@@ -4,31 +4,25 @@ test.describe('Note to Todo Conversion', () => {
   test('should show application branding and navigation', async ({ page }) => {
     await page.goto('/');
     
-    // Should show the Gumboard branding (use more specific selector)
     await expect(page.locator('span.text-4xl.font-bold')).toContainText('Gumboard');
     
-    // Should show the main call to action
     await expect(page.locator('text=Get started - it\'s free')).toBeVisible();
   });
 
   test('should handle authentication flow for todo functionality', async ({ page }) => {
     await page.goto('/');
     
-    // Click get started to begin auth flow
     await page.click('text=Get started - it\'s free');
     
-    // Should be on signin page
     await expect(page).toHaveURL(/.*auth\/signin.*/);
     
-    // Should show signin form
-    await expect(page.locator('input[type="email"]')).toBeVisible();
+    await expect(page.locator('#email')).toBeVisible();
     await expect(page.locator('text=Continue with Email')).toBeVisible();
   });
 
   test('should show footer information', async ({ page }) => {
     await page.goto('/');
     
-    // Should show footer with project attribution
     await expect(page.locator('text=A project by')).toBeVisible();
     await expect(page.locator('text=Antiwork')).toBeVisible();
   });
@@ -36,19 +30,45 @@ test.describe('Note to Todo Conversion', () => {
   test('should validate email input in signin form', async ({ page }) => {
     await page.goto('/auth/signin');
     
-    // Test email validation
-    const emailInput = page.locator('input[type="email"]');
+    const emailInput = page.locator('#email');
     const submitButton = page.locator('button[type="submit"]');
     
-    // Button should be disabled initially
     await expect(submitButton).toBeDisabled();
     
-    // Fill valid email
     await emailInput.fill('test@example.com');
     await expect(submitButton).not.toBeDisabled();
     
-    // Clear email
     await emailInput.fill('');
     await expect(submitButton).toBeDisabled();
+  });
+
+  test('should show demo functionality description', async ({ page }) => {
+    await page.goto('/');
+    
+    await expect(page.locator('text=add notes, edit text, and complete tasks')).toBeVisible();
+  });
+
+  test('should show interactive demo section', async ({ page }) => {
+    await page.goto('/');
+    
+    await expect(page.locator('text=interactive demo')).toBeVisible();
+  });
+
+  test('should show todo conversion requires authentication', async ({ page }) => {
+    await page.goto('/boards/test-board');
+    
+    await expect(page).toHaveURL(/.*auth\/signin.*/);
+  });
+
+  test('should show demo features description', async ({ page }) => {
+    await page.goto('/');
+    
+    await expect(page.locator('text=Create colorful sticky notes with interactive checklists')).toBeVisible();
+  });
+
+  test('should show demo collaboration features', async ({ page }) => {
+    await page.goto('/');
+    
+    await expect(page.locator('text=Work together seamlessly with your team in real-time')).toBeVisible();
   });
 });

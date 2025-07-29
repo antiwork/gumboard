@@ -36,6 +36,20 @@ npm run dev
 
 Visit [http://localhost:3000](http://localhost:3000) in your browser to access the application.
 
+## Testing
+
+Run the test suite:
+
+```bash
+npm test
+```
+
+Run only e2e tests:
+
+```bash
+npm run test:e2e
+```
+
 ## Database Commands
 
 - `npm run docker:up` - Start PostgreSQL database

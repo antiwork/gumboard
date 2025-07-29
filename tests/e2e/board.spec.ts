@@ -1,20 +1,17 @@
 import { test, expect, isAuthenticationRequired } from '../fixtures/test-helpers';
 
 test.describe('Board Creation', () => {
-  test('should redirect to authentication when accessing dashboard without login', async ({ page }) => {
-    await page.goto('/dashboard');
+  test('should show homepage for unauthenticated users', async ({ page }) => {
+    await page.goto('/');
     
-    // Should redirect to signin page
-    await expect(page).toHaveURL(/.*auth\/signin.*/);
-    await expect(page.locator('text=Welcome to Gumboard')).toBeVisible();
+    await expect(page.locator('text=Keep on top of your team\'s to-dos.')).toBeVisible();
   });
 
   test('should show signin form elements', async ({ page }) => {
     await page.goto('/auth/signin');
     
-    // Should show the signin form
     await expect(page.locator('text=Welcome to Gumboard')).toBeVisible();
-    await expect(page.locator('input[type="email"]')).toBeVisible();
+    await expect(page.locator('#email')).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
@@ -22,25 +19,40 @@ test.describe('Board Creation', () => {
     await page.goto('/auth/signin');
     
     const testEmail = 'test@example.com';
-    await page.fill('input[type="email"]', testEmail);
+    await page.fill('#email', testEmail);
     
-    // Button should be enabled when email is filled
     const submitButton = page.locator('button[type="submit"]');
     await expect(submitButton).not.toBeDisabled();
     
-    // Should show the correct email value
-    await expect(page.locator('input[type="email"]')).toHaveValue(testEmail);
+    await expect(page.locator('#email')).toHaveValue(testEmail);
   });
 
   test('should show magic link sent message after form submission', async ({ page }) => {
     await page.goto('/auth/signin');
     
     const testEmail = 'test@example.com';
-    await page.fill('input[type="email"]', testEmail);
+    await page.fill('#email', testEmail);
     await page.click('button[type="submit"]');
     
-    // Should show the "check your email" message
     await expect(page.locator('text=Check your email')).toBeVisible();
     await expect(page.locator(`text=${testEmail}`)).toBeVisible();
+  });
+
+  test('should show board creation requires authentication', async ({ page }) => {
+    await page.goto('/dashboard');
+    
+    await expect(page).toHaveURL(/.*auth\/signin.*/);
+  });
+
+  test('should show board access requires authentication', async ({ page }) => {
+    await page.goto('/boards/test-board');
+    
+    await expect(page).toHaveURL(/.*auth\/signin.*/);
+  });
+
+  test('should show authentication required for board management', async ({ page }) => {
+    await page.goto('/dashboard');
+    
+    await expect(page.locator('text=Welcome to Gumboard')).toBeVisible();
   });
 });
