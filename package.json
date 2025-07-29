@@ -8,6 +8,7 @@
     "build": "prisma generate && prisma db push && next build",
     "start": "next start",
     "lint": "next lint",
+    "test:e2e": "playwright test",
     "test": "jest",
     "test:watch": "jest --watch",
     "db:generate": "prisma generate",
@@ -42,6 +43,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@playwright/test": "^1.54.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.6.3",
     "@types/jest": "^30.0.0",
