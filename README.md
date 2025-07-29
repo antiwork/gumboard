@@ -45,3 +45,8 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser to access t
 - `npm run db:migrate` - Run database migrations
 - `npm run db:studio` - Open Prisma Studio (database GUI)
 - `npm run db:reset` - Reset database and run migrations
+
+## Environment Variables
+
+- `NEXT_PUBLIC_POLL_INTERVAL_MS` - Interval in milliseconds for polling notes
+  updates. Defaults to `5000` if not set.

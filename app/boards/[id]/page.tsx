@@ -8,6 +8,7 @@ import Link from "next/link"
 import { signOut } from "next-auth/react"
 import { FullPageLoader } from "@/components/ui/loader"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
+import useNotes from "@/lib/hooks/useNotes"
 
 interface ChecklistItem {
   id: string
@@ -90,6 +91,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const boardRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  const {
+    notes: fetchedNotes,
+    isLoading: notesLoading,
+    mutate: refreshNotes
+  } = useNotes(boardId)
+
+  useEffect(() => {
+    setNotes(fetchedNotes)
+  }, [fetchedNotes])
 
   // Update URL with current filter state
   const updateURL = (newSearchTerm?: string, newDateRange?: { startDate: Date | null; endDate: Date | null }, newAuthor?: string | null, newSort?: SortOption, newShowDone?: boolean) => {
@@ -579,19 +590,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       }
 
       if (boardId === 'all-notes') {
-        // For all notes view, create a virtual board object and fetch all notes
+        // For all notes view, create a virtual board object
         setBoard({
           id: 'all-notes',
           name: 'All notes',
           description: 'Notes from all boards'
         })
-
-        // Fetch notes from all boards
-        const notesResponse = await fetch(`/api/boards/all-notes/notes`)
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json()
-          setNotes(notes)
-        }
       } else {
         // Fetch current board info
         const boardResponse = await fetch(`/api/boards/${boardId}`)
@@ -602,13 +606,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         if (boardResponse.ok) {
           const { board } = await boardResponse.json()
           setBoard(board)
-        }
-
-        // Fetch notes for specific board
-        const notesResponse = await fetch(`/api/boards/${boardId}/notes`)
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json()
-          setNotes(notes)
         }
       }
     } catch (error) {
@@ -645,6 +642,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         setNotes([...notes, note])
         setEditingNote(note.id)
         setEditContent("")
+        refreshNotes()
       }
     } catch (error) {
       console.error("Error creating note:", error)
@@ -670,6 +668,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         setNotes(notes.map(n => n.id === noteId ? note : n))
         setEditingNote(null)
         setEditContent("")
+        refreshNotes()
       } else {
         const errorData = await response.json()
         alert(errorData.error || "Failed to update note")
@@ -694,6 +693,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (response.ok) {
         setNotes(notes.filter(n => n.id !== noteId))
+        refreshNotes()
       } else {
         const errorData = await response.json()
         alert(errorData.error || "Failed to delete note")
@@ -721,6 +721,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json()
         setNotes(notes.map(n => n.id === noteId ? note : n))
+        refreshNotes()
       }
     } catch (error) {
       console.error("Error toggling note done status:", error)
@@ -772,6 +773,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json()
         setNotes(notes.map(n => n.id === noteId ? note : n))
+        refreshNotes()
       }
     } catch (error) {
       console.error("Error converting to checklist:", error)
@@ -816,6 +818,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         setNewChecklistItemContent("")
         // Keep addingChecklistItem active so user can continue adding items
         // setAddingChecklistItem(null) - removed this line
+        refreshNotes()
       }
     } catch (error) {
       console.error("Error adding checklist item:", error)
@@ -866,6 +869,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             newSet.delete(itemId)
             return newSet
           })
+          refreshNotes()
         })
       }, 200)
       
@@ -900,6 +904,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json()
         setNotes(notes.map(n => n.id === noteId ? note : n))
+        refreshNotes()
       }
     } catch (error) {
       console.error("Error deleting checklist item:", error)
@@ -936,6 +941,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         setNotes(notes.map(n => n.id === noteId ? note : n))
         setEditingChecklistItem(null)
         setEditingChecklistItemContent("")
+        refreshNotes()
       }
     } catch (error) {
       console.error("Error editing checklist item:", error)
@@ -982,6 +988,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json()
         setNotes(notes.map(n => n.id === noteId ? note : n))
+        refreshNotes()
       }
     } catch (error) {
       console.error("Error toggling all checklist items:", error)
@@ -1021,12 +1028,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           })
         })
 
-        if (response.ok) {
-          const { note } = await response.json()
-          setNotes(notes.map(n => n.id === noteId ? note : n))
-          setEditingChecklistItem({ noteId, itemId: newItem.id })
-          setEditingChecklistItemContent("")
-        }
+      if (response.ok) {
+        const { note } = await response.json()
+        setNotes(notes.map(n => n.id === noteId ? note : n))
+        setEditingChecklistItem({ noteId, itemId: newItem.id })
+        setEditingChecklistItemContent("")
+        refreshNotes()
+      }
         return
       }
 
@@ -1063,6 +1071,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         setNotes(notes.map(n => n.id === noteId ? note : n))
         setEditingChecklistItem({ noteId, itemId: newItem.id })
         setEditingChecklistItemContent(secondHalf)
+        refreshNotes()
       }
     } catch (error) {
       console.error("Error splitting checklist item:", error)
