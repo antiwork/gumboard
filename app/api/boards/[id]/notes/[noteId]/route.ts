@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { after, NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { sendSlackNotification } from "@/lib/slack"
@@ -83,16 +83,17 @@ export async function PUT(
       }
     })
 
-    // Send Slack notification if done status changed and webhook is configured
-    if (note.board.organization.slackWebhookUrl && done !== undefined && done !== wasDone) {
-      await sendSlackNotification(note.board.organization.slackWebhookUrl, {
-        boardName: note.board.name,
-        noteContent: updatedNote.content,
-        authorName: user.name || '',
-        authorEmail: user.email,
-        action: done ? 'completed' : 'uncompleted'
-      })
-    }
+    after(async () => {
+      if (note.board.organization.slackWebhookUrl && done !== undefined && done !== wasDone) {
+        await sendSlackNotification(note.board.organization.slackWebhookUrl, {
+          boardName: note.board.name,
+          noteContent: updatedNote.content,
+          authorName: user.name || '',
+          authorEmail: user.email,
+          action: done ? 'completed' : 'uncompleted'
+        })
+      }
+    })
 
     return NextResponse.json({ note: updatedNote })
   } catch (error) {
