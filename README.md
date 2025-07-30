@@ -12,19 +12,16 @@ Keep on top of your team's to-dos.
 ### Database Setup
 
 1. Create your environment variables file:
-
 ```bash
 cp env.example .env.local
 ```
 
 2. Start the PostgreSQL database using Docker:
-
 ```bash
 npm run docker:up
 ```
 
 3. Push the database schema:
-
 ```bash
 npm run db:push
 ```
