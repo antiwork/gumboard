@@ -367,7 +367,6 @@ export default function OrganizationSettingsPage() {
         </div>
       </Card>
 
-      {/* Slack Integration */}
       <Card className="p-6">
         <div className="space-y-6">
           <div>
