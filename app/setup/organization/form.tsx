@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { X, Plus } from "lucide-react"
+import { toast } from "sonner"
 
 interface OrganizationSetupFormProps {
   onSubmit: (orgName: string, teamEmails: string[]) => Promise<void>
@@ -33,14 +34,32 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!orgName.trim()) return
+    if (!orgName.trim()) {
+      toast.error("Organization name required", {
+        description: "Please enter a name for your organization."
+      })
+      return
+    }
 
     setIsSubmitting(true)
     try {
       const validEmails = teamEmails.filter(email => email.trim() && email.includes('@'))
+      const invalidEmails = teamEmails.filter(email => email.trim() && !email.includes('@'))
+
+      if (invalidEmails.length > 0) {
+        toast.error("Invalid email addresses", {
+          description: "Please check that all email addresses are valid."
+        })
+        setIsSubmitting(false)
+        return
+      }
+
       await onSubmit(orgName.trim(), validEmails)
     } catch (error) {
       console.error('Error creating organization:', error)
+      toast.error("Failed to create organization", {
+        description: "Please try again or contact support if the problem persists."
+      })
       setIsSubmitting(false)
     }
   }
@@ -59,10 +78,10 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
           className="w-full"
         />
       </div>
-      
+
       <div className="space-y-4">
         <Label>Team Member Email Addresses</Label>
-        
+
         <div className="space-y-3">
           {teamEmails.map((email, index) => (
             <div key={index} className="flex gap-2">
@@ -87,7 +106,7 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
             </div>
           ))}
         </div>
-        
+
         <Button
           type="button"
           variant="outline"
@@ -97,12 +116,12 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
           <Plus className="h-4 w-4 mr-2" />
           Add Team Member
         </Button>
-        
+
         <p className="text-xs text-muted-foreground">
           {`we'll send invitations to join your organization to these email addresses.`}
         </p>
       </div>
-      
+
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? "Creating..." : "Save & Send Invites"}
       </Button>

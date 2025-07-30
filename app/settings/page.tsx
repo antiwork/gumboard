@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Mail } from "lucide-react"
 import { Loader } from "@/components/ui/loader"
+import { toast } from "sonner"
 
 interface User {
   id: string
@@ -38,7 +39,7 @@ export default function ProfileSettingsPage() {
         router.push("/auth/signin")
         return
       }
-      
+
       if (response.ok) {
         const userData = await response.json()
         setUser(userData)
@@ -46,6 +47,9 @@ export default function ProfileSettingsPage() {
       }
     } catch (error) {
       console.error("Error fetching user data:", error)
+      toast.error("Failed to load profile", {
+        description: "Please refresh the page or try again later."
+      })
     } finally {
       setLoading(false)
     }
@@ -71,9 +75,20 @@ export default function ProfileSettingsPage() {
       if (response.ok) {
         const updatedUser = await response.json()
         setUser(updatedUser)
+        toast.success("Profile updated successfully", {
+          description: "Your profile information has been saved."
+        })
+      } else {
+        const errorData = await response.json()
+        toast.error("Failed to update profile", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error updating profile:", error)
+      toast.error("Failed to update profile", {
+        description: "Please check your connection and try again."
+      })
     } finally {
       setSaving(false)
     }
@@ -124,7 +139,7 @@ export default function ProfileSettingsPage() {
         </div>
 
         <div className="pt-4 border-t">
-          <Button 
+          <Button
             onClick={handleSaveProfile}
             disabled={saving || profileName === user?.name}
             className="bg-blue-600 hover:bg-blue-700"

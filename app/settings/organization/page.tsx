@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Trash2, UserPlus, Shield, ShieldCheck, Link, Copy, Calendar, Users } from "lucide-react"
 import { Loader } from "@/components/ui/loader"
+import { toast } from "sonner"
 
 interface User {
   id: string
@@ -72,7 +73,7 @@ export default function OrganizationSettingsPage() {
         router.push("/auth/signin")
         return
       }
-      
+
       if (response.ok) {
         const userData = await response.json()
         setUser(userData)
@@ -131,13 +132,20 @@ export default function OrganizationSettingsPage() {
       if (response.ok) {
         const updatedUser = await response.json()
         setUser(updatedUser)
+        toast.success("Organization updated successfully", {
+          description: "Your organization settings have been saved."
+        })
       } else {
         const errorData = await response.json()
-        alert(errorData.error || "Failed to update organization")
+        toast.error("Failed to update organization", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error updating organization:", error)
-      alert("Failed to update organization")
+      toast.error("Failed to update organization", {
+        description: "Please check your connection and try again."
+      })
     } finally {
       setSaving(false)
     }
@@ -162,19 +170,27 @@ export default function OrganizationSettingsPage() {
       if (response.ok) {
         setInviteEmail("")
         fetchInvites()
+        toast.success("Invitation sent successfully", {
+          description: `An invite has been sent to ${inviteEmail}`
+        })
       } else {
         const errorData = await response.json()
-        alert(errorData.error || "Failed to send invite")
+        toast.error("Failed to send invite", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error inviting member:", error)
-      alert("Failed to send invite")
+      toast.error("Failed to send invite", {
+        description: "Please check your connection and try again."
+      })
     } finally {
       setInviting(false)
     }
   }
 
   const handleRemoveMember = async (memberId: string) => {
+    const member = user?.organization?.members.find(m => m.id === memberId)
     if (!confirm("Are you sure you want to remove this team member?")) return
 
     try {
@@ -184,13 +200,20 @@ export default function OrganizationSettingsPage() {
 
       if (response.ok) {
         fetchUserData()
+        toast.success("Team member removed successfully", {
+          description: `${member?.name || member?.email || 'Member'} has been removed from the organization.`
+        })
       } else {
         const errorData = await response.json()
-        alert(errorData.error || "Failed to remove member")
+        toast.error("Failed to remove member", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error removing member:", error)
-      alert("Failed to remove member")
+      toast.error("Failed to remove member", {
+        description: "Please check your connection and try again."
+      })
     }
   }
 
@@ -209,6 +232,9 @@ export default function OrganizationSettingsPage() {
   }
 
   const handleToggleAdmin = async (memberId: string, currentAdminStatus: boolean) => {
+    const member = user?.organization?.members.find(m => m.id === memberId)
+    const newStatus = !currentAdminStatus
+
     try {
       const response = await fetch(`/api/organization/members/${memberId}`, {
         method: "PUT",
@@ -216,19 +242,26 @@ export default function OrganizationSettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          isAdmin: !currentAdminStatus,
+          isAdmin: newStatus,
         }),
       })
 
       if (response.ok) {
         fetchUserData() // Refresh the data to show updated admin status
+        toast.success(`Admin status updated successfully`, {
+          description: `${member?.name || member?.email || 'Member'} ${newStatus ? 'is now an admin' : 'is no longer an admin'}.`
+        })
       } else {
         const errorData = await response.json()
-        alert(errorData.error || "Failed to update admin status")
+        toast.error("Failed to update admin status", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error toggling admin status:", error)
-      alert("Failed to update admin status")
+      toast.error("Failed to update admin status", {
+        description: "Please check your connection and try again."
+      })
     }
   }
 
@@ -269,13 +302,20 @@ export default function OrganizationSettingsPage() {
       if (response.ok) {
         setNewSelfServeInvite({ name: "", expiresAt: "", usageLimit: "" })
         fetchSelfServeInvites()
+        toast.success("Invite link created successfully", {
+          description: `"${newSelfServeInvite.name}" invite link is ready to share.`
+        })
       } else {
         const errorData = await response.json()
-        alert(errorData.error || "Failed to create invite link")
+        toast.error("Failed to create invite link", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error creating self-serve invite:", error)
-      alert("Failed to create invite link")
+      toast.error("Failed to create invite link", {
+        description: "Please check your connection and try again."
+      })
     } finally {
       setCreating(false)
     }
@@ -291,13 +331,20 @@ export default function OrganizationSettingsPage() {
 
       if (response.ok) {
         fetchSelfServeInvites()
+        toast.success("Invite link deleted successfully", {
+          description: "The invite link has been permanently removed."
+        })
       } else {
         const errorData = await response.json()
-        alert(errorData.error || "Failed to delete invite link")
+        toast.error("Failed to delete invite link", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error deleting self-serve invite:", error)
-      alert("Failed to delete invite link")
+      toast.error("Failed to delete invite link", {
+        description: "Please check your connection and try again."
+      })
     }
   }
 
@@ -305,7 +352,9 @@ export default function OrganizationSettingsPage() {
     const inviteUrl = `${window.location.origin}/join/${inviteToken}`
     try {
       await navigator.clipboard.writeText(inviteUrl)
-      alert("Invite link copied to clipboard!")
+      toast.success("Invite link copied!", {
+        description: "The invite link has been copied to your clipboard."
+      })
     } catch (error) {
       console.error("Failed to copy link:", error)
       // Fallback for older browsers
@@ -315,7 +364,9 @@ export default function OrganizationSettingsPage() {
       textArea.select()
       document.execCommand("copy")
       document.body.removeChild(textArea)
-      alert("Invite link copied to clipboard!")
+      toast.success("Invite link copied!", {
+        description: "The invite link has been copied to your clipboard."
+      })
     }
   }
 
@@ -351,7 +402,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="pt-4 border-t">
-            <Button 
+            <Button
               onClick={handleSaveOrganization}
               disabled={saving || orgName === user?.organization?.name || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
@@ -369,8 +420,8 @@ export default function OrganizationSettingsPage() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">Team Members</h3>
             <p className="text-gray-600">
-              {user?.isAdmin 
-                ? `Manage your organization's team members.` 
+              {user?.isAdmin
+                ? `Manage your organization's team members.`
                 : `View your organization's team members.`
               }
             </p>
@@ -405,11 +456,10 @@ export default function OrganizationSettingsPage() {
                       onClick={() => handleToggleAdmin(member.id, member.isAdmin)}
                       variant="outline"
                       size="sm"
-                      className={`${
-                        member.isAdmin 
-                          ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50' 
-                          : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
-                      }`}
+                      className={`${member.isAdmin
+                        ? 'text-purple-600 hover:text-purple-700 hover:bg-purple-50'
+                        : 'text-gray-600 hover:text-purple-600 hover:bg-purple-50'
+                        }`}
                       title={member.isAdmin ? "Remove admin role" : "Make admin"}
                     >
                       {member.isAdmin ? <ShieldCheck className="w-4 h-4" /> : <Shield className="w-4 h-4" />}
@@ -451,8 +501,8 @@ export default function OrganizationSettingsPage() {
                 disabled={!user?.isAdmin}
               />
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={inviting || !user?.isAdmin}
               className="disabled:bg-gray-400 disabled:cursor-not-allowed"
               title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
@@ -535,8 +585,8 @@ export default function OrganizationSettingsPage() {
                 />
               </div>
             </div>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               disabled={creating || !user?.isAdmin}
               className="disabled:bg-gray-400 disabled:cursor-not-allowed"
               title={!user?.isAdmin ? "Only admins can create invite links" : undefined}

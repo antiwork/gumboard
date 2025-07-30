@@ -20,6 +20,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import { toast } from "sonner";
 
 interface ChecklistItem {
   id: string;
@@ -800,7 +801,9 @@ export default function BoardPage({
   const handleAddNote = async (targetBoardId?: string) => {
     // For all notes view, ensure a board is selected
     if (boardId === "all-notes" && !targetBoardId) {
-      alert("Please select a board to add the note to");
+      toast.error("No board selected", {
+        description: "Please select a board to add the note to."
+      });
       return;
     }
 
@@ -859,13 +862,20 @@ export default function BoardPage({
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
         setEditingNote(null);
         setEditContent("");
+        toast.success("Note updated successfully", {
+          description: "Your changes have been saved."
+        });
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to update note");
+        toast.error("Failed to update note", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        });
       }
     } catch (error) {
       console.error("Error updating note:", error);
-      alert("Failed to update note");
+      toast.error("Failed to update note", {
+        description: "Please check your connection and try again."
+      });
     }
   };
 
@@ -888,14 +898,22 @@ export default function BoardPage({
       );
 
       if (response.ok) {
+        const deletedNote = notes.find((n) => n.id === noteId);
         setNotes(notes.filter((n) => n.id !== noteId));
+        toast.success("Note deleted successfully", {
+          description: deletedNote?.content ? `"${deletedNote.content.substring(0, 30)}${deletedNote.content.length > 30 ? '...' : ''}" has been removed.` : "The note has been permanently removed."
+        });
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete note");
+        toast.error("Failed to delete note", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        });
       }
     } catch (error) {
       console.error("Error deleting note:", error);
-      alert("Failed to delete note");
+      toast.error("Failed to delete note", {
+        description: "Please check your connection and try again."
+      });
     }
   };
 
@@ -952,19 +970,19 @@ export default function BoardPage({
       const checklistItems: ChecklistItem[] =
         lines.length > 0
           ? lines.map((line, index) => ({
-              id: `item-${Date.now()}-${index}`,
-              content: line,
-              checked: false,
-              order: index,
-            }))
+            id: `item-${Date.now()}-${index}`,
+            content: line,
+            checked: false,
+            order: index,
+          }))
           : [
-              {
-                id: `item-${Date.now()}`,
-                content: "",
-                checked: false,
-                order: 0,
-              },
-            ];
+            {
+              id: `item-${Date.now()}`,
+              content: "",
+              checked: false,
+              order: 0,
+            },
+          ];
 
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
@@ -1415,11 +1433,10 @@ export default function BoardPage({
                     {/* All Notes Option */}
                     <Link
                       href="/boards/all-notes"
-                      className={`block px-4 py-2 text-sm hover:bg-gray-100 ${
-                        boardId === "all-notes"
-                          ? "bg-blue-50 text-blue-700"
-                          : "text-gray-700"
-                      }`}
+                      className={`block px-4 py-2 text-sm hover:bg-gray-100 ${boardId === "all-notes"
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700"
+                        }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
                       <div className="font-medium">All notes</div>
@@ -1434,11 +1451,10 @@ export default function BoardPage({
                       <Link
                         key={b.id}
                         href={`/boards/${b.id}`}
-                        className={`block px-4 py-2 text-sm hover:bg-gray-100 ${
-                          b.id === boardId
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-gray-700"
-                        }`}
+                        className={`block px-4 py-2 text-sm hover:bg-gray-100 ${b.id === boardId
+                          ? "bg-blue-50 text-blue-700"
+                          : "text-gray-700"
+                          }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div className="font-medium">{b.name}</div>
@@ -1478,13 +1494,12 @@ export default function BoardPage({
                 <span className="text-gray-700 truncate max-w-32">
                   {selectedAuthor
                     ? uniqueAuthors.find((a) => a.id === selectedAuthor)
-                        ?.name || "Unknown author"
+                      ?.name || "Unknown author"
                     : "All authors"}
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 text-gray-500 transition-transform ${
-                    showAuthorDropdown ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-gray-500 transition-transform ${showAuthorDropdown ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -1497,11 +1512,10 @@ export default function BoardPage({
                         setShowAuthorDropdown(false);
                         updateURL(undefined, undefined, null);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${
-                        !selectedAuthor
-                          ? "bg-blue-50 text-blue-700"
-                          : "text-gray-700"
-                      }`}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${!selectedAuthor
+                        ? "bg-blue-50 text-blue-700"
+                        : "text-gray-700"
+                        }`}
                     >
                       <User className="w-4 h-4 text-gray-500" />
                       <span className="font-medium">All authors</span>
@@ -1514,11 +1528,10 @@ export default function BoardPage({
                           setShowAuthorDropdown(false);
                           updateURL(undefined, undefined, author.id);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${
-                          selectedAuthor === author.id
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-gray-700"
-                        }`}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${selectedAuthor === author.id
+                          ? "bg-blue-50 text-blue-700"
+                          : "text-gray-700"
+                          }`}
                       >
                         <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                           <span className="text-xs font-medium text-white">
@@ -1552,9 +1565,8 @@ export default function BoardPage({
                     ?.label || "Sort"}
                 </span>
                 <ChevronDown
-                  className={`w-4 h-4 text-gray-500 transition-transform ${
-                    showSortDropdown ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-gray-500 transition-transform ${showSortDropdown ? "rotate-180" : ""
+                    }`}
                 />
               </button>
 
@@ -1574,11 +1586,10 @@ export default function BoardPage({
                             option.value
                           );
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                          sortBy === option.value
-                            ? "bg-blue-50 text-blue-700"
-                            : "text-gray-700"
-                        }`}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${sortBy === option.value
+                          ? "bg-blue-50 text-blue-700"
+                          : "text-gray-700"
+                          }`}
                       >
                         <div className="font-medium">{option.label}</div>
                         <div className="text-xs text-gray-500 mt-1">
@@ -1605,11 +1616,10 @@ export default function BoardPage({
                     newShowDone
                   );
                 }}
-                className={`flex items-center space-x-2 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-                  showDoneNotes
-                    ? "border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700"
-                    : "border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-                }`}
+                className={`flex items-center space-x-2 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${showDoneNotes
+                  ? "border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700"
+                  : "border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+                  }`}
                 title={
                   showDoneNotes
                     ? "Hide completed notes"
@@ -1787,14 +1797,13 @@ export default function BoardPage({
               <span className="text-gray-700">
                 {selectedAuthor
                   ? uniqueAuthors.find((a) => a.id === selectedAuthor)?.name ||
-                    "Unknown author"
+                  "Unknown author"
                   : "All authors"}
               </span>
             </div>
             <ChevronDown
-              className={`w-4 h-4 text-gray-500 transition-transform ${
-                showAuthorDropdown ? "rotate-180" : ""
-              }`}
+              className={`w-4 h-4 text-gray-500 transition-transform ${showAuthorDropdown ? "rotate-180" : ""
+                }`}
             />
           </button>
 
@@ -1807,11 +1816,10 @@ export default function BoardPage({
                     setShowAuthorDropdown(false);
                     updateURL(undefined, undefined, null);
                   }}
-                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${
-                    !selectedAuthor
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700"
-                  }`}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${!selectedAuthor
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700"
+                    }`}
                 >
                   <User className="w-4 h-4 text-gray-500" />
                   <span className="font-medium">All authors</span>
@@ -1824,11 +1832,10 @@ export default function BoardPage({
                       setShowAuthorDropdown(false);
                       updateURL(undefined, undefined, author.id);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${
-                      selectedAuthor === author.id
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-700"
-                    }`}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center space-x-3 ${selectedAuthor === author.id
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700"
+                      }`}
                   >
                     <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-xs font-medium text-white">
@@ -1862,9 +1869,8 @@ export default function BoardPage({
               </span>
             </div>
             <ChevronDown
-              className={`w-4 h-4 text-gray-500 transition-transform ${
-                showSortDropdown ? "rotate-180" : ""
-              }`}
+              className={`w-4 h-4 text-gray-500 transition-transform ${showSortDropdown ? "rotate-180" : ""
+                }`}
             />
           </button>
 
@@ -1879,11 +1885,10 @@ export default function BoardPage({
                       setShowSortDropdown(false);
                       updateURL(undefined, undefined, undefined, option.value);
                     }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${
-                      sortBy === option.value
-                        ? "bg-blue-50 text-blue-700"
-                        : "text-gray-700"
-                    }`}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 ${sortBy === option.value
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-gray-700"
+                      }`}
                   >
                     <div className="font-medium">{option.label}</div>
                     <div className="text-xs text-gray-500 mt-1">
@@ -1910,11 +1915,10 @@ export default function BoardPage({
                 newShowDone
               );
             }}
-            className={`w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${
-              showDoneNotes
-                ? "border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700"
-                : "border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
-            }`}
+            className={`w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors ${showDoneNotes
+              ? "border-blue-300 bg-blue-50 hover:bg-blue-100 text-blue-700"
+              : "border-gray-300 bg-white hover:bg-gray-50 text-gray-700"
+              }`}
           >
             {showDoneNotes ? (
               <EyeOff className="w-4 h-4" />
@@ -1944,88 +1948,87 @@ export default function BoardPage({
           selectedAuthor ||
           sortBy !== "created-desc" ||
           showDoneNotes) && (
-          <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 text-sm text-blue-700">
-            <div className="flex flex-wrap items-center gap-2">
-              <span>
-                {filteredNotes.length === 1
-                  ? `1 note found`
-                  : `${filteredNotes.length} notes found`}
-              </span>
-              {searchTerm && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Search: &quot;{searchTerm}&quot;
+            <div className="px-4 py-2 bg-blue-50 border-b border-blue-100 text-sm text-blue-700">
+              <div className="flex flex-wrap items-center gap-2">
+                <span>
+                  {filteredNotes.length === 1
+                    ? `1 note found`
+                    : `${filteredNotes.length} notes found`}
                 </span>
-              )}
-              {selectedAuthor && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Author:{" "}
-                  {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name ||
-                    "Unknown"}
-                </span>
-              )}
-              {(dateRange.startDate || dateRange.endDate) && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Date:{" "}
-                  {dateRange.startDate
-                    ? dateRange.startDate.toLocaleDateString("en-US", {
+                {searchTerm && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Search: &quot;{searchTerm}&quot;
+                  </span>
+                )}
+                {selectedAuthor && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Author:{" "}
+                    {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name ||
+                      "Unknown"}
+                  </span>
+                )}
+                {(dateRange.startDate || dateRange.endDate) && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Date:{" "}
+                    {dateRange.startDate
+                      ? dateRange.startDate.toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
                       })
-                    : "..."}{" "}
-                  -{" "}
-                  {dateRange.endDate
-                    ? dateRange.endDate.toLocaleDateString("en-US", {
+                      : "..."}{" "}
+                    -{" "}
+                    {dateRange.endDate
+                      ? dateRange.endDate.toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
                         year: "numeric",
                       })
-                    : "..."}
-                </span>
-              )}
-              {sortBy !== "created-desc" && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Sort:{" "}
-                  {SORT_OPTIONS.find((option) => option.value === sortBy)
-                    ?.label || "Custom"}
-                </span>
-              )}
-              {showDoneNotes && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  Completed notes shown
-                </span>
-              )}
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setDateRange({ startDate: null, endDate: null });
-                  setSelectedAuthor(null);
-                  setSortBy("created-desc");
-                  setShowDoneNotes(false);
-                  updateURL(
-                    "",
-                    { startDate: null, endDate: null },
-                    null,
-                    "created-desc",
-                    false
-                  );
-                }}
-                className="text-blue-600 hover:text-blue-800 text-xs underline"
-              >
-                Clear all filters
-              </button>
+                      : "..."}
+                  </span>
+                )}
+                {sortBy !== "created-desc" && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Sort:{" "}
+                    {SORT_OPTIONS.find((option) => option.value === sortBy)
+                      ?.label || "Custom"}
+                  </span>
+                )}
+                {showDoneNotes && (
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    Completed notes shown
+                  </span>
+                )}
+                <button
+                  onClick={() => {
+                    setSearchTerm("");
+                    setDateRange({ startDate: null, endDate: null });
+                    setSelectedAuthor(null);
+                    setSortBy("created-desc");
+                    setShowDoneNotes(false);
+                    updateURL(
+                      "",
+                      { startDate: null, endDate: null },
+                      null,
+                      "created-desc",
+                      false
+                    );
+                  }}
+                  className="text-blue-600 hover:text-blue-800 text-xs underline"
+                >
+                  Clear all filters
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
         {/* Notes */}
         <div className="relative w-full h-full">
           {layoutNotes.map((note) => (
             <div
               key={note.id}
-              className={`absolute rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 box-border ${
-                note.done ? "opacity-80" : ""
-              }`}
+              className={`absolute rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 box-border ${note.done ? "opacity-80" : ""
+                }`}
               style={{
                 backgroundColor: note.color,
                 left: note.x,
@@ -2068,7 +2071,7 @@ export default function BoardPage({
                               day: "numeric",
                               year:
                                 new Date(note.createdAt).getFullYear() !==
-                                new Date().getFullYear()
+                                  new Date().getFullYear()
                                   ? "numeric"
                                   : undefined,
                             }
@@ -2125,10 +2128,9 @@ export default function BoardPage({
                         }}
                         className={`
                           relative w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center cursor-pointer hover:scale-110 z-10
-                          ${
-                            note.done
-                              ? "bg-green-500 border-green-500 text-white shadow-lg opacity-100"
-                              : "bg-white bg-opacity-60 border-gray-400 hover:border-green-400 hover:bg-green-50 opacity-30 group-hover:opacity-100"
+                          ${note.done
+                            ? "bg-green-500 border-green-500 text-white shadow-lg opacity-100"
+                            : "bg-white bg-opacity-60 border-gray-400 hover:border-green-400 hover:bg-green-50 opacity-30 group-hover:opacity-100"
                           }
                         `}
                         title={
@@ -2169,7 +2171,7 @@ export default function BoardPage({
                     onChange={(e) => {
                       const newValue = e.target.value;
                       setEditContent(newValue);
-                      
+
                       if (newValue.includes("[ ]") && !note.isChecklist) {
                         handleConvertToChecklist(note.id);
                       }
@@ -2203,9 +2205,8 @@ export default function BoardPage({
                   {note.checklistItems?.map((item) => (
                     <div
                       key={item.id}
-                      className={`flex items-center group/item hover:bg-white hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200 ${
-                        animatingItems.has(item.id) ? "animate-pulse" : ""
-                      }`}
+                      className={`flex items-center group/item hover:bg-white hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200 ${animatingItems.has(item.id) ? "animate-pulse" : ""
+                        }`}
                     >
                       {/* Checkbox */}
                       <button
@@ -2214,10 +2215,9 @@ export default function BoardPage({
                         }
                         className={`
                           relative w-4 h-4 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer hover:scale-110 mr-3 flex-shrink-0 ml-2
-                          ${
-                            item.checked
-                              ? "bg-green-500 border-green-500 text-white"
-                              : "bg-white bg-opacity-60 border-gray-400 hover:border-green-400"
+                          ${item.checked
+                            ? "bg-green-500 border-green-500 text-white"
+                            : "bg-white bg-opacity-60 border-gray-400 hover:border-green-400"
                           }
                         `}
                       >
@@ -2238,7 +2238,7 @@ export default function BoardPage({
 
                       {/* Content */}
                       {editingChecklistItem?.noteId === note.id &&
-                      editingChecklistItem?.itemId === item.id ? (
+                        editingChecklistItem?.itemId === item.id ? (
                         <input
                           type="text"
                           value={editingChecklistItemContent}
@@ -2279,11 +2279,10 @@ export default function BoardPage({
                         />
                       ) : (
                         <span
-                          className={`flex-1 text-sm leading-6 cursor-pointer ${
-                            item.checked
-                              ? "text-gray-500 line-through opacity-70"
-                              : "text-gray-800"
-                          }`}
+                          className={`flex-1 text-sm leading-6 cursor-pointer ${item.checked
+                            ? "text-gray-500 line-through opacity-70"
+                            : "text-gray-800"
+                            }`}
                           onClick={() => {
                             if (user?.id === note.user.id || user?.isAdmin) {
                               setEditingChecklistItem({
@@ -2355,11 +2354,10 @@ export default function BoardPage({
               ) : (
                 <div className="flex-1 overflow-hidden flex flex-col relative">
                   <p
-                    className={`text-base whitespace-pre-wrap break-words leading-7 m-0 p-0 flex-1 transition-all duration-200 ${
-                      note.done
-                        ? "text-gray-500 opacity-70 line-through"
-                        : "text-gray-800"
-                    }`}
+                    className={`text-base whitespace-pre-wrap break-words leading-7 m-0 p-0 flex-1 transition-all duration-200 ${note.done
+                      ? "text-gray-500 opacity-70 line-through"
+                      : "text-gray-800"
+                      }`}
                   >
                     {note.content}
                   </p>

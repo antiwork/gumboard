@@ -9,6 +9,7 @@ import { useState, useEffect } from "react"
 import { Plus, Trash2, Settings, LogOut, ChevronDown, Grid3x3 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { FullPageLoader } from "@/components/ui/loader"
+import { toast } from "sonner"
 
 interface Board {
   id: string
@@ -84,17 +85,17 @@ export default function Dashboard() {
         router.push("/auth/signin")
         return
       }
-      
+
       if (userResponse.ok) {
         const userData = await userResponse.json()
         setUser(userData)
-        
+
         // Check if user needs to complete profile setup
         if (!userData.name) {
           router.push("/setup/profile")
           return
         }
-        
+
         // Check if user needs to complete organization setup
         if (!userData.organization) {
           router.push("/setup/organization")
@@ -110,6 +111,9 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching data:", error)
+      toast.error("Failed to load dashboard", {
+        description: "Please refresh the page or try again later."
+      })
     } finally {
       setLoading(false)
     }
@@ -137,13 +141,20 @@ export default function Dashboard() {
         setNewBoardName("")
         setNewBoardDescription("")
         setShowAddBoard(false)
+        toast.success("Board created successfully!", {
+          description: `"${board.name}" is ready for your team to use.`
+        })
       } else {
         const errorData = await response.json()
-        alert(errorData.error || "Failed to create board")
+        toast.error("Failed to create board", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error creating board:", error)
-      alert("Failed to create board")
+      toast.error("Failed to create board", {
+        description: "Please check your connection and try again."
+      })
     }
   }
 
@@ -156,18 +167,29 @@ export default function Dashboard() {
       })
 
       if (response.ok) {
+        const deletedBoard = boards.find(board => board.id === boardId)
         setBoards(boards.filter(board => board.id !== boardId))
+        toast.success("Board deleted successfully", {
+          description: `"${deletedBoard?.name || 'Board'}" has been permanently removed.`
+        })
       } else {
         const errorData = await response.json()
-        alert(errorData.error || "Failed to delete board")
+        toast.error("Failed to delete board", {
+          description: errorData.error || "Please try again or contact support if the problem persists."
+        })
       }
     } catch (error) {
       console.error("Error deleting board:", error)
-      alert("Failed to delete board")
+      toast.error("Failed to delete board", {
+        description: "Please check your connection and try again."
+      })
     }
   }
 
   const handleSignOut = async () => {
+    toast.success("Signed out successfully", {
+      description: "You have been securely logged out of your account."
+    })
     await signOut()
   }
 
@@ -196,9 +218,9 @@ export default function Dashboard() {
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Board</span>
             </Button>
-            
+
             <div className="relative user-dropdown">
-                          <button
+              <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 sm:px-3 py-2"
               >
@@ -213,30 +235,30 @@ export default function Dashboard() {
                 <ChevronDown className="w-4 h-4 ml-1 hidden sm:inline" />
               </button>
 
-            {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                <div className="py-1">
-                  <div className="px-4 py-2 text-sm text-gray-500 border-b">
-                    {user?.email}
+              {showUserDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                  <div className="py-1">
+                    <div className="px-4 py-2 text-sm text-gray-500 border-b">
+                      {user?.email}
+                    </div>
+                    <Link
+                      href="/settings"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowUserDropdown(false)}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Settings
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </button>
                   </div>
-                  <Link
-                    href="/settings"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setShowUserDropdown(false)}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </button>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           </div>
         </div>
@@ -257,35 +279,41 @@ export default function Dashboard() {
 
         {/* Enhanced Responsive Add Board Modal */}
         {showAddBoard && (
-          <div 
-            className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          <div
+            className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4 sm:p-6"
             onClick={() => {
               setShowAddBoard(false)
               setNewBoardName("")
               setNewBoardDescription("")
             }}
           >
-            <div 
-              className="bg-white bg-opacity-95 backdrop-blur-md rounded-lg p-4 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl drop-shadow-2xl border border-white border-opacity-30"
+            <div
+              className="bg-white bg-opacity-95 backdrop-blur-md rounded-xl p-6 sm:p-8 w-full max-w-md sm:max-w-lg shadow-2xl drop-shadow-2xl border border-white border-opacity-30"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold mb-4">Create New Board</h3>
+              {/* Modal Header */}
+              <div className="mb-6">
+                <h3 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Create New Board</h3>
+                <p className="text-sm text-gray-600">Set up a new board to organize your team&apos;s notes and ideas.</p>
+              </div>
+
               <form onSubmit={handleAddBoard}>
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Board Name
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Board Name *
                     </label>
                     <Input
                       type="text"
                       value={newBoardName}
                       onChange={(e) => setNewBoardName(e.target.value)}
                       placeholder="Enter board name"
+                      className="h-11"
                       required
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
                       Description (Optional)
                     </label>
                     <Input
@@ -293,13 +321,17 @@ export default function Dashboard() {
                       value={newBoardDescription}
                       onChange={(e) => setNewBoardDescription(e.target.value)}
                       placeholder="Enter board description"
+                      className="h-11"
                     />
                   </div>
                 </div>
-                <div className="flex justify-end space-x-3 mt-6">
+
+                {/* Modal Footer */}
+                <div className="flex flex-col sm:flex-row justify-end gap-3 sm:gap-4 mt-8 pt-6 border-t border-gray-100">
                   <Button
                     type="button"
                     variant="outline"
+                    className="order-2 sm:order-1 h-11 px-6"
                     onClick={() => {
                       setShowAddBoard(false)
                       setNewBoardName("")
@@ -308,7 +340,12 @@ export default function Dashboard() {
                   >
                     Cancel
                   </Button>
-                  <Button type="submit">Create Board</Button>
+                  <Button
+                    type="submit"
+                    className="order-1 sm:order-2 h-11 px-6 bg-blue-600 hover:bg-blue-700"
+                  >
+                    Create Board
+                  </Button>
                 </div>
               </form>
             </div>
@@ -336,7 +373,7 @@ export default function Dashboard() {
                 </CardHeader>
               </Link>
             </Card>
-            
+
             {boards.map((board) => (
               <Card key={board.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
                 <Link href={`/boards/${board.id}`}>
@@ -381,7 +418,7 @@ export default function Dashboard() {
             <p className="text-gray-500 mb-4">
               Get started by creating your first board
             </p>
-            <Button onClick={() => setShowAddBoard(true)}>
+            <Button onClick={() => setShowAddBoard(true)} className="bg-blue-600 hover:bg-blue-700 text-white">
               Create your first board
             </Button>
           </div>
