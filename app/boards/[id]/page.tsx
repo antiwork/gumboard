@@ -20,6 +20,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import useNotes from "@/lib/hooks/useNotes";
 
 interface ChecklistItem {
   id: string;
@@ -87,10 +88,9 @@ const SORT_OPTIONS = [
 export default function BoardPage({
   params,
 }: {
-  params: Promise<{ id: string }>;
+  params: { id: string };
 }) {
   const [board, setBoard] = useState<Board | null>(null);
-  const [notes, setNotes] = useState<Note[]>([]);
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -98,7 +98,7 @@ export default function BoardPage({
   const [editContent, setEditContent] = useState("");
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const [boardId, setBoardId] = useState<string | null>(null);
+  const boardId = params.id;
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -127,6 +127,14 @@ export default function BoardPage({
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // Use SWR for polling
+  const {
+    notes = [],
+    error: notesError,
+    isLoading: notesLoading,
+    mutate
+  } = useNotes(boardId);
 
   // Update URL with current filter state
   const updateURL = (
@@ -349,8 +357,16 @@ export default function BoardPage({
     }
   };
 
+  // LayoutNote interface for notes with position information
+  interface LayoutNote extends Note {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  }
+
   // Helper function to calculate bin-packed layout for desktop
-  const calculateGridLayout = () => {
+  const calculateGridLayout = (): LayoutNote[] => {
     if (typeof window === "undefined") return [];
 
     const config = getResponsiveConfig();
@@ -419,7 +435,7 @@ export default function BoardPage({
   };
 
   // Helper function to calculate mobile layout (optimized single/double column)
-  const calculateMobileLayout = () => {
+  const calculateMobileLayout = (): LayoutNote[] => {
     if (typeof window === "undefined") return [];
 
     const config = getResponsiveConfig();
@@ -476,13 +492,6 @@ export default function BoardPage({
     });
   };
 
-  useEffect(() => {
-    const initializeParams = async () => {
-      const resolvedParams = await params;
-      setBoardId(resolvedParams.id);
-    };
-    initializeParams();
-  }, [params]);
 
   // Initialize filters from URL on mount
   useEffect(() => {
@@ -579,8 +588,8 @@ export default function BoardPage({
         // This ensures notes are properly repositioned
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
-          setNotes((prevNotes) => [...prevNotes]);
+          // Trigger a re-render by revalidating the data
+          mutate();
         }, 50); // Debounce resize events - reduced for real-time feel
       }
     };
@@ -758,19 +767,12 @@ export default function BoardPage({
       }
 
       if (boardId === "all-notes") {
-        // For all notes view, create a virtual board object and fetch all notes
+        // For all notes view, create a virtual board object
         setBoard({
           id: "all-notes",
           name: "All notes",
           description: "Notes from all boards",
         });
-
-        // Fetch notes from all boards
-        const notesResponse = await fetch(`/api/boards/all-notes/notes`);
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json();
-          setNotes(notes);
-        }
       } else {
         // Fetch current board info
         const boardResponse = await fetch(`/api/boards/${boardId}`);
@@ -781,13 +783,6 @@ export default function BoardPage({
         if (boardResponse.ok) {
           const { board } = await boardResponse.json();
           setBoard(board);
-        }
-
-        // Fetch notes for specific board
-        const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json();
-          setNotes(notes);
         }
       }
     } catch (error) {
@@ -808,29 +803,56 @@ export default function BoardPage({
       const actualTargetBoardId =
         boardId === "all-notes" ? targetBoardId : boardId;
       const isAllNotesView = boardId === "all-notes";
+      
+      // Create optimistic note
+      const optimisticNote: Note = {
+        id: `temp-${Date.now()}`,
+        content: "",
+        color: "#fef3c7",
+        done: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        user: user!,
+        ...(isAllNotesView && { board: { id: targetBoardId!, name: "" } })
+      };
+      
+      // Optimistically update the UI
+      await mutate(
+        async () => {
+          const response = await fetch(
+            `/api/boards/${isAllNotesView ? "all-notes" : actualTargetBoardId}/notes`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                content: "",
+                ...(isAllNotesView && { boardId: targetBoardId }),
+              }),
+            }
+          );
 
-      const response = await fetch(
-        `/api/boards/${isAllNotesView ? "all-notes" : actualTargetBoardId}/notes`,
+          if (!response.ok) {
+            throw new Error("Failed to create note");
+          }
+          
+          const { note } = await response.json();
+          setEditingNote(note.id);
+          setEditContent("");
+          
+          // Replace optimistic note with real one
+          return { notes: [...notes.filter(n => n.id !== optimisticNote.id), note] };
+        },
         {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            content: "",
-            ...(isAllNotesView && { boardId: targetBoardId }),
-          }),
+          optimisticData: { notes: [...notes, optimisticNote] },
+          rollbackOnError: true,
+          revalidate: true
         }
       );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes([...notes, note]);
-        setEditingNote(note.id);
-        setEditContent("");
-      }
     } catch (error) {
       console.error("Error creating note:", error);
+      alert("Failed to create note");
     }
   };
 
@@ -838,31 +860,44 @@ export default function BoardPage({
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
+      
       const targetBoardId =
         boardId === "all-notes" && currentNote?.board?.id
           ? currentNote.board.id
           : boardId;
+      
+      // Optimistically update the UI
+      await mutate(
+        async () => {
+          const response = await fetch(
+            `/api/boards/${targetBoardId}/notes/${noteId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ content }),
+            }
+          );
 
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to update note");
+          }
+          
+          const { note } = await response.json();
+          setEditingNote(null);
+          setEditContent("");
+          
+          return { notes: notes.map(n => n.id === noteId ? note : n) };
+        },
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ content }),
+          optimisticData: { notes: notes.map(n => n.id === noteId ? { ...n, content } : n) },
+          rollbackOnError: true,
+          revalidate: true
         }
       );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-        setEditingNote(null);
-        setEditContent("");
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || "Failed to update note");
-      }
     } catch (error) {
       console.error("Error updating note:", error);
       alert("Failed to update note");
@@ -879,20 +914,30 @@ export default function BoardPage({
         boardId === "all-notes" && currentNote?.board?.id
           ? currentNote.board.id
           : boardId;
+      
+      // Optimistically update the UI
+      await mutate(
+        async () => {
+          const response = await fetch(
+            `/api/boards/${targetBoardId}/notes/${noteId}`,
+            {
+              method: "DELETE",
+            }
+          );
 
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to delete note");
+          }
+          
+          return { notes: notes.filter(n => n.id !== noteId) };
+        },
         {
-          method: "DELETE",
+          optimisticData: { notes: notes.filter(n => n.id !== noteId) },
+          rollbackOnError: true,
+          revalidate: true
         }
       );
-
-      if (response.ok) {
-        setNotes(notes.filter((n) => n.id !== noteId));
-      } else {
-        const errorData = await response.json();
-        alert(errorData.error || "Failed to delete note");
-      }
     } catch (error) {
       console.error("Error deleting note:", error);
       alert("Failed to delete note");
@@ -907,22 +952,34 @@ export default function BoardPage({
         boardId === "all-notes" && currentNote?.board?.id
           ? currentNote.board.id
           : boardId;
+      
+      // Optimistically update the UI
+      await mutate(
+        async () => {
+          const response = await fetch(
+            `/api/boards/${targetBoardId}/notes/${noteId}`,
+            {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ done: !currentDone }),
+            }
+          );
 
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
+          if (!response.ok) {
+            throw new Error("Failed to toggle done status");
+          }
+          
+          const { note } = await response.json();
+          return { notes: notes.map(n => n.id === noteId ? note : n) };
+        },
         {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ done: !currentDone }),
+          optimisticData: { notes: notes.map(n => n.id === noteId ? { ...n, done: !currentDone } : n) },
+          rollbackOnError: true,
+          revalidate: true
         }
       );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      }
     } catch (error) {
       console.error("Error toggling note done status:", error);
     }
@@ -930,6 +987,32 @@ export default function BoardPage({
 
   const handleSignOut = async () => {
     await signOut();
+  };
+  
+  // Helper function for optimistic note updates
+  const updateNoteOptimistically = async (
+    noteId: string,
+    updateFn: (note: Note) => Partial<Note>,
+    apiCall: () => Promise<Response>
+  ) => {
+    const currentNote = notes.find(n => n.id === noteId);
+    if (!currentNote) return;
+    
+    await mutate(
+      async () => {
+        const response = await apiCall();
+        if (!response.ok) {
+          throw new Error("Failed to update note");
+        }
+        const { note } = await response.json();
+        return { notes: notes.map(n => n.id === noteId ? note : n) };
+      },
+      {
+        optimisticData: { notes: notes.map(n => n.id === noteId ? { ...n, ...updateFn(n) } : n) },
+        rollbackOnError: true,
+        revalidate: true
+      }
+    );
   };
 
   // Checklist handlers
@@ -966,24 +1049,20 @@ export default function BoardPage({
               },
             ];
 
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
+      await updateNoteOptimistically(
+        noteId,
+        () => ({ isChecklist: true, checklistItems }),
+        () => fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
+          body: JSON.stringify({ 
             isChecklist: true,
-            checklistItems: checklistItems,
+            checklistItems: checklistItems
           }),
-        }
+        })
       );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      }
     } catch (error) {
       console.error("Error converting to checklist:", error);
     }
@@ -1029,7 +1108,10 @@ export default function BoardPage({
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+        await mutate(
+          { notes: notes.map((n) => (n.id === noteId ? note : n)) },
+          false
+        );
         setNewChecklistItemContent("");
         // Keep addingChecklistItem active so user can continue adding items
         // setAddingChecklistItem(null) - removed this line
@@ -1082,8 +1164,11 @@ export default function BoardPage({
           }),
         })
           .then((response) => response.json())
-          .then(({ note }) => {
-            setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+          .then(async ({ note }) => {
+            await mutate(
+              { notes: notes.map((n) => (n.id === noteId ? note : n)) },
+              false
+            );
             // Remove from animating set after update
             setAnimatingItems((prev) => {
               const newSet = new Set(prev);
@@ -1133,7 +1218,10 @@ export default function BoardPage({
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+        await mutate(
+          { notes: notes.map((n) => (n.id === noteId ? note : n)) },
+          false
+        );
       }
     } catch (error) {
       console.error("Error deleting checklist item:", error);
@@ -1177,7 +1265,10 @@ export default function BoardPage({
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+        await mutate(
+          { notes: notes.map((n) => (n.id === noteId ? note : n)) },
+          false
+        );
         setEditingChecklistItem(null);
         setEditingChecklistItemContent("");
       }
@@ -1237,7 +1328,10 @@ export default function BoardPage({
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+        await mutate(
+          { notes: notes.map((n) => (n.id === noteId ? note : n)) },
+          false
+        );
       }
     } catch (error) {
       console.error("Error toggling all checklist items:", error);
@@ -1294,7 +1388,10 @@ export default function BoardPage({
 
         if (response.ok) {
           const { note } = await response.json();
-          setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+          await mutate(
+            { notes: notes.map((n) => (n.id === noteId ? note : n)) },
+            false
+          );
           setEditingChecklistItem({ noteId, itemId: newItem.id });
           setEditingChecklistItemContent("");
         }
@@ -1338,7 +1435,10 @@ export default function BoardPage({
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+        await mutate(
+          { notes: notes.map((n) => (n.id === noteId ? note : n)) },
+          false
+        );
         setEditingChecklistItem({ noteId, itemId: newItem.id });
         setEditingChecklistItemContent(secondHalf);
       }
@@ -1349,6 +1449,17 @@ export default function BoardPage({
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
+  }
+  
+  if (notesError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg text-red-600 mb-2">Failed to load notes</div>
+          <Button onClick={() => mutate()}>Try Again</Button>
+        </div>
+      </div>
+    );
   }
 
   if (!board && boardId !== "all-notes") {
