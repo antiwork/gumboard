@@ -1,46 +1,40 @@
-import { auth } from "@/auth";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { auth } from "@/auth"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 
-import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { Resend } from "resend";
-import OrganizationSetupForm from "./form";
+import { redirect } from "next/navigation"
+import { db } from "@/lib/db"
+import { Resend } from "resend"
+import OrganizationSetupForm from "./form"
 
-const resend = new Resend(process.env.AUTH_RESEND_KEY);
+const resend = new Resend(process.env.AUTH_RESEND_KEY)
 
 async function createOrganization(orgName: string, teamEmails: string[]) {
-  "use server";
-
-  const session = await auth();
+  "use server"
+  
+  const session = await auth()
   if (!session?.user?.id) {
-    throw new Error("Not authenticated");
+    throw new Error("Not authenticated")
   }
 
   if (!orgName?.trim()) {
-    throw new Error("Organization name is required");
+    throw new Error("Organization name is required")
   }
 
   // Create organization
   const organization = await db.organization.create({
     data: {
       name: orgName.trim(),
-    },
-  });
+    }
+  })
 
   // Update user to belong to this organization and make them admin
   await db.user.update({
     where: { id: session.user.id },
-    data: {
+    data: { 
       organizationId: organization.id,
-      isAdmin: true,
-    },
-  });
+      isAdmin: true
+    }
+  })
 
   // Send invites to team members if provided
   if (teamEmails.length > 0) {
@@ -52,13 +46,13 @@ async function createOrganization(orgName: string, teamEmails: string[]) {
           data: {
             email,
             organizationId: organization.id,
-            invitedBy: session.user.id!,
-          },
-        });
+            invitedBy: session.user.id!
+          }
+        })
 
         // Send invite email using the invite ID as token
         await resend.emails.send({
-          from: "noreply@sargam.xyz",
+          from: "noreply@gumboard.com",
           to: email,
           subject: `${session.user.name} invited you to join ${orgName}`,
           html: `
@@ -74,37 +68,37 @@ async function createOrganization(orgName: string, teamEmails: string[]) {
                 If you don&apos;t want to receive these emails, please ignore this message.
               </p>
             </div>
-          `,
-        });
+          `
+        })
       } catch (error) {
-        console.error(`Failed to send invite to ${email}:`, error);
+        console.error(`Failed to send invite to ${email}:`, error)
       }
     }
   }
 
-  redirect("/dashboard");
+  redirect("/dashboard")
 }
 
 export default async function OrganizationSetup() {
-  const session = await auth();
+  const session = await auth()
 
   if (!session?.user) {
-    redirect("/auth/signin");
+    redirect("/auth/signin")
   }
 
   // If user doesn't have a name, redirect to profile setup
   if (!session.user.name) {
-    redirect("/setup/profile");
+    redirect("/setup/profile")
   }
 
   // Check if user already has an organization
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    include: { organization: true },
-  });
-
+    include: { organization: true }
+  })
+  
   if (user?.organization) {
-    redirect("/dashboard");
+    redirect("/dashboard")
   }
 
   return (
@@ -113,9 +107,7 @@ export default async function OrganizationSetup() {
         <div className="max-w-sm sm:max-w-md mx-auto space-y-6 sm:space-y-8">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2">
-              Setup Your Organization
-            </h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2">Setup Your Organization</h1>
             <p className="text-sm sm:text-base text-muted-foreground">
               Create your workspace and invite your team
             </p>
@@ -129,19 +121,19 @@ export default async function OrganizationSetup() {
                   {session.user.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <CardTitle className="text-lg sm:text-xl">
-                Welcome, {session.user.name}!
-              </CardTitle>
+              <CardTitle className="text-lg sm:text-xl">Welcome, {session.user.name}!</CardTitle>
               <CardDescription className="text-sm sm:text-base">
                 Let&apos;s set up your organization
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <OrganizationSetupForm onSubmit={createOrganization} />
+              <OrganizationSetupForm 
+                onSubmit={createOrganization}
+              />
             </CardContent>
           </Card>
         </div>
       </div>
     </div>
-  );
-}
+  )
+}  
