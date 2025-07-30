@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server"
+import { after, NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { NOTE_COLORS } from "@/lib/constants"
@@ -128,15 +128,17 @@ export async function POST(
     })
 
     // Send Slack notification if webhook is configured
-    if (note.board.organization.slackWebhookUrl) {
-      await sendSlackNotification(note.board.organization.slackWebhookUrl, {
-        boardName: board.name,
-        noteContent: note.content,
-        authorName: note.user.name || '',
-        authorEmail: note.user.email,
-        action: 'created'
-      })
-    }
+    after(async () => {
+      if (note.board.organization.slackWebhookUrl) {
+        await sendSlackNotification(note.board.organization.slackWebhookUrl, {
+          boardName: board.name,
+          noteContent: note.content,
+          authorName: note.user.name || '',
+          authorEmail: note.user.email,
+          action: 'created'
+        })
+      }
+    })
 
     // Remove sensitive data before returning
     return NextResponse.json({ 
