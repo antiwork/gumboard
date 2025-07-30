@@ -45,3 +45,11 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser to access t
 - `npm run db:migrate` - Run database migrations
 - `npm run db:studio` - Open Prisma Studio (database GUI)
 - `npm run db:reset` - Reset database and run migrations
+
+
+## Deploy on Vercel
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone)
+
+
+Click the button above to deploy your own instance of Gumboard on Vercel in seconds
