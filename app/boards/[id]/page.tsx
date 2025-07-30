@@ -20,6 +20,10 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
+import {
+  useKeyboardShortcuts,
+  type KeyboardShortcut,
+} from "@/lib/hooks/useKeyboardShortcuts";
 
 interface ChecklistItem {
   id: string;
@@ -124,9 +128,87 @@ export default function BoardPage({
   const [editingChecklistItemContent, setEditingChecklistItemContent] =
     useState("");
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
+  const [showAddNote, setShowAddNote] = useState(false);
+  const [noteContent, setNoteContent] = useState("");
+  const [noteColor, setNoteColor] = useState("#fef3c7");
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+
   const boardRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const mobileSearchInputRef = useRef<HTMLInputElement>(null);
+
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const shortcuts: KeyboardShortcut[] = [
+    {
+      key: "n",
+      action: () => {
+        setShowAddNote(true);
+      },
+      description: "Create new note",
+    },
+    {
+      key: "k",
+      ctrl: true,
+      action: () => {
+        const searchInput = isMobile
+          ? mobileSearchInputRef.current
+          : searchInputRef.current;
+        searchInput?.focus();
+        searchInput?.select();
+      },
+      description: "Search",
+    },
+    {
+      key: "Escape",
+      action: () => {
+        if (editingNote) {
+          setEditingNote(null);
+          setEditContent("");
+        }
+        if (addingChecklistItem) {
+          setAddingChecklistItem(null);
+          setNewChecklistItemContent("");
+        }
+        if (editingChecklistItem) {
+          setEditingChecklistItem(null);
+          setEditingChecklistItemContent("");
+        }
+        if (showBoardDropdown) {
+          setShowBoardDropdown(false);
+        }
+        if (showUserDropdown) {
+          setShowUserDropdown(false);
+        }
+        if (showAuthorDropdown) {
+          setShowAuthorDropdown(false);
+        }
+        if (showSortDropdown) {
+          setShowSortDropdown(false);
+        }
+        if (showKeyboardShortcuts) {
+          setShowKeyboardShortcuts(false);
+        }
+        if (showAddNote) {
+          setShowAddNote(false);
+          setNoteContent("");
+        }
+      },
+      description: "Cancel/Close",
+    },
+    {
+      key: "?",
+      shift: true,
+      action: () => {
+        setShowKeyboardShortcuts(!showKeyboardShortcuts);
+      },
+      description: "Show keyboard shortcuts",
+    },
+  ];
+
+  useKeyboardShortcuts(shortcuts);
 
   // Update URL with current filter state
   const updateURL = (
@@ -477,6 +559,13 @@ export default function BoardPage({
   };
 
   useEffect(() => {
+    setIsMac(
+      typeof window !== "undefined" &&
+        navigator.platform.toLowerCase().includes("mac"),
+    );
+  }, []);
+
+  useEffect(() => {
     const initializeParams = async () => {
       const resolvedParams = await params;
       setBoardId(resolvedParams.id);
@@ -817,7 +906,7 @@ export default function BoardPage({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            content: "",
+            content: noteContent || "",
             ...(isAllNotesView && { boardId: targetBoardId }),
           }),
         }
@@ -827,7 +916,7 @@ export default function BoardPage({
         const { note } = await response.json();
         setNotes([...notes, note]);
         setEditingNote(note.id);
-        setEditContent("");
+        setEditContent(noteContent || "");
       }
     } catch (error) {
       console.error("Error creating note:", error);
@@ -1636,6 +1725,7 @@ export default function BoardPage({
                 <Search className="h-4 w-4 text-gray-400" />
               </div>
               <input
+                ref={searchInputRef}
                 type="text"
                 placeholder="Search notes..."
                 value={searchTerm}
@@ -1659,13 +1749,7 @@ export default function BoardPage({
             </div>
 
             <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else {
-                  handleAddNote();
-                }
-              }}
+              onClick={() => setShowAddNote(true)}
               className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium"
             >
               <Pencil className="w-4 h-4" />
@@ -1740,6 +1824,7 @@ export default function BoardPage({
             <Search className="h-4 w-4 text-gray-400" />
           </div>
           <input
+            ref={mobileSearchInputRef}
             type="text"
             placeholder="Search notes..."
             value={searchTerm}
@@ -2463,13 +2548,7 @@ export default function BoardPage({
               Click &ldquo;Add Note&rdquo; to get started
             </div>
             <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else {
-                  handleAddNote();
-                }
-              }}
+              onClick={() => setShowAddNote(true)}
               className="flex items-center space-x-2"
             >
               <Pencil className="w-4 h-4" />
@@ -2478,6 +2557,115 @@ export default function BoardPage({
           </div>
         )}
       </div>
+
+      {/* Add Note Modal */}
+      {showAddNote && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => {
+            setShowAddNote(false);
+            setNoteContent("");
+          }}
+        >
+          <div
+            className="bg-white bg-opacity-95 backdrop-blur-md rounded-lg p-6 w-full max-w-md shadow-2xl drop-shadow-2xl border border-white border-opacity-30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">Add New Note</h3>
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                await handleAddNote();
+                setShowAddNote(false);
+                setNoteContent("");
+              }}
+            >
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Note Content
+                  </label>
+                  <textarea
+                    value={noteContent}
+                    onChange={(e) => setNoteContent(e.target.value)}
+                    placeholder="Enter your note..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    rows={4}
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                        e.preventDefault();
+                        handleAddNote();
+                        setShowAddNote(false);
+                        setNoteContent("");
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    setShowAddNote(false);
+                    setNoteContent("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit">Create Note</Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Keyboard Shortcuts Modal */}
+      {showKeyboardShortcuts && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowKeyboardShortcuts(false)}
+        >
+          <div
+            className="bg-white bg-opacity-95 backdrop-blur-md rounded-lg p-6 w-full max-w-md shadow-2xl drop-shadow-2xl border border-white border-opacity-30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">Keyboard Shortcuts</h3>
+            <div className="space-y-2">
+              {shortcuts.map((shortcut, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
+                >
+                  <span className="text-sm text-gray-700">
+                    {shortcut.description}
+                  </span>
+                  <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">
+                    {shortcut.meta && (isMac ? "⌘ + " : "Ctrl + ")}
+                    {shortcut.ctrl && (isMac ? "⌘ + " : "Ctrl + ")}
+                    {shortcut.shift && (isMac ? "⇧ + " : "Shift + ")}
+                    {shortcut.alt && (isMac ? "⌥ + " : "Alt + ")}
+                    {shortcut.key === " "
+                      ? "Space"
+                      : shortcut.key === "?"
+                        ? "?"
+                        : shortcut.key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 text-center">
+              <Button
+                onClick={() => setShowKeyboardShortcuts(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -5,10 +5,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { signOut } from "next-auth/react"
 import Link from "next/link"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { Plus, Trash2, Settings, LogOut, ChevronDown, Grid3x3 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { FullPageLoader } from "@/components/ui/loader"
+import {
+  useKeyboardShortcuts,
+  type KeyboardShortcut,
+} from "@/lib/hooks/useKeyboardShortcuts"
 
 interface Board {
   id: string
@@ -37,7 +41,58 @@ export default function Dashboard() {
   const [newBoardName, setNewBoardName] = useState("")
   const [newBoardDescription, setNewBoardDescription] = useState("")
   const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false)
+  const [isMac, setIsMac] = useState(false)
+
+  const boardNameInputRef = useRef<HTMLInputElement>(null)
   const router = useRouter()
+
+  const shortcuts: KeyboardShortcut[] = [
+    {
+      key: "n",
+      action: () => {
+        setShowAddBoard(true)
+        setTimeout(() => {
+          boardNameInputRef.current?.focus()
+        }, 100)
+      },
+      description: "Create new board",
+    },
+    {
+      key: "Escape",
+      action: () => {
+        if (showAddBoard) {
+          setShowAddBoard(false)
+          setNewBoardName("")
+          setNewBoardDescription("")
+        }
+        if (showUserDropdown) {
+          setShowUserDropdown(false)
+        }
+        if (showKeyboardShortcuts) {
+          setShowKeyboardShortcuts(false)
+        }
+      },
+      description: "Cancel/Close",
+    },
+    {
+      key: "?",
+      shift: true,
+      action: () => {
+        setShowKeyboardShortcuts(!showKeyboardShortcuts)
+      },
+      description: "Show keyboard shortcuts",
+    },
+  ]
+
+  useKeyboardShortcuts(shortcuts)
+
+  useEffect(() => {
+    setIsMac(
+      typeof window !== "undefined" &&
+        navigator.platform.toLowerCase().includes("mac"),
+    )
+  }, [])
 
   useEffect(() => {
     fetchUserAndBoards()
@@ -277,6 +332,7 @@ export default function Dashboard() {
                       Board Name
                     </label>
                     <Input
+                      ref={boardNameInputRef}
                       type="text"
                       value={newBoardName}
                       onChange={(e) => setNewBoardName(e.target.value)}
@@ -387,6 +443,51 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Keyboard Shortcuts Modal */}
+      {showKeyboardShortcuts && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowKeyboardShortcuts(false)}
+        >
+          <div
+            className="bg-white bg-opacity-95 backdrop-blur-md rounded-lg p-6 w-full max-w-md shadow-2xl drop-shadow-2xl border border-white border-opacity-30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">Keyboard Shortcuts</h3>
+            <div className="space-y-2">
+              {shortcuts.map((shortcut, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
+                >
+                  <span className="text-sm text-gray-700">
+                    {shortcut.description}
+                  </span>
+                  <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">
+                    {shortcut.ctrl && (isMac ? "⌘ + " : "Ctrl + ")}
+                    {shortcut.shift && (isMac ? "⇧ + " : "Shift + ")}
+                    {shortcut.alt && (isMac ? "⌥ + " : "Alt + ")}
+                    {shortcut.key === " "
+                      ? "Space"
+                      : shortcut.key === "?"
+                        ? "?"
+                        : shortcut.key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 text-center">
+              <Button
+                onClick={() => setShowKeyboardShortcuts(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }  
