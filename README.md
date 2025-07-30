@@ -12,16 +12,19 @@ Keep on top of your team's to-dos.
 ### Database Setup
 
 1. Create your environment variables file:
+
 ```bash
 cp env.example .env.local
 ```
 
 2. Start the PostgreSQL database using Docker:
+
 ```bash
 npm run docker:up
 ```
 
 3. Push the database schema:
+
 ```bash
 npm run db:push
 ```
@@ -45,8 +48,3 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser to access t
 - `npm run db:migrate` - Run database migrations
 - `npm run db:studio` - Open Prisma Studio (database GUI)
 - `npm run db:reset` - Reset database and run migrations
-
-## Environment Variables
-
-- `NEXT_PUBLIC_POLL_INTERVAL_MS` - Interval in milliseconds for polling notes
-  updates. Defaults to `5000` if not set.
