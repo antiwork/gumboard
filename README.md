@@ -47,9 +47,17 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser to access t
 - `npm run db:reset` - Reset database and run migrations
 
 
-## Deploy on Vercel
+## 🚀 Deploy on Vercel
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/antiwork/gumboard&env=AUTH_SECRET,AUTH_RESEND_KEY,DATABASE_URL)
 
+Click the button above to deploy your own instance of Gumboard on Vercel in seconds.
 
-Click the button above to deploy your own instance of Gumboard on Vercel in seconds
+### 🔐 Environment Variables
+
+Make sure to set the following environment variables during deployment:
+
+```env
+AUTH_SECRET=sample-auth-secret
+AUTH_RESEND_KEY=re_sample_key
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/gumboard
