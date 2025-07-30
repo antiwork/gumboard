@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
+import { NOTE_COLORS } from "@/lib/constants"
 
 // Get all notes from all boards in the organization
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -92,19 +93,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    // Random colors for sticky notes
-    const colors = [
-      "#fef3c7", // yellow
-      "#fce7f3", // pink
-      "#dbeafe", // blue
-      "#dcfce7", // green
-      "#fed7d7", // red
-      "#e0e7ff", // indigo
-      "#f3e8ff", // purple
-      "#fef4e6", // orange
-    ]
-
-    const randomColor = color || colors[Math.floor(Math.random() * colors.length)]
+    const randomColor = color || NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)]
 
     const note = await db.note.create({
       data: {

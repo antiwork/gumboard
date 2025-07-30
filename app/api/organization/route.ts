@@ -54,7 +54,8 @@ export async function PUT(request: NextRequest) {
               select: {
                 id: true,
                 name: true,
-                email: true
+                email: true,
+                isAdmin: true
               }
             }
           }
@@ -66,6 +67,7 @@ export async function PUT(request: NextRequest) {
       id: updatedUser!.id,
       name: updatedUser!.name,
       email: updatedUser!.email,
+      isAdmin: updatedUser!.isAdmin,
       organization: updatedUser!.organization ? {
         id: updatedUser!.organization.id,
         name: updatedUser!.organization.name,
@@ -76,4 +78,4 @@ export async function PUT(request: NextRequest) {
     console.error("Error updating organization:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-} 
+}  

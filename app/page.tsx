@@ -106,8 +106,17 @@ export default async function HomePage() {
           >
             Antiwork
           </Link>
+          {" • "}
+          <Link
+            href="https://github.com/antiwork/gumboard"
+            className="underline hover:text-slate-900"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            View on GitHub
+          </Link>
         </div>
       </footer>
     </div>
   )
-}                                                                                                                                                                        
+}                                                                                                                                                                                                                                                                                                                                                

@@ -244,14 +244,16 @@ export default function Dashboard() {
 
       {/* Enhanced Responsive Main Content */}
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="mb-6 sm:mb-8">
-          <div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Boards</h2>
-            <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Manage your organization&apos;s boards
-            </p>
+        {boards.length > 0 && (
+          <div className="mb-6 sm:mb-8">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Boards</h2>
+              <p className="text-sm sm:text-base text-gray-600 mt-1">
+                Manage your organization&apos;s boards
+              </p>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Enhanced Responsive Add Board Modal */}
         {showAddBoard && (
@@ -314,59 +316,61 @@ export default function Dashboard() {
         )}
 
         {/* Enhanced Responsive Boards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-          {/* All Notes Card */}
-          <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
-            <Link href="/boards/all-notes">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-1">
-                      <Grid3x3 className="w-5 h-5 text-blue-600" />
-                      <CardTitle className="text-lg text-blue-900">All Notes</CardTitle>
-                    </div>
-                    <CardDescription className="text-blue-700">
-                      View notes from all boards
-                    </CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-            </Link>
-          </Card>
-          
-          {boards.map((board) => (
-            <Card key={board.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
-              <Link href={`/boards/${board.id}`}>
+        {boards.length > 0 && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+            {/* All Notes Card */}
+            <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-indigo-50">
+              <Link href="/boards/all-notes">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
-                      <CardTitle className="text-lg">{board.name}</CardTitle>
-                      {board.description && (
-                        <CardDescription className="mt-1">
-                          {board.description}
-                        </CardDescription>
-                      )}
+                      <div className="flex items-center space-x-2 mb-1">
+                        <Grid3x3 className="w-5 h-5 text-blue-600" />
+                        <CardTitle className="text-lg text-blue-900">All Notes</CardTitle>
+                      </div>
+                      <CardDescription className="text-blue-700">
+                        View notes from all boards
+                      </CardDescription>
                     </div>
-                    {/* Only show delete button for board creator or admin */}
-                    {(user?.id === board.createdBy || user?.isAdmin) && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault()
-                          e.stopPropagation()
-                          handleDeleteBoard(board.id)
-                        }}
-                        className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-opacity"
-                        title={user?.id === board.createdBy ? "Delete board" : "Delete board (Admin)"}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
                   </div>
                 </CardHeader>
               </Link>
             </Card>
-          ))}
-        </div>
+            
+            {boards.map((board) => (
+              <Card key={board.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
+                <Link href={`/boards/${board.id}`}>
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{board.name}</CardTitle>
+                        {board.description && (
+                          <CardDescription className="mt-1">
+                            {board.description}
+                          </CardDescription>
+                        )}
+                      </div>
+                      {/* Only show delete button for board creator or admin */}
+                      {(user?.id === board.createdBy || user?.isAdmin) && (
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault()
+                            e.stopPropagation()
+                            handleDeleteBoard(board.id)
+                          }}
+                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-opacity"
+                          title={user?.id === board.createdBy ? "Delete board" : "Delete board (Admin)"}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </CardHeader>
+                </Link>
+              </Card>
+            ))}
+          </div>
+        )}
 
         {boards.length === 0 && (
           <div className="text-center py-12">
@@ -378,11 +382,11 @@ export default function Dashboard() {
               Get started by creating your first board
             </p>
             <Button onClick={() => setShowAddBoard(true)}>
-              Create Your First Board
+              Create your first board
             </Button>
           </div>
         )}
       </div>
     </div>
   )
-} 
+}  

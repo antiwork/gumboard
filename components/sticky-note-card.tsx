@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useRef, useEffect } from "react"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -39,6 +40,8 @@ const taskItemVariants = {
 }
 
 export function StickyNoteCard({ note, onUpdate, onDelete }: StickyNoteCardProps) {
+  const newTaskIdRef = useRef<number | null>(null)
+
   const handleTaskToggle = (taskId: number) => {
     const updatedTasks = note.tasks.map((task) => (task.id === taskId ? { ...task, completed: !task.completed } : task))
     onUpdate({ ...note, tasks: updatedTasks })
@@ -49,14 +52,32 @@ export function StickyNoteCard({ note, onUpdate, onDelete }: StickyNoteCardProps
     onUpdate({ ...note, tasks: updatedTasks })
   }
 
+  const handleDeleteTask = (taskId: number) => {
+    const updatedTasks = note.tasks.filter((task) => task.id !== taskId)
+    onUpdate({ ...note, tasks: updatedTasks })
+  }
+
   const handleAddTask = () => {
+    const newTaskId = Date.now()
     const newTask: Task = {
-      id: Date.now(),
+      id: newTaskId,
       text: "New task",
       completed: false,
     }
+    newTaskIdRef.current = newTaskId
     onUpdate({ ...note, tasks: [...note.tasks, newTask] })
   }
+
+  useEffect(() => {
+    if (newTaskIdRef.current) {
+      const newInput = document.querySelector(`input[data-task-id="${newTaskIdRef.current}"]`) as HTMLInputElement
+      if (newInput) {
+        newInput.focus()
+        newInput.select()
+      }
+      newTaskIdRef.current = null
+    }
+  }, [note.tasks])
 
   return (
     <div className={cn("flex flex-col gap-4 rounded-xl p-4 transition-all", note.color)}>
@@ -94,11 +115,22 @@ export function StickyNoteCard({ note, onUpdate, onDelete }: StickyNoteCardProps
                 type="text"
                 value={task.text}
                 onChange={(e) => handleTaskTextChange(e, task.id)}
+                data-task-id={task.id}
                 className={cn(
                   "h-auto flex-1 border-none bg-transparent p-0 text-sm focus-visible:ring-0 focus-visible:ring-offset-0",
                   task.completed && "text-slate-500 line-through",
                 )}
+                style={{ overflow: 'visible' }}
               />
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-6 w-6 opacity-50 hover:opacity-100" 
+                onClick={() => handleDeleteTask(task.id)}
+              >
+                <Trash2 className="h-3 w-3" />
+                <span className="sr-only">Delete task</span>
+              </Button>
             </motion.div>
           ))}
         </AnimatePresence>
