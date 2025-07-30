@@ -127,7 +127,6 @@ export async function POST(
       }
     })
 
-    // Send Slack notification if webhook is configured
     after(async () => {
       if (note.board.organization.slackWebhookUrl) {
         await sendSlackNotification(note.board.organization.slackWebhookUrl, {
@@ -140,8 +139,7 @@ export async function POST(
       }
     })
 
-    // Remove sensitive data before returning
-    return NextResponse.json({ 
+    return NextResponse.json({
       note: {
         id: note.id,
         content: note.content,
