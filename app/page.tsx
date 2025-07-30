@@ -16,7 +16,7 @@ export default async function HomePage() {
   return (
     <div className="flex min-h-[100dvh] flex-col bg-slate-50 text-slate-900">
       <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32">
+        <section className="w-full py-12 md:py-15">
           <div className="container mx-auto px-4 md:px-6">
             <div className="grid gap-12 lg:grid-cols-2 lg:gap-16 xl:gap-24">
               <div className="flex flex-col justify-center space-y-6">

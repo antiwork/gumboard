@@ -6,6 +6,7 @@ import { db } from "@/lib/db"
 import { Resend } from "resend"
 import OrganizationSetupForm from "./form"
 
+
 const resend = new Resend(process.env.AUTH_RESEND_KEY)
 
 async function createOrganization(orgName: string, teamEmails: string[]) {
@@ -52,7 +53,7 @@ async function createOrganization(orgName: string, teamEmails: string[]) {
 
         // Send invite email using the invite ID as token
         await resend.emails.send({
-          from: "noreply@gumboard.com",
+          from: process.env.EMAIL_FROM!,
           to: email,
           subject: `${session.user.name} invited you to join ${orgName}`,
           html: `

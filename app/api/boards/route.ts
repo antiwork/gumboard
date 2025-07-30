@@ -29,7 +29,16 @@ export async function GET() {
         description: true,
         createdBy: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        _count: {
+          select: {
+            notes: {
+              where: {
+                deletedAt: null
+              }
+            }
+          }
+        }
       },
       orderBy: { createdAt: "desc" }
     })
@@ -80,4 +89,4 @@ export async function POST(request: NextRequest) {
     console.error("Error creating board:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-} 
+}  

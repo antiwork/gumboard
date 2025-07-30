@@ -17,6 +17,9 @@ interface Board {
   createdBy: string
   createdAt: string
   updatedAt: string
+  _count: {
+    notes: number
+  }
 }
 
 interface User {
@@ -214,10 +217,12 @@ export default function Dashboard() {
               </button>
 
             {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-md shadow-lg border border-gray-200 z-50">
                 <div className="py-1">
-                  <div className="px-4 py-2 text-sm text-gray-500 border-b">
-                    {user?.email}
+                  <div className="px-4 py-2 text-sm text-gray-500 border-b break-all overflow-hidden">
+                    <span className="block truncate" title={user?.email}>
+                      {user?.email}
+                    </span>
                   </div>
                   <Link
                     href="/settings"
@@ -343,7 +348,12 @@ export default function Dashboard() {
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
-                        <CardTitle className="text-lg">{board.name}</CardTitle>
+                        <div className="flex items-center justify-between mb-1">
+                          <CardTitle className="text-lg">{board.name}</CardTitle>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            {board._count.notes} {board._count.notes === 1 ? 'note' : 'notes'}
+                          </span>
+                        </div>
                         {board.description && (
                           <CardDescription className="mt-1">
                             {board.description}
@@ -358,7 +368,7 @@ export default function Dashboard() {
                             e.stopPropagation()
                             handleDeleteBoard(board.id)
                           }}
-                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-opacity ml-2"
                           title={user?.id === board.createdBy ? "Delete board" : "Delete board (Admin)"}
                         >
                           <Trash2 className="w-4 h-4" />
@@ -389,4 +399,4 @@ export default function Dashboard() {
       </div>
     </div>
   )
-}  
+}    

@@ -68,6 +68,7 @@ model User {
 model Organization {
   id        String   @id @default(cuid())
   name      String
+  slackWebhookUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   members   User[]
@@ -99,6 +100,7 @@ model Note {
   done      Boolean @default(false) // Track completion status
   isChecklist Boolean @default(false) // Track if note is a checklist
   checklistItems Json? // Store checklist items as JSON
+  slackMessageId String?
   boardId   String
   board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   createdBy String
