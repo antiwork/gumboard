@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
+import { sendSlackNotification } from "@/lib/slack"
 
 // Update a note
 export async function PUT(
@@ -29,7 +30,17 @@ export async function PUT(
     // Verify the note belongs to a board in the user's organization
     const note = await db.note.findUnique({
       where: { id: noteId },
-      include: { board: true }
+      include: { 
+        board: {
+          include: {
+            organization: {
+              select: {
+                slackWebhookUrl: true
+              }
+            }
+          }
+        }
+      }
     })
 
     if (!note) {
@@ -50,6 +61,9 @@ export async function PUT(
       return NextResponse.json({ error: "Only the note author or admin can edit this note" }, { status: 403 })
     }
 
+    // Check if done status is changing for Slack notification
+    const wasDone = note.done
+
     const updatedNote = await db.note.update({
       where: { id: noteId },
       data: {
@@ -69,6 +83,17 @@ export async function PUT(
         }
       }
     })
+
+    // Send Slack notification if done status changed and webhook is configured
+    if (note.board.organization.slackWebhookUrl && done !== undefined && done !== wasDone) {
+      await sendSlackNotification(note.board.organization.slackWebhookUrl, {
+        boardName: note.board.name,
+        noteContent: updatedNote.content,
+        authorName: user.name || '',
+        authorEmail: user.email,
+        action: done ? 'completed' : 'uncompleted'
+      })
+    }
 
     return NextResponse.json({ note: updatedNote })
   } catch (error) {

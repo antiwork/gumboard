@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { NOTE_COLORS } from "@/lib/constants"
+import { sendSlackNotification } from "@/lib/slack"
 
 // Get all notes for a board
 export async function GET(
@@ -113,11 +114,46 @@ export async function POST(
             name: true,
             email: true
           }
+        },
+        board: {
+          include: {
+            organization: {
+              select: {
+                slackWebhookUrl: true
+              }
+            }
+          }
         }
       }
     })
 
-    return NextResponse.json({ note }, { status: 201 })
+    // Send Slack notification if webhook is configured
+    if (note.board.organization.slackWebhookUrl) {
+      await sendSlackNotification(note.board.organization.slackWebhookUrl, {
+        boardName: board.name,
+        noteContent: note.content,
+        authorName: note.user.name || '',
+        authorEmail: note.user.email,
+        action: 'created'
+      })
+    }
+
+    // Remove sensitive data before returning
+    return NextResponse.json({ 
+      note: {
+        id: note.id,
+        content: note.content,
+        color: note.color,
+        done: note.done,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        isChecklist: note.isChecklist,
+        checklistItems: note.checklistItems,
+        boardId: note.boardId,
+        createdBy: note.createdBy,
+        user: note.user
+      }
+    }, { status: 201 })
   } catch (error) {
     console.error("Error creating note:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

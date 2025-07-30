@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Trash2, UserPlus, Shield, ShieldCheck, Link, Copy, Calendar, Users } from "lucide-react"
+import { Trash2, UserPlus, Shield, ShieldCheck, Link, Copy, Calendar, Users, MessageSquare } from "lucide-react"
 import { Loader } from "@/components/ui/loader"
 
 interface User {
@@ -17,6 +17,7 @@ interface User {
   organization: {
     id: string
     name: string
+    slackWebhookUrl?: string | null
     members: {
       id: string
       name: string | null
@@ -53,6 +54,7 @@ export default function OrganizationSettingsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [orgName, setOrgName] = useState("")
+  const [slackWebhookUrl, setSlackWebhookUrl] = useState("")
   const [inviteEmail, setInviteEmail] = useState("")
   const [invites, setInvites] = useState<OrganizationInvite[]>([])
   const [inviting, setInviting] = useState(false)
@@ -77,6 +79,7 @@ export default function OrganizationSettingsPage() {
         const userData = await response.json()
         setUser(userData)
         setOrgName(userData.organization?.name || "")
+        setSlackWebhookUrl(userData.organization?.slackWebhookUrl || "")
       }
     } catch (error) {
       console.error("Error fetching user data:", error)
@@ -125,6 +128,7 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           name: orgName,
+          slackWebhookUrl: slackWebhookUrl,
         }),
       })
 
@@ -353,7 +357,55 @@ export default function OrganizationSettingsPage() {
           <div className="pt-4 border-t">
             <Button 
               onClick={handleSaveOrganization}
-              disabled={saving || orgName === user?.organization?.name || !user?.isAdmin}
+              disabled={saving || (orgName === user?.organization?.name && slackWebhookUrl === user?.organization?.slackWebhookUrl) || !user?.isAdmin}
+              className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
+            >
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Slack Integration */}
+      <Card className="p-6">
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2 flex items-center">
+              <MessageSquare className="w-5 h-5 mr-2" />
+              Slack Integration
+            </h2>
+            <p className="text-gray-600">Connect your Slack workspace to receive notifications when tasks are added or completed.</p>
+          </div>
+
+          <div>
+            <Label htmlFor="slackWebhook">Slack Webhook URL</Label>
+            <Input
+              id="slackWebhook"
+              type="url"
+              value={slackWebhookUrl}
+              onChange={(e) => setSlackWebhookUrl(e.target.value)}
+              placeholder="https://hooks.slack.com/services/..."
+              className="mt-1"
+              disabled={!user?.isAdmin}
+            />
+            <p className="text-sm text-gray-500 mt-2">
+              Enter your Slack incoming webhook URL to enable notifications. 
+              <a 
+                href="https://api.slack.com/messaging/webhooks" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline ml-1"
+              >
+                Learn how to create one
+              </a>
+            </p>
+          </div>
+
+          <div className="pt-4 border-t">
+            <Button 
+              onClick={handleSaveOrganization}
+              disabled={saving || (orgName === user?.organization?.name && slackWebhookUrl === user?.organization?.slackWebhookUrl) || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
