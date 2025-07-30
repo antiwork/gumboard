@@ -145,6 +145,5 @@ export async function sendSlackNotification(
     }
   } catch (error) {
     console.error("Error sending Slack notification:", error);
-    // Don't throw - we don't want Slack failures to break the main flow
   }
 }
