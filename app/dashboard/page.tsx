@@ -1,123 +1,189 @@
-"use client"
+"use client";
 
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { signOut } from "next-auth/react"
-import Link from "next/link"
-import { useState, useEffect } from "react"
-import { Plus, Trash2, Settings, LogOut, ChevronDown, Grid3x3 } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { FullPageLoader } from "@/components/ui/loader"
+import {
+  Card,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { signOut } from "next-auth/react";
+import Link from "next/link";
+import { useState, useEffect, useRef } from "react";
+import {
+  Plus,
+  Trash2,
+  Settings,
+  LogOut,
+  ChevronDown,
+  Grid3x3,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { FullPageLoader } from "@/components/ui/loader";
+import {
+  useKeyboardShortcuts,
+  type KeyboardShortcut,
+} from "@/lib/hooks/useKeyboardShortcuts";
 
 interface Board {
-  id: string
-  name: string
-  description: string | null
-  createdBy: string
-  createdAt: string
-  updatedAt: string
+  id: string;
+  name: string;
+  description: string | null;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 interface User {
-  id: string
-  name: string | null
-  email: string
-  isAdmin: boolean
+  id: string;
+  name: string | null;
+  email: string;
+  isAdmin: boolean;
   organization: {
-    name: string
-  } | null
+    name: string;
+  } | null;
 }
 
 export default function Dashboard() {
-  const [boards, setBoards] = useState<Board[]>([])
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [showAddBoard, setShowAddBoard] = useState(false)
-  const [newBoardName, setNewBoardName] = useState("")
-  const [newBoardDescription, setNewBoardDescription] = useState("")
-  const [showUserDropdown, setShowUserDropdown] = useState(false)
-  const router = useRouter()
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [showAddBoard, setShowAddBoard] = useState(false);
+  const [newBoardName, setNewBoardName] = useState("");
+  const [newBoardDescription, setNewBoardDescription] = useState("");
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [showKeyboardShortcuts, setShowKeyboardShortcuts] = useState(false);
+  const [isMac, setIsMac] = useState(false);
+
+  const boardNameInputRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
+
+  const shortcuts: KeyboardShortcut[] = [
+    {
+      key: "n",
+      action: () => {
+        setShowAddBoard(true);
+        setTimeout(() => {
+          boardNameInputRef.current?.focus();
+        }, 100);
+      },
+      description: "Create new board",
+    },
+    {
+      key: "Escape",
+      action: () => {
+        if (showAddBoard) {
+          setShowAddBoard(false);
+          setNewBoardName("");
+          setNewBoardDescription("");
+        }
+        if (showUserDropdown) {
+          setShowUserDropdown(false);
+        }
+        if (showKeyboardShortcuts) {
+          setShowKeyboardShortcuts(false);
+        }
+      },
+      description: "Cancel/Close",
+    },
+    {
+      key: "?",
+      shift: true,
+      action: () => {
+        setShowKeyboardShortcuts(!showKeyboardShortcuts);
+      },
+      description: "Show keyboard shortcuts",
+    },
+  ];
+
+  useKeyboardShortcuts(shortcuts);
 
   useEffect(() => {
-    fetchUserAndBoards()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+    setIsMac(
+      typeof window !== "undefined" &&
+        navigator.platform.toLowerCase().includes("mac"),
+    );
+  }, []);
 
-  // Close dropdown when clicking outside and handle escape key
+  useEffect(() => {
+    fetchUserAndBoards();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showUserDropdown) {
-        const target = event.target as Element
-        if (!target.closest('.user-dropdown')) {
-          setShowUserDropdown(false)
+        const target = event.target as Element;
+        if (!target.closest(".user-dropdown")) {
+          setShowUserDropdown(false);
         }
       }
-    }
+    };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         if (showAddBoard) {
-          setShowAddBoard(false)
-          setNewBoardName("")
-          setNewBoardDescription("")
+          setShowAddBoard(false);
+          setNewBoardName("");
+          setNewBoardDescription("");
         }
         if (showUserDropdown) {
-          setShowUserDropdown(false)
+          setShowUserDropdown(false);
         }
       }
-    }
+    };
 
-    document.addEventListener('mousedown', handleClickOutside)
-    document.addEventListener('keydown', handleKeyDown)
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [showUserDropdown, showAddBoard])
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [showUserDropdown, showAddBoard]);
 
   const fetchUserAndBoards = async () => {
     try {
       // Get user info first to check authentication
-      const userResponse = await fetch("/api/user")
+      const userResponse = await fetch("/api/user");
       if (userResponse.status === 401) {
-        router.push("/auth/signin")
-        return
+        router.push("/auth/signin");
+        return;
       }
-      
+
       if (userResponse.ok) {
-        const userData = await userResponse.json()
-        setUser(userData)
-        
+        const userData = await userResponse.json();
+        setUser(userData);
+
         // Check if user needs to complete profile setup
         if (!userData.name) {
-          router.push("/setup/profile")
-          return
+          router.push("/setup/profile");
+          return;
         }
-        
+
         // Check if user needs to complete organization setup
         if (!userData.organization) {
-          router.push("/setup/organization")
-          return
+          router.push("/setup/organization");
+          return;
         }
       }
 
       // Fetch boards
-      const boardsResponse = await fetch("/api/boards")
+      const boardsResponse = await fetch("/api/boards");
       if (boardsResponse.ok) {
-        const { boards } = await boardsResponse.json()
-        setBoards(boards)
+        const { boards } = await boardsResponse.json();
+        setBoards(boards);
       }
     } catch (error) {
-      console.error("Error fetching data:", error)
+      console.error("Error fetching data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const handleAddBoard = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newBoardName.trim()) return
+    e.preventDefault();
+    if (!newBoardName.trim()) return;
 
     try {
       const response = await fetch("/api/boards", {
@@ -129,50 +195,50 @@ export default function Dashboard() {
           name: newBoardName,
           description: newBoardDescription,
         }),
-      })
+      });
 
       if (response.ok) {
-        const { board } = await response.json()
-        setBoards([board, ...boards])
-        setNewBoardName("")
-        setNewBoardDescription("")
-        setShowAddBoard(false)
+        const { board } = await response.json();
+        setBoards([board, ...boards]);
+        setNewBoardName("");
+        setNewBoardDescription("");
+        setShowAddBoard(false);
       } else {
-        const errorData = await response.json()
-        alert(errorData.error || "Failed to create board")
+        const errorData = await response.json();
+        alert(errorData.error || "Failed to create board");
       }
     } catch (error) {
-      console.error("Error creating board:", error)
-      alert("Failed to create board")
+      console.error("Error creating board:", error);
+      alert("Failed to create board");
     }
-  }
+  };
 
   const handleDeleteBoard = async (boardId: string) => {
-    if (!confirm("Are you sure you want to delete this board?")) return
+    if (!confirm("Are you sure you want to delete this board?")) return;
 
     try {
       const response = await fetch(`/api/boards/${boardId}`, {
         method: "DELETE",
-      })
+      });
 
       if (response.ok) {
-        setBoards(boards.filter(board => board.id !== boardId))
+        setBoards(boards.filter((board) => board.id !== boardId));
       } else {
-        const errorData = await response.json()
-        alert(errorData.error || "Failed to delete board")
+        const errorData = await response.json();
+        alert(errorData.error || "Failed to delete board");
       }
     } catch (error) {
-      console.error("Error deleting board:", error)
-      alert("Failed to delete board")
+      console.error("Error deleting board:", error);
+      alert("Failed to delete board");
     }
-  }
+  };
 
   const handleSignOut = async () => {
-    await signOut()
-  }
+    await signOut();
+  };
 
   if (loading) {
-    return <FullPageLoader message="Loading dashboard..." />
+    return <FullPageLoader message="Loading dashboard..." />;
   }
 
   return (
@@ -183,7 +249,9 @@ export default function Dashboard() {
           {/* Logo */}
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600">Gumboard</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-blue-600">
+                Gumboard
+              </h1>
             </div>
           </div>
 
@@ -196,47 +264,49 @@ export default function Dashboard() {
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Board</span>
             </Button>
-            
+
             <div className="relative user-dropdown">
-                          <button
+              <button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center space-x-2 text-gray-700 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 sm:px-3 py-2"
               >
                 <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center">
                   <span className="text-sm font-medium text-white">
-                    {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
+                    {user?.name
+                      ? user.name.charAt(0).toUpperCase()
+                      : user?.email?.charAt(0).toUpperCase()}
                   </span>
                 </div>
                 <span className="text-sm font-medium hidden sm:inline">
-                  {user?.name?.split(' ')[0] || 'User'}
+                  {user?.name?.split(" ")[0] || "User"}
                 </span>
                 <ChevronDown className="w-4 h-4 ml-1 hidden sm:inline" />
               </button>
 
-            {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
-                <div className="py-1">
-                  <div className="px-4 py-2 text-sm text-gray-500 border-b">
-                    {user?.email}
+              {showUserDropdown && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                  <div className="py-1">
+                    <div className="px-4 py-2 text-sm text-gray-500 border-b">
+                      {user?.email}
+                    </div>
+                    <Link
+                      href="/settings"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setShowUserDropdown(false)}
+                    >
+                      <Settings className="w-4 h-4 mr-2" />
+                      Settings
+                    </Link>
+                    <button
+                      onClick={handleSignOut}
+                      className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      <LogOut className="w-4 h-4 mr-2" />
+                      Sign Out
+                    </button>
                   </div>
-                  <Link
-                    href="/settings"
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                    onClick={() => setShowUserDropdown(false)}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </Link>
-                  <button
-                    onClick={handleSignOut}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </button>
                 </div>
-              </div>
-            )}
+              )}
             </div>
           </div>
         </div>
@@ -247,7 +317,9 @@ export default function Dashboard() {
         {boards.length > 0 && (
           <div className="mb-6 sm:mb-8">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">Boards</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
+                Boards
+              </h2>
               <p className="text-sm sm:text-base text-gray-600 mt-1">
                 Manage your organization&apos;s boards
               </p>
@@ -257,15 +329,15 @@ export default function Dashboard() {
 
         {/* Enhanced Responsive Add Board Modal */}
         {showAddBoard && (
-          <div 
+          <div
             className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4"
             onClick={() => {
-              setShowAddBoard(false)
-              setNewBoardName("")
-              setNewBoardDescription("")
+              setShowAddBoard(false);
+              setNewBoardName("");
+              setNewBoardDescription("");
             }}
           >
-            <div 
+            <div
               className="bg-white bg-opacity-95 backdrop-blur-md rounded-lg p-4 sm:p-6 w-full max-w-sm sm:max-w-md shadow-2xl drop-shadow-2xl border border-white border-opacity-30"
               onClick={(e) => e.stopPropagation()}
             >
@@ -277,6 +349,7 @@ export default function Dashboard() {
                       Board Name
                     </label>
                     <Input
+                      ref={boardNameInputRef}
                       type="text"
                       value={newBoardName}
                       onChange={(e) => setNewBoardName(e.target.value)}
@@ -301,9 +374,9 @@ export default function Dashboard() {
                     type="button"
                     variant="outline"
                     onClick={() => {
-                      setShowAddBoard(false)
-                      setNewBoardName("")
-                      setNewBoardDescription("")
+                      setShowAddBoard(false);
+                      setNewBoardName("");
+                      setNewBoardDescription("");
                     }}
                   >
                     Cancel
@@ -326,7 +399,9 @@ export default function Dashboard() {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
                         <Grid3x3 className="w-5 h-5 text-blue-600" />
-                        <CardTitle className="text-lg text-blue-900">All Notes</CardTitle>
+                        <CardTitle className="text-lg text-blue-900">
+                          All Notes
+                        </CardTitle>
                       </div>
                       <CardDescription className="text-blue-700">
                         View notes from all boards
@@ -336,9 +411,12 @@ export default function Dashboard() {
                 </CardHeader>
               </Link>
             </Card>
-            
+
             {boards.map((board) => (
-              <Card key={board.id} className="group hover:shadow-lg transition-shadow cursor-pointer">
+              <Card
+                key={board.id}
+                className="group hover:shadow-lg transition-shadow cursor-pointer"
+              >
                 <Link href={`/boards/${board.id}`}>
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
@@ -354,12 +432,16 @@ export default function Dashboard() {
                       {(user?.id === board.createdBy || user?.isAdmin) && (
                         <button
                           onClick={(e) => {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            handleDeleteBoard(board.id)
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleDeleteBoard(board.id);
                           }}
                           className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-opacity"
-                          title={user?.id === board.createdBy ? "Delete board" : "Delete board (Admin)"}
+                          title={
+                            user?.id === board.createdBy
+                              ? "Delete board"
+                              : "Delete board (Admin)"
+                          }
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -377,7 +459,9 @@ export default function Dashboard() {
             <div className="text-gray-400 mb-4">
               <Plus className="w-12 h-12 mx-auto" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No boards yet</h3>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">
+              No boards yet
+            </h3>
             <p className="text-gray-500 mb-4">
               Get started by creating your first board
             </p>
@@ -387,6 +471,51 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Keyboard Shortcuts Modal */}
+      {showKeyboardShortcuts && (
+        <div
+          className="fixed inset-0 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={() => setShowKeyboardShortcuts(false)}
+        >
+          <div
+            className="bg-white bg-opacity-95 backdrop-blur-md rounded-lg p-6 w-full max-w-md shadow-2xl drop-shadow-2xl border border-white border-opacity-30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-lg font-semibold mb-4">Keyboard Shortcuts</h3>
+            <div className="space-y-2">
+              {shortcuts.map((shortcut, index) => (
+                <div
+                  key={index}
+                  className="flex justify-between items-center py-2 border-b border-gray-100 last:border-0"
+                >
+                  <span className="text-sm text-gray-700">
+                    {shortcut.description}
+                  </span>
+                  <kbd className="px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-100 border border-gray-200 rounded-lg">
+                    {shortcut.ctrl && (isMac ? "⌘ + " : "Ctrl + ")}
+                    {shortcut.shift && (isMac ? "⇧ + " : "Shift + ")}
+                    {shortcut.alt && (isMac ? "⌥ + " : "Alt + ")}
+                    {shortcut.key === " "
+                      ? "Space"
+                      : shortcut.key === "?"
+                        ? "?"
+                        : shortcut.key}
+                  </kbd>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 text-center">
+              <Button
+                onClick={() => setShowKeyboardShortcuts(false)}
+                variant="outline"
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
-  )
-}  
+  );
+}
