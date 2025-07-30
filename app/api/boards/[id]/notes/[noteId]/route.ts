@@ -61,7 +61,6 @@ export async function PUT(
       return NextResponse.json({ error: "Only the note author or admin can edit this note" }, { status: 403 })
     }
 
-    // Check if done status is changing for Slack notification
     const wasDone = note.done
 
     const updatedNote = await db.note.update({
