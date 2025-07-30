@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Trash2, UserPlus, Shield, ShieldCheck, Link, Copy, Calendar, Users, MessageSquare } from "lucide-react"
+import { Trash2, UserPlus, Shield, ShieldCheck, Link, Copy, Calendar, Users } from "lucide-react"
 import { Loader } from "@/components/ui/loader"
 
 interface User {
@@ -372,7 +372,6 @@ export default function OrganizationSettingsPage() {
         <div className="space-y-6">
           <div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2 flex items-center">
-              <MessageSquare className="w-5 h-5 mr-2" />
               Slack Integration
             </h2>
             <p className="text-gray-600">Connect your Slack workspace to receive notifications when tasks are added or completed.</p>
