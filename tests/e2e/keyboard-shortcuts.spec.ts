@@ -59,6 +59,8 @@ test.describe("Keyboard Shortcuts", () => {
       })
 
       await page.goto("/dashboard")
+      // Wait for page to be ready
+      await page.waitForLoadState('networkidle')
     })
 
     test('pressing "n" opens new board modal', async ({ page }) => {
@@ -92,7 +94,7 @@ test.describe("Keyboard Shortcuts", () => {
       await page.keyboard.press("Shift+?")
 
       // Check if shortcuts modal is visible
-      await expect(page.getByText("Keyboard Shortcuts")).toBeVisible()
+      await expect(page.getByRole('heading', { name: 'Keyboard Shortcuts' })).toBeVisible()
 
       // Check if shortcuts are displayed
       await expect(page.getByText("Create new board")).toBeVisible()
@@ -161,6 +163,8 @@ test.describe("Keyboard Shortcuts", () => {
       })
 
       await page.goto("/boards/board-1")
+      // Wait for page to be ready
+      await page.waitForLoadState('networkidle')
     })
 
     test('pressing "n" opens new note modal', async ({ page }) => {
@@ -173,7 +177,10 @@ test.describe("Keyboard Shortcuts", () => {
 
     test("pressing Cmd/Ctrl+K focuses search", async ({ page }) => {
       const isMac = process.platform === "darwin"
-      const searchInput = page.getByPlaceholder("Search notes...")
+      const searchInput = page.getByPlaceholder("Search notes...").first()
+
+      // Wait a bit for keyboard shortcuts to be registered
+      await page.waitForTimeout(500)
 
       // Press Cmd+K (Mac) or Ctrl+K (Windows/Linux)
       if (isMac) {
@@ -189,11 +196,8 @@ test.describe("Keyboard Shortcuts", () => {
     test("pressing Escape while editing note cancels edit", async ({
       page,
     }) => {
-      // Click on a note to edit
-      await page
-        .locator(".cursor-pointer")
-        .filter({ hasText: "Test Note" })
-        .click()
+      // Click on a note to edit - look for note content paragraph
+      await page.locator('p').filter({ hasText: "Test Note" }).click()
 
       // Check if edit mode is active
       await expect(page.locator("textarea")).toBeVisible()
@@ -261,7 +265,7 @@ test.describe("Keyboard Shortcuts", () => {
 
       // Check for Mac symbols
       const shortcutElement = page.locator("kbd").filter({ hasText: /⌘|⇧|⌥/ })
-      await expect(shortcutElement).toHaveCount(2) // Should have at least one Mac symbol
+      await expect(shortcutElement.first()).toBeVisible() // Should have at least one Mac symbol
     })
 
     test("shows Windows/Linux keys on non-Mac", async ({ page }) => {
@@ -290,7 +294,7 @@ test.describe("Keyboard Shortcuts", () => {
       const shortcutElement = page
         .locator("kbd")
         .filter({ hasText: /Ctrl|Shift|Alt/ })
-      await expect(shortcutElement).toHaveCount(2) // Should have at least one non-Mac key
+      await expect(shortcutElement.first()).toBeVisible() // Should have at least one non-Mac key
     })
   })
 })
