@@ -70,7 +70,7 @@ model Organization {
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  slackWebhookUrl String? // Slack webhook URL for notifications
+  slackWebhookUrl String?
   members   User[]
   invites   OrganizationInvite[]
   boards    Board[]
