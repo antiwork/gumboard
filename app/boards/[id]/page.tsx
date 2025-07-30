@@ -63,7 +63,6 @@ const SORT_OPTIONS = [
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null)
-  const [notes, setNotes] = useState<Note[]>([])
   const [allBoards, setAllBoards] = useState<Board[]>([])
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
@@ -93,14 +92,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const searchParams = useSearchParams()
 
   const {
-    notes: fetchedNotes,
-    isLoading: notesLoading,
-    mutate: refreshNotes
+    notes = [],
+    error: notesError,
+    mutate
   } = useNotes(boardId)
-
-  useEffect(() => {
-    setNotes(fetchedNotes)
-  }, [fetchedNotes])
 
   // Update URL with current filter state
   const updateURL = (newSearchTerm?: string, newDateRange?: { startDate: Date | null; endDate: Date | null }, newAuthor?: string | null, newSort?: SortOption, newShowDone?: boolean) => {
@@ -449,8 +444,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         // This ensures notes are properly repositioned
         clearTimeout(resizeTimeout)
         resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
-          setNotes(prevNotes => [...prevNotes])
+          // Trigger a re-render by updating mobile state
+          setIsMobile(prev => prev)
         }, 50) // Debounce resize events - reduced for real-time feel
       }
     }
@@ -626,26 +621,52 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const actualTargetBoardId = boardId === 'all-notes' ? targetBoardId : boardId
       const isAllNotesView = boardId === 'all-notes'
       
-      const response = await fetch(`/api/boards/${isAllNotesView ? 'all-notes' : actualTargetBoardId}/notes`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          content: "",
-          ...(isAllNotesView && { boardId: targetBoardId })
-        }),
-      })
-
-      if (response.ok) {
-        const { note } = await response.json()
-        setNotes([...notes, note])
-        setEditingNote(note.id)
-        setEditContent("")
-        refreshNotes()
+      // Create optimistic note
+      const optimisticNote: Note = {
+        id: `temp-${Date.now()}`,
+        content: "",
+        color: "#fef3c7",
+        done: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        user: user!,
+        ...(isAllNotesView && { board: { id: targetBoardId!, name: "" } })
       }
+      
+      // Optimistically update the UI
+      await mutate(
+        async () => {
+          const response = await fetch(`/api/boards/${isAllNotesView ? 'all-notes' : actualTargetBoardId}/notes`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              content: "",
+              ...(isAllNotesView && { boardId: targetBoardId })
+            }),
+          })
+
+          if (!response.ok) {
+            throw new Error("Failed to create note")
+          }
+
+          const { note } = await response.json()
+          setEditingNote(note.id)
+          setEditContent("")
+          
+          // Return the updated notes list with the real note
+          return { notes: [...notes.filter(n => n.id !== optimisticNote.id), note] }
+        },
+        {
+          optimisticData: { notes: [...notes, optimisticNote] },
+          rollbackOnError: true,
+          revalidate: true
+        }
+      )
     } catch (error) {
       console.error("Error creating note:", error)
+      alert("Failed to create note")
     }
   }
 
@@ -653,26 +674,39 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find(n => n.id === noteId)
+      if (!currentNote) return
+      
       const targetBoardId = boardId === 'all-notes' && currentNote?.board?.id ? currentNote.board.id : boardId
       
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ content }),
-      })
+      // Optimistically update the UI
+      await mutate(
+        async () => {
+          const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ content }),
+          })
 
-      if (response.ok) {
-        const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
-        setEditingNote(null)
-        setEditContent("")
-        refreshNotes()
-      } else {
-        const errorData = await response.json()
-        alert(errorData.error || "Failed to update note")
-      }
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || "Failed to update note")
+          }
+
+          const { note } = await response.json()
+          setEditingNote(null)
+          setEditContent("")
+          
+          // Return updated notes list
+          return { notes: notes.map(n => n.id === noteId ? note : n) }
+        },
+        {
+          optimisticData: { notes: notes.map(n => n.id === noteId ? { ...n, content } : n) },
+          rollbackOnError: true,
+          revalidate: true
+        }
+      )
     } catch (error) {
       console.error("Error updating note:", error)
       alert("Failed to update note")
@@ -687,17 +721,27 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const currentNote = notes.find(n => n.id === noteId)
       const targetBoardId = boardId === 'all-notes' && currentNote?.board?.id ? currentNote.board.id : boardId
       
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "DELETE",
-      })
+      // Optimistically update the UI
+      await mutate(
+        async () => {
+          const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+            method: "DELETE",
+          })
 
-      if (response.ok) {
-        setNotes(notes.filter(n => n.id !== noteId))
-        refreshNotes()
-      } else {
-        const errorData = await response.json()
-        alert(errorData.error || "Failed to delete note")
-      }
+          if (!response.ok) {
+            const errorData = await response.json()
+            throw new Error(errorData.error || "Failed to delete note")
+          }
+
+          // Return updated notes list
+          return { notes: notes.filter(n => n.id !== noteId) }
+        },
+        {
+          optimisticData: { notes: notes.filter(n => n.id !== noteId) },
+          rollbackOnError: true,
+          revalidate: true
+        }
+      )
     } catch (error) {
       console.error("Error deleting note:", error)
       alert("Failed to delete note")
@@ -710,19 +754,30 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const currentNote = notes.find(n => n.id === noteId)
       const targetBoardId = boardId === 'all-notes' && currentNote?.board?.id ? currentNote.board.id : boardId
       
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ done: !currentDone }),
-      })
+      // Optimistically update the UI
+      await mutate(
+        async () => {
+          const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ done: !currentDone }),
+          })
 
-      if (response.ok) {
-        const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
-        refreshNotes()
-      }
+          if (!response.ok) {
+            throw new Error("Failed to toggle done status")
+          }
+
+          const { note } = await response.json()
+          return { notes: notes.map(n => n.id === noteId ? note : n) }
+        },
+        {
+          optimisticData: { notes: notes.map(n => n.id === noteId ? { ...n, done: !currentDone } : n) },
+          rollbackOnError: true,
+          revalidate: true
+        }
+      )
     } catch (error) {
       console.error("Error toggling note done status:", error)
     }
@@ -730,6 +785,33 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const handleSignOut = async () => {
     await signOut()
+  }
+
+  // Helper function for optimistic note updates
+  const updateNoteOptimistically = async (
+    noteId: string,
+    updateFn: (note: Note) => Partial<Note>,
+    apiCall: () => Promise<Response>
+  ) => {
+    const currentNote = notes.find(n => n.id === noteId)
+    if (!currentNote) return
+
+    await mutate(
+      async () => {
+        const response = await apiCall()
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || "Failed to update note")
+        }
+        const { note } = await response.json()
+        return { notes: notes.map(n => n.id === noteId ? note : n) }
+      },
+      {
+        optimisticData: { notes: notes.map(n => n.id === noteId ? { ...n, ...updateFn(n) } : n) },
+        rollbackOnError: true,
+        revalidate: true
+      }
+    )
   }
 
   // Checklist handlers
@@ -759,22 +841,20 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             order: 0
           }]
       
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          isChecklist: true,
-          checklistItems: checklistItems
-        }),
-      })
-
-      if (response.ok) {
-        const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
-        refreshNotes()
-      }
+      await updateNoteOptimistically(
+        noteId,
+        () => ({ isChecklist: true, checklistItems }),
+        () => fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            isChecklist: true,
+            checklistItems: checklistItems
+          }),
+        })
+      )
     } catch (error) {
       console.error("Error converting to checklist:", error)
     }
@@ -797,29 +877,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       }
       
       const updatedItems = [...(currentNote.checklistItems || []), newItem]
-      
-      // Check if all items are checked to mark note as done
       const allItemsChecked = updatedItems.every(item => item.checked)
       
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          checklistItems: updatedItems,
-          done: allItemsChecked
-        }),
-      })
-
-      if (response.ok) {
-        const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
-        setNewChecklistItemContent("")
-        // Keep addingChecklistItem active so user can continue adding items
-        // setAddingChecklistItem(null) - removed this line
-        refreshNotes()
-      }
+      await updateNoteOptimistically(
+        noteId,
+        () => ({ checklistItems: updatedItems, done: allItemsChecked }),
+        () => fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            checklistItems: updatedItems,
+            done: allItemsChecked
+          }),
+        })
+      )
+      
+      setNewChecklistItemContent("")
     } catch (error) {
       console.error("Error adding checklist item:", error)
     }
@@ -862,14 +937,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         })
         .then(response => response.json())
         .then(({ note }) => {
-          setNotes(notes.map(n => n.id === noteId ? note : n))
+          mutate(
+            { notes: notes.map(n => n.id === noteId ? note : n) },
+            false
+          )
           // Remove from animating set after update
           setAnimatingItems(prev => {
             const newSet = new Set(prev)
             newSet.delete(itemId)
             return newSet
           })
-          refreshNotes()
         })
       }, 200)
       
@@ -886,26 +963,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const targetBoardId = boardId === 'all-notes' && currentNote.board?.id ? currentNote.board.id : boardId
       
       const updatedItems = currentNote.checklistItems.filter(item => item.id !== itemId)
-      
-      // Check if all remaining items are checked to mark note as done
       const allItemsChecked = updatedItems.length > 0 ? updatedItems.every(item => item.checked) : false
       
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          checklistItems: updatedItems,
-          done: allItemsChecked
-        }),
-      })
-
-      if (response.ok) {
-        const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
-        refreshNotes()
-      }
+      await updateNoteOptimistically(
+        noteId,
+        () => ({ checklistItems: updatedItems, done: allItemsChecked }),
+        () => fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            checklistItems: updatedItems,
+            done: allItemsChecked
+          }),
+        })
+      )
     } catch (error) {
       console.error("Error deleting checklist item:", error)
     }
@@ -921,28 +994,25 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const updatedItems = currentNote.checklistItems.map(item => 
         item.id === itemId ? { ...item, content } : item
       )
-      
-      // Check if all items are checked to mark note as done
       const allItemsChecked = updatedItems.every(item => item.checked)
       
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          checklistItems: updatedItems,
-          done: allItemsChecked
-        }),
-      })
-
-      if (response.ok) {
-        const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
-        setEditingChecklistItem(null)
-        setEditingChecklistItemContent("")
-        refreshNotes()
-      }
+      await updateNoteOptimistically(
+        noteId,
+        () => ({ checklistItems: updatedItems, done: allItemsChecked }),
+        () => fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            checklistItems: updatedItems,
+            done: allItemsChecked
+          }),
+        })
+      )
+      
+      setEditingChecklistItem(null)
+      setEditingChecklistItemContent("")
     } catch (error) {
       console.error("Error editing checklist item:", error)
     }
@@ -955,41 +1025,33 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       
       const targetBoardId = boardId === 'all-notes' && currentNote.board?.id ? currentNote.board.id : boardId
       
-      // Check if all items are checked
       const allChecked = currentNote.checklistItems.every(item => item.checked)
-      
-      // Toggle all items to opposite state
       const updatedItems = currentNote.checklistItems.map(item => ({
         ...item,
         checked: !allChecked
       }))
       
-      // Sort items: unchecked first, then checked
       const sortedItems = [
         ...updatedItems.filter(item => !item.checked).sort((a, b) => a.order - b.order),
         ...updatedItems.filter(item => item.checked).sort((a, b) => a.order - b.order)
       ]
       
-      // The note should be marked as done if all items are checked
-      const noteIsDone = !allChecked // If all were checked before, we're unchecking them (note becomes undone)
-                                    // If not all were checked before, we're checking them all (note becomes done)
+      const noteIsDone = !allChecked
       
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ 
-          checklistItems: sortedItems,
-          done: noteIsDone
-        }),
-      })
-
-      if (response.ok) {
-        const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
-        refreshNotes()
-      }
+      await updateNoteOptimistically(
+        noteId,
+        () => ({ checklistItems: sortedItems, done: noteIsDone }),
+        () => fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ 
+            checklistItems: sortedItems,
+            done: noteIsDone
+          }),
+        })
+      )
     } catch (error) {
       console.error("Error toggling all checklist items:", error)
     }
@@ -1030,10 +1092,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (response.ok) {
         const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
+        await mutate(
+          { notes: notes.map(n => n.id === noteId ? note : n) },
+          false
+        )
         setEditingChecklistItem({ noteId, itemId: newItem.id })
         setEditingChecklistItemContent("")
-        refreshNotes()
       }
         return
       }
@@ -1068,10 +1132,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (response.ok) {
         const { note } = await response.json()
-        setNotes(notes.map(n => n.id === noteId ? note : n))
+        await mutate(
+          { notes: notes.map(n => n.id === noteId ? note : n) },
+          false
+        )
         setEditingChecklistItem({ noteId, itemId: newItem.id })
         setEditingChecklistItemContent(secondHalf)
-        refreshNotes()
       }
     } catch (error) {
       console.error("Error splitting checklist item:", error)
@@ -1080,6 +1146,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />
+  }
+  
+  if (notesError) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-lg text-red-600 mb-2">Failed to load notes</div>
+          <Button onClick={() => mutate()}>Try Again</Button>
+        </div>
+      </div>
+    )
   }
 
   if (!board && boardId !== 'all-notes') {
