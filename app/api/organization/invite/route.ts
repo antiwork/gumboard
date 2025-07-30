@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     // Send invite email
     try {
       await resend.emails.send({
-        from: "noreply@sargam.xyz",
+        from: "noreply@gumboard.com",
         to: cleanEmail,
         subject: `${session.user.name} invited you to join ${user.organization.name}`,
         html: `
