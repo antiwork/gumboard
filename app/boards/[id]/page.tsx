@@ -21,6 +21,16 @@ import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { DateRangePicker } from "@/components/ui/date-range-picker";
 import { toast } from "sonner";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ChecklistItem {
   id: string;
@@ -125,6 +135,8 @@ export default function BoardPage({
   const [editingChecklistItemContent, setEditingChecklistItemContent] =
     useState("");
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
+  const [showDeleteNoteDialog, setShowDeleteNoteDialog] = useState(false);
+  const [noteToDelete, setNoteToDelete] = useState<Note | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -879,29 +891,27 @@ export default function BoardPage({
     }
   };
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!confirm("Are you sure you want to delete this note?")) return;
+  const handleDeleteNote = async () => {
+    if (!noteToDelete) return;
 
     try {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === noteId);
+      // Find the board ID for all notes view
       const targetBoardId =
-        boardId === "all-notes" && currentNote?.board?.id
-          ? currentNote.board.id
+        boardId === "all-notes" && noteToDelete.board?.id
+          ? noteToDelete.board.id
           : boardId;
 
       const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
+        `/api/boards/${targetBoardId}/notes/${noteToDelete.id}`,
         {
           method: "DELETE",
         }
       );
 
       if (response.ok) {
-        const deletedNote = notes.find((n) => n.id === noteId);
-        setNotes(notes.filter((n) => n.id !== noteId));
+        setNotes(notes.filter((n) => n.id !== noteToDelete.id));
         toast.success("Note deleted successfully", {
-          description: deletedNote?.content ? `"${deletedNote.content.substring(0, 30)}${deletedNote.content.length > 30 ? '...' : ''}" has been removed.` : "The note has been permanently removed."
+          description: noteToDelete.content ? `"${noteToDelete.content.substring(0, 30)}${noteToDelete.content.length > 30 ? '...' : ''}" has been removed.` : "The note has been permanently removed."
         });
       } else {
         const errorData = await response.json();
@@ -914,7 +924,15 @@ export default function BoardPage({
       toast.error("Failed to delete note", {
         description: "Please check your connection and try again."
       });
+    } finally {
+      setShowDeleteNoteDialog(false);
+      setNoteToDelete(null);
     }
+  };
+
+  const openDeleteNoteDialog = (note: Note) => {
+    setNoteToDelete(note);
+    setShowDeleteNoteDialog(true);
   };
 
   const handleToggleDone = async (noteId: string, currentDone: boolean) => {
@@ -2105,7 +2123,7 @@ export default function BoardPage({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleDeleteNote(note.id);
+                          openDeleteNoteDialog(note);
                         }}
                         className="p-1 text-gray-600 hover:text-red-600 rounded"
                       >
@@ -2188,7 +2206,7 @@ export default function BoardPage({
                         setEditContent("");
                       }
                       if (e.key === "Backspace" && editContent.trim() === "") {
-                        handleDeleteNote(note.id);
+                        openDeleteNoteDialog(note);
                       }
                     }}
                     onFocus={(e) => {
@@ -2476,6 +2494,37 @@ export default function BoardPage({
           </div>
         )}
       </div>
+
+      {/* Delete Note Confirmation Dialog */}
+      <AlertDialog open={showDeleteNoteDialog} onOpenChange={setShowDeleteNoteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Note</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this note?
+              {noteToDelete?.content && (
+                <>
+                  <br /><br />
+                  <strong>&quot;{noteToDelete.content.substring(0, 100)}{noteToDelete.content.length > 100 ? '...' : ''}&quot;</strong>
+                </>
+              )}
+              <br /><br />
+              This action cannot be undone and will permanently remove the note and all its content.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setNoteToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteNote}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete Note
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

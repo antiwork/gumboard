@@ -9,6 +9,16 @@ import { Label } from "@/components/ui/label"
 import { Trash2, UserPlus, Shield, ShieldCheck, Link, Copy, Calendar, Users } from "lucide-react"
 import { Loader } from "@/components/ui/loader"
 import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface User {
   id: string
@@ -64,6 +74,10 @@ export default function OrganizationSettingsPage() {
     usageLimit: ""
   })
   const [creating, setCreating] = useState(false)
+  const [showRemoveMemberDialog, setShowRemoveMemberDialog] = useState(false)
+  const [memberToRemove, setMemberToRemove] = useState<{ id: string, name: string | null, email: string } | null>(null)
+  const [showDeleteInviteDialog, setShowDeleteInviteDialog] = useState(false)
+  const [inviteToDelete, setInviteToDelete] = useState<{ token: string, name: string } | null>(null)
   const router = useRouter()
 
   const fetchUserData = useCallback(async () => {
@@ -189,19 +203,18 @@ export default function OrganizationSettingsPage() {
     }
   }
 
-  const handleRemoveMember = async (memberId: string) => {
-    const member = user?.organization?.members.find(m => m.id === memberId)
-    if (!confirm("Are you sure you want to remove this team member?")) return
+  const handleRemoveMember = async () => {
+    if (!memberToRemove) return
 
     try {
-      const response = await fetch(`/api/organization/members/${memberId}`, {
+      const response = await fetch(`/api/organization/members/${memberToRemove.id}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
         fetchUserData()
         toast.success("Team member removed successfully", {
-          description: `${member?.name || member?.email || 'Member'} has been removed from the organization.`
+          description: `${memberToRemove.name || memberToRemove.email || 'Member'} has been removed from the organization.`
         })
       } else {
         const errorData = await response.json()
@@ -214,7 +227,15 @@ export default function OrganizationSettingsPage() {
       toast.error("Failed to remove member", {
         description: "Please check your connection and try again."
       })
+    } finally {
+      setShowRemoveMemberDialog(false)
+      setMemberToRemove(null)
     }
+  }
+
+  const openRemoveMemberDialog = (member: { id: string, name: string | null, email: string }) => {
+    setMemberToRemove(member)
+    setShowRemoveMemberDialog(true)
   }
 
   const handleCancelInvite = async (inviteId: string) => {
@@ -321,18 +342,18 @@ export default function OrganizationSettingsPage() {
     }
   }
 
-  const handleDeleteSelfServeInvite = async (inviteToken: string) => {
-    if (!confirm("Are you sure you want to delete this invite link?")) return
+  const handleDeleteSelfServeInvite = async () => {
+    if (!inviteToDelete) return
 
     try {
-      const response = await fetch(`/api/organization/self-serve-invites/${inviteToken}`, {
+      const response = await fetch(`/api/organization/self-serve-invites/${inviteToDelete.token}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
         fetchSelfServeInvites()
         toast.success("Invite link deleted successfully", {
-          description: "The invite link has been permanently removed."
+          description: `"${inviteToDelete.name}" invite link has been permanently removed.`
         })
       } else {
         const errorData = await response.json()
@@ -345,7 +366,15 @@ export default function OrganizationSettingsPage() {
       toast.error("Failed to delete invite link", {
         description: "Please check your connection and try again."
       })
+    } finally {
+      setShowDeleteInviteDialog(false)
+      setInviteToDelete(null)
     }
+  }
+
+  const openDeleteInviteDialog = (invite: { token: string, name: string }) => {
+    setInviteToDelete(invite)
+    setShowDeleteInviteDialog(true)
   }
 
   const copyInviteLink = async (inviteToken: string) => {
@@ -467,7 +496,7 @@ export default function OrganizationSettingsPage() {
                   )}
                   {user?.isAdmin && member.id !== user.id && (
                     <Button
-                      onClick={() => handleRemoveMember(member.id)}
+                      onClick={() => openRemoveMemberDialog(member)}
                       variant="outline"
                       size="sm"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -643,7 +672,7 @@ export default function OrganizationSettingsPage() {
                       </Button>
                       {user?.isAdmin && (
                         <Button
-                          onClick={() => handleDeleteSelfServeInvite(invite.token)}
+                          onClick={() => openDeleteInviteDialog({ token: invite.token, name: invite.name })}
                           variant="outline"
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50"
@@ -668,6 +697,54 @@ export default function OrganizationSettingsPage() {
           )}
         </div>
       </Card>
+
+      {/* Remove Member Confirmation Dialog */}
+      <AlertDialog open={showRemoveMemberDialog} onOpenChange={setShowRemoveMemberDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Team Member</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove <strong>{memberToRemove?.name || memberToRemove?.email}</strong> from your organization?
+              This action cannot be undone and they will lose access to all boards and content.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setMemberToRemove(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleRemoveMember}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Remove Member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Invite Link Confirmation Dialog */}
+      <AlertDialog open={showDeleteInviteDialog} onOpenChange={setShowDeleteInviteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Invite Link</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the <strong>&quot;{inviteToDelete?.name}&quot;</strong> invite link?
+              This action cannot be undone and the link will no longer work for new members.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setInviteToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteSelfServeInvite}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete Link
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 

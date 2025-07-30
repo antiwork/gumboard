@@ -10,6 +10,16 @@ import { Plus, Trash2, Settings, LogOut, ChevronDown, Grid3x3 } from "lucide-rea
 import { useRouter } from "next/navigation"
 import { FullPageLoader } from "@/components/ui/loader"
 import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 interface Board {
   id: string
@@ -38,6 +48,8 @@ export default function Dashboard() {
   const [newBoardName, setNewBoardName] = useState("")
   const [newBoardDescription, setNewBoardDescription] = useState("")
   const [showUserDropdown, setShowUserDropdown] = useState(false)
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [boardToDelete, setBoardToDelete] = useState<Board | null>(null)
   const router = useRouter()
 
   useEffect(() => {
@@ -158,19 +170,18 @@ export default function Dashboard() {
     }
   }
 
-  const handleDeleteBoard = async (boardId: string) => {
-    if (!confirm("Are you sure you want to delete this board?")) return
+  const handleDeleteBoard = async () => {
+    if (!boardToDelete) return
 
     try {
-      const response = await fetch(`/api/boards/${boardId}`, {
+      const response = await fetch(`/api/boards/${boardToDelete.id}`, {
         method: "DELETE",
       })
 
       if (response.ok) {
-        const deletedBoard = boards.find(board => board.id === boardId)
-        setBoards(boards.filter(board => board.id !== boardId))
+        setBoards(boards.filter(board => board.id !== boardToDelete.id))
         toast.success("Board deleted successfully", {
-          description: `"${deletedBoard?.name || 'Board'}" has been permanently removed.`
+          description: `"${boardToDelete.name}" has been permanently removed.`
         })
       } else {
         const errorData = await response.json()
@@ -183,7 +194,15 @@ export default function Dashboard() {
       toast.error("Failed to delete board", {
         description: "Please check your connection and try again."
       })
+    } finally {
+      setShowDeleteDialog(false)
+      setBoardToDelete(null)
     }
+  }
+
+  const openDeleteDialog = (board: Board) => {
+    setBoardToDelete(board)
+    setShowDeleteDialog(true)
   }
 
   const handleSignOut = async () => {
@@ -393,7 +412,7 @@ export default function Dashboard() {
                           onClick={(e) => {
                             e.preventDefault()
                             e.stopPropagation()
-                            handleDeleteBoard(board.id)
+                            openDeleteDialog(board)
                           }}
                           className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 rounded transition-opacity"
                           title={user?.id === board.createdBy ? "Delete board" : "Delete board (Admin)"}
@@ -424,6 +443,30 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Delete Board Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Board</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>&quot;{boardToDelete?.name}&quot;</strong>?
+              This action cannot be undone and will permanently remove the board and all its notes.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBoardToDelete(null)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBoard}
+              className="bg-red-600 hover:bg-red-700 focus:ring-red-600"
+            >
+              Delete Board
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }  
