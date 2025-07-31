@@ -72,6 +72,23 @@ export async function POST(request: NextRequest) {
         description,
         organizationId: user.organization.id,
         createdBy: session.user.id
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: {
+            notes: {
+              where: {
+                deletedAt: null
+              }
+            }
+          }
+        }
       }
     })
 
