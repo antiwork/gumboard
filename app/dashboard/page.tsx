@@ -100,10 +100,12 @@ export default function Dashboard() {
       if (userResponse.ok) {
         const userData = await userResponse.json();
         setUser(userData);
+
         if (!userData.name) {
           router.push("/setup/profile");
           return;
         }
+
         if (!userData.organization) {
           router.push("/setup/organization");
           return;
@@ -115,19 +117,25 @@ export default function Dashboard() {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
 
-        try {
+        // Only redirect to last visited board on initial login/session
+        const shouldRedirect = sessionStorage.getItem("gumboard-should-redirect");
+
+        if (shouldRedirect === "true") {
           const lastVisitedBoardId = localStorage.getItem("gumboard-last-visited-board");
+
           if (lastVisitedBoardId) {
-            const boardExists = boards.some((board: Board) => board.id === lastVisitedBoardId);
+            const boardExists = boards.some(
+              (board: Board) => board.id === lastVisitedBoardId
+            );
+
             if (boardExists) {
+              sessionStorage.removeItem("gumboard-should-redirect");
               router.push(`/boards/${lastVisitedBoardId}`);
               return;
             } else {
               localStorage.removeItem("gumboard-last-visited-board");
             }
           }
-        } catch (error) {
-          console.warn("Failed to check last visited board:", error);
         }
       }
     } catch (error) {
@@ -136,6 +144,7 @@ export default function Dashboard() {
       setLoading(false);
     }
   };
+
 
   const handleAddBoard = async (e: React.FormEvent) => {
     e.preventDefault();
