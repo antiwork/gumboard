@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { use } from 'react';
+
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -85,11 +87,9 @@ const SORT_OPTIONS = [
   },
 ] as const;
 
-export default function BoardPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+
+export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id:boardId } = use(params); 
   const [board, setBoard] = useState<Board | null>(null);
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -98,7 +98,6 @@ export default function BoardPage({
   const [editContent, setEditContent] = useState("");
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
-  const boardId = params.id;
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
