@@ -87,11 +87,10 @@ const SORT_OPTIONS = [
   },
 ] as const;
 
-
 export default function BoardPage({ 
   params,
 }: {
-  params: Promise<{ id: string }> 
+  params: Promise<{ id: string }>;
 }) {
   const { id:boardId } = use(params); 
   const [board, setBoard] = useState<Board | null>(null);
@@ -135,7 +134,6 @@ export default function BoardPage({
   const {
     notes = [],
     error: notesError,
-    isLoading: notesLoading,
     mutate
   } = useNotes(boardId);
 
@@ -603,7 +601,7 @@ export default function BoardPage({
       window.removeEventListener("resize", checkResponsive);
       clearTimeout(resizeTimeout);
     };
-  }, []);
+  }, [mutate]);
 
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {

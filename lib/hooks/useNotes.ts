@@ -1,6 +1,13 @@
 import useSWR from 'swr'
 import { useEffect, useState } from 'react'
 
+interface ChecklistItem {
+  id: string
+  content: string
+  checked: boolean
+  order: number
+}
+
 interface Note {
   id: string
   content: string
@@ -9,7 +16,7 @@ interface Note {
   createdAt: string
   updatedAt: string
   isChecklist?: boolean
-  checklistItems?: any[]
+  checklistItems?: ChecklistItem[]
   user: {
     id: string
     name: string | null
