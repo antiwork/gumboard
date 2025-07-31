@@ -88,7 +88,11 @@ const SORT_OPTIONS = [
 ] as const;
 
 
-export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BoardPage({ 
+  params,
+}: {
+  params: Promise<{ id: string }> 
+}) {
   const { id:boardId } = use(params); 
   const [board, setBoard] = useState<Board | null>(null);
   const [allBoards, setAllBoards] = useState<Board[]>([]);
