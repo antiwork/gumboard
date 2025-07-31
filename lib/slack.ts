@@ -12,6 +12,31 @@ export function hasValidContent(content: string | null | undefined): boolean {
 
 const notificationDebounce = new Map<string, number>()
 const DEBOUNCE_DURATION = 1000
+const MAX_CACHE_SIZE = 1000 // Maximum number of entries to prevent unbounded growth
+const CLEANUP_INTERVAL = 60000 // Clean up old entries every minute
+
+// Cleanup old entries periodically
+setInterval(() => {
+  const now = Date.now()
+  const cutoffTime = now - DEBOUNCE_DURATION * 2 // Remove entries older than 2x debounce duration
+  
+  for (const [key, timestamp] of notificationDebounce.entries()) {
+    if (timestamp < cutoffTime) {
+      notificationDebounce.delete(key)
+    }
+  }
+  
+  // If still too many entries, remove oldest ones
+  if (notificationDebounce.size > MAX_CACHE_SIZE) {
+    const entries = Array.from(notificationDebounce.entries())
+      .sort((a, b) => a[1] - b[1]) // Sort by timestamp, oldest first
+    
+    const entriesToRemove = entries.slice(0, entries.length - MAX_CACHE_SIZE)
+    for (const [key] of entriesToRemove) {
+      notificationDebounce.delete(key)
+    }
+  }
+}, CLEANUP_INTERVAL)
 
 export function shouldSendNotification(userId: string, boardId: string): boolean {
   const key = `${userId}-${boardId}`
