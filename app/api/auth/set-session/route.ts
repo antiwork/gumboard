@@ -1,26 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { rateLimit } from "@/lib/rate-limit"
 
 export async function GET(request: NextRequest) {
-  // Apply rate limiting
-  const { allowed, retryAfter } = rateLimit(request)
-  
-  if (!allowed) {
-    return NextResponse.json(
-      { error: 'Too many requests. Please try again later.' },
-      { 
-        status: 429,
-        headers: {
-          'Retry-After': retryAfter?.toString() || '60',
-          'X-RateLimit-Limit': '10',
-          'X-RateLimit-Remaining': '0',
-          'X-RateLimit-Reset': new Date(Date.now() + (retryAfter || 60) * 1000).toISOString()
-        }
-      }
-    )
-  }
-
   const searchParams = request.nextUrl.searchParams
   const sessionToken = searchParams.get('token')
   const redirectTo = searchParams.get('redirectTo')
