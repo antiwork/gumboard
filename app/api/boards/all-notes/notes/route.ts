@@ -93,7 +93,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    const randomColor = color || NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)]
+    const randomColor = color || (NOTE_COLORS?.length > 0 
+      ? NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)] 
+      : '#fbbf24')
 
     const note = await db.note.create({
       data: {

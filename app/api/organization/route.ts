@@ -10,10 +10,25 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, slackWebhookUrl } = await request.json()
+    let requestBody
+    try {
+      requestBody = await request.json()
+    } catch (error) {
+      return NextResponse.json({ error: "Invalid JSON in request body" }, { status: 400 })
+    }
 
-    if (!name || typeof name !== 'string') {
-      return NextResponse.json({ error: "Organization name is required" }, { status: 400 })
+    const { name, slackWebhookUrl } = requestBody || {}
+
+    if (!name || typeof name !== 'string' || name.trim().length === 0) {
+      return NextResponse.json({ error: "Organization name is required and must be a non-empty string" }, { status: 400 })
+    }
+
+    if (name.trim().length > 100) {
+      return NextResponse.json({ error: "Organization name must be 100 characters or less" }, { status: 400 })
+    }
+
+    if (slackWebhookUrl !== undefined && slackWebhookUrl !== null && typeof slackWebhookUrl !== 'string') {
+      return NextResponse.json({ error: "Slack webhook URL must be a string" }, { status: 400 })
     }
 
     // Get user with organization
@@ -66,16 +81,20 @@ export async function PUT(request: NextRequest) {
       }
     })
 
+    if (!updatedUser) {
+      return NextResponse.json({ error: "Failed to fetch updated user data" }, { status: 500 })
+    }
+
     return NextResponse.json({
-      id: updatedUser!.id,
-      name: updatedUser!.name,
-      email: updatedUser!.email,
-      isAdmin: updatedUser!.isAdmin,
-      organization: updatedUser!.organization ? {
-        id: updatedUser!.organization.id,
-        name: updatedUser!.organization.name,
-        slackWebhookUrl: updatedUser!.organization.slackWebhookUrl,
-        members: updatedUser!.organization.members
+      id: updatedUser.id,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      isAdmin: updatedUser.isAdmin,
+      organization: updatedUser.organization ? {
+        id: updatedUser.organization.id,
+        name: updatedUser.organization.name,
+        slackWebhookUrl: updatedUser.organization.slackWebhookUrl,
+        members: updatedUser.organization.members
       } : null
     })
   } catch (error) {
