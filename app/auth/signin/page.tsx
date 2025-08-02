@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback, memo } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import {
@@ -29,7 +29,7 @@ function SignInContent() {
     }
   }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) return;
 
@@ -47,7 +47,12 @@ function SignInContent() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [email, searchParams]);
+
+  const handleGoogleSignIn = useCallback(async () => {
+    const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
+    await signIn("google", { callbackUrl });
+  }, [searchParams]);
 
   if (isSubmitted) {
     return (
@@ -121,8 +126,37 @@ function SignInContent() {
               : "Enter your email address and we'll send you a magic link to sign in"}
           </CardDescription>
         </CardHeader>
+        <CardContent className="space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full h-12 font-medium border-gray-200 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-900 cursor-pointer hover:scale-[1.02] transition-transform duration-200 active:scale-[0.98]"
+            onClick={handleGoogleSignIn}
+          >
+            <img 
+              src="/icons/google-color.svg" 
+              alt="Google" 
+              className="w-5 h-5 mr-3"
+              width="20"
+              height="20"
+            />
+            Continue with Google
+          </Button>
+          
+          <div className="relative">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t border-gray-200 dark:border-zinc-700" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-white dark:bg-zinc-900 px-2 text-gray-500 dark:text-zinc-400">
+                Or continue with email
+              </span>
+            </div>
+          </div>
+        </CardContent>
+        
         <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-4 pt-0">
             {searchParams.get("email") && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
                 <p className="text-sm text-blue-700 dark:text-blue-300">

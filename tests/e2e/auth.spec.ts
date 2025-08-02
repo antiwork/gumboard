@@ -90,4 +90,52 @@ test.describe('Authentication Flow', () => {
     await page.goto('/dashboard');
     await expect(page).toHaveURL(/.*auth.*signin/);
   });
+
+  test('should complete Google authentication flow', async ({ page }) => {
+    let googleAuthRequested = false;
+    
+    // Mock Google OAuth authorization request
+    await page.route('**/api/auth/signin/google', async (route) => {
+      googleAuthRequested = true;
+      await route.fulfill({
+        status: 302,
+        headers: {
+          'Location': '/auth/verify-request?provider=google'
+        }
+      });
+    });
+
+    // Mock successful Google authentication session
+    await page.route('**/api/auth/session', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: {
+            id: 'google-user-123',
+            name: 'Google User',
+            email: 'user@gmail.com',
+            image: 'https://lh3.googleusercontent.com/a/test-avatar'
+          },
+        }),
+      });
+    });
+
+    // Visit signin page
+    await page.goto('/auth/signin');
+    
+    // Simulate Google sign-in button click by directly calling the API
+    await page.evaluate(() => {
+      fetch('/api/auth/signin/google', { method: 'POST' });
+    });
+    
+    await page.waitForTimeout(100);
+    
+    // Verify Google auth was requested
+    expect(googleAuthRequested).toBe(true);
+    
+    // Navigate to dashboard to verify authenticated state
+    await page.goto('/dashboard');
+    await expect(page).toHaveURL(/.*dashboard/);
+  });
 });

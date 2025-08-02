@@ -1,16 +1,18 @@
 import NextAuth from "next-auth"
 import { PrismaAdapter } from "@auth/prisma-adapter"
 import Resend from "next-auth/providers/resend"
-import { PrismaClient } from "@prisma/client"
-
-
-const prisma = new PrismaClient()
+import Google from "next-auth/providers/google"
+import { prisma } from "@/lib/prisma"
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
     Resend({
       from: process.env.EMAIL_FROM!,
+    }),
+    Google({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
   ],
   pages: {
@@ -19,19 +21,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/auth/error",
   },
   callbacks: {
-    async signIn() {
-      return true
-    },
-    async redirect({ url, baseUrl }) {
-      // Handle invite callback URLs
+    signIn: async () => true,
+    redirect: async ({ url, baseUrl }) => {
       if (url.includes("/invite/accept")) {
         return url.startsWith("/") ? `${baseUrl}${url}` : url
       }
-      
-      // Redirect to dashboard after successful sign in
-      if (url.startsWith("/")) return `${baseUrl}/dashboard`
-      else if (new URL(url).origin === baseUrl) return url
-      return `${baseUrl}/dashboard`
+      return url.startsWith("/") 
+        ? `${baseUrl}/dashboard`
+        : new URL(url).origin === baseUrl 
+          ? url 
+          : `${baseUrl}/dashboard`
     },
-  },
+  }
 })

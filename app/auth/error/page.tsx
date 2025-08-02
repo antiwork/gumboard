@@ -11,6 +11,7 @@ const errorMessages: Record<string, string> = {
   Configuration: "There is a problem with the server configuration.",
   AccessDenied: "Access denied. You do not have permission to sign in.",
   Verification: "The verification token has expired or has already been used.",
+  OAuthAccountNotLinked: "This email is already associated with another sign-in method. Please sign in using your original method.",
   Default: "An unexpected error occurred. Please try again.",
 }
 
