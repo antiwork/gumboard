@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
+import Image from "next/image";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -59,7 +60,8 @@ function SignInContent() {
             </div>
             <CardTitle className="text-2xl dark:text-zinc-100">Check your email</CardTitle>
             <CardDescription className="dark:text-zinc-400">
-              We&apos;ve sent a magic link to <strong className="dark:text-zinc-100">{email}</strong>
+              We&apos;ve sent a magic link to{" "}
+              <strong className="dark:text-zinc-100">{email}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -79,9 +81,7 @@ function SignInContent() {
               <Button
                 variant="outline"
                 className="w-full justify-between dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900"
-                onClick={() =>
-                  window.open("https://outlook.live.com", "_blank")
-                }
+                onClick={() => window.open("https://outlook.live.com", "_blank")}
               >
                 Open Outlook
                 <ExternalLink className="w-4 h-4" />
@@ -117,21 +117,52 @@ function SignInContent() {
           </CardTitle>
           <CardDescription className="dark:text-zinc-400">
             {searchParams.get("email")
-              ? "we'll send you a magic link to verify your email address"
+              ? "We'll send you a magic link to verify your email address"
               : "Enter your email address and we'll send you a magic link to sign in"}
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {searchParams.get("email") && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  📧 You&apos;re signing in from an organization invitation
-                </p>
-              </div>
-            )}
+
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => signIn("google", { callbackUrl: "/" })}
+              className="w-full h-12 justify-center gap-2 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900"
+            >
+              <Image
+                src="https://www.svgrepo.com/show/475656/google-color.svg"
+                alt="Google"
+                height={24}
+                width={24}
+              />
+              Continue with Google
+            </Button>
+          </div>
+
+          <div className="relative py-2">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t dark:border-zinc-800" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="bg-white px-2 text-muted-foreground dark:bg-zinc-900 dark:text-zinc-400">
+                or continue with email
+              </span>
+            </div>
+          </div>
+
+          {searchParams.get("email") && (
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+              <p className="text-sm text-blue-700 dark:text-blue-300">
+                📧 You&apos;re signing in from an organization invitation
+              </p>
+            </div>
+          )}
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="dark:text-zinc-200">Email address</Label>
+              <Label htmlFor="email" className="dark:text-zinc-200">
+                Email address
+              </Label>
               <Input
                 id="email"
                 type="email"
@@ -143,11 +174,9 @@ function SignInContent() {
                 className="h-12 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
               />
             </div>
-          </CardContent>
-          <CardFooter>
             <Button
               type="submit"
-              className="w-full h-12 font-medium mt-4 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              className="w-full h-12 font-medium dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
               disabled={isLoading || !email}
             >
               {isLoading ? (
@@ -162,8 +191,8 @@ function SignInContent() {
                 </>
               )}
             </Button>
-          </CardFooter>
-        </form>
+          </form>
+        </CardContent>
       </Card>
     </div>
   );
