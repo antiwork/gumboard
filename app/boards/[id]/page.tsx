@@ -12,12 +12,14 @@ import {
   LogOut,
   Search,
   User,
+  Edit3,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
-import { NoteCard } from "@/components/note-card";
+// import { NoteCard } from "@/components/note-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { AnimatePresence, motion } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface ChecklistItem {
   id: string;
@@ -172,6 +178,13 @@ export default function BoardPage({
     const queryString = params.toString();
     const newURL = queryString ? `?${queryString}` : window.location.pathname;
     router.replace(newURL, { scroll: false });
+  };
+
+  
+  const taskItemVariants = {
+    hidden: { opacity: 0, height: 0 },
+    visible: { opacity: 1, height: "auto", transition: { duration: 0.2 } },
+    exit: { opacity: 0, height: 0, transition: { duration: 0.15 } },
   };
 
   // Initialize filters from URL parameters
@@ -1033,6 +1046,15 @@ export default function BoardPage({
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
 
+      // Immediately update the UI state for instant feedback
+      setNotes(prevNotes => 
+        prevNotes.map((n) => 
+          n.id === noteId 
+            ? { ...n, checklistItems: updatedItems }
+            : n
+        )
+      );
+
       // Add item to animating set for visual feedback
       setAnimatingItems((prev) => new Set([...prev, itemId]));
 
@@ -1063,8 +1085,24 @@ export default function BoardPage({
         })
           .then((response) => response.json())
           .then(({ note }) => {
-            setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+            setNotes(prevNotes => prevNotes.map((n) => (n.id === noteId ? note : n)));
             // Remove from animating set after update
+            setAnimatingItems((prev) => {
+              const newSet = new Set(prev);
+              newSet.delete(itemId);
+              return newSet;
+            });
+          })
+          .catch((error) => {
+            console.error("Error updating checklist item:", error);
+            // Revert the optimistic update on error
+            setNotes(prevNotes => 
+              prevNotes.map((n) => 
+                n.id === noteId 
+                  ? { ...n, checklistItems: currentNote.checklistItems }
+                  : n
+              )
+            );
             setAnimatingItems((prev) => {
               const newSet = new Set(prev);
               newSet.delete(itemId);
@@ -1319,6 +1357,24 @@ export default function BoardPage({
     const calculatedHeight = Math.max(minHeight, maxBottom + 100); // Add 100px padding at bottom
 
     return `${calculatedHeight}px`;
+  };
+
+  const onNoteClick = (note: Note, e: React.MouseEvent) => {
+    // Allow editing if user is the note author or admin
+    if (user?.id === note.user.id || user?.isAdmin) {
+      // Check if click was on background (not on existing content)
+      const target = e.target as HTMLElement;
+      const isBackgroundClick = target.classList.contains('note-background') || 
+                              target.closest('.note-background') === e.currentTarget;
+      
+      if (note.isChecklist && isBackgroundClick && addingChecklistItem !== note.id) {
+        // Create new checklist item on background click
+        setAddingChecklistItem(note.id);
+      } else if (!note.isChecklist || !isBackgroundClick) {
+        setEditingNote(note.id);
+        setEditContent(note.content);
+      }
+    }
   };
 
   return (
@@ -1614,51 +1670,380 @@ export default function BoardPage({
         {/* Notes */}
         <div className="relative w-full h-full">
           {layoutNotes.map((note) => (
-            <NoteCard
+
+            <div
               key={note.id}
-              note={note}
-              user={user}
-              boardId={boardId ?? ""}
-              editingNote={editingNote}
-              editContent={editContent}
-              addingChecklistItem={addingChecklistItem}
-              newChecklistItemContent={newChecklistItemContent}
-              editingChecklistItem={editingChecklistItem}
-              editingChecklistItemContent={editingChecklistItemContent}
-              animatingItems={animatingItems}
-              onNoteClick={(note, e) => {
-                // Allow editing if user is the note author or admin
-                if (user?.id === note.user.id || user?.isAdmin) {
-                  // Check if click was on background (not on existing content)
-                  const target = e.target as HTMLElement;
-                  const isBackgroundClick = target.classList.contains('note-background') || 
-                                          target.closest('.note-background') === e.currentTarget;
-                  
-                  if (note.isChecklist && isBackgroundClick && addingChecklistItem !== note.id) {
-                    // Create new checklist item on background click
-                    setAddingChecklistItem(note.id);
-                  } else if (!note.isChecklist || !isBackgroundClick) {
-                    setEditingNote(note.id);
-                    setEditContent(note.content);
-                  }
-                }
+              className={cn(
+                "absolute select-none group transition-all duration-200 flex flex-col",
+                note.done && "opacity-80"
+              )}
+              style={{
+                left: note.x,
+                top: note.y,
+                width: note.width,
+                height: note.height,
               }}
-              onEditNote={handleUpdateNote}
-              onDeleteNote={handleDeleteNote}
-              onToggleDone={handleToggleDone}
-              onToggleAllChecklistItems={handleToggleAllChecklistItems}
-              onAddChecklistItem={handleAddChecklistItem}
-              onToggleChecklistItem={handleToggleChecklistItem}
-              onDeleteChecklistItem={handleDeleteChecklistItem}
-              onEditChecklistItem={handleEditChecklistItem}
-              onSplitChecklistItem={handleSplitChecklistItem}
-              onSetEditingNote={setEditingNote}
-              onSetEditContent={setEditContent}
-              onSetAddingChecklistItem={setAddingChecklistItem}
-              onSetNewChecklistItemContent={setNewChecklistItemContent}
-              onSetEditingChecklistItem={setEditingChecklistItem}
-              onSetEditingChecklistItemContent={setEditingChecklistItemContent}
-            />
+              onClick={(e) => onNoteClick(note, e)}
+              tabIndex={0}
+              aria-label={`Note by ${note.user.name || note.user.email}`}
+            >
+              <div
+                className={cn(
+                  "flex flex-col gap-4 rounded-xl p-4 transition-all h-full",
+                  "bg-white dark:bg-zinc-900",
+                  note.color
+                )}
+              >
+                <div className="flex items-center justify-between flex-shrink-0">
+                  <div className="flex items-center gap-2">
+                    <Avatar className="h-8 w-8 border-2 border-white dark:border-zinc-800">
+                      <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200">
+                        {(note.user.name
+                          ? note.user.name.charAt(0)
+                          : note.user.email.charAt(0)
+                        ).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-zinc-900 dark:text-zinc-100 text-sm">
+                        {note.user.name
+                          ? note.user.name.split(" ")[0]
+                          : note.user.email.split("@")[0]}
+                      </span>
+                      <div className="flex flex-col">
+                        {!note.isChecklist && (
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400 opacity-70">
+                            {new Date(note.createdAt).toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              year:
+                                new Date(note.createdAt).getFullYear() !==
+                                new Date().getFullYear()
+                                  ? "numeric"
+                                  : undefined,
+                            })}
+                          </span>
+                        )}
+                        {boardId === "all-notes" && note.board && (
+                          <span className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20">
+                            {note.board.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {(user?.id === note.user.id || user?.isAdmin) && (
+                      <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {!note.isChecklist && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-zinc-500 hover:text-blue-600 dark:text-zinc-400 dark:hover:text-blue-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                                                          setEditingNote(note.id);
+                            setEditContent(note.content);
+                            }}
+                            aria-label="Edit note"
+                            tabIndex={0}
+                          >
+                            <Edit3 className="h-4 w-4" />
+                            <span className="sr-only">Edit note</span>
+                          </Button>
+                        )}
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteNote(note.id);
+                          }}
+                          aria-label="Delete note"
+                          tabIndex={0}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          <span className="sr-only">Delete note</span>
+                        </Button>
+                      </div>
+                    )}
+                    {(user?.id === note.user.id || user?.isAdmin) && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (note.isChecklist) {
+                            handleToggleAllChecklistItems(note.id);
+                          } else {
+                            handleToggleDone(note.id, note.done);
+                          }
+                        }}
+                        className={cn(
+                          "relative w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center cursor-pointer hover:scale-110 z-10",
+                          note.done
+                            ? "bg-green-500 dark:bg-green-600 border-green-500 dark:border-green-600 text-white shadow-lg opacity-100"
+                            : "bg-white dark:bg-gray-800 bg-opacity-60 dark:bg-opacity-60 border-gray-400 dark:border-gray-500 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 opacity-30 group-hover:opacity-100"
+                        )}
+                        title={
+                          note.isChecklist
+                            ? note.done
+                              ? "Uncheck all items"
+                              : "Check all items"
+                            : note.done
+                              ? "Mark as not done"
+                              : "Mark as done"
+                        }
+                        type="button"
+                        style={{ pointerEvents: "auto" }}
+                        aria-pressed={!!note.done}
+                        tabIndex={0}
+                      >
+                        {note.done && (
+                          <svg
+                            className="w-3 h-3 text-white"
+                            fill="none"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                            aria-hidden="true"
+                          >
+                            <path d="M5 13l4 4L19 7"></path>
+                          </svg>
+                        )}
+                        <span className="sr-only">
+                          {note.isChecklist
+                            ? note.done
+                              ? "Uncheck all items"
+                              : "Check all items"
+                            : note.done
+                              ? "Mark as not done"
+                              : "Mark as done"}
+                        </span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {editingNote === note.id && !note.isChecklist ? (
+                  <div className="flex-1 min-h-0">
+                    <textarea
+                      value={editContent}
+                      onChange={(e) => {
+                                                    setEditContent(e.target.value);
+                      }}
+                      className="w-full h-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-zinc-900 dark:text-zinc-100"
+                      placeholder="Enter note content..."
+                                              onBlur={() => handleUpdateNote(note.id, editContent)}
+                                              onKeyDown={(e) => {
+                          if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
+                            e.preventDefault();
+                            handleUpdateNote(note.id, editContent);
+                          }
+                          if (e.key === "Escape") {
+                            setEditingNote(null);
+                            setEditContent("");
+                          }
+                          if (e.key === "Backspace" && editContent.trim() === "") {
+                            handleDeleteNote(note.id);
+                          }
+                        }}
+                      onFocus={(e) => {
+                        const length = e.target.value.length;
+                        e.target.setSelectionRange(length, length);
+                      }}
+                      autoFocus
+                      aria-label="Edit note content"
+                    />
+                  </div>
+                ) : note.isChecklist ? (
+                  <div className="flex flex-col gap-2 flex-1  overflow-hidden">
+                    <AnimatePresence>
+                      {note.checklistItems?.map((item) => (
+                        <motion.div
+                          key={item.id}
+                          className={cn(
+                            "flex items-center gap-3",
+                            animatingItems.has(item.id) && "animate-pulse"
+                          )}
+                          variants={taskItemVariants}
+                          initial="hidden"
+                          animate="visible"
+                          exit="exit"
+                          layout
+                        >
+                          <Checkbox
+                            id={`task-${item.id}`}
+                            checked={item.checked}
+                            onCheckedChange={() => handleToggleChecklistItem(note.id, item.id)}
+                            className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                            aria-checked={item.checked}
+                            tabIndex={0}
+                          />
+
+                          {editingChecklistItem?.noteId === note.id &&
+                          editingChecklistItem?.itemId === item.id ? (
+                            <Input
+                              type="text"
+                              value={editingChecklistItemContent}
+                              onChange={(e) =>
+                                setEditingChecklistItemContent(e.target.value)
+                              }
+                              className={cn(
+                                "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                              )}
+                              onBlur={() =>
+                                handleEditChecklistItem(
+                                  note.id,
+                                  item.id,
+                                  editingChecklistItemContent
+                                )
+                              }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    const target = e.target as HTMLInputElement;
+                                    const cursorPosition = target.selectionStart || 0;
+                                    handleSplitChecklistItem(
+                                      note.id,
+                                      item.id,
+                                      editingChecklistItemContent,
+                                      cursorPosition
+                                    );
+                                  }
+                                  if (e.key === "Escape") {
+                                    setEditingChecklistItem(null);
+                                    setEditingChecklistItemContent("");
+                                  }
+                                  if (
+                                    e.key === "Backspace" &&
+                                    editingChecklistItemContent.trim() === ""
+                                  ) {
+                                    handleDeleteChecklistItem(note.id, item.id);
+                                  }
+                                }}
+                              autoFocus
+                              aria-label="Edit checklist item"
+                            />
+                          ) : (
+                            <span
+                              className={cn(
+                                "flex-1 text-sm cursor-pointer",
+                                item.checked
+                                  ? "text-slate-500 dark:text-zinc-500 line-through"
+                                  : "text-zinc-900 dark:text-zinc-100"
+                              )}
+                              onClick={() => {
+                                if (user?.id === note.user.id || user?.isAdmin) {
+                                  setEditingChecklistItem({
+                                    noteId: note.id,
+                                    itemId: item.id,
+                                  });
+                                  setEditingChecklistItemContent(item.content);
+                                }
+                              }}
+                              tabIndex={0}
+                              role="button"
+                              aria-label="Edit checklist item"
+                            >
+                              {item.content || (
+                                <span className="text-zinc-400 dark:text-zinc-500 italic">
+                                  Click to edit...
+                                </span>
+                              )}
+                            </span>
+                          )}
+
+                          {(user?.id === note.user.id || user?.isAdmin) && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 opacity-50 hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
+                              onClick={() => handleDeleteChecklistItem(note.id, item.id)}
+                              aria-label="Delete task"
+                              tabIndex={0}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              <span className="sr-only">Delete task</span>
+                            </Button>
+                          )}
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+
+                    {addingChecklistItem === note.id && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-4 h-4 rounded border-2 border-slate-500 dark:border-zinc-600 flex-shrink-0 bg-white dark:bg-zinc-800 bg-opacity-60 dark:bg-opacity-60"></div>
+                        <Input
+                          type="text"
+                          value={newChecklistItemContent}
+                          onChange={(e) => setNewChecklistItemContent(e.target.value)}
+                          className={cn(
+                            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 placeholder-zinc-500 dark:placeholder-zinc-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                          )}
+                          placeholder="Add new item..."
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              handleAddChecklistItem(note.id);
+                            }
+                            if (e.key === "Escape") {
+                              setAddingChecklistItem(null);
+                              setNewChecklistItemContent("");
+                            }
+                            if (
+                              e.key === "Backspace" &&
+                              newChecklistItemContent.trim() === ""
+                            ) {
+                              setAddingChecklistItem(null);
+                              setNewChecklistItemContent("");
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newChecklistItemContent.trim()) {
+                              handleAddChecklistItem(note.id);
+                              setAddingChecklistItem(null);
+                            } else {
+                              setAddingChecklistItem(null);
+                              setNewChecklistItemContent("");
+                            }
+                          }}
+                          autoFocus
+                          aria-label="Add new checklist item"
+                        />
+                      </div>
+                    )}
+
+                    {(user?.id === note.user.id || user?.isAdmin) && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setAddingChecklistItem(note.id)}
+                        className="mt-1 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+                        aria-label="Add task"
+                        tabIndex={0}
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Add task
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-hidden flex flex-col relative">
+                    <p
+                      className={cn(
+                        "text-base whitespace-pre-wrap break-words leading-7 m-0 p-0 flex-1 transition-all duration-200",
+                        note.done
+                          ? "text-zinc-500 dark:text-zinc-400 opacity-70 line-through"
+                          : "text-zinc-900 dark:text-zinc-100"
+                      )}
+                    >
+                      {note.content}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
           ))}
         </div>
 
