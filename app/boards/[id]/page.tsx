@@ -1772,12 +1772,9 @@ export default function BoardPage({
               onClick={(e) => {
                 // Allow editing if user is the note author or admin
                 if (user?.id === note.user.id || user?.isAdmin) {
-                  // Check if click was on background (not on existing content)
                   const target = e.target as HTMLElement;
-                  const isBackgroundClick = target.classList.contains('note-background') || 
-                                          target.closest('.note-background') === e.currentTarget;
                   
-                  if (!note.isChecklist || !isBackgroundClick) {
+                  if (!note.isChecklist || !(target.classList.contains('note-background') || target.closest('.note-background') === e.currentTarget)) {
                     setEditingNote(note.id);
                     setEditContent(note.content);
                   }
