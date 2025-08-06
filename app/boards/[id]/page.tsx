@@ -2035,7 +2035,11 @@ export default function BoardPage({
                             }
                           }}
                         >
-                          {item.content}
+                          {item.content || (
+                            <span className="text-gray-400 dark:text-gray-500 italic">
+                              Click to edit...
+                            </span>
+                          )}
                         </span>
                       )}
 
