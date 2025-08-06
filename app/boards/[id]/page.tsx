@@ -72,7 +72,6 @@ interface User {
   } | null;
 }
 
-
 export default function BoardPage({
   params,
 }: {
@@ -482,6 +481,7 @@ export default function BoardPage({
   useEffect(() => {
     isEditingRef.current = editingNote !== null;
   }, [editingNote]);
+  
   useEffect(() => {
     let cancelled = false;
     const inFlight = { v: false };
@@ -503,13 +503,10 @@ export default function BoardPage({
     };
   }, [boardId]);
 
+  // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (
-        showBoardDropdown ||
-        showUserDropdown ||
-        showAddBoard
-      ) {
+      if (showBoardDropdown || showUserDropdown || showAddBoard) {
         const target = event.target as Element;
         if (
           !target.closest(".board-dropdown") &&
@@ -689,9 +686,8 @@ export default function BoardPage({
         return a.done ? 1 : -1;
       }
 
-      return (
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      // Third priority: newest first
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
     return filteredNotes;
@@ -975,7 +971,6 @@ export default function BoardPage({
     }
   };
 
-
   const handleAddChecklistItem = async (noteId: string) => {
     if (!newChecklistItemContent.trim()) return;
 
@@ -1247,45 +1242,6 @@ export default function BoardPage({
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();
 
-      if (!secondHalf) {
-        await handleEditChecklistItem(noteId, itemId, firstHalf);
-
-        const currentItem = currentNote.checklistItems.find(
-          (item) => item.id === itemId
-        );
-        const currentOrder = currentItem?.order || 0;
-
-        const newItem = {
-          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          content: "",
-          checked: false,
-          order: currentOrder + 0.5,
-        };
-
-        const allItems = [...currentNote.checklistItems, newItem].sort(
-          (a, b) => a.order - b.order
-        );
-
-        const response = await fetch(
-          `/api/boards/${targetBoardId}/notes/${noteId}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              checklistItems: allItems,
-            }),
-          }
-        );
-
-        if (response.ok) {
-          const { note } = await response.json();
-          setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-          setEditingChecklistItem({ noteId, itemId: newItem.id });
-          setEditingChecklistItemContent("");
-        }
-        return;
-      }
-
       // Update current item with first half
       const updatedItems = currentNote.checklistItems.map((item) =>
         item.id === itemId ? { ...item, content: firstHalf } : item
@@ -1379,7 +1335,8 @@ export default function BoardPage({
               </h1>
             </Link>
 
-            <div className="relative board-dropdown hidden md:block">
+            {/* Board Selector Dropdown */}
+            <div className="relative board-dropdown block">
               <button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
                 className="flex items-center border border-border dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer"
@@ -1453,7 +1410,8 @@ export default function BoardPage({
               )}
             </div>
 
-            <div className="hidden md:block">
+            {/* Filter Popover */}
+            <div className="block">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
@@ -1481,7 +1439,7 @@ export default function BoardPage({
           {/* Right side - Search, Add Note and User dropdown */}
           <div className="flex items-center space-x-2 px-3 ">
             {/* Search Box */}
-            <div className="relative hidden sm:block">
+            <div className="relative block">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
@@ -1573,78 +1531,6 @@ export default function BoardPage({
         </div>
       </div>
 
-      {/* Mobile Board Title */}
-      <div className="md:hidden bg-card dark:bg-gray-800 border-b border-border dark:border-gray-700 px-4 py-3 space-y-3">
-        <div>
-          <h2 className="text-lg font-semibold text-foreground dark:text-gray-200">
-            {boardId === "all-notes" ? "All notes" : board?.name}
-          </h2>
-          {boardId === "all-notes" ? (
-            <p className="text-sm text-muted-foreground dark:text-gray-400">
-              Notes from all boards
-            </p>
-          ) : (
-            board?.description && (
-              <p className="text-sm text-muted-foreground dark:text-gray-400">
-                {board.description}
-              </p>
-            )
-          )}
-        </div>
-
-        {/* Mobile Search Box */}
-        <div className="relative">
-          <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-            <Search className="h-4 w-4 text-muted-foreground dark:text-gray-400" />
-          </div>
-          <input
-            type="text"
-            placeholder="Search notes..."
-            value={searchTerm}
-            onChange={(e) => {
-              setSearchTerm(e.target.value);
-              updateURL(e.target.value);
-            }}
-            className="w-full pl-10 pr-4 py-2 border border-border dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent text-sm bg-background dark:bg-gray-700 text-foreground dark:text-gray-200 placeholder:text-muted-foreground dark:placeholder:text-gray-400 shadow-sm"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => {
-                setSearchTerm("");
-                updateURL("");
-              }}
-              className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-gray-400 hover:text-foreground dark:hover:text-gray-200"
-            >
-              ×
-            </button>
-          )}
-        </div>
-
-        {/* Mobile Filter Popover */}
-        <div className="md:hidden">
-          <FilterPopover
-            startDate={dateRange.startDate}
-            endDate={dateRange.endDate}
-            onDateRangeChange={(startDate, endDate) => {
-              const newDateRange = { startDate, endDate };
-              setDateRange(newDateRange);
-              updateURL(undefined, newDateRange);
-            }}
-            selectedAuthor={selectedAuthor}
-            authors={uniqueAuthors}
-            onAuthorChange={(authorId) => {
-              setSelectedAuthor(authorId);
-              updateURL(undefined, undefined, authorId);
-            }}
-            showCompleted={showDoneNotes}
-            onShowCompletedChange={(show) => {
-              setShowDoneNotes(show);
-              updateURL(undefined, undefined, undefined, show);
-            }}
-            className="w-full"
-          />
-        </div>
-      </div>
       {/* Board Area */}
       <div
         ref={boardRef}
@@ -1924,14 +1810,18 @@ export default function BoardPage({
         </div>
       )}
 
-      <AlertDialog open={deleteNoteDialog.open} onOpenChange={(open) => setDeleteNoteDialog({ open, noteId: "" })}>
+      <AlertDialog
+        open={deleteNoteDialog.open}
+        onOpenChange={(open) => setDeleteNoteDialog({ open, noteId: "" })}
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Delete note
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete this note? This action cannot be undone.
+              Are you sure you want to delete this note? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1948,7 +1838,12 @@ export default function BoardPage({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
+      <AlertDialog
+        open={errorDialog.open}
+        onOpenChange={(open) =>
+          setErrorDialog({ open, title: "", description: "" })
+        }
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
@@ -1960,7 +1855,9 @@ export default function BoardPage({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
-              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
+              onClick={() =>
+                setErrorDialog({ open: false, title: "", description: "" })
+              }
               className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               OK
