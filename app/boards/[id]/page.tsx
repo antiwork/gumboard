@@ -31,6 +31,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { cn } from "@/lib/utils";
 
 interface ChecklistItem {
   id: string;
@@ -1673,7 +1674,7 @@ export default function BoardPage({
                   {(user?.id === note.user.id || user?.isAdmin) && (
                     <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       {!note.isChecklist && (
-                        <button
+                        <Button
                           onClick={(e) => {
                             e.stopPropagation();
                             setEditingNote(note.id);
@@ -1682,9 +1683,9 @@ export default function BoardPage({
                           className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
                         >
                           <Edit3 className="w-3 h-3" />
-                        </button>
+                        </Button>
                       )}
-                      <button
+                      <Button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteNote(note.id);
@@ -1692,7 +1693,7 @@ export default function BoardPage({
                         className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
                       >
                         <Trash2 className="w-3 h-3" />
-                      </button>
+                      </Button>
                     </div>
                   )}
                   {/* Beautiful checkbox for done status - show to author or admin */}
@@ -1707,7 +1708,7 @@ export default function BoardPage({
                             handleToggleDone(note.id, note.done);
                           }
                         }}
-                        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 h-5 w-5 opacity-30 group-hover:opacity-100"
+                        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                         title={
                           note.isChecklist
                             ? note.done
@@ -1759,180 +1760,130 @@ export default function BoardPage({
                   {note.checklistItems?.map((item) => (
                     <div
                       key={item.id}
-                      className={`flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200 ${
+                      className={`flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded gap-3 transition-all duration-200 ${
                         animatingItems.has(item.id) ? "animate-pulse" : ""
                       }`}
                     >
                       {/* Checkbox */}
                       <Checkbox
                         checked={item.checked}
-                        onCheckedChange={() => handleToggleChecklistItem(note.id, item.id)}
-                        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mr-3 ml-2"
+                        onCheckedChange={() =>
+                          handleToggleChecklistItem(note.id, item.id)
+                        }
+                        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                       />
 
                       {/* Content */}
                       {editingChecklistItem?.noteId === note.id &&
-                      editingChecklistItem?.itemId === item.id ? (
-                        <Input
-                          type="text"
-                          value={editingChecklistItemContent}
-                          onChange={(e) =>
-                            setEditingChecklistItemContent(e.target.value)
-                          }
-                          className="flex-1 bg-transparent border-none text-sm leading-6 text-gray-800 dark:text-gray-200 focus-visible:ring-0 focus-visible:ring-offset-0"
-                          onBlur={() =>
-                            handleEditChecklistItem(
-                              note.id,
-                              item.id,
-                              editingChecklistItemContent
-                            )
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              e.preventDefault();
-                              const target = e.target as HTMLInputElement;
-                              const cursorPosition = target.selectionStart || 0;
-                              handleSplitChecklistItem(
+                        editingChecklistItem?.itemId === item.id && (
+                          <Input
+                            type="text"
+                            value={editingChecklistItemContent}
+                            onChange={(e) =>
+                              setEditingChecklistItemContent(e.target.value)
+                            }
+                            className={cn(
+                              "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0",
+                              item.checked &&
+                                "text-slate-500 dark:text-zinc-500 line-through"
+                            )}
+                            onBlur={() =>
+                              handleEditChecklistItem(
                                 note.id,
                                 item.id,
-                                editingChecklistItemContent,
-                                cursorPosition
-                              );
+                                editingChecklistItemContent
+                              )
                             }
-                            if (e.key === "Escape") {
-                              setEditingChecklistItem(null);
-                              setEditingChecklistItemContent("");
-                            }
-                            if (
-                              e.key === "Backspace" &&
-                              editingChecklistItemContent.trim() === ""
-                            ) {
-                              e.preventDefault();
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                const target = e.target as HTMLInputElement;
+                                const cursorPosition =
+                                  target.selectionStart || 0;
+                                handleSplitChecklistItem(
+                                  note.id,
+                                  item.id,
+                                  editingChecklistItemContent,
+                                  cursorPosition
+                                );
+                              }
+                              if (e.key === "Escape") {
+                                setEditingChecklistItem(null);
+                                setEditingChecklistItemContent("");
+                              }
+                              if (
+                                e.key === "Backspace" &&
+                                editingChecklistItemContent.trim() === ""
+                              ) {
+                                e.preventDefault();
 
-                              const currentNote = notes.find(
-                                (n) => n.id === note.id
-                              );
-                              if (currentNote?.checklistItems) {
-                                const currentItem =
-                                  currentNote.checklistItems.find(
-                                    (i) => i.id === item.id
-                                  );
-                                if (currentItem) {
-                                  const sortedItems = [
-                                    ...currentNote.checklistItems,
-                                  ].sort((a, b) => a.order - b.order);
-                                  const currentIndex = sortedItems.findIndex(
-                                    (i) => i.id === item.id
-                                  );
+                                const currentNote = notes.find(
+                                  (n) => n.id === note.id
+                                );
+                                if (currentNote?.checklistItems) {
+                                  const currentItem =
+                                    currentNote.checklistItems.find(
+                                      (i) => i.id === item.id
+                                    );
+                                  if (currentItem) {
+                                    const sortedItems = [
+                                      ...currentNote.checklistItems,
+                                    ].sort((a, b) => a.order - b.order);
+                                    const currentIndex = sortedItems.findIndex(
+                                      (i) => i.id === item.id
+                                    );
 
-                                  if (currentIndex > 0) {
-                                    const previousItem =
-                                      sortedItems[currentIndex - 1];
+                                    if (currentIndex > 0) {
+                                      const previousItem =
+                                        sortedItems[currentIndex - 1];
 
-                                    handleDeleteChecklistItem(note.id, item.id);
-
-                                    setTimeout(() => {
-                                      setEditingChecklistItem({
-                                        noteId: note.id,
-                                        itemId: previousItem.id,
-                                      });
-                                      setEditingChecklistItemContent(
-                                        previousItem.content
+                                      handleDeleteChecklistItem(
+                                        note.id,
+                                        item.id
                                       );
-                                    }, 0);
+
+                                      setTimeout(() => {
+                                        setEditingChecklistItem({
+                                          noteId: note.id,
+                                          itemId: previousItem.id,
+                                        });
+                                        setEditingChecklistItemContent(
+                                          previousItem.content
+                                        );
+                                      }, 0);
+                                    } else {
+                                      handleDeleteChecklistItem(
+                                        note.id,
+                                        item.id
+                                      );
+                                    }
                                   } else {
                                     handleDeleteChecklistItem(note.id, item.id);
                                   }
                                 } else {
                                   handleDeleteChecklistItem(note.id, item.id);
                                 }
-                              } else {
-                                handleDeleteChecklistItem(note.id, item.id);
                               }
-                            }
-                          }}
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          className={`flex-1 text-sm leading-6 cursor-pointer ${
-                            item.checked
-                              ? "text-gray-500 dark:text-gray-400 line-through opacity-70"
-                              : "text-gray-800 dark:text-gray-200"
-                          }`}
-                          onClick={() => {
-                            if (user?.id === note.user.id || user?.isAdmin) {
-                              setEditingChecklistItem({
-                                noteId: note.id,
-                                itemId: item.id,
-                              });
-                              setEditingChecklistItemContent(item.content);
-                            }
-                          }}
-                        >
-                          {item.content || (
-                            <span className="text-gray-400 dark:text-gray-500 italic">
-                              Click to edit...
-                            </span>
-                          )}
-                        </span>
-                      )}
+                            }}
+                            autoFocus
+                          />
+                        )}
 
                       {/* Delete button */}
                       {(user?.id === note.user.id || user?.isAdmin) && (
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 opacity-50 hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
                           onClick={() =>
                             handleDeleteChecklistItem(note.id, item.id)
                           }
-                          className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded ml-2"
                         >
                           <Trash2 className="w-3 h-3" />
-                        </button>
+                        </Button>
                       )}
                     </div>
                   ))}
-
-                  {/* Add new item input */}
-                  {addingChecklistItem === note.id && (
-                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200">
-                      <Checkbox
-                        checked={false}
-                        disabled
-                        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mr-3 ml-2"
-                      />
-                      <Input
-                        type="text"
-                        value={newChecklistItemContent}
-                        onChange={(e) =>
-                          setNewChecklistItemContent(e.target.value)
-                        }
-                        className="flex-1 bg-transparent border-none text-sm leading-6 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
-                        placeholder="Add new item..."
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleAddChecklistItem(note.id);
-                          }
-                          if (e.key === "Escape") {
-                            setAddingChecklistItem(null);
-                            setNewChecklistItemContent("");
-                          }
-                          if (
-                            e.key === "Backspace" &&
-                            newChecklistItemContent.trim() === ""
-                          ) {
-                            setAddingChecklistItem(null);
-                            setNewChecklistItemContent("");
-                          }
-                        }}
-                        onBlur={() => {
-                          if (newChecklistItemContent.trim()) {
-                            handleAddChecklistItem(note.id);
-                          }
-                        }}
-                        autoFocus
-                      />
-                    </div>
-                  )}
 
                   {/* Add task button - everpresent for checklist notes and authorized users */}
                   {note.isChecklist &&
@@ -1944,7 +1895,7 @@ export default function BoardPage({
                           e.stopPropagation();
                           setAddingChecklistItem(note.id);
                         }}
-                        className="justify-start text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-gray-100 mt-2 ml-2 text-sm opacity-70 hover:opacity-100"
+                        className="mt-2 justify-start text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-gray-100 text-sm opacity-70 hover:opacity-100"
                       >
                         <Plus className="mr-2 h-4 w-4" />
                         Add task
