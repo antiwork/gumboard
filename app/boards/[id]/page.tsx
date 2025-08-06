@@ -1777,9 +1777,7 @@ export default function BoardPage({
                   const isBackgroundClick = target.classList.contains('note-background') || 
                                           target.closest('.note-background') === e.currentTarget;
                   
-                  if (note.isChecklist && isBackgroundClick && addingChecklistItem !== note.id) {
-                    return;
-                  } else if (!note.isChecklist || !isBackgroundClick) {
+                  if (!note.isChecklist || !isBackgroundClick) {
                     setEditingNote(note.id);
                     setEditContent(note.content);
                   }
