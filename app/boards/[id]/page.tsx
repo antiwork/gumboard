@@ -1240,45 +1240,6 @@ export default function BoardPage({
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();
 
-      if (!secondHalf) {
-        await handleEditChecklistItem(noteId, itemId, firstHalf);
-
-        const currentItem = currentNote.checklistItems.find(
-          (item) => item.id === itemId
-        );
-        const currentOrder = currentItem?.order || 0;
-
-        const newItem = {
-          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-          content: "",
-          checked: false,
-          order: currentOrder + 0.5,
-        };
-
-        const allItems = [...currentNote.checklistItems, newItem].sort(
-          (a, b) => a.order - b.order
-        );
-
-        const response = await fetch(
-          `/api/boards/${targetBoardId}/notes/${noteId}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              checklistItems: allItems,
-            }),
-          }
-        );
-
-        if (response.ok) {
-          const { note } = await response.json();
-          setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-          setEditingChecklistItem({ noteId, itemId: newItem.id });
-          setEditingChecklistItemContent("");
-        }
-        return;
-      }
-
       // Update current item with first half
       const updatedItems = currentNote.checklistItems.map((item) =>
         item.id === itemId ? { ...item, content: firstHalf } : item
@@ -1953,6 +1914,7 @@ export default function BoardPage({
                           }
                           onKeyDown={(e) => {
                             if (e.key === "Enter") {
+                              e.preventDefault();
                               const target = e.target as HTMLInputElement;
                               const cursorPosition = target.selectionStart || 0;
                               handleSplitChecklistItem(
