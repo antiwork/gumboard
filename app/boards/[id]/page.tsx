@@ -2080,8 +2080,8 @@ export default function BoardPage({
                     </div>
                   )}
                   
-                  {/* Add task button - only show for checklist notes and authorized users */}
-                  {note.isChecklist && (user?.id === note.user.id || user?.isAdmin) && addingChecklistItem !== note.id && (
+                  {/* Add task button - everpresent for checklist notes and authorized users */}
+                  {note.isChecklist && (user?.id === note.user.id || user?.isAdmin) && (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();

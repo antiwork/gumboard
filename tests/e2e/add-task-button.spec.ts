@@ -298,7 +298,7 @@ test.describe('Add Task Button', () => {
     expect(updatedChecklistItems[1].content).toBe('New task from button');
   });
 
-  test('should hide "Add task" button when already adding a checklist item', async ({ page }) => {
+  test('should keep "Add task" button visible when already adding a checklist item (everpresent)', async ({ page }) => {
     await page.route('**/api/boards/test-board/notes', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
@@ -348,7 +348,7 @@ test.describe('Add Task Button', () => {
     
     const newItemInput = page.locator('input[placeholder="Add new item..."]');
     await expect(newItemInput).toBeVisible();
-    await expect(addTaskButton).not.toBeVisible();
+    await expect(addTaskButton).toBeVisible();
   });
 
   test('should not add checklist item on background click', async ({ page }) => {
