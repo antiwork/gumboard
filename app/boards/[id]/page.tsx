@@ -2013,6 +2013,8 @@ export default function BoardPage({
                               e.key === "Backspace" &&
                               editingChecklistItemContent.trim() === ""
                             ) {
+                              e.preventDefault();
+                              
                               const currentNote = notes.find((n) => n.id === note.id);
                               if (currentNote?.checklistItems) {
                                 const currentItem = currentNote.checklistItems.find(
@@ -2027,16 +2029,25 @@ export default function BoardPage({
                                   
                                   if (currentIndex > 0) {
                                     const previousItem = sortedItems[currentIndex - 1];
-                                    setEditingChecklistItem({
-                                      noteId: note.id,
-                                      itemId: previousItem.id,
-                                    });
-                                    setEditingChecklistItemContent(previousItem.content);
+                                    
+                                    handleDeleteChecklistItem(note.id, item.id);
+                                    
+                                    setTimeout(() => {
+                                      setEditingChecklistItem({
+                                        noteId: note.id,
+                                        itemId: previousItem.id,
+                                      });
+                                      setEditingChecklistItemContent(previousItem.content);
+                                    }, 0);
+                                  } else {
+                                    handleDeleteChecklistItem(note.id, item.id);
                                   }
+                                } else {
+                                  handleDeleteChecklistItem(note.id, item.id);
                                 }
+                              } else {
+                                handleDeleteChecklistItem(note.id, item.id);
                               }
-                              
-                              handleDeleteChecklistItem(note.id, item.id);
                             }
                           }}
                           autoFocus
