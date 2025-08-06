@@ -27,6 +27,7 @@ export async function GET() {
         id: true,
         name: true,
         description: true,
+        isPublic: true,
         createdBy: true,
         createdAt: true,
         updatedAt: true,
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description } = await request.json()
+    const { name, description, isPublic } = await request.json()
 
     if (!name) {
       return NextResponse.json({ error: "Board name is required" }, { status: 400 })
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         description,
+        isPublic: Boolean(isPublic || false),
         organizationId: user.organization.id,
         createdBy: session.user.id
       },
@@ -94,4 +96,4 @@ export async function POST(request: NextRequest) {
     console.error("Error creating board:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}  
+}    

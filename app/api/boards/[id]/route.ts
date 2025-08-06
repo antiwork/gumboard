@@ -8,14 +8,8 @@ export async function GET(
 ) {
   try {
     const session = await auth()
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const boardId = (await params).id
 
-    // Check if board exists and user has access
     const board = await db.board.findUnique({
       where: { id: boardId },
       include: { organization: { include: { members: true } } }
@@ -23,6 +17,23 @@ export async function GET(
 
     if (!board) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 })
+    }
+
+    if (board.isPublic) {
+      const { organization, ...boardData } = board
+      return NextResponse.json({ 
+        board: {
+          ...boardData,
+          organization: {
+            id: organization.id,
+            name: organization.name
+          }
+        }
+      })
+    }
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Check if user is member of the organization
@@ -108,4 +119,4 @@ export async function DELETE(
     console.error("Error deleting board:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-} 
+}  

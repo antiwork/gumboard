@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { signOut } from "next-auth/react";
@@ -18,6 +19,7 @@ import {
   LogOut,
   ChevronDown,
   Grid3x3,
+  Copy,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -39,6 +41,7 @@ interface Board {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  isPublic: boolean;
   _count: {
     notes: number;
   };
@@ -61,6 +64,7 @@ export default function Dashboard() {
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
+  const [newBoardIsPublic, setNewBoardIsPublic] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
     open: boolean;
@@ -72,6 +76,7 @@ export default function Dashboard() {
     title: string;
     description: string;
   }>({ open: false, title: "", description: "" });
+  const [copiedBoardId, setCopiedBoardId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -156,6 +161,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           name: newBoardName,
           description: newBoardDescription,
+          isPublic: newBoardIsPublic,
         }),
       });
 
@@ -214,6 +220,44 @@ export default function Dashboard() {
         title: "Failed to delete board",
         description: "Failed to delete board",
       });
+    }
+  };
+
+  const handleTogglePublic = async (boardId: string, isPublic: boolean) => {
+    try {
+      const response = await fetch(`/api/boards/${boardId}/public`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isPublic }),
+      });
+
+      if (response.ok) {
+        setBoards(boards.map((board) => 
+          board.id === boardId ? { ...board, isPublic } : board
+        ));
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update board",
+          description: errorData.error || "Failed to update board settings",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating board:", error);
+    }
+  };
+
+  const handleCopyPublicUrl = async (boardId: string) => {
+    const publicUrl = `${window.location.origin}/public/boards/${boardId}`;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiedBoardId(boardId);
+      setTimeout(() => setCopiedBoardId(null), 2000);
+    } catch (error) {
+      console.error("Failed to copy URL:", error);
     }
   };
 
@@ -311,6 +355,7 @@ export default function Dashboard() {
               setShowAddBoard(false);
               setNewBoardName("");
               setNewBoardDescription("");
+              setNewBoardIsPublic(false);
             }}
           >
             <div
@@ -347,6 +392,16 @@ export default function Dashboard() {
                       className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
                     />
                   </div>
+                  
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={newBoardIsPublic}
+                      onCheckedChange={setNewBoardIsPublic}
+                    />
+                    <label className="text-sm font-medium text-foreground dark:text-zinc-200">
+                      Make this board public
+                    </label>
+                  </div>
                 </div>
                 <div className="flex justify-end space-x-3 mt-6">
                   <Button
@@ -356,6 +411,7 @@ export default function Dashboard() {
                       setShowAddBoard(false);
                       setNewBoardName("");
                       setNewBoardDescription("");
+                      setNewBoardIsPublic(false);
                     }}
                     className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
@@ -417,6 +473,43 @@ export default function Dashboard() {
                             {board.description}
                           </CardDescription>
                         )}
+                        
+                        <div className="mt-3 flex items-center justify-between" onClick={(e) => e.preventDefault()}>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              checked={board.isPublic}
+                              onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
+                              disabled={user?.id !== board.createdBy && !user?.isAdmin}
+                            />
+                            <span className="text-xs text-muted-foreground dark:text-zinc-400">
+                              {board.isPublic ? "Public" : "Private"}
+                            </span>
+                          </div>
+                          
+                          {board.isPublic && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleCopyPublicUrl(board.id);
+                              }}
+                              className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                              title="Copy public link"
+                            >
+                              {copiedBoardId === board.id ? (
+                                <>
+                                  <span>✓</span>
+                                  <span>Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy link</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {(user?.id === board.createdBy || user?.isAdmin) && (
                         <button
