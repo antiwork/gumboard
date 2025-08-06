@@ -34,6 +34,54 @@ test.describe('Authentication Flow', () => {
     expect(authData).not.toBeNull();
     expect(authData!.email).toBe('test@example.com');
   });
+  
+  test('should reuse email-created account when signing in with Google using same email', async ({ page }) => {
+    const existingUserId = 'email-user-123';
+    const testEmail = 'sahil@gumroad.com';
+    
+    await page.route('**/api/auth/session', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: {
+            id: existingUserId, // Same ID as the email-created account
+            name: 'Sahil Gumroad',
+            email: testEmail,
+            image: 'https://lh3.googleusercontent.com/a/avatar.jpg',
+          },
+        }),
+      });
+    });
+
+    await page.route('**/api/user', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          id: existingUserId,
+          name: 'Sahil Gumroad', 
+          email: testEmail,
+          isAdmin: false,
+          organization: null,
+        }),
+      });
+    });
+
+    await page.route('**/api/boards', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ boards: [] }),
+      });
+    });
+
+    await page.goto('/dashboard');
+    
+    await expect(page).toHaveURL(/.*dashboard/);
+    await expect(page.locator('text=No boards yet')).toBeVisible();
+  
+  });
 
   test('should authenticate user and access dashboard', async ({ page }) => {
     await page.route('**/api/auth/session', async (route) => {
