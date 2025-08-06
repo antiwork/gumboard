@@ -21,6 +21,16 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Board {
   id: string;
@@ -52,6 +62,16 @@ export default function Dashboard() {
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
+    open: boolean;
+    boardId: string;
+    boardName: string;
+  }>({ open: false, boardId: "", boardName: "" });
+  const [errorDialog, setErrorDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+  }>({ open: false, title: "", description: "" });
   const router = useRouter();
 
   useEffect(() => {
@@ -147,31 +167,53 @@ export default function Dashboard() {
         setShowAddBoard(false);
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to create board");
+        setErrorDialog({
+          open: true,
+          title: "Failed to create board",
+          description: errorData.error || "Failed to create board",
+        });
       }
     } catch (error) {
       console.error("Error creating board:", error);
-      alert("Failed to create board");
+      setErrorDialog({
+        open: true,
+        title: "Failed to create board",
+        description: "Failed to create board",
+      });
     }
   };
 
-  const handleDeleteBoard = async (boardId: string) => {
-    if (!confirm("Are you sure you want to delete this board?")) return;
+  const handleDeleteBoard = (boardId: string, boardName: string) => {
+    setDeleteConfirmDialog({
+      open: true,
+      boardId,
+      boardName,
+    });
+  };
 
+  const confirmDeleteBoard = async () => {
     try {
-      const response = await fetch(`/api/boards/${boardId}`, {
+      const response = await fetch(`/api/boards/${deleteConfirmDialog.boardId}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        setBoards(boards.filter((board) => board.id !== boardId));
+        setBoards(boards.filter((board) => board.id !== deleteConfirmDialog.boardId));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete board");
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete board",
+          description: errorData.error || "Failed to delete board",
+        });
       }
     } catch (error) {
       console.error("Error deleting board:", error);
-      alert("Failed to delete board");
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete board",
+        description: "Failed to delete board",
+      });
     }
   };
 
@@ -381,7 +423,7 @@ export default function Dashboard() {
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleDeleteBoard(board.id);
+                            handleDeleteBoard(board.id, board.name);
                           }}
                           className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity ml-2"
                           title={
@@ -420,6 +462,51 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={deleteConfirmDialog.open} onOpenChange={(open) => setDeleteConfirmDialog({ open, boardId: "", boardName: "" })}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              Delete board
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Are you sure you want to delete &quot;{deleteConfirmDialog.boardName}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteBoard}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              Delete board
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              {errorDialog.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              {errorDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

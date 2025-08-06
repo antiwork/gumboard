@@ -120,7 +120,7 @@ export async function POST(
       }
     })
 
-    if (user.organization?.slackWebhookUrl && hasValidContent(content) && shouldSendNotification(session.user.id, boardId)) {
+    if (user.organization?.slackWebhookUrl && hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name)) {
       const slackMessage = formatNoteForSlack(note, board.name, user.name || user.email)
       const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
         text: slackMessage,
@@ -141,4 +141,4 @@ export async function POST(
     console.error("Error creating note:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}                
+}                                

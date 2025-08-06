@@ -18,6 +18,16 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface User {
   id: string;
@@ -78,6 +88,22 @@ export default function OrganizationSettingsPage() {
     expiresAt: "",
     usageLimit: "",
   });
+  const [removeMemberDialog, setRemoveMemberDialog] = useState<{
+    open: boolean;
+    memberId: string;
+    memberName: string;
+  }>({ open: false, memberId: "", memberName: "" });
+  const [deleteInviteDialog, setDeleteInviteDialog] = useState<{
+    open: boolean;
+    inviteToken: string;
+    inviteName: string;
+  }>({ open: false, inviteToken: "", inviteName: "" });
+  const [errorDialog, setErrorDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    variant?: "default" | "success" | "error";
+  }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
   const router = useRouter();
 
@@ -158,11 +184,19 @@ export default function OrganizationSettingsPage() {
         setOriginalSlackWebhookUrl(slackWebhookUrl);
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to update organization");
+        setErrorDialog({
+          open: true,
+          title: "Failed to update organization",
+          description: errorData.error || "Failed to update organization",
+        });
       }
     } catch (error) {
       console.error("Error updating organization:", error);
-      alert("Failed to update organization");
+      setErrorDialog({
+        open: true,
+        title: "Failed to update organization",
+        description: "Failed to update organization",
+      });
     } finally {
       setSaving(false);
     }
@@ -189,21 +223,35 @@ export default function OrganizationSettingsPage() {
         fetchInvites();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to send invite");
+        setErrorDialog({
+          open: true,
+          title: "Failed to send invite",
+          description: errorData.error || "Failed to send invite",
+        });
       }
     } catch (error) {
       console.error("Error inviting member:", error);
-      alert("Failed to send invite");
+      setErrorDialog({
+        open: true,
+        title: "Failed to send invite",
+        description: "Failed to send invite",
+      });
     } finally {
       setInviting(false);
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (!confirm("Are you sure you want to remove this team member?")) return;
+  const handleRemoveMember = (memberId: string, memberName: string) => {
+    setRemoveMemberDialog({
+      open: true,
+      memberId,
+      memberName,
+    });
+  };
 
+  const confirmRemoveMember = async () => {
     try {
-      const response = await fetch(`/api/organization/members/${memberId}`, {
+      const response = await fetch(`/api/organization/members/${removeMemberDialog.memberId}`, {
         method: "DELETE",
       });
 
@@ -211,11 +259,19 @@ export default function OrganizationSettingsPage() {
         fetchUserData();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to remove member");
+        setErrorDialog({
+          open: true,
+          title: "Failed to remove member",
+          description: errorData.error || "Failed to remove member",
+        });
       }
     } catch (error) {
       console.error("Error removing member:", error);
-      alert("Failed to remove member");
+      setErrorDialog({
+        open: true,
+        title: "Failed to remove member",
+        description: "Failed to remove member",
+      });
     }
   };
 
@@ -252,11 +308,19 @@ export default function OrganizationSettingsPage() {
         fetchUserData(); // Refresh the data to show updated admin status
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to update admin status");
+        setErrorDialog({
+          open: true,
+          title: "Failed to update admin status",
+          description: errorData.error || "Failed to update admin status",
+        });
       }
     } catch (error) {
       console.error("Error toggling admin status:", error);
-      alert("Failed to update admin status");
+      setErrorDialog({
+        open: true,
+        title: "Failed to update admin status",
+        description: "Failed to update admin status",
+      });
     }
   };
 
@@ -299,22 +363,36 @@ export default function OrganizationSettingsPage() {
         fetchSelfServeInvites();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to create invite link");
+        setErrorDialog({
+          open: true,
+          title: "Failed to create invite link",
+          description: errorData.error || "Failed to create invite link",
+        });
       }
     } catch (error) {
       console.error("Error creating self-serve invite:", error);
-      alert("Failed to create invite link");
+      setErrorDialog({
+        open: true,
+        title: "Failed to create invite link",
+        description: "Failed to create invite link",
+      });
     } finally {
       setCreating(false);
     }
   };
 
-  const handleDeleteSelfServeInvite = async (inviteToken: string) => {
-    if (!confirm("Are you sure you want to delete this invite link?")) return;
+  const handleDeleteSelfServeInvite = (inviteToken: string, inviteName: string) => {
+    setDeleteInviteDialog({
+      open: true,
+      inviteToken,
+      inviteName,
+    });
+  };
 
+  const confirmDeleteSelfServeInvite = async () => {
     try {
       const response = await fetch(
-        `/api/organization/self-serve-invites/${inviteToken}`,
+        `/api/organization/self-serve-invites/${deleteInviteDialog.inviteToken}`,
         {
           method: "DELETE",
         }
@@ -324,11 +402,19 @@ export default function OrganizationSettingsPage() {
         fetchSelfServeInvites();
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete invite link");
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete invite link",
+          description: errorData.error || "Failed to delete invite link",
+        });
       }
     } catch (error) {
       console.error("Error deleting self-serve invite:", error);
-      alert("Failed to delete invite link");
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete invite link",
+        description: "Failed to delete invite link",
+      });
     }
   };
 
@@ -336,7 +422,12 @@ export default function OrganizationSettingsPage() {
     const inviteUrl = `${window.location.origin}/join/${inviteToken}`;
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      alert("Invite link copied to clipboard!");
+      setErrorDialog({
+        open: true,
+        title: "Success",
+        description: "Invite link copied to clipboard!",
+        variant: "success",
+      });
     } catch (error) {
       console.error("Failed to copy link:", error);
       // Fallback for older browsers
@@ -346,7 +437,12 @@ export default function OrganizationSettingsPage() {
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      alert("Invite link copied to clipboard!");
+      setErrorDialog({
+        open: true,
+        title: "Success",
+        description: "Invite link copied to clipboard!",
+        variant: "success",
+      });
     }
   };
 
@@ -545,7 +641,7 @@ export default function OrganizationSettingsPage() {
                   )}
                   {user?.isAdmin && member.id !== user.id && (
                     <Button
-                      onClick={() => handleRemoveMember(member.id)}
+                      onClick={() => handleRemoveMember(member.id, member.name || member.email)}
                       variant="outline"
                       size="sm"
                       className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
@@ -799,7 +895,7 @@ export default function OrganizationSettingsPage() {
                       {user?.isAdmin && (
                         <Button
                           onClick={() =>
-                            handleDeleteSelfServeInvite(invite.token)
+                            handleDeleteSelfServeInvite(invite.token, invite.name)
                           }
                           variant="outline"
                           size="sm"
@@ -817,6 +913,79 @@ export default function OrganizationSettingsPage() {
           )}
         </div>
       </Card>
+
+      <AlertDialog open={removeMemberDialog.open} onOpenChange={(open) => setRemoveMemberDialog({ open, memberId: "", memberName: "" })}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              Remove team member
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Are you sure you want to remove {removeMemberDialog.memberName} from the team? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemoveMember}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              Remove member
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteInviteDialog.open} onOpenChange={(open) => setDeleteInviteDialog({ open, inviteToken: "", inviteName: "" })}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              Delete invite link
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Are you sure you want to delete the invite link &quot;{deleteInviteDialog.inviteName}&quot;? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteSelfServeInvite}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              Delete invite link
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "", variant: "error" })}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              {errorDialog.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              {errorDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setErrorDialog({ open: false, title: "", description: "", variant: "error" })}
+              className={
+                errorDialog.variant === "success"
+                  ? "bg-green-600 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-700"
+                  : "bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+              }
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

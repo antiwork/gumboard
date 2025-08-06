@@ -137,7 +137,7 @@ export async function PUT(
       
       // Send notifications for newly added todos
       for (const addedItem of addedItems) {
-        if (hasValidContent(addedItem.content) && shouldSendNotification(session.user.id, boardId)) {
+        if (hasValidContent(addedItem.content) && shouldSendNotification(session.user.id, boardId, boardName)) {
           await sendTodoNotification(
             user.organization.slackWebhookUrl,
             addedItem.content,
@@ -165,7 +165,7 @@ export async function PUT(
       const wasEmpty = !hasValidContent(note.content)
       const hasContent = hasValidContent(content)
       
-      if (wasEmpty && hasContent && shouldSendNotification(session.user.id, boardId)) {
+      if (wasEmpty && hasContent && shouldSendNotification(session.user.id, boardId, updatedNote.board.name)) {
         const slackMessage = formatNoteForSlack(updatedNote, updatedNote.board.name, user.name || user.email || 'Unknown User')
         const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
           text: slackMessage,
@@ -256,4 +256,4 @@ export async function DELETE(
     console.error("Error deleting note:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}        
+}                

@@ -19,6 +19,16 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ChecklistItem {
   id: string;
@@ -104,6 +114,15 @@ export default function BoardPage({
   const [editingChecklistItemContent, setEditingChecklistItemContent] =
     useState("");
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
+  const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
+    open: boolean;
+    noteId: string;
+  }>({ open: false, noteId: "" });
+  const [errorDialog, setErrorDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+  }>({ open: false, title: "", description: "" });
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -774,7 +793,11 @@ export default function BoardPage({
   const handleAddNote = async (targetBoardId?: string) => {
     // For all notes view, ensure a board is selected
     if (boardId === "all-notes" && !targetBoardId) {
-      alert("Please select a board to add the note to");
+      setErrorDialog({
+        open: true,
+        title: "Board selection required",
+        description: "Please select a board to add the note to",
+      });
       return;
     }
 
@@ -793,12 +816,7 @@ export default function BoardPage({
           body: JSON.stringify({
             content: "",
             isChecklist: true,
-            checklistItems: [{
-              id: `item-${Date.now()}`,
-              content: "",
-              checked: false,
-              order: 0,
-            }],
+            checklistItems: [],
             ...(isAllNotesView && { boardId: targetBoardId }),
           }),
         }
@@ -842,41 +860,62 @@ export default function BoardPage({
         setEditContent("");
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to update note");
+        setErrorDialog({
+          open: true,
+          title: "Failed to update note",
+          description: errorData.error || "Failed to update note",
+        });
       }
     } catch (error) {
       console.error("Error updating note:", error);
-      alert("Failed to update note");
+      setErrorDialog({
+        open: true,
+        title: "Failed to update note",
+        description: "Failed to update note",
+      });
     }
   };
 
-  const handleDeleteNote = async (noteId: string) => {
-    if (!confirm("Are you sure you want to delete this note?")) return;
+  const handleDeleteNote = (noteId: string) => {
+    setDeleteNoteDialog({
+      open: true,
+      noteId,
+    });
+  };
 
+  const confirmDeleteNote = async () => {
     try {
       // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === noteId);
+      const currentNote = notes.find((n) => n.id === deleteNoteDialog.noteId);
       const targetBoardId =
         boardId === "all-notes" && currentNote?.board?.id
           ? currentNote.board.id
           : boardId;
 
       const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
+        `/api/boards/${targetBoardId}/notes/${deleteNoteDialog.noteId}`,
         {
           method: "DELETE",
         }
       );
 
       if (response.ok) {
-        setNotes(notes.filter((n) => n.id !== noteId));
+        setNotes(notes.filter((n) => n.id !== deleteNoteDialog.noteId));
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to delete note");
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete note",
+          description: errorData.error || "Failed to delete note",
+        });
       }
     } catch (error) {
       console.error("Error deleting note:", error);
-      alert("Failed to delete note");
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete note",
+        description: "Failed to delete note",
+      });
     }
   };
 
@@ -939,11 +978,19 @@ export default function BoardPage({
         router.push(`/boards/${board.id}`);
       } else {
         const errorData = await response.json();
-        alert(errorData.error || "Failed to create board");
+        setErrorDialog({
+          open: true,
+          title: "Failed to create board",
+          description: errorData.error || "Failed to create board",
+        });
       }
     } catch (error) {
       console.error("Error creating board:", error);
-      alert("Failed to create board");
+      setErrorDialog({
+        open: true,
+        title: "Failed to create board",
+        description: "Failed to create board",
+      });
     }
   };
 
@@ -1988,7 +2035,11 @@ export default function BoardPage({
                             }
                           }}
                         >
-                          {item.content}
+                          {item.content || (
+                            <span className="text-gray-400 dark:text-gray-500 italic">
+                              Click to edit...
+                            </span>
+                          )}
                         </span>
                       )}
 
@@ -2008,7 +2059,7 @@ export default function BoardPage({
 
                   {/* Add new item input */}
                   {addingChecklistItem === note.id && (
-                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded-2xl pl-6 pr-3 py-2 -ml-6 -mr-3 mt-2 transition-all duration-200">
+                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200">
                       <div className="w-4 h-4 rounded border-2 border-gray-400 dark:border-gray-500 mr-3 flex-shrink-0 bg-white dark:bg-gray-800 bg-opacity-60 dark:bg-opacity-60 ml-2"></div>
                       <input
                         type="text"
@@ -2211,6 +2262,51 @@ export default function BoardPage({
           </div>
         </div>
       )}
+
+      <AlertDialog open={deleteNoteDialog.open} onOpenChange={(open) => setDeleteNoteDialog({ open, noteId: "" })}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              Delete note
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Are you sure you want to delete this note? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteNote}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              Delete note
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              {errorDialog.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              {errorDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

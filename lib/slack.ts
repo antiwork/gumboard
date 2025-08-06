@@ -31,7 +31,12 @@ export function hasValidContent(content: string | null | undefined): boolean {
 const notificationDebounce = new Map<string, number>()
 const DEBOUNCE_DURATION = 1000
 
-export function shouldSendNotification(userId: string, boardId: string): boolean {
+export function shouldSendNotification(userId: string, boardId: string, boardName: string): boolean {
+  if (boardName.startsWith("Test")) {
+    console.log(`[Slack] Skipping notification for test board: ${boardName}`)
+    return false
+  }
+  
   const key = `${userId}-${boardId}`
   const now = Date.now()
   const lastNotification = notificationDebounce.get(key)
