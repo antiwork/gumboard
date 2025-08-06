@@ -478,32 +478,6 @@ export default function BoardPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
-  const isEditingRef = useRef(false);           // always up‑to‑date in the interval
-
-  useEffect(() => {
-    isEditingRef.current = editingNote !== null; // editingNote already exists in state
-  }, [editingNote]);
-  useEffect(() => {
-    let cancelled = false;
-    const inFlight = { v: false };
-  
-    const tick = async () => {
-      if (cancelled || isEditingRef.current || inFlight.v) return;  // 🔐 bail out
-      inFlight.v = true;
-      try {
-        await fetchBoardData();   // same helper you added earlier
-      } finally {
-        inFlight.v = false;
-      }
-    };
-  
-    const id = setInterval(tick, 5_000);
-    return () => {
-      cancelled = true;
-      clearInterval(id);
-    };
-  }, [boardId]);   // restart when the user switches boards
-
   // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
