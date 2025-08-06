@@ -1778,8 +1778,7 @@ export default function BoardPage({
                                           target.closest('.note-background') === e.currentTarget;
                   
                   if (note.isChecklist && isBackgroundClick && addingChecklistItem !== note.id) {
-                    // Create new checklist item on background click
-                    setAddingChecklistItem(note.id);
+                    return;
                   } else if (!note.isChecklist || !isBackgroundClick) {
                     setEditingNote(note.id);
                     setEditContent(note.content);
@@ -2095,6 +2094,20 @@ export default function BoardPage({
                         autoFocus
                       />
                     </div>
+                  )}
+                  
+                  {/* Add task button - only show for checklist notes and authorized users */}
+                  {note.isChecklist && (user?.id === note.user.id || user?.isAdmin) && addingChecklistItem !== note.id && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAddingChecklistItem(note.id);
+                      }}
+                      className="flex items-center justify-start text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-gray-100 transition-colors duration-200 mt-2 ml-2 text-sm opacity-70 hover:opacity-100"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add task
+                    </button>
                   )}
                 </div>
               ) : (
