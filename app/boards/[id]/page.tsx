@@ -1769,23 +1769,6 @@ export default function BoardPage({
                 height: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
               }}
-              onClick={(e) => {
-                // Allow editing if user is the note author or admin
-                if (user?.id === note.user.id || user?.isAdmin) {
-                  // Check if click was on background (not on existing content)
-                  const target = e.target as HTMLElement;
-                  const isBackgroundClick = target.classList.contains('note-background') || 
-                                          target.closest('.note-background') === e.currentTarget;
-                  
-                  if (note.isChecklist && isBackgroundClick && addingChecklistItem !== note.id) {
-                    // Create new checklist item on background click
-                    setAddingChecklistItem(note.id);
-                  } else if (!note.isChecklist || !isBackgroundClick) {
-                    setEditingNote(note.id);
-                    setEditContent(note.content);
-                  }
-                }
-              }}
             >
               {/* User Info Header */}
               <div className="flex items-start justify-between mb-4 flex-shrink-0">
@@ -2129,6 +2112,20 @@ export default function BoardPage({
                         autoFocus
                       />
                     </div>
+                  )}
+                  
+                  {/* Add task button - everpresent for checklist notes and authorized users */}
+                  {note.isChecklist && (user?.id === note.user.id || user?.isAdmin) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setAddingChecklistItem(note.id);
+                      }}
+                      className="flex items-center justify-start text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-gray-100 transition-colors duration-200 mt-2 ml-2 text-sm opacity-70 hover:opacity-100"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add task
+                    </button>
                   )}
                 </div>
               ) : (
