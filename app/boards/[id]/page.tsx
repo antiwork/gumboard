@@ -2058,7 +2058,11 @@ export default function BoardPage({
                             }
                           }}
                         >
-                          {item.content}
+                          {item.content || (
+                            <span className="text-gray-400 dark:text-gray-500 italic">
+                              Click to edit...
+                            </span>
+                          )}
                         </span>
                       )}
 
@@ -2078,7 +2082,7 @@ export default function BoardPage({
 
                   {/* Add new item input */}
                   {addingChecklistItem === note.id && (
-                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded-2xl pl-6 pr-3 py-2 -ml-6 -mr-3 mt-2 transition-all duration-200">
+                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200">
                       <div className="w-4 h-4 rounded border-2 border-gray-400 dark:border-gray-500 mr-3 flex-shrink-0 bg-white dark:bg-gray-800 bg-opacity-60 dark:bg-opacity-60 ml-2"></div>
                       <input
                         type="text"
