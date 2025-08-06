@@ -83,6 +83,7 @@ model Board {
   id             String       @id @default(cuid())
   name           String
   description    String?
+  isPublic       Boolean      @default(false)
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy      String
