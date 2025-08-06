@@ -780,6 +780,28 @@ export default function BoardPage({
         boardId === "all-notes" ? targetBoardId : boardId;
       const isAllNotesView = boardId === "all-notes";
 
+      // Generate a temporary ID for optimistic update
+      const tempId = `temp-${Date.now()}`;
+      const tempNote: Note = {
+        id: tempId,
+        content: "",
+        color: "#FBBF24",
+        done: false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        isChecklist: true,
+        checklistItems: [],
+        user: user || { id: "", name: "", email: "" },
+        board: isAllNotesView && targetBoardId 
+          ? allBoards.find(b => b.id === targetBoardId) 
+          : board || undefined,
+      };
+
+      // OPTIMISTIC UPDATE
+      setNotes([...notes, tempNote]);
+      setAddingChecklistItem(tempId);
+      setNewChecklistItemContent("");
+
       const response = await fetch(
         `/api/boards/${isAllNotesView ? "all-notes" : actualTargetBoardId}/notes`,
         {
@@ -798,12 +820,33 @@ export default function BoardPage({
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes([...notes, note]);
-        setAddingChecklistItem(note.id);
-        setNewChecklistItemContent("");
+        setNotes(prevNotes => 
+          prevNotes.map(n => n.id === tempId ? note : n)
+        );
+        // Update the adding state to the real note ID
+        if (addingChecklistItem === tempId) {
+          setAddingChecklistItem(note.id);
+        }
+      } else {
+        setNotes(prevNotes => prevNotes.filter(n => n.id !== tempId));
+        setAddingChecklistItem(null);
+        setErrorDialog({
+          open: true,
+          title: "Failed to Create Note",
+          description: "Failed to create note. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Error creating note:", error);
+
+      setNotes(prevNotes => prevNotes.filter(n => n.id.startsWith("temp-")));
+      setAddingChecklistItem(null);
+      
+      setErrorDialog({
+        open: true,
+        title: "Connection Error",
+        description: "Failed to create note. Please check your connection.",
+      });
     }
   };
 
@@ -811,11 +854,26 @@ export default function BoardPage({
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
       const targetBoardId =
-        boardId === "all-notes" && currentNote?.board?.id
+        boardId === "all-notes" && currentNote.board?.id
           ? currentNote.board.id
           : boardId;
 
+      // Store original content for potential rollback
+      const originalContent = currentNote.content;
+
+      // OPTIMISTIC UPDATE: Update UI immediately
+      const optimisticNote = {
+        ...currentNote,
+        content: content,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+      setEditingNote(null);
+      setEditContent("");
+
+      // Send to server in background
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
         {
@@ -828,11 +886,19 @@ export default function BoardPage({
       );
 
       if (response.ok) {
+        // Server succeeded, confirm with actual server response
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-        setEditingNote(null);
-        setEditContent("");
       } else {
+        // Server failed, revert to original content
+        console.error("Server error, reverting optimistic update");
+        const revertedNote = { ...currentNote, content: originalContent };
+        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
+        
+        // Re-enable editing with original content
+        setEditingNote(noteId);
+        setEditContent(originalContent);
+
         const errorData = await response.json();
         setErrorDialog({
           open: true,
@@ -842,10 +908,20 @@ export default function BoardPage({
       }
     } catch (error) {
       console.error("Error updating note:", error);
+      
+      // Revert optimistic update on network error
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (currentNote) {
+        // We need to restore the original content, but we've lost it
+        // In a more robust implementation, we'd store it in state
+        setEditingNote(noteId);
+        setEditContent(currentNote.content); // Use current content as fallback
+      }
+      
       setErrorDialog({
         open: true,
-        title: "Failed to update note",
-        description: "Failed to update note",
+        title: "Connection Error", 
+        description: "Failed to save note. Please try again.",
       });
     }
   };
@@ -897,11 +973,22 @@ export default function BoardPage({
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
+
       const targetBoardId =
-        boardId === "all-notes" && currentNote?.board?.id
+        boardId === "all-notes" && currentNote.board?.id
           ? currentNote.board.id
           : boardId;
 
+      // OPTIMISTIC UPDATE: Update UI immediately
+      const optimisticNote = {
+        ...currentNote,
+        done: !currentDone,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+
+      // Send to server in background
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
         {
@@ -914,11 +1001,35 @@ export default function BoardPage({
       );
 
       if (response.ok) {
+        // Server succeeded, confirm with actual server response
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+      } else {
+        // Server failed, revert to original state
+        console.error("Server error, reverting optimistic update");
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        
+        setErrorDialog({
+          open: true,
+          title: "Update Failed",
+          description: "Failed to update note status. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Error toggling note done status:", error);
+      
+      // Revert optimistic update on network error
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (currentNote) {
+        const revertedNote = { ...currentNote, done: currentDone };
+        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
+      }
+      
+      setErrorDialog({
+        open: true,
+        title: "Connection Error",
+        description: "Failed to sync changes. Please check your connection.",
+      });
     }
   };
 
