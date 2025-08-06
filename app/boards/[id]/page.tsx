@@ -6,8 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Pencil,
-  Trash2,
-  Edit3,
   Plus,
   ChevronDown,
   Settings,
@@ -19,6 +17,7 @@ import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
+import { NoteCard } from "@/components/note-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -478,20 +477,20 @@ export default function BoardPage({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
-  const isEditingRef = useRef(false);           // always up‑to‑date in the interval
+  const isEditingRef = useRef(false);
 
   useEffect(() => {
-    isEditingRef.current = editingNote !== null; // editingNote already exists in state
+    isEditingRef.current = editingNote !== null;
   }, [editingNote]);
   useEffect(() => {
     let cancelled = false;
     const inFlight = { v: false };
   
     const tick = async () => {
-      if (cancelled || isEditingRef.current || inFlight.v) return;  // 🔐 bail out
+      if (cancelled || isEditingRef.current || inFlight.v) return;
       inFlight.v = true;
       try {
-        await fetchBoardData();   // same helper you added earlier
+        await fetchBoardData();
       } finally {
         inFlight.v = false;
       }
@@ -502,9 +501,8 @@ export default function BoardPage({
       cancelled = true;
       clearInterval(id);
     };
-  }, [boardId]);   // restart when the user switches boards
+  }, [boardId]);
 
-  // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -568,22 +566,18 @@ export default function BoardPage({
     editingChecklistItem,
   ]);
 
-  // Enhanced responsive handling with debounced resize and better breakpoints
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
 
     const checkResponsive = () => {
       if (typeof window !== "undefined") {
         const width = window.innerWidth;
-        setIsMobile(width < 768); // Tablet breakpoint
+        setIsMobile(width < 768);
 
-        // Force re-render of notes layout after screen size change
-        // This ensures notes are properly repositioned
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
           setNotes((prevNotes) => [...prevNotes]);
-        }, 50); // Debounce resize events - reduced for real-time feel
+        }, 50);
       }
     };
 
@@ -595,7 +589,6 @@ export default function BoardPage({
     };
   }, []);
 
-  // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
     const authorsMap = new Map<
       string,
@@ -617,7 +610,6 @@ export default function BoardPage({
     );
   };
 
-  // Filter notes based on search term, date range, author, and done status
   const filterAndSortNotes = (
     notes: Note[],
     searchTerm: string,
@@ -628,12 +620,15 @@ export default function BoardPage({
   ): Note[] => {
     let filteredNotes = notes;
 
-    // Filter by done status
     if (!showDone) {
-      filteredNotes = filteredNotes.filter((note) => !note.done);
+      filteredNotes = filteredNotes.filter((note) => {
+        if (note.isChecklist) {
+          return true;
+        }
+        return !note.done;
+      });
     }
 
-    // Filter by search term
     if (searchTerm.trim()) {
       const search = searchTerm.toLowerCase();
       filteredNotes = filteredNotes.filter((note) => {
@@ -643,12 +638,10 @@ export default function BoardPage({
       });
     }
 
-    // Filter by author
     if (authorId) {
       filteredNotes = filteredNotes.filter((note) => note.user.id === authorId);
     }
 
-    // Filter by date range
     if (dateRange.startDate || dateRange.endDate) {
       filteredNotes = filteredNotes.filter((note) => {
         const noteDate = new Date(note.createdAt);
@@ -679,27 +672,23 @@ export default function BoardPage({
       });
     }
 
-    // Sort notes with user priority (current user's notes first) and then by creation date (newest first)
     filteredNotes.sort((a, b) => {
-      // First priority: logged-in user's notes come first
       if (currentUser) {
         const aIsCurrentUser = a.user.id === currentUser.id;
         const bIsCurrentUser = b.user.id === currentUser.id;
 
         if (aIsCurrentUser && !bIsCurrentUser) {
-          return -1; // a (current user's note) comes first
+          return -1;
         }
         if (!aIsCurrentUser && bIsCurrentUser) {
-          return 1; // b (current user's note) comes first
+          return 1;
         }
       }
 
-      // Second priority: done status (undone notes first) if showing done notes
       if (showDone && a.done !== b.done) {
-        return a.done ? 1 : -1; // Undone notes (false) come first
+        return a.done ? 1 : -1;
       }
 
-      // Third priority: newest first
       return (
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -708,10 +697,8 @@ export default function BoardPage({
     return filteredNotes;
   };
 
-  // Get unique authors for dropdown
   const uniqueAuthors = getUniqueAuthors(notes);
 
-  // Get filtered and sorted notes for display
   const filteredNotes = filterAndSortNotes(
     notes,
     searchTerm,
@@ -723,7 +710,6 @@ export default function BoardPage({
 
   const fetchBoardData = async () => {
     try {
-      // Get user info first to check authentication
       const userResponse = await fetch("/api/user");
       if (userResponse.status === 401) {
         router.push("/auth/signin");
@@ -735,7 +721,6 @@ export default function BoardPage({
         setUser(userData);
       }
 
-      // Fetch all boards for the dropdown
       const allBoardsResponse = await fetch("/api/boards");
       if (allBoardsResponse.ok) {
         const { boards } = await allBoardsResponse.json();
@@ -743,21 +728,18 @@ export default function BoardPage({
       }
 
       if (boardId === "all-notes") {
-        // For all notes view, create a virtual board object and fetch all notes
         setBoard({
           id: "all-notes",
           name: "All notes",
           description: "Notes from all boards",
         });
 
-        // Fetch notes from all boards
         const notesResponse = await fetch(`/api/boards/all-notes/notes`);
         if (notesResponse.ok) {
           const { notes } = await notesResponse.json();
           setNotes(notes);
         }
       } else {
-        // Fetch current board info
         const boardResponse = await fetch(`/api/boards/${boardId}`);
         if (boardResponse.status === 401) {
           router.push("/auth/signin");
@@ -768,7 +750,6 @@ export default function BoardPage({
           setBoard(board);
         }
 
-        // Fetch notes for specific board
         const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
         if (notesResponse.ok) {
           const { notes } = await notesResponse.json();
@@ -1389,7 +1370,6 @@ export default function BoardPage({
       <div className="bg-card dark:bg-zinc-900 border-b border-border dark:border-zinc-800 shadow-sm">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
-            {/* Company Name */}
             <Link
               href="/dashboard"
               className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4"
@@ -1399,7 +1379,6 @@ export default function BoardPage({
               </h1>
             </Link>
 
-            {/* Board Selector Dropdown */}
             <div className="relative board-dropdown hidden md:block">
               <button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
@@ -1420,7 +1399,6 @@ export default function BoardPage({
               {showBoardDropdown && (
                 <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
                   <div className="py-1">
-                    {/* All Notes Option */}
                     <Link
                       href="/boards/all-notes"
                       className={`block px-4 py-2 text-sm hover:bg-accent dark:hover:bg-zinc-800 ${
@@ -1475,7 +1453,6 @@ export default function BoardPage({
               )}
             </div>
 
-            {/* Filter Popover */}
             <div className="hidden md:block">
               <FilterPopover
                 startDate={dateRange.startDate}
@@ -1751,25 +1728,19 @@ export default function BoardPage({
         {/* Notes */}
         <div className="relative w-full h-full">
           {layoutNotes.map((note) => (
-            <div
+            <NoteCard
               key={note.id}
-              className={`absolute rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border note-background ${
-                note.done ? "opacity-80" : ""
-              }`}
-              style={{
-                backgroundColor:
-                  typeof window !== "undefined" &&
-                  window.matchMedia &&
-                  window.matchMedia("(prefers-color-scheme: dark)").matches
-                    ? `${note.color}20`
-                    : note.color,
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-              }}
-              onClick={(e) => {
+              note={note}
+              user={user}
+              boardId={boardId ?? ""}
+              editingNote={editingNote}
+              editContent={editContent}
+              addingChecklistItem={addingChecklistItem}
+              newChecklistItemContent={newChecklistItemContent}
+              editingChecklistItem={editingChecklistItem}
+              editingChecklistItemContent={editingChecklistItemContent}
+              animatingItems={animatingItems}
+              onNoteClick={(note, e) => {
                 // Allow editing if user is the note author or admin
                 if (user?.id === note.user.id || user?.isAdmin) {
                   // Check if click was on background (not on existing content)
@@ -1786,332 +1757,22 @@ export default function BoardPage({
                   }
                 }
               }}
-            >
-              {/* User Info Header */}
-              <div className="flex items-start justify-between mb-4 flex-shrink-0">
-                <div className="flex items-center space-x-2">
-                  <div className="w-7 h-7 bg-white bg-opacity-40 dark:bg-gray-800 dark:bg-opacity-40 rounded-full flex items-center justify-center shadow-sm">
-                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-                      {note.user.name
-                        ? note.user.name.charAt(0).toUpperCase()
-                        : note.user.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate max-w-20">
-                      {note.user.name
-                        ? note.user.name.split(" ")[0]
-                        : note.user.email.split("@")[0]}
-                    </span>
-                    <div className="flex flex-col">
-                      {!note.isChecklist && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400 opacity-70">
-                          {new Date(note.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year:
-                                new Date(note.createdAt).getFullYear() !==
-                                new Date().getFullYear()
-                                  ? "numeric"
-                                  : undefined,
-                            }
-                          )}
-                        </span>
-                      )}
-                      {boardId === "all-notes" && note.board && (
-                        <span className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20">
-                          {note.board.name}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {/* Show edit/delete buttons for note author or admin */}
-                  {(user?.id === note.user.id || user?.isAdmin) && (
-                    <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!note.isChecklist && (
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingNote(note.id);
-                            setEditContent(note.content);
-                          }}
-                          className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                        </button>
-                      )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteNote(note.id);
-                        }}
-                        className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    </div>
-                  )}
-                  {/* Beautiful checkbox for done status - show to author or admin */}
-                  {(user?.id === note.user.id || user?.isAdmin) && (
-                    <div className="flex items-center">
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          if (note.isChecklist) {
-                            handleToggleAllChecklistItems(note.id);
-                          } else {
-                            handleToggleDone(note.id, note.done);
-                          }
-                        }}
-                        className={`
-                          relative w-5 h-5 rounded-md border-2 transition-all duration-200 flex items-center justify-center cursor-pointer hover:scale-110 z-10
-                          ${
-                            note.done
-                              ? "bg-green-500 dark:bg-green-600 border-green-500 dark:border-green-600 text-white shadow-lg opacity-100"
-                              : "bg-white dark:bg-gray-800 bg-opacity-60 dark:bg-opacity-60 border-gray-400 dark:border-gray-500 hover:border-green-400 dark:hover:border-green-500 hover:bg-green-50 dark:hover:bg-green-900/20 opacity-30 group-hover:opacity-100"
-                          }
-                        `}
-                        title={
-                          note.isChecklist
-                            ? note.done
-                              ? "Uncheck all items"
-                              : "Check all items"
-                            : note.done
-                              ? "Mark as not done"
-                              : "Mark as done"
-                        }
-                        type="button"
-                        style={{ pointerEvents: "auto" }}
-                      >
-                        {note.done && (
-                          <svg
-                            className="w-3 h-3 text-white"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path d="M5 13l4 4L19 7"></path>
-                          </svg>
-                        )}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {editingNote === note.id && !note.isChecklist ? (
-                <div className="flex-1 min-h-0">
-                  <textarea
-                    value={editContent}
-                    onChange={(e) => {
-                      const newValue = e.target.value;
-                      setEditContent(newValue);
-                    }}
-                    className="w-full h-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
-                    placeholder="Enter note content..."
-                    onBlur={() => handleUpdateNote(note.id, editContent)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && e.ctrlKey) {
-                        handleUpdateNote(note.id, editContent);
-                      }
-                      if (e.key === "Escape") {
-                        setEditingNote(null);
-                        setEditContent("");
-                      }
-                      if (e.key === "Backspace" && editContent.trim() === "") {
-                        handleDeleteNote(note.id);
-                      }
-                    }}
-                    onFocus={(e) => {
-                      // Set cursor at the end of the text
-                      const length = e.target.value.length;
-                      e.target.setSelectionRange(length, length);
-                    }}
-                    autoFocus
-                  />
-                </div>
-              ) : note.isChecklist ? (
-                <div className="flex-1 overflow-hidden flex flex-col space-y-1">
-                  {/* Checklist Items */}
-                  {note.checklistItems?.map((item) => (
-                    <div
-                      key={item.id}
-                      className={`flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200 ${
-                        animatingItems.has(item.id) ? "animate-pulse" : ""
-                      }`}
-                    >
-                      {/* Checkbox */}
-                      <button
-                        onClick={() =>
-                          handleToggleChecklistItem(note.id, item.id)
-                        }
-                        className={`
-                          relative w-4 h-4 rounded border-2 transition-all duration-200 flex items-center justify-center cursor-pointer hover:scale-110 mr-3 flex-shrink-0 ml-2
-                          ${
-                            item.checked
-                              ? "bg-green-500 dark:bg-green-600 border-green-500 dark:border-green-600 text-white"
-                              : "bg-white dark:bg-gray-800 bg-opacity-60 dark:bg-opacity-60 border-gray-400 dark:border-gray-500 hover:border-green-400 dark:hover:border-green-500"
-                          }
-                        `}
-                      >
-                        {item.checked && (
-                          <svg
-                            className="w-3 h-3 text-white"
-                            fill="none"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path d="M5 13l4 4L19 7"></path>
-                          </svg>
-                        )}
-                      </button>
-
-                      {/* Content */}
-                      {editingChecklistItem?.noteId === note.id &&
-                      editingChecklistItem?.itemId === item.id ? (
-                        <input
-                          type="text"
-                          value={editingChecklistItemContent}
-                          onChange={(e) =>
-                            setEditingChecklistItemContent(e.target.value)
-                          }
-                          className="flex-1 bg-transparent border-none outline-none text-sm leading-6 text-gray-800 dark:text-gray-200"
-                          onBlur={() =>
-                            handleEditChecklistItem(
-                              note.id,
-                              item.id,
-                              editingChecklistItemContent
-                            )
-                          }
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              const target = e.target as HTMLInputElement;
-                              const cursorPosition = target.selectionStart || 0;
-                              handleSplitChecklistItem(
-                                note.id,
-                                item.id,
-                                editingChecklistItemContent,
-                                cursorPosition
-                              );
-                            }
-                            if (e.key === "Escape") {
-                              setEditingChecklistItem(null);
-                              setEditingChecklistItemContent("");
-                            }
-                            if (
-                              e.key === "Backspace" &&
-                              editingChecklistItemContent.trim() === ""
-                            ) {
-                              handleDeleteChecklistItem(note.id, item.id);
-                            }
-                          }}
-                          autoFocus
-                        />
-                      ) : (
-                        <span
-                          className={`flex-1 text-sm leading-6 cursor-pointer ${
-                            item.checked
-                              ? "text-gray-500 dark:text-gray-400 line-through opacity-70"
-                              : "text-gray-800 dark:text-gray-200"
-                          }`}
-                          onClick={() => {
-                            if (user?.id === note.user.id || user?.isAdmin) {
-                              setEditingChecklistItem({
-                                noteId: note.id,
-                                itemId: item.id,
-                              });
-                              setEditingChecklistItemContent(item.content);
-                            }
-                          }}
-                        >
-                          {item.content || (
-                            <span className="text-gray-400 dark:text-gray-500 italic">
-                              Click to edit...
-                            </span>
-                          )}
-                        </span>
-                      )}
-
-                      {/* Delete button */}
-                      {(user?.id === note.user.id || user?.isAdmin) && (
-                        <button
-                          onClick={() =>
-                            handleDeleteChecklistItem(note.id, item.id)
-                          }
-                          className="opacity-0 group-hover/item:opacity-100 transition-opacity p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded ml-2"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      )}
-                    </div>
-                  ))}
-
-                  {/* Add new item input */}
-                  {addingChecklistItem === note.id && (
-                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200">
-                      <div className="w-4 h-4 rounded border-2 border-gray-400 dark:border-gray-500 mr-3 flex-shrink-0 bg-white dark:bg-gray-800 bg-opacity-60 dark:bg-opacity-60 ml-2"></div>
-                      <input
-                        type="text"
-                        value={newChecklistItemContent}
-                        onChange={(e) =>
-                          setNewChecklistItemContent(e.target.value)
-                        }
-                        className="flex-1 bg-transparent border-none outline-none text-sm leading-6 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400"
-                        placeholder="Add new item..."
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            handleAddChecklistItem(note.id);
-                          }
-                          if (e.key === "Escape") {
-                            setAddingChecklistItem(null);
-                            setNewChecklistItemContent("");
-                          }
-                          if (
-                            e.key === "Backspace" &&
-                            newChecklistItemContent.trim() === ""
-                          ) {
-                            setAddingChecklistItem(null);
-                            setNewChecklistItemContent("");
-                          }
-                        }}
-                        onBlur={() => {
-                          if (newChecklistItemContent.trim()) {
-                            handleAddChecklistItem(note.id);
-                          }
-                          // Don't close the input on blur - let user continue adding items
-                          // Only close on explicit Escape key
-                        }}
-                        autoFocus
-                      />
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <div className="flex-1 overflow-hidden flex flex-col relative">
-                  <p
-                    className={`text-base whitespace-pre-wrap break-words leading-7 m-0 p-0 flex-1 transition-all duration-200 ${
-                      note.done
-                        ? "text-gray-500 dark:text-gray-400 opacity-70 line-through"
-                        : "text-gray-800 dark:text-gray-200"
-                    }`}
-                  >
-                    {note.content}
-                  </p>
-                </div>
-              )}
-
-            </div>
+              onEditNote={handleUpdateNote}
+              onDeleteNote={handleDeleteNote}
+              onToggleDone={handleToggleDone}
+              onToggleAllChecklistItems={handleToggleAllChecklistItems}
+              onAddChecklistItem={handleAddChecklistItem}
+              onToggleChecklistItem={handleToggleChecklistItem}
+              onDeleteChecklistItem={handleDeleteChecklistItem}
+              onEditChecklistItem={handleEditChecklistItem}
+              onSplitChecklistItem={handleSplitChecklistItem}
+              onSetEditingNote={setEditingNote}
+              onSetEditContent={setEditContent}
+              onSetAddingChecklistItem={setAddingChecklistItem}
+              onSetNewChecklistItemContent={setNewChecklistItemContent}
+              onSetEditingChecklistItem={setEditingChecklistItem}
+              onSetEditingChecklistItemContent={setEditingChecklistItemContent}
+            />
           ))}
         </div>
 
