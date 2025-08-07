@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -541,6 +541,14 @@ export default function BoardPage({
     addingChecklistItem,
     editingChecklistItem,
   ]);
+
+  useEffect(() => {
+    if (!editingChecklistItem) {
+      // Clear all pending timeouts when exiting edit mode
+      editDebounceMap.current.forEach((timeout) => clearTimeout(timeout));
+      editDebounceMap.current.clear();
+    }
+  }, [editingChecklistItem]);
 
   // Enhanced responsive handling with debounced resize and better breakpoints
   useEffect(() => {
@@ -1301,7 +1309,7 @@ export default function BoardPage({
     }
   };
 
-  const handleEditChecklistItem = async (
+  const handleEditChecklistItem = useCallback(async (
     noteId: string,
     itemId: string,
     content: string
@@ -1345,7 +1353,30 @@ export default function BoardPage({
     } catch (error) {
       console.error("Error editing checklist item:", error);
     }
-  };
+  }, [notes]);
+
+  const editDebounceMap = useRef(new Map<string, NodeJS.Timeout>());
+  const EDIT_DEBOUNCE_DURATION = 1000;
+
+  const debouncedEditChecklistItem = useCallback((
+    noteId: string,
+    itemId: string,
+    content: string
+  ) => {
+    const key = `${noteId}-${itemId}`;
+    
+    const existingTimeout = editDebounceMap.current.get(key);
+    if (existingTimeout) {
+      clearTimeout(existingTimeout);
+    }
+    
+    const timeout = setTimeout(() => {
+      handleEditChecklistItem(noteId, itemId, content);
+      editDebounceMap.current.delete(key);
+    }, EDIT_DEBOUNCE_DURATION);
+    
+    editDebounceMap.current.set(key, timeout);
+  }, [handleEditChecklistItem]);
 
   const handleToggleAllChecklistItems = async (noteId: string) => {
     try {
@@ -1981,21 +2012,33 @@ export default function BoardPage({
                           <Input
                             type="text"
                             value={editingChecklistItemContent}
-                            onChange={(e) =>
-                              setEditingChecklistItemContent(e.target.value)
-                            }
+                            onChange={(e) => {
+                              setEditingChecklistItemContent(e.target.value);
+                              debouncedEditChecklistItem(
+                                note.id,
+                                item.id,
+                                e.target.value
+                              );
+                            }}
                             className={cn(
                               "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0",
                               item.checked &&
                                 "text-slate-500 dark:text-zinc-500 line-through"
                             )}
-                            onBlur={() =>
+                            onBlur={() => {
+                              const key = `${note.id}-${item.id}`;
+                              const existingTimeout = editDebounceMap.current.get(key);
+                              if (existingTimeout) {
+                                clearTimeout(existingTimeout);
+                                editDebounceMap.current.delete(key);
+                              }
+                              // Save immediately
                               handleEditChecklistItem(
                                 note.id,
                                 item.id,
                                 editingChecklistItemContent
-                              )
-                            }
+                              );
+                            }}
                             onKeyDown={(e) => {
                               if (e.key === "Enter") {
                                 e.preventDefault();
