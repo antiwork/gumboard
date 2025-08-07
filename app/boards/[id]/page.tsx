@@ -47,7 +47,6 @@ interface Note {
   done: boolean;
   createdAt: string;
   updatedAt: string;
-  isChecklist?: boolean;
   checklistItems?: ChecklistItem[];
   user: {
     id: string;
@@ -287,7 +286,7 @@ export default function BoardPage({
     const paddingHeight = actualNotePadding * 2; // Top and bottom padding
     const minContentHeight = 84; // Minimum content area (3 lines)
 
-    if (note.isChecklist && note.checklistItems) {
+    if (note.checklistItems) {
       // For checklist items, calculate height based on number of items
       const itemHeight = 32; // Each checklist item is about 32px tall (text + padding)
       const itemSpacing = 8; // Space between items
@@ -796,7 +795,6 @@ export default function BoardPage({
           },
           body: JSON.stringify({
             content: "",
-            isChecklist: true,
             checklistItems: [],
             ...(isAllNotesView && { boardId: targetBoardId }),
           }),
@@ -1877,22 +1875,6 @@ export default function BoardPage({
                         : note.user.email.split("@")[0]}
                     </span>
                     <div className="flex flex-col">
-                      {!note.isChecklist && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400 opacity-70">
-                          {new Date(note.createdAt).toLocaleDateString(
-                            "en-US",
-                            {
-                              month: "short",
-                              day: "numeric",
-                              year:
-                                new Date(note.createdAt).getFullYear() !==
-                                new Date().getFullYear()
-                                  ? "numeric"
-                                  : undefined,
-                            }
-                          )}
-                        </span>
-                      )}
                       {boardId === "all-notes" && note.board && (
                         <span className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20">
                           {note.board.name}
@@ -1905,18 +1887,6 @@ export default function BoardPage({
                   {/* Show edit/delete buttons for note author or admin */}
                   {(user?.id === note.user.id || user?.isAdmin) && (
                     <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      {!note.isChecklist && (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingNote(note.id);
-                            setEditContent(note.content);
-                          }}
-                          className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
-                        >
-                          <Edit3 className="w-3 h-3" />
-                        </Button>
-                      )}
                       <Button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1934,21 +1904,13 @@ export default function BoardPage({
                       <Checkbox
                         checked={note.done}
                         onCheckedChange={() => {
-                          if (note.isChecklist) {
-                            handleToggleAllChecklistItems(note.id);
-                          } else {
-                            handleToggleDone(note.id, note.done);
-                          }
+                          handleToggleAllChecklistItems(note.id);
                         }}
                         className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                         title={
-                          note.isChecklist
-                            ? note.done
-                              ? "Uncheck all items"
-                              : "Check all items"
-                            : note.done
-                              ? "Mark as not done"
-                              : "Mark as done"
+                          note.done
+                            ? "Uncheck all items"
+                            : "Check all items"
                         }
                       />
                     </div>
@@ -1956,7 +1918,7 @@ export default function BoardPage({
                 </div>
               </div>
 
-              {editingNote === note.id && !note.isChecklist ? (
+              {editingNote === note.id ? (
                 <div className="flex-1 min-h-0">
                   <textarea
                     value={editContent}
@@ -1986,7 +1948,7 @@ export default function BoardPage({
                     autoFocus
                   />
                 </div>
-              ) : note.isChecklist ? (
+              ) : (
                 <div className="flex-1 flex flex-col">
                   <div className="overflow-y-auto space-y-1 flex-1">
                     {/* Checklist Items */}
@@ -2194,8 +2156,7 @@ export default function BoardPage({
                   </div>
 
                   {/* Add task button - everpresent for checklist notes and authorized users */}
-                  {note.isChecklist &&
-                    (user?.id === note.user.id || user?.isAdmin) && (
+                  {(user?.id === note.user.id || user?.isAdmin) && (
                       <Button
                         variant="ghost"
                         size="sm"
@@ -2209,18 +2170,6 @@ export default function BoardPage({
                         Add task
                       </Button>
                     )}
-                </div>
-              ) : (
-                <div className="flex-1 flex flex-col relative">
-                  <p
-                    className={`text-base whitespace-pre-wrap break-words leading-7 m-0 p-0 flex-1 transition-all duration-200 ${
-                      note.done
-                        ? "text-gray-500 dark:text-gray-400 opacity-70 line-through"
-                        : "text-gray-800 dark:text-gray-200"
-                    }`}
-                  >
-                    {note.content}
-                  </p>
                 </div>
               )}
             </div>

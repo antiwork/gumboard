@@ -83,7 +83,6 @@ test.describe('Note Management with Newlines', () => {
               content: '',
               color: '#fef3c7',
               done: false,
-              isChecklist: true,
               checklistItems: postData.checklistItems || [{
                 id: `item-${Date.now()}`,
                 content: '',
@@ -115,7 +114,6 @@ test.describe('Note Management with Newlines', () => {
               content: '',
               color: '#fef3c7',
               done: false,
-              isChecklist: true,
               checklistItems: postData.checklistItems || [{
                 id: `item-${Date.now()}`,
                 content: '',
@@ -161,7 +159,6 @@ test.describe('Note Management with Newlines', () => {
               content: '',
               color: '#fef3c7',
               done: false,
-              isChecklist: true,
               checklistItems: postData.checklistItems || [{
                 id: `item-${Date.now()}`,
                 content: '',
@@ -186,7 +183,6 @@ test.describe('Note Management with Newlines', () => {
     await page.evaluate(() => {
       const mockNoteData = { 
         content: '',
-        isChecklist: true,
         checklistItems: [{
           id: `item-${Date.now()}`,
           content: '',
@@ -205,7 +201,6 @@ test.describe('Note Management with Newlines', () => {
     
     expect(noteCreated).toBe(true);
     expect(noteData).not.toBeNull();
-    expect(noteData!.isChecklist).toBe(true);
     expect(noteData!.checklistItems).toBeDefined();
     expect(Array.isArray(noteData!.checklistItems)).toBe(true);
   });
