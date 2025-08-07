@@ -43,6 +43,11 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true
           }
+        },
+        checklistItems: {
+          orderBy: {
+            order: 'asc'
+          }
         }
       },
       orderBy: {
@@ -114,6 +119,11 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             name: true
+          }
+        },
+        checklistItems: {
+          orderBy: {
+            order: 'asc'
           }
         }
       }

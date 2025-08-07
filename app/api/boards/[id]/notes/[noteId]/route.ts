@@ -50,24 +50,74 @@ export async function PUT(
       return NextResponse.json({ error: "Only the note author or admin can edit this note" }, { status: 403 })
     }
 
-    const updatedNote = await db.note.update({
-      where: { id: noteId },
-      data: {
-        ...(content !== undefined && { content }),
-        ...(color !== undefined && { color }),
-        ...(done !== undefined && { done }),
-        ...(isChecklist !== undefined && { isChecklist }),
-        ...(checklistItems !== undefined && { checklistItems }),
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true
+    // Use a transaction to update note and checklist items together
+    const updatedNote = await db.$transaction(async (tx) => {
+      // Update the note
+      const note = await tx.note.update({
+        where: { id: noteId },
+        data: {
+          ...(content !== undefined && { content }),
+          ...(color !== undefined && { color }),
+          ...(done !== undefined && { done }),
+          ...(isChecklist !== undefined && { isChecklist }),
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true
+            }
+          },
+          checklistItems: {
+            orderBy: {
+              order: 'asc'
+            }
           }
         }
+      })
+
+      // Handle checklist items update if provided
+      if (checklistItems !== undefined && Array.isArray(checklistItems)) {
+        // Delete existing checklist items
+        await tx.checklistItem.deleteMany({
+          where: { noteId }
+        })
+
+        // Create new checklist items if any
+        if (checklistItems.length > 0) {
+          await tx.checklistItem.createMany({
+            data: checklistItems.map((item: { id: string; content: string; checked: boolean; order: number }) => ({
+              id: item.id,
+              content: item.content,
+              checked: item.checked,
+              order: item.order,
+              noteId: noteId
+            }))
+          })
+        }
+
+        // Refresh the note with updated checklist items
+        return await tx.note.findUnique({
+          where: { id: noteId },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
+            checklistItems: {
+              orderBy: {
+                order: 'asc'
+              }
+            }
+          }
+        })
       }
+
+      return note
     })
 
     return NextResponse.json({ note: updatedNote })

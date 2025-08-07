@@ -40,6 +40,11 @@ export async function GET(
                 name: true,
                 email: true
               }
+            },
+            checklistItems: {
+              orderBy: {
+                order: 'asc'
+              }
             }
           }
         }
@@ -112,6 +117,11 @@ export async function POST(
             id: true,
             name: true,
             email: true
+          }
+        },
+        checklistItems: {
+          orderBy: {
+            order: 'asc'
           }
         }
       }
