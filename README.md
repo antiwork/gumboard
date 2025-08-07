@@ -11,7 +11,9 @@ Keep on top of your team's to-dos.
 
 ### Install dependencies
 
+```bash
 npm install
+```
 
 ### Database Setup
 
