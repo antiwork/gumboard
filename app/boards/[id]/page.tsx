@@ -2256,7 +2256,7 @@ export default function BoardPage({
               Board settings
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Configure settings for "{board?.name}" board.
+              Configure settings for &quot;{board?.name}&quot; board.
             </AlertDialogDescription>
           </AlertDialogHeader>
           
@@ -2277,7 +2277,7 @@ export default function BoardPage({
               </label>
             </div>
             <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-              When enabled, note updates will be sent to your organization's Slack channel
+              When enabled, note updates will be sent to your organization&apos;s Slack channel
             </p>
           </div>
 
