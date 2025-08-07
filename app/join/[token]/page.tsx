@@ -314,7 +314,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
                 
                 <form action={autoCreateAccountAndJoin.bind(null, token)} className="space-y-4">
                   <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    <label htmlFor="email" className="block text-sm font-medium text-foreground mb-1">
                       Email Address
                     </label>
                     <input
@@ -322,7 +322,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
                       id="email"
                       name="email"
                       required
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter your email address"
                     />
                   </div>
@@ -332,7 +332,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
                 </form>
                 
                 <div className="text-center">
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     Already have an account?{' '}
                     <a 
                       href={`/auth/signin?callbackUrl=${encodeURIComponent(`/join/${token}`)}`}
@@ -457,4 +457,4 @@ export default async function JoinPage({ params }: JoinPageProps) {
       </div>
     </div>
   )
-} 
+}  

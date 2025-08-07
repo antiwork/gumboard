@@ -1,62 +1,62 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Mail } from "lucide-react"
-import { Loader } from "@/components/ui/loader"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Mail } from "lucide-react";
+import { Loader } from "@/components/ui/loader";
 
 interface User {
-  id: string
-  name: string | null
-  email: string
+  id: string;
+  name: string | null;
+  email: string;
   organization: {
-    id: string
-    name: string
+    id: string;
+    name: string;
     members: {
-      id: string
-      name: string | null
-      email: string
-    }[]
-  } | null
+      id: string;
+      name: string | null;
+      email: string;
+    }[];
+  } | null;
 }
 
 export default function ProfileSettingsPage() {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [profileName, setProfileName] = useState("")
-  const router = useRouter()
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [profileName, setProfileName] = useState("");
+  const router = useRouter();
 
   const fetchUserData = useCallback(async () => {
     try {
-      const response = await fetch("/api/user")
+      const response = await fetch("/api/user");
       if (response.status === 401) {
-        router.push("/auth/signin")
-        return
+        router.push("/auth/signin");
+        return;
       }
-      
+
       if (response.ok) {
-        const userData = await response.json()
-        setUser(userData)
-        setProfileName(userData.name || "")
+        const userData = await response.json();
+        setUser(userData);
+        setProfileName(userData.name || "");
       }
     } catch (error) {
-      console.error("Error fetching user data:", error)
+      console.error("Error fetching user data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [router])
+  }, [router]);
 
   useEffect(() => {
-    fetchUserData()
-  }, [fetchUserData])
+    fetchUserData();
+  }, [fetchUserData]);
 
   const handleSaveProfile = async () => {
-    setSaving(true)
+    setSaving(true);
     try {
       const response = await fetch("/api/user/profile", {
         method: "PUT",
@@ -66,73 +66,77 @@ export default function ProfileSettingsPage() {
         body: JSON.stringify({
           name: profileName,
         }),
-      })
+      });
 
       if (response.ok) {
-        const updatedUser = await response.json()
-        setUser(updatedUser)
+        const updatedUser = await response.json();
+        setUser(updatedUser);
       }
     } catch (error) {
-      console.error("Error updating profile:", error)
+      console.error("Error updating profile:", error);
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
+      <div className="flex items-center justify-center p-8 bg-white dark:bg-black min-h-screen">
         <Loader size="lg" />
       </div>
-    )
+    );
   }
 
   return (
-    <Card className="p-6">
+    <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
       <div className="space-y-6">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Profile Settings</h2>
-          <p className="text-gray-600">Manage your personal information and preferences.</p>
+          <h2 className="text-xl font-semibold text-foreground dark:text-zinc-100 mb-2">
+            Profile Settings
+          </h2>
+          <p className="text-muted-foreground dark:text-zinc-400">
+            Manage your personal information and preferences.
+          </p>
         </div>
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name" className="text-foreground dark:text-zinc-200">Full Name</Label>
             <Input
               id="name"
               type="text"
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
               placeholder="Enter your full name"
-              className="mt-1"
+              className="mt-1 bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100"
             />
           </div>
 
           <div>
-            <Label htmlFor="email">Email Address</Label>
+            <Label htmlFor="email" className="text-foreground dark:text-zinc-200">Email Address</Label>
             <div className="relative mt-1">
               <Input
                 id="email"
                 type="email"
                 value={user?.email || ""}
                 disabled
-                className="bg-gray-50 cursor-not-allowed"
+                className="bg-muted dark:bg-zinc-800 text-muted-foreground dark:text-zinc-400 cursor-not-allowed"
               />
-              <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-zinc-400" />
             </div>
           </div>
         </div>
 
-        <div className="pt-4 border-t">
-          <Button 
+        <div className="pt-4 border-t border-border dark:border-zinc-800">
+          <Button
             onClick={handleSaveProfile}
             disabled={saving || profileName === user?.name}
-            className="bg-blue-600 hover:bg-blue-700"
+            className="bg-black hover:bg-zinc-900 text-white dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {saving ? "Saving..." : "Save Changes"}
           </Button>
         </div>
       </div>
     </Card>
-  )
-} 
+  );
+}

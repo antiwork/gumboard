@@ -290,7 +290,7 @@ export function StickyNotesDemo() {
       color: randomColor,
       tasks: [{ id: Date.now() + 1, text: "New to-do", completed: false }],
     }
-    setNotes([...notes, newNote])
+    setNotes([newNote, ...notes])
   }
 
   return (

@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { Resend } from "resend"
 
+
 const resend = new Resend(process.env.AUTH_RESEND_KEY)
 
 export async function POST(request: NextRequest) {
@@ -89,7 +90,7 @@ export async function POST(request: NextRequest) {
     // Send invite email
     try {
       await resend.emails.send({
-        from: "noreply@gumboard.com",
+        from: process.env.EMAIL_FROM!,
         to: cleanEmail,
         subject: `${session.user.name} invited you to join ${user.organization.name}`,
         html: `

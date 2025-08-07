@@ -29,7 +29,21 @@ export async function PUT(
     // Verify the note belongs to a board in the user's organization
     const note = await db.note.findUnique({
       where: { id: noteId },
-      include: { board: true }
+      include: { 
+        board: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        },
+        checklistItems: {
+          orderBy: {
+            order: 'asc'
+          }
+        }
+      }
     })
 
     if (!note) {
@@ -53,7 +67,7 @@ export async function PUT(
     // Use a transaction to update note and checklist items together
     const updatedNote = await db.$transaction(async (tx) => {
       // Update the note
-      const note = await tx.note.update({
+      const updatedNote = await tx.note.update({
         where: { id: noteId },
         data: {
           ...(content !== undefined && { content }),
@@ -69,6 +83,7 @@ export async function PUT(
               email: true
             }
           },
+          board: true,
           checklistItems: {
             orderBy: {
               order: 'asc'
@@ -108,6 +123,7 @@ export async function PUT(
                 email: true
               }
             },
+            board: true,
             checklistItems: {
               orderBy: {
                 order: 'asc'
@@ -117,7 +133,7 @@ export async function PUT(
         })
       }
 
-      return note
+      return updatedNote
     })
 
     return NextResponse.json({ note: updatedNote })
@@ -187,4 +203,4 @@ export async function DELETE(
     console.error("Error deleting note:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-} 
+}                                                                

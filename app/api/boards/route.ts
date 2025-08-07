@@ -27,9 +27,19 @@ export async function GET() {
         id: true,
         name: true,
         description: true,
+        isPublic: true,
         createdBy: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        _count: {
+          select: {
+            notes: {
+              where: {
+                deletedAt: null
+              }
+            }
+          }
+        }
       },
       orderBy: { createdAt: "desc" }
     })
@@ -49,7 +59,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description } = await request.json()
+    const { name, description, isPublic } = await request.json()
 
     if (!name) {
       return NextResponse.json({ error: "Board name is required" }, { status: 400 })
@@ -70,9 +80,15 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         description,
+        isPublic: Boolean(isPublic || false),
         organizationId: user.organization.id,
         createdBy: session.user.id
-      }
+      },
+      include: {
+        _count: {
+          select: { notes: true },
+        },
+      },
     })
 
     return NextResponse.json({ board }, { status: 201 })
@@ -80,4 +96,4 @@ export async function POST(request: NextRequest) {
     console.error("Error creating board:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-} 
+}    

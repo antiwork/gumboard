@@ -51,6 +51,9 @@ test.describe('Board Management', () => {
               createdBy: 'test-user',
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
+              _count: {
+                notes: 0
+              },
             },
           }),
         });
@@ -84,6 +87,9 @@ test.describe('Board Management', () => {
               createdBy: 'test-user',
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
+              _count: {
+                notes: 0
+              },
             },
           }),
         });

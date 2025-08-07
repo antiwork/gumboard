@@ -68,6 +68,7 @@ model User {
 model Organization {
   id        String   @id @default(cuid())
   name      String
+  slackWebhookUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   members   User[]
@@ -82,6 +83,8 @@ model Board {
   id             String       @id @default(cuid())
   name           String
   description    String?
+  isPublic       Boolean      @default(false)
+  sendSlackUpdates Boolean    @default(true)
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy      String
@@ -98,6 +101,7 @@ model Note {
   color     String @default("#fef3c7") // Default yellow color
   done      Boolean @default(false) // Track completion status
   isChecklist Boolean @default(false) // Track if note is a checklist
+  slackMessageId String? // Slack message ID for updates
   boardId   String
   board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   createdBy String

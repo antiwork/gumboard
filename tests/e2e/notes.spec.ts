@@ -73,17 +73,22 @@ test.describe('Note Management with Newlines', () => {
           }),
         });
       } else if (route.request().method() === 'POST') {
-        const postData = route.request().postDataJSON();
+        const postData = await route.request().postDataJSON();
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
             note: {
               id: 'new-note-id',
-              content: postData.content || '',
+              content: '',
               color: '#fef3c7',
               done: false,
-              isChecklist: false,
+              checklistItems: postData.checklistItems || [{
+                id: `item-${Date.now()}`,
+                content: '',
+                checked: false,
+                order: 0,
+              }],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               user: {
@@ -99,17 +104,22 @@ test.describe('Note Management with Newlines', () => {
 
     await page.route('**/api/boards/test-board/notes/new-note-id', async (route) => {
       if (route.request().method() === 'PUT') {
-        const postData = route.request().postDataJSON();
+        const postData = await route.request().postDataJSON();
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
             note: {
               id: 'new-note-id',
-              content: postData.content || '',
+              content: '',
               color: '#fef3c7',
               done: false,
-              isChecklist: false,
+              checklistItems: postData.checklistItems || [{
+                id: `item-${Date.now()}`,
+                content: '',
+                checked: false,
+                order: 0,
+              }],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               user: {
@@ -124,9 +134,9 @@ test.describe('Note Management with Newlines', () => {
     });
   });
 
-  test('should create a note with multiline content and verify database state', async ({ page }) => {
+  test('should create a checklist note and verify database state', async ({ page }) => {
     let noteCreated = false;
-    let noteData: { content: string } | null = null;
+    let noteData: any = null;
 
     await page.route('**/api/boards/test-board/notes', async (route) => {
       if (route.request().method() === 'GET') {
@@ -146,10 +156,15 @@ test.describe('Note Management with Newlines', () => {
           body: JSON.stringify({
             note: {
               id: 'new-note-id',
-              content: postData.content,
+              content: '',
               color: '#fef3c7',
               done: false,
-              isChecklist: false,
+              checklistItems: postData.checklistItems || [{
+                id: `item-${Date.now()}`,
+                content: '',
+                checked: false,
+                order: 0,
+              }],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               user: {
@@ -165,59 +180,63 @@ test.describe('Note Management with Newlines', () => {
 
     await page.goto('/boards/test-board');
     
-    const multilineContent = 'Line 1\nLine 2\nLine 3\n\nNew paragraph\nAnother line';
-    
-    await page.evaluate((content) => {
-      const mockNoteData = { content };
+    await page.evaluate(() => {
+      const mockNoteData = { 
+        content: '',
+        checklistItems: [{
+          id: `item-${Date.now()}`,
+          content: '',
+          checked: false,
+          order: 0,
+        }]
+      };
       fetch('/api/boards/test-board/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(mockNoteData)
       });
-    }, multilineContent);
+    });
     
     await page.waitForTimeout(100);
     
     expect(noteCreated).toBe(true);
     expect(noteData).not.toBeNull();
-    expect(noteData!.content).toBe(multilineContent);
-    expect(noteData!.content).toContain('\n');
-    expect(noteData!.content.split('\n')).toHaveLength(6);
+    expect(noteData!.checklistItems).toBeDefined();
+    expect(Array.isArray(noteData!.checklistItems)).toBe(true);
   });
 
-  test('should preserve newlines when editing notes', async ({ page }) => {
+  test('should handle checklist item editing', async ({ page }) => {
     await page.goto('/boards/test-board');
     
     await page.click('button:has-text("Add Your First Note")');
     
-    const textarea = page.locator('textarea[placeholder*="Enter note content"]');
-    const contentWithNewlines = 'First paragraph\n\nSecond paragraph after empty line\n\n\nThird paragraph after multiple empty lines';
-    await textarea.fill(contentWithNewlines);
+    await page.waitForTimeout(500);
     
-    await textarea.press('Control+Enter');
+    const input = page.locator('input.bg-transparent');
+    await expect(input).toBeVisible();
+    await input.fill('Test checklist item');
+    await input.blur();
     
-    await page.hover('.group');
-    await page.click('button:has(.w-3.h-3)');
+    await page.waitForTimeout(500);
     
-    const editTextarea = page.locator('textarea[placeholder*="Enter note content"]');
-    await expect(editTextarea).toHaveValue(contentWithNewlines);
+    await expect(page.locator('text=Test checklist item')).toBeVisible();
   });
 
-  test('should handle creating notes with newlines in content', async ({ page }) => {
+  test('should handle creating multiple checklist items', async ({ page }) => {
     await page.goto('/boards/test-board');
     
     await page.click('button:has-text("Add Your First Note")');
     
-    const textarea = page.locator('textarea[placeholder*="Enter note content"]');
-    await textarea.fill('Line 1\nLine 2\nLine 3');
+    await page.waitForTimeout(500);
     
-    await textarea.press('Control+Enter');
+    const input = page.locator('input.bg-transparent');
+    await expect(input).toBeVisible();
+    await input.fill('First item');
+    await input.blur();
     
-    await page.hover('.group');
-    await page.click('button:has(.w-3.h-3)');
+    await page.waitForTimeout(500);
     
-    const editTextarea = page.locator('textarea[placeholder*="Enter note content"]');
-    await expect(editTextarea).toHaveValue('Line 1\nLine 2\nLine 3');
+    await expect(page.locator('text=First item')).toBeVisible();
   });
 
   test('should display empty state when no notes exist', async ({ page }) => {
