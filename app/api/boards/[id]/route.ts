@@ -109,7 +109,11 @@ export async function PUT(
       return NextResponse.json({ error: "Only the board creator or admin can edit this board" }, { status: 403 })
     }
 
-    const updateData: any = {}
+    const updateData: {
+      name?: string;
+      description?: string;
+      sendSlackUpdates?: boolean;
+    } = {}
     if (name !== undefined) updateData.name = name?.trim() || board.name
     if (description !== undefined) updateData.description = description?.trim() || board.description
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates
@@ -194,4 +198,4 @@ export async function DELETE(
     console.error("Error deleting board:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}       
+}         
