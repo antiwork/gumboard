@@ -495,7 +495,6 @@ export default function BoardPage({
       if (event.key === "Escape") {
         if (editingNote) {
           setEditingNote(null);
-          setEditContent("");
         }
         if (addingChecklistItem) {
           setAddingChecklistItem(null);
@@ -503,7 +502,6 @@ export default function BoardPage({
         }
         if (editingChecklistItem) {
           setEditingChecklistItem(null);
-          setEditingChecklistItemContent("");
         }
         if (showBoardDropdown) {
           setShowBoardDropdown(false);
@@ -798,80 +796,12 @@ export default function BoardPage({
     }
   };
 
-  const handleUpdateNote = async (noteId: string, content: string) => {
-    try {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote) return;
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      // Store original content for potential rollback
-      const originalContent = currentNote.content;
-
-      // OPTIMISTIC UPDATE: Update UI immediately
-      const optimisticNote = {
-        ...currentNote,
-        content: content,
-      };
-
-      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-      setEditingNote(null);
-      setEditContent("");
-
-      // Send to server in background
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ content }),
-        }
-      );
-
-      if (response.ok) {
-        // Server succeeded, confirm with actual server response
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      } else {
-        // Server failed, revert to original content
-        console.error("Server error, reverting optimistic update");
-        const revertedNote = { ...currentNote, content: originalContent };
-        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
-        
-        // Re-enable editing with original content
-        setEditingNote(noteId);
-        setEditContent(originalContent);
-
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to update note",
-          description: errorData.error || "Failed to update note",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating note:", error);
-      
-      // Revert optimistic update on network error
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (currentNote) {
-        // We need to restore the original content, but we've lost it
-        // In a more robust implementation, we'd store it in state
-        setEditingNote(noteId);
-        setEditContent(currentNote.content); // Use current content as fallback
-      }
-      
-      setErrorDialog({
-        open: true,
-        title: "Connection Error", 
-        description: "Failed to save note. Please try again.",
-      });
-    }
+  const handleUpdateNote = (noteId: string, content: string) => {
+    setNotes(prevNotes => prevNotes.map(note => 
+      note.id === noteId 
+        ? { ...note, content } 
+        : note
+    ));
   };
 
   const handleDeleteNote = (noteId: string) => {
@@ -991,63 +921,6 @@ export default function BoardPage({
     ));
   };
 
-  const handleToggleAllChecklistItems = async (noteId: string) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote || !currentNote.checklistItems) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      // Check if all items are checked
-      const allChecked = currentNote.checklistItems.every(
-        (item) => item.checked
-      );
-
-      // Toggle all items to opposite state
-      const updatedItems = currentNote.checklistItems.map((item) => ({
-        ...item,
-        checked: !allChecked,
-      }));
-
-      // Sort items: unchecked first, then checked
-      const sortedItems = [
-        ...updatedItems
-          .filter((item) => !item.checked)
-          .sort((a, b) => a.order - b.order),
-        ...updatedItems
-          .filter((item) => item.checked)
-          .sort((a, b) => a.order - b.order),
-      ];
-
-      // The note should be marked as done if all items are checked
-      const noteIsDone = !allChecked; // If all were checked before, we're unchecking them (note becomes undone)
-      // If not all were checked before, we're checking them all (note becomes done)
-
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: sortedItems,
-            done: noteIsDone,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      }
-    } catch (error) {
-      console.error("Error toggling all checklist items:", error);
-    }
-  };
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
@@ -1402,10 +1275,9 @@ export default function BoardPage({
               newChecklistItemContent={addingChecklistItem === note.id ? newChecklistItemContent : ""}
               onUpdate={handleUpdateNote}
               onDelete={handleDeleteNote}
-              onToggleAllChecklistItems={handleToggleAllChecklistItems}
               onChecklistUpdate={handleChecklistUpdate}
               boardId={boardId === "all-notes" && note.board?.id ? note.board.id : boardId || ""}
-              onEditStart={(noteId) => {
+              onEditStart={(noteId: string) => {
                 setEditingNote(noteId);
               }}
               onEditEnd={() => {

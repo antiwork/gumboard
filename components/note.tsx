@@ -40,9 +40,9 @@ interface NoteProps {
   newChecklistItemContent?: string;
   onUpdate?: (noteId: string, content: string) => void;
   onDelete?: (noteId: string) => void;
-  onToggleAllChecklistItems?: (noteId: string) => void;
   onChecklistUpdate?: (noteId: string, items: ChecklistItemData[], done: boolean) => void;
   boardId?: string;
+  onEditStart?: (noteId: string) => void;
   onEditEnd?: (noteId: string) => void;
   onChecklistItemEditStart?: (noteId: string, itemId: string) => void;
   onChecklistItemEditEnd?: () => void;
@@ -70,9 +70,9 @@ export function Note({
   newChecklistItemContent: externalNewChecklistItemContent = "",
   onUpdate,
   onDelete,
-  onToggleAllChecklistItems,
   onChecklistUpdate,
   boardId,
+  onEditStart,
   onEditEnd,
   onChecklistItemEditStart,
   onChecklistItemEditEnd,
@@ -94,14 +94,109 @@ export function Note({
 
   const canEdit = currentUserId === user.id || isAdmin;
 
-  const handleUpdateNote = () => {
-    if (onUpdate && editContent !== content) {
-      onUpdate(id, editContent);
+  const handleUpdateNote = async () => {
+    if (!boardId || editContent === content) {
+      if (onEditEnd) {
+        onEditEnd(id);
+      } else {
+        setInternalIsEditing(false);
+      }
+      return;
     }
-    if (onEditEnd) {
-      onEditEnd(id);
-    } else {
-      setInternalIsEditing(false);
+
+    try {
+      // OPTIMISTIC UPDATE: Update UI immediately
+      if (onUpdate) {
+        onUpdate(id, editContent);
+      }
+      
+      if (onEditEnd) {
+        onEditEnd(id);
+      } else {
+        setInternalIsEditing(false);
+      }
+
+      // Send to server in background
+      const response = await fetch(`/api/boards/${boardId}/notes/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content: editContent }),
+      });
+
+      if (response.ok) {
+        const { note } = await response.json();
+        // Notify parent of successful update with server data
+        if (onUpdate) {
+          onUpdate(id, note.content);
+        }
+      } else {
+        // Server failed, revert to original content
+        console.error("Server error, reverting optimistic update");
+        if (onUpdate) {
+          onUpdate(id, content);
+        }
+        // Re-enable editing with original content
+        setEditContent(content);
+        if (!externalIsEditing) {
+          setInternalIsEditing(true);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating note:", error);
+      // Revert optimistic update on network error
+      if (onUpdate) {
+        onUpdate(id, content);
+      }
+      setEditContent(content);
+      if (!externalIsEditing) {
+        setInternalIsEditing(true);
+      }
+    }
+  };
+
+  const handleToggleAllItems = async () => {
+    
+    try {
+      if (!boardId || !checklistItems) return;
+
+      const allChecked = checklistItems.every((item) => item.checked);
+      const updatedItems = checklistItems.map((item) => ({
+        ...item,
+        checked: !allChecked,
+      }));
+
+      const sortedItems = [
+        ...updatedItems
+          .filter((item) => !item.checked)
+          .sort((a, b) => a.order - b.order),
+        ...updatedItems
+          .filter((item) => item.checked)
+          .sort((a, b) => a.order - b.order),
+      ];
+
+      const noteIsDone = !allChecked;
+
+      const response = await fetch(`/api/boards/${boardId}/notes/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          checklistItems: sortedItems,
+          done: noteIsDone,
+        }),
+      });
+
+      if (response.ok) {
+        const { note } = await response.json();
+        if (onChecklistUpdate) {
+          onChecklistUpdate(id, note.checklistItems, note.done);
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling all checklist items:", error);
     }
   };
 
@@ -173,9 +268,7 @@ export function Note({
             <div className="flex items-center">
               <Checkbox
                 checked={done}
-                onCheckedChange={() => {
-                  onToggleAllChecklistItems?.(id);
-                }}
+                onCheckedChange={handleToggleAllItems}
                 className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                 title={
                   done
