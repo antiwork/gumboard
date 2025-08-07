@@ -84,6 +84,7 @@ model Board {
   name           String
   description    String?
   isPublic       Boolean      @default(false)
+  sendSlackUpdates Boolean    @default(true)
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy      String
