@@ -72,8 +72,8 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description } = await request.json()
     const boardId = (await params).id
+    const { name, description, sendSlackUpdates } = await request.json()
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
@@ -103,20 +103,29 @@ export async function PUT(
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    // Check if user can edit this board (board creator or admin)
-    if (board.createdBy !== session.user.id && !currentUser.isAdmin) {
+    // For name/description updates, check if user can edit this board (board creator or admin)
+    if ((name !== undefined || description !== undefined) && 
+        board.createdBy !== session.user.id && !currentUser.isAdmin) {
       return NextResponse.json({ error: "Only the board creator or admin can edit this board" }, { status: 403 })
     }
 
+    const updateData: any = {}
+    if (name !== undefined) updateData.name = name?.trim() || board.name
+    if (description !== undefined) updateData.description = description?.trim() || board.description
+    if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates
+
     const updatedBoard = await db.board.update({
       where: { id: boardId },
-      data: { 
-        name: name?.trim() || board.name,
-        description: description?.trim() || board.description
-      },
+      data: updateData,
       include: {
         _count: {
           select: { notes: true }
+        },
+        organization: {
+          select: {
+            id: true,
+            name: true
+          }
         }
       }
     })
@@ -127,7 +136,6 @@ export async function PUT(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -186,4 +194,4 @@ export async function DELETE(
     console.error("Error deleting board:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}     
+}       

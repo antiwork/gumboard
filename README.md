@@ -9,6 +9,12 @@ Keep on top of your team's to-dos.
 - Docker Compose
 - Node
 
+### Install dependencies
+
+```bash
+npm install
+```
+
 ### Database Setup
 
 1. Create your environment variables file:
@@ -48,7 +54,13 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser to access t
 - `npm run db:studio` - Open Prisma Studio (database GUI)
 - `npm run db:reset` - Reset database and run migrations
 
----
+### Schema Changes
+
+When changing the database schema in `prisma/schema.prisma`, create and check in a new migration to apply the changes in production:
+
+```bash
+npm run db:migrate
+```
 
 ## 🔐 Google OAuth Setup
 
