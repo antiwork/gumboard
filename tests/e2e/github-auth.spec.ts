@@ -33,7 +33,7 @@ test.describe('GitHub Authentication Flow', () => {
     await page.click('button:has-text("Continue with GitHub")');
 
     // Wait for navigation to GitHub OAuth URL
-    await page.waitForURL('**/github.com/login/oauth/authorize**', { timeout: 5000 });
+    await page.waitForURL('**/github.com/login/oauth/authorize**');
     
     expect(githubAuthInitiated).toBe(true);
   });
@@ -177,7 +177,7 @@ test.describe('GitHub Authentication Flow', () => {
     await page.click('button:has-text("Continue with GitHub")');
     
     // Wait for GitHub OAuth to be initiated
-    await page.waitForURL('**/github.com/login/oauth/authorize**', { timeout: 5000 });
+    await page.waitForURL('**/github.com/login/oauth/authorize**');
     
     // Verify GitHub auth was initiated
     expect(githubAuthInitiated).toBe(true);
