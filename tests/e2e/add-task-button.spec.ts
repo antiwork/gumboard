@@ -64,7 +64,7 @@ test.describe('Add Task Button', () => {
     });
   });
 
-  test('should display "Add task" button for checklist notes when user is authorized', async ({ page }) => {
+  test('should display "Add task" button for all notes when user is authorized', async ({ page }) => {
     await page.route('**/api/boards/test-board/notes', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
@@ -125,14 +125,17 @@ test.describe('Add Task Button', () => {
     
     await expect(page.locator('text=Existing task')).toBeVisible();
     
-    const addTaskButton = page.locator('button:has-text("Add task")');
-    await expect(addTaskButton).toBeVisible();
+    const addTaskButtons = page.locator('button:has-text("Add task")');
+    await expect(addTaskButtons).toHaveCount(2);
     
-    const plusIcon = addTaskButton.locator('svg');
+    const firstAddTaskButton = addTaskButtons.first();
+    await expect(firstAddTaskButton).toBeVisible();
+    
+    const plusIcon = firstAddTaskButton.locator('svg');
     await expect(plusIcon).toBeVisible();
     
-    const regularNoteElement = page.locator('text=Regular note content').locator('..');
-    await expect(regularNoteElement.locator('button:has-text("Add task")')).not.toBeVisible();
+    const secondAddTaskButton = addTaskButtons.nth(1);
+    await expect(secondAddTaskButton).toBeVisible();
   });
 
   test('should not display "Add task" button when user is not authorized', async ({ page }) => {
