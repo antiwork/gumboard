@@ -221,7 +221,7 @@ function SignInContent() {
             </div>
 
             {/* OAuth Buttons */}
-            <div className="space-y-3 w-full">
+            <div className="space-y-3 w-full mt-4">
               {/* Google Button */}
               <Button
                 type="button"
