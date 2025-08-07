@@ -88,3 +88,35 @@ In your `.env.local` file, add:
 GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
 ```
+## 🔐 GitHub OAuth Setup
+
+To enable login with GitHub, follow these steps:
+
+### 1. Create GitHub OAuth App
+
+1. Visit [GitHub Developer Settings](https://github.com/settings/developers).
+2. Under **OAuth Apps**, click **"New OAuth App"**.
+3. Fill out the form:
+   - **Application Name**: Gumboard (or anything)
+   - **Homepage URL**:  
+     ```
+     http://localhost:3000
+     ```
+   - **Authorization Callback URL**:  
+     ```
+     http://localhost:3000/api/auth/callback/github
+     ```
+4. Click **Register Application**.
+5. After registration, copy:
+   - **Client ID**
+   - **Client Secret**
+
+---
+
+### 2. Add Environment Variables
+
+In your `.env.local` file, add:
+
+```env
+GITHUB_CLIENT_ID=your-github-client-id
+GITHUB_CLIENT_SECRET=your-github-client-secret
