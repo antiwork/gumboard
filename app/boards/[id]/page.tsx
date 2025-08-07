@@ -1944,7 +1944,7 @@ export default function BoardPage({
                 </div>
               ) : note.isChecklist ? (
                 <div className="flex-1 flex flex-col">
-                  <div className="overflow-y-auto max-h-48 space-y-1 flex-1">
+                  <div className="overflow-y-auto space-y-1 flex-1">
                     {/* Checklist Items */}
                     {note.checklistItems?.map((item) => (
                     <div
@@ -2161,7 +2161,7 @@ export default function BoardPage({
                     )}
                 </div>
               ) : (
-                <div className="flex-1 overflow-hidden flex flex-col relative">
+                <div className="flex-1 flex flex-col relative">
                   <p
                     className={`text-base whitespace-pre-wrap break-words leading-7 m-0 p-0 flex-1 transition-all duration-200 ${
                       note.done
