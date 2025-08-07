@@ -123,7 +123,7 @@ export async function POST(
       }
     })
 
-    if (user.organization?.slackWebhookUrl && hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name)) {
+    if (user.organization?.slackWebhookUrl && hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)) {
       const slackMessage = formatNoteForSlack(note, board.name, user.name || user.email)
       const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
         text: slackMessage,
