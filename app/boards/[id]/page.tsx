@@ -2109,11 +2109,11 @@ export default function BoardPage({
 
                   {/* Add new item input */}
                   {addingChecklistItem === note.id && (
-                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200">
+                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded gap-3 transition-all duration-200">
                       <Checkbox
                         checked={false}
                         disabled
-                        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mr-3 ml-2"
+                        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                       />
                       <Input
                         type="text"
