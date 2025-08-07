@@ -15,7 +15,6 @@ import {
   LogOut,
   Search,
   User,
-  GripVertical,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -116,22 +115,15 @@ function SortableChecklistItem(props: SortableChecklistItemProps) {
       className={`flex items-center group/item rounded gap-2 sm:gap-3 transition-all duration-200 ${
         animating ? "animate-pulse" : ""
       }`}
+      {...attributes}
+      {...listeners}
     >
-      {canEdit && (
-        <button
-          className="cursor-grab active:cursor-grabbing p-1 text-zinc-400 hover:text-zinc-600 dark:text-zinc-500 dark:hover:text-zinc-300"
-          aria-label="Drag to reorder"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="w-4 h-4" />
-        </button>
-      )}
+      {/* Entire item is draggable; handle removed */}
 
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => handleToggleChecklistItem(noteId, item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 cursor-pointer"
       />
 
       {editingChecklistItem?.noteId === noteId &&
@@ -324,7 +316,7 @@ export default function BoardPage({
 
   // DnD sensors reused for all note lists
   const sensors = useSensors(
-    useSensor(PointerSensor),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor)
   );
 
@@ -1494,7 +1486,7 @@ export default function BoardPage({
         // Revert on error
         setNotes(notes);
       }
-    } catch (err) {
+    } catch {
       // Revert on network error
       setNotes(notes);
     }
