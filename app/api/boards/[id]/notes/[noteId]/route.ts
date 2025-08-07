@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
+import { sendSlackMessage, formatNoteForSlack, hasValidContent, shouldSendNotification, updateSlackMessage, sendTodoNotification } from "@/lib/slack"
 
 // Update a note
 export async function PUT(
@@ -135,6 +136,63 @@ export async function PUT(
 
       return updatedNote
     })
+
+    // Handle Slack notifications after the database transaction
+    if (updatedNote) {
+      const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        include: { organization: true }
+      })
+
+      // Send Slack notification for content updates
+      if (user?.organization?.slackWebhookUrl && updatedNote.board.sendSlackUpdates) {
+        if (content !== undefined && hasValidContent(content) && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
+          const slackMessage = formatNoteForSlack({ content }, updatedNote.board.name, user.name || user.email)
+          const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
+            text: slackMessage,
+            username: 'Gumboard',
+            icon_emoji: ':clipboard:'
+          })
+
+          if (messageId && !updatedNote.slackMessageId) {
+            await db.note.update({
+              where: { id: noteId },
+              data: { slackMessageId: messageId }
+            })
+          }
+        }
+
+        // Send Slack notification for checklist item changes
+        if (checklistItems !== undefined && Array.isArray(checklistItems)) {
+          for (const item of checklistItems) {
+            if (hasValidContent(item.content) && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
+              const action = item.checked ? 'completed' : 'added'
+              await sendTodoNotification(
+                user.organization.slackWebhookUrl,
+                item.content,
+                updatedNote.board.name,
+                user.name || user.email,
+                action
+              )
+            }
+          }
+        }
+
+        // Send completion notification for the note itself
+        if (done !== undefined && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
+          const noteContent = updatedNote.content || (updatedNote.checklistItems && updatedNote.checklistItems.length > 0 ? updatedNote.checklistItems[0].content : 'Note')
+          if (hasValidContent(noteContent)) {
+            await updateSlackMessage(
+              user.organization.slackWebhookUrl,
+              noteContent,
+              done,
+              updatedNote.board.name,
+              user.name || user.email
+            )
+          }
+        }
+      }
+    }
 
     return NextResponse.json({ note: updatedNote })
   } catch (error) {
