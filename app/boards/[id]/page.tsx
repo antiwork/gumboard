@@ -17,7 +17,6 @@ import {
   Search,
   User,
 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -1978,7 +1977,7 @@ export default function BoardPage({
 
                       {/* Content */}
                       {editingChecklistItem?.noteId === note.id &&
-                        editingChecklistItem?.itemId === item.id && (
+                        editingChecklistItem?.itemId === item.id ? (
                           <Input
                             type="text"
                             value={editingChecklistItemContent}
@@ -2070,6 +2069,26 @@ export default function BoardPage({
                             }}
                             autoFocus
                           />
+                        ) : (
+                          <span
+                            className={cn(
+                              "flex-1 text-sm leading-6 cursor-pointer transition-all duration-200",
+                              item.checked
+                                ? "text-slate-500 dark:text-zinc-500 line-through"
+                                : "text-gray-800 dark:text-gray-200"
+                            )}
+                            onClick={() => {
+                              if (user?.id === note.user.id || user?.isAdmin) {
+                                setEditingChecklistItem({
+                                  noteId: note.id,
+                                  itemId: item.id,
+                                });
+                                setEditingChecklistItemContent(item.content);
+                              }
+                            }}
+                          >
+                            {item.content}
+                          </span>
                         )}
 
                       {/* Delete button */}
@@ -2087,6 +2106,48 @@ export default function BoardPage({
                       )}
                     </div>
                     ))}
+
+                  {/* Add new item input */}
+                  {addingChecklistItem === note.id && (
+                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200">
+                      <Checkbox
+                        checked={false}
+                        disabled
+                        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mr-3 ml-2"
+                      />
+                      <Input
+                        type="text"
+                        value={newChecklistItemContent}
+                        onChange={(e) =>
+                          setNewChecklistItemContent(e.target.value)
+                        }
+                        className="flex-1 bg-transparent border-none text-sm leading-6 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
+                        placeholder="Add new item..."
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            handleAddChecklistItem(note.id);
+                          }
+                          if (e.key === "Escape") {
+                            setAddingChecklistItem(null);
+                            setNewChecklistItemContent("");
+                          }
+                          if (
+                            e.key === "Backspace" &&
+                            newChecklistItemContent.trim() === ""
+                          ) {
+                            setAddingChecklistItem(null);
+                            setNewChecklistItemContent("");
+                          }
+                        }}
+                        onBlur={() => {
+                          if (newChecklistItemContent.trim()) {
+                            handleAddChecklistItem(note.id);
+                          }
+                        }}
+                        autoFocus
+                      />
+                    </div>
+                  )}
                   </div>
 
                   {/* Add task button - everpresent for checklist notes and authorized users */}
