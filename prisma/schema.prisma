@@ -120,6 +120,7 @@ model ChecklistItem {
   checked   Boolean @default(false)
   order     Int @default(0)
   noteId    String
+  slackMessageId String? // Slack message ID for individual item updates
   note      Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -14,7 +14,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { content, color, done, isChecklist, checklistItems } = await request.json()
+    const { content, color, done, checklistItems } = await request.json()
     const { id: boardId, noteId } = await params
 
     // Verify user has access to this board (same organization)
@@ -66,6 +66,9 @@ export async function PUT(
     }
 
     // Use a transaction to update note and checklist items together
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let checklistChanges: any = null;
+
     const updatedNote = await db.$transaction(async (tx) => {
       // Update the note
       const updatedNote = await tx.note.update({
@@ -74,7 +77,6 @@ export async function PUT(
           ...(content !== undefined && { content }),
           ...(color !== undefined && { color }),
           ...(done !== undefined && { done }),
-          ...(isChecklist !== undefined && { isChecklist }),
         },
         include: {
           user: {
@@ -95,21 +97,67 @@ export async function PUT(
 
       // Handle checklist items update if provided
       if (checklistItems !== undefined && Array.isArray(checklistItems)) {
-        // Delete existing checklist items
-        await tx.checklistItem.deleteMany({
-          where: { noteId }
+        const existingItems = await tx.checklistItem.findMany({
+          where: { noteId },
+          orderBy: { order: 'asc' }
         })
 
-        // Create new checklist items if any
-        if (checklistItems.length > 0) {
+        const existingItemsMap = new Map(existingItems.map(item => [item.id, item]))
+        const newItemsMap = new Map(checklistItems.map(item => [item.id, item]))
+
+        const createdItems = checklistItems.filter(item => !existingItemsMap.has(item.id))
+        const updatedItems = checklistItems.filter(item => {
+          const existing = existingItemsMap.get(item.id)
+          return existing && (
+            existing.content !== item.content || 
+            existing.checked !== item.checked || 
+            existing.order !== item.order
+          )
+        })
+        const deletedItemIds = existingItems
+          .filter(item => !newItemsMap.has(item.id))
+          .map(item => item.id)
+        const deletedItems = existingItems.filter(item => deletedItemIds.includes(item.id))
+
+        // Store changes for Slack notifications
+        checklistChanges = {
+          created: createdItems,
+          updated: updatedItems.map(item => ({
+            ...item,
+            previous: existingItemsMap.get(item.id)
+          })),
+          deleted: deletedItems
+        }
+
+        // Delete removed items
+        if (deletedItemIds.length > 0) {
+          await tx.checklistItem.deleteMany({
+            where: { id: { in: deletedItemIds } }
+          })
+        }
+
+        // Create new items
+        if (createdItems.length > 0) {
           await tx.checklistItem.createMany({
-            data: checklistItems.map((item: { id: string; content: string; checked: boolean; order: number }) => ({
+            data: createdItems.map(item => ({
               id: item.id,
               content: item.content,
               checked: item.checked,
               order: item.order,
               noteId: noteId
             }))
+          })
+        }
+
+        // Update existing items
+        for (const item of updatedItems) {
+          await tx.checklistItem.update({
+            where: { id: item.id },
+            data: {
+              content: item.content,
+              checked: item.checked,
+              order: item.order
+            }
           })
         }
 
@@ -162,18 +210,52 @@ export async function PUT(
           }
         }
 
-        // Send Slack notification for checklist item changes
-        if (checklistItems !== undefined && Array.isArray(checklistItems)) {
-          for (const item of checklistItems) {
-            if (hasValidContent(item.content) && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
-              const action = item.checked ? 'completed' : 'added'
-              await sendTodoNotification(
-                user.organization.slackWebhookUrl,
-                item.content,
-                updatedNote.board.name,
-                user.name || user.email,
-                action
-              )
+        // Handle checklist item changes with proper diffing
+        if (checklistChanges && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
+          // Send notification only for new items
+          if (checklistChanges.created) {
+            for (const item of checklistChanges.created) {
+              if (hasValidContent(item.content)) {
+                const messageId = await sendTodoNotification(
+                  user.organization.slackWebhookUrl,
+                  item.content,
+                  updatedNote.board.name,
+                  user.name || user.email,
+                  'added'
+                )
+
+                if (messageId) {
+                  await db.checklistItem.update({
+                    where: { id: item.id },
+                    data: { slackMessageId: messageId }
+                  })
+                }
+              }
+            }
+          }
+
+          if (checklistChanges.updated) {
+            for (const item of checklistChanges.updated) {
+              if (hasValidContent(item.content) && item.previous) {
+                // Only notify if checked status changed
+                if (item.previous.checked !== item.checked) {
+                  const action = item.checked ? 'completed' : 'added'
+                  const messageId = await sendTodoNotification(
+                    user.organization.slackWebhookUrl,
+                    item.content,
+                    updatedNote.board.name,
+                    user.name || user.email,
+                    action
+                  )
+
+                  if (messageId) {
+                    await db.checklistItem.update({
+                      where: { id: item.id },
+                      data: { slackMessageId: messageId }
+                    })
+                  }
+                }
+              }
             }
           }
         }
