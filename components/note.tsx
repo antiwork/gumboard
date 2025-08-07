@@ -4,9 +4,8 @@ import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Trash2, Plus } from "lucide-react";
-import { ChecklistItem } from "./checklist-item";
+import { Trash2 } from "lucide-react";
+import { Checklist } from "./checklist";
 import { cn } from "@/lib/utils";
 
 interface ChecklistItemData {
@@ -41,14 +40,9 @@ interface NoteProps {
   newChecklistItemContent?: string;
   onUpdate?: (noteId: string, content: string) => void;
   onDelete?: (noteId: string) => void;
-  onAddChecklistItem?: (noteId: string, content: string) => void;
-  onToggleChecklistItem?: (noteId: string, itemId: string) => void;
-  onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
-  onEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
   onToggleAllChecklistItems?: (noteId: string) => void;
-  onSplitChecklistItem?: (noteId: string, itemId: string, content: string, cursorPosition: number) => void;
-  onDebouncedEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
-  onEditStart?: (noteId: string) => void;
+  onChecklistUpdate?: (noteId: string, items: ChecklistItemData[], done: boolean) => void;
+  boardId?: string;
   onEditEnd?: (noteId: string) => void;
   onChecklistItemEditStart?: (noteId: string, itemId: string) => void;
   onChecklistItemEditEnd?: () => void;
@@ -64,7 +58,6 @@ export function Note({
   content,
   color,
   done,
-  createdAt,
   checklistItems = [],
   user,
   board,
@@ -77,14 +70,9 @@ export function Note({
   newChecklistItemContent: externalNewChecklistItemContent = "",
   onUpdate,
   onDelete,
-  onAddChecklistItem,
-  onToggleChecklistItem,
-  onDeleteChecklistItem,
-  onEditChecklistItem,
   onToggleAllChecklistItems,
-  onSplitChecklistItem,
-  onDebouncedEditChecklistItem,
-  onEditStart,
+  onChecklistUpdate,
+  boardId,
   onEditEnd,
   onChecklistItemEditStart,
   onChecklistItemEditEnd,
@@ -98,7 +86,6 @@ export function Note({
   const [editContent, setEditContent] = useState(content);
   const [internalAddingChecklistItem, setInternalAddingChecklistItem] = useState(false);
   const [internalNewChecklistItemContent, setInternalNewChecklistItemContent] = useState("");
-  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
 
   const isEditing = externalIsEditing || internalIsEditing;
   const editingChecklistItemId = externalEditingChecklistItemId;
@@ -118,26 +105,9 @@ export function Note({
     }
   };
 
-  const handleAddChecklistItem = () => {
-    if (onAddChecklistItem && newChecklistItemContent.trim()) {
-      onAddChecklistItem(id, newChecklistItemContent);
-      if (!externalIsAddingChecklistItem) {
-        setInternalNewChecklistItemContent("");
-      }
-    }
-  };
-
-  const handleToggleChecklistItem = (itemId: string) => {
-    if (onToggleChecklistItem) {
-      setAnimatingItems(new Set([...animatingItems, itemId]));
-      onToggleChecklistItem(id, itemId);
-      setTimeout(() => {
-        setAnimatingItems((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(itemId);
-          return newSet;
-        });
-      }, 200);
+  const handleChecklistUpdate = (items: ChecklistItemData[], done: boolean) => {
+    if (onChecklistUpdate) {
+      onChecklistUpdate(id, items, done);
     }
   };
 
@@ -247,103 +217,43 @@ export function Note({
           />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col">
-          <div className="overflow-y-auto space-y-1 flex-1">
-            {checklistItems.map((item) => (
-              <ChecklistItem
-                key={item.id}
-                content={item.content}
-                checked={item.checked}
-                isEditing={editingChecklistItemId === item.id}
-                canEdit={canEdit}
-                onToggle={() => handleToggleChecklistItem(item.id)}
-                onDelete={() => onDeleteChecklistItem?.(id, item.id)}
-                onEdit={(newContent) => onDebouncedEditChecklistItem ? onDebouncedEditChecklistItem(id, item.id, newContent) : onEditChecklistItem?.(id, item.id, newContent)}
-                onEditStart={() => onChecklistItemEditStart?.(id, item.id)}
-                onEditEnd={() => onChecklistItemEditEnd?.()}
-                onSplit={(content, cursorPosition) => 
-                  onSplitChecklistItem?.(id, item.id, content, cursorPosition)
-                }
-                isAnimating={animatingItems.has(item.id)}
-              />
-            ))}
-
-            {addingChecklistItem && (
-              <div className="flex items-center group/item rounded gap-3 transition-all duration-200">
-                <Checkbox
-                  checked={false}
-                  disabled
-                  className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
-                />
-                <Input
-                  type="text"
-                  value={newChecklistItemContent}
-                  onChange={(e) => {
-                    if (onNewChecklistItemChange) {
-                      onNewChecklistItemChange(e.target.value);
-                    } else {
-                      setInternalNewChecklistItemContent(e.target.value);
-                    }
-                  }}
-                  className="flex-1 bg-transparent border-none text-sm leading-6 text-gray-800 dark:text-gray-200 placeholder-gray-500 dark:placeholder-gray-400 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  placeholder="Add new item..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      handleAddChecklistItem();
-                    }
-                    if (e.key === "Escape") {
-                      if (onCancelAddingItem) {
-                        onCancelAddingItem();
-                      } else {
-                        setInternalAddingChecklistItem(false);
-                        setInternalNewChecklistItemContent("");
-                      }
-                    }
-                    if (e.key === "Backspace" && newChecklistItemContent.trim() === "") {
-                      if (onCancelAddingItem) {
-                        onCancelAddingItem();
-                      } else {
-                        setInternalAddingChecklistItem(false);
-                        setInternalNewChecklistItemContent("");
-                      }
-                    }
-                  }}
-                  onBlur={() => {
-                    if (newChecklistItemContent.trim()) {
-                      handleAddChecklistItem();
-                    } else {
-                      if (onCancelAddingItem) {
-                        onCancelAddingItem();
-                      } else {
-                        setInternalAddingChecklistItem(false);
-                      }
-                    }
-                  }}
-                  autoFocus
-                />
-              </div>
-            )}
-          </div>
-
-          {canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation();
-                if (onAddTaskClick) {
-                  onAddTaskClick();
-                } else {
-                  setInternalAddingChecklistItem(true);
-                }
-              }}
-              className="mt-2 justify-start text-slate-600 dark:text-gray-300 hover:text-slate-900 dark:hover:text-gray-100 text-sm opacity-70 hover:opacity-100"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add task
-            </Button>
-          )}
-        </div>
+        <Checklist
+          noteId={id}
+          boardId={boardId || ""}
+          items={checklistItems}
+          canEdit={canEdit}
+          editingItemId={editingChecklistItemId}
+          isAddingItem={addingChecklistItem}
+          newItemContent={newChecklistItemContent}
+          onItemsUpdate={handleChecklistUpdate}
+          onEditStart={(itemId) => onChecklistItemEditStart?.(id, itemId)}
+          onEditEnd={() => onChecklistItemEditEnd?.()}
+          onNewItemChange={(content) => {
+            if (onNewChecklistItemChange) {
+              onNewChecklistItemChange(content);
+            } else {
+              setInternalNewChecklistItemContent(content);
+            }
+          }}
+          onAddTaskClick={() => {
+            if (onAddTaskClick) {
+              onAddTaskClick();
+            } else {
+              setInternalAddingChecklistItem(true);
+            }
+          }}
+          onCancelAddingItem={() => {
+            if (onCancelAddingItem) {
+              onCancelAddingItem();
+            } else {
+              setInternalAddingChecklistItem(false);
+              setInternalNewChecklistItemContent("");
+            }
+          }}
+          onError={(title, description) => {
+            console.error(`${title}: ${description}`);
+          }}
+        />
       )}
     </div>
   );
