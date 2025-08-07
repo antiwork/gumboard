@@ -1777,9 +1777,10 @@ export default function BoardPage({
                   />
                 </div>
               ) : note.isChecklist ? (
-                <div className="flex-1 overflow-hidden flex flex-col space-y-1">
-                  {/* Checklist Items */}
-                  {note.checklistItems?.map((item) => (
+                <div className="flex-1 flex flex-col">
+                  <div className="overflow-y-auto max-h-48 space-y-1 flex-1">
+                    {/* Checklist Items */}
+                    {note.checklistItems?.map((item) => (
                     <div
                       key={item.id}
                       className={`flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200 ${
@@ -1935,7 +1936,8 @@ export default function BoardPage({
                         </button>
                       )}
                     </div>
-                  ))}
+                    ))}
+                  </div>
 
                   {/* Add new item input */}
                   {addingChecklistItem === note.id && (
