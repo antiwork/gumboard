@@ -66,8 +66,7 @@ export async function PUT(
     }
 
     // Use a transaction to update note and checklist items together
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let checklistChanges: any = null;
+    let checklistChanges: { created: { id: string; content: string; checked: boolean; order: number }[]; updated: { id: string; content: string; checked: boolean; order: number; previous: { id: string; content: string; checked: boolean; order: number } }[]; deleted: { id: string; content: string; checked: boolean; order: number }[] } | null = { created: [], updated: [], deleted: [] };
 
     const updatedNote = await db.$transaction(async (tx) => {
       // Update the note
@@ -343,4 +342,4 @@ export async function DELETE(
     console.error("Error deleting note:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}                                                                
+}
