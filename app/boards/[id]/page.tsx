@@ -1962,7 +1962,7 @@ export default function BoardPage({
                     {note.checklistItems?.map((item) => (
                     <div
                       key={item.id}
-                      className={`flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded gap-3 transition-all duration-200 ${
+                      className={`flex items-center group/item rounded gap-3 transition-all duration-200 ${
                         animatingItems.has(item.id) ? "animate-pulse" : ""
                       }`}
                     >
@@ -2109,7 +2109,7 @@ export default function BoardPage({
 
                   {/* Add new item input */}
                   {addingChecklistItem === note.id && (
-                    <div className="flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded gap-3 transition-all duration-200">
+                    <div className="flex items-center group/item rounded gap-3 transition-all duration-200">
                       <Checkbox
                         checked={false}
                         disabled
