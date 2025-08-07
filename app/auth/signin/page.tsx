@@ -221,37 +221,62 @@ function SignInContent() {
             </div>
 
             {/* Google Button */}
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full h-12 mt-4 justify-center dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900"
-              onClick={() => signIn("google", { callbackUrl: "/" })}
-            >
-              <svg
-                className="w-5 h-5 mr-2"
-                viewBox="0 0 48 48"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
+            <div className="flex flex-row gap-3 w-full mt-4">
+              {/* Google Button */}
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-12 justify-center dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900"
+                onClick={() => signIn("google", { callbackUrl: "/" })}
               >
-                <path
-                  d="M44.5 20H24v8.5h11.9C34.3 32.4 29.8 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8.1 3.1l6-6C34.1 4.3 29.3 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11.3 0 20.8-8.2 22-19h-1.5z"
-                  fill="#FFC107"
-                />
-                <path
-                  d="M6.3 14.7l7 5.1C14.5 16.4 18.9 14 24 14c3.1 0 5.9 1.2 8.1 3.1l6-6C34.1 4.3 29.3 2 24 2c-7.7 0-14.3 3.7-18.3 9.5l.6 3.2z"
-                  fill="#FF3D00"
-                />
-                <path
-                  d="M24 46c5.8 0 11.1-2.2 15.1-5.7l-7-5.7c-2 1.4-4.6 2.2-8.1 2.2-5.8 0-10.6-3.9-12.3-9.2l-7.1 5.5C7.6 41.5 15.2 46 24 46z"
-                  fill="#4CAF50"
-                />
-                <path
-                  d="M44.5 20H24v8.5h11.9c-1.1 3.2-3.5 5.8-6.6 7.2l7 5.7c4.1-3.4 6.8-8.5 6.8-14.4 0-1.3-.1-2.5-.3-3.7z"
-                  fill="#1976D2"
-                />
-              </svg>
-              Continue with Google
-            </Button>
+                <svg
+                  className="w-5 h-5 mr-2"
+                  viewBox="0 0 48 48"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M44.5 20H24v8.5h11.9C34.3 32.4 29.8 35 24 35c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8.1 3.1l6-6C34.1 4.3 29.3 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11.3 0 20.8-8.2 22-19h-1.5z"
+                    fill="#FFC107"
+                  />
+                  <path
+                    d="M6.3 14.7l7 5.1C14.5 16.4 18.9 14 24 14c3.1 0 5.9 1.2 8.1 3.1l6-6C34.1 4.3 29.3 2 24 2c-7.7 0-14.3 3.7-18.3 9.5l.6 3.2z"
+                    fill="#FF3D00"
+                  />
+                  <path
+                    d="M24 46c5.8 0 11.1-2.2 15.1-5.7l-7-5.7c-2 1.4-4.6 2.2-8.1 2.2-5.8 0-10.6-3.9-12.3-9.2l-7.1 5.5C7.6 41.5 15.2 46 24 46z"
+                    fill="#4CAF50"
+                  />
+                  <path
+                    d="M44.5 20H24v8.5h11.9c-1.1 3.2-3.5 5.8-6.6 7.2l7 5.7c4.1-3.4 6.8-8.5 6.8-14.4 0-1.3-.1-2.5-.3-3.7z"
+                    fill="#1976D2"
+                  />
+                </svg>
+                Google
+              </Button>
+
+              {/* GitHub Button */}
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 h-12 justify-center dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900"
+                onClick={() => signIn("github", { callbackUrl: "/" })}
+              >
+                <svg
+                  className="w-5 h-5 mr-2"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M12 .5C5.65.5.5 5.65.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.8-1.4-3.8-1.4-.5-1.2-1.2-1.5-1.2-1.5-1-.7.1-.7.1-.7 1.1.1 1.6 1.1 1.6 1.1 1 .1 1.5.8 2.2 1 .1-.7.4-1.1.7-1.4-2.6-.3-5.4-1.3-5.4-5.8 0-1.3.5-2.3 1.1-3.2-.1-.3-.5-1.5.1-3.1 0 0 .9-.3 3.2 1.2a11 11 0 0 1 5.8 0c2.3-1.5 3.2-1.2 3.2-1.2.6 1.6.2 2.8.1 3.1.7.9 1.1 1.9 1.1 3.2 0 4.5-2.8 5.5-5.4 5.8.5.5.8 1.1.8 2.2v3.3c0 .3.2.6.8.5A11.5 11.5 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"
+                  />
+                </svg>
+                GitHub
+              </Button>
+            </div>
           </CardFooter>
         </form>
       </Card>

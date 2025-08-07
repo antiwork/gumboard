@@ -1,20 +1,33 @@
-import NextAuth from "next-auth"
-import { PrismaAdapter } from "@auth/prisma-adapter"
-import Resend from "next-auth/providers/resend"
-import GoogleProvider from "next-auth/providers/google"
-import { PrismaClient } from "@prisma/client"
+// auth.ts
 
-const prisma = new PrismaClient()
+import NextAuth from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import ResendProvider from "next-auth/providers/resend";
+import GoogleProvider from "next-auth/providers/google";
+import GitHubProvider from "next-auth/providers/github";
+import { PrismaClient } from "@prisma/client";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const prisma = new PrismaClient();
+
+export const {
+  handlers,  // For route.ts usage in /api/auth
+  signIn,
+  signOut,
+  auth,
+} = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
-    Resend({
+    ResendProvider({
       from: process.env.EMAIL_FROM!,
     }),
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+    GitHubProvider({
+      clientId: process.env.GITHUB_CLIENT_ID!,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
   ],
@@ -25,15 +38,15 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   callbacks: {
     async signIn() {
-      return true
+      return true;
     },
     async redirect({ url, baseUrl }) {
       if (url.includes("/invite/accept")) {
-        return url.startsWith("/") ? `${baseUrl}${url}` : url
+        return url.startsWith("/") ? `${baseUrl}${url}` : url;
       }
-      if (url.startsWith("/")) return `${baseUrl}/dashboard`
-      else if (new URL(url).origin === baseUrl) return url
-      return `${baseUrl}/dashboard`
+      if (url.startsWith("/")) return `${baseUrl}/dashboard`;
+      else if (new URL(url).origin === baseUrl) return url;
+      return `${baseUrl}/dashboard`;
     },
   },
-})
+});
