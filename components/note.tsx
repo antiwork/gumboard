@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Edit3, Trash2, Plus } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
 import { ChecklistItem } from "./checklist-item";
 import { cn } from "@/lib/utils";
 
@@ -41,7 +41,6 @@ interface NoteProps {
   newChecklistItemContent?: string;
   onUpdate?: (noteId: string, content: string) => void;
   onDelete?: (noteId: string) => void;
-  onToggleDone?: (noteId: string, done: boolean) => void;
   onAddChecklistItem?: (noteId: string, content: string) => void;
   onToggleChecklistItem?: (noteId: string, itemId: string) => void;
   onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
@@ -78,7 +77,6 @@ export function Note({
   newChecklistItemContent: externalNewChecklistItemContent = "",
   onUpdate,
   onDelete,
-  onToggleDone,
   onAddChecklistItem,
   onToggleChecklistItem,
   onDeleteChecklistItem,
@@ -179,19 +177,6 @@ export function Note({
                 : user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
-              {false && (
-                <span className="text-xs text-gray-500 dark:text-gray-400 opacity-70">
-                  {new Date(createdAt).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year:
-                      new Date(createdAt).getFullYear() !==
-                      new Date().getFullYear()
-                        ? "numeric"
-                        : undefined,
-                  })}
-                </span>
-              )}
               {showBoardName && board && (
                 <span className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20">
                   {board.name}
@@ -203,22 +188,6 @@ export function Note({
         <div className="flex items-center space-x-2">
           {canEdit && (
             <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {false && (
-                <Button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (onEditStart) {
-                      onEditStart(id);
-                    } else {
-                      setInternalIsEditing(true);
-                    }
-                    setEditContent(content);
-                  }}
-                  className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
-                >
-                  <Edit3 className="w-3 h-3" />
-                </Button>
-              )}
               <Button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -250,7 +219,7 @@ export function Note({
       </div>
 
       {/* Content */}
-      {false ? (
+      {isEditing ? (
         <div className="flex-1 min-h-0">
           <textarea
             value={editContent}
@@ -374,19 +343,6 @@ export function Note({
               Add task
             </Button>
           )}
-        </div>
-      ) : (
-        <div className="flex-1 flex flex-col relative">
-          <p
-            className={cn(
-              "text-base whitespace-pre-wrap break-words leading-7 m-0 p-0 flex-1 transition-all duration-200",
-              done
-                ? "text-gray-500 dark:text-gray-400 opacity-70 line-through"
-                : "text-gray-800 dark:text-gray-200"
-            )}
-          >
-            {content}
-          </p>
         </div>
       )}
     </div>

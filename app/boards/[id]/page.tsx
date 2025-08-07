@@ -1785,7 +1785,6 @@ export default function BoardPage({
               newChecklistItemContent={addingChecklistItem === note.id ? newChecklistItemContent : ""}
               onUpdate={handleUpdateNote}
               onDelete={handleDeleteNote}
-              onToggleDone={handleToggleDone}
               onAddChecklistItem={(noteId, content) => {
                 handleAddChecklistItem(noteId);
               }}
