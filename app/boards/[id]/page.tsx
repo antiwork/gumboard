@@ -1062,7 +1062,6 @@ export default function BoardPage({
 
       setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
       setNewChecklistItemContent("");
-      setAddingChecklistItem(null);
     
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
