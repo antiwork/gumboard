@@ -736,7 +736,7 @@ export default function BoardPage({
         if (boardResponse.ok) {
           const { board } = await boardResponse.json();
           setBoard(board);
-          setBoardSettings({ sendSlackUpdates: board.sendSlackUpdates ?? true });
+          setBoardSettings({ sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true });
         }
 
         // Fetch notes for specific board
@@ -1423,7 +1423,7 @@ export default function BoardPage({
                     {boardId !== "all-notes" && (
                       <button
                         onClick={() => {
-                          setBoardSettings({ sendSlackUpdates: board?.sendSlackUpdates ?? true });
+                          setBoardSettings({ sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true });
                           setBoardSettingsDialog(true);
                           setShowBoardDropdown(false);
                         }}
