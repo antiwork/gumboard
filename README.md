@@ -9,6 +9,12 @@ Keep on top of your team's to-dos.
 - Docker Compose
 - Node
 
+### Install dependencies
+
+```bash
+npm install
+```
+
 ### Database Setup
 
 1. Create your environment variables file:

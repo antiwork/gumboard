@@ -807,11 +807,26 @@ export default function BoardPage({
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
       const targetBoardId =
-        boardId === "all-notes" && currentNote?.board?.id
+        boardId === "all-notes" && currentNote.board?.id
           ? currentNote.board.id
           : boardId;
 
+      // Store original content for potential rollback
+      const originalContent = currentNote.content;
+
+      // OPTIMISTIC UPDATE: Update UI immediately
+      const optimisticNote = {
+        ...currentNote,
+        content: content,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+      setEditingNote(null);
+      setEditContent("");
+
+      // Send to server in background
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
         {
@@ -824,11 +839,19 @@ export default function BoardPage({
       );
 
       if (response.ok) {
+        // Server succeeded, confirm with actual server response
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-        setEditingNote(null);
-        setEditContent("");
       } else {
+        // Server failed, revert to original content
+        console.error("Server error, reverting optimistic update");
+        const revertedNote = { ...currentNote, content: originalContent };
+        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
+        
+        // Re-enable editing with original content
+        setEditingNote(noteId);
+        setEditContent(originalContent);
+
         const errorData = await response.json();
         setErrorDialog({
           open: true,
@@ -838,10 +861,20 @@ export default function BoardPage({
       }
     } catch (error) {
       console.error("Error updating note:", error);
+      
+      // Revert optimistic update on network error
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (currentNote) {
+        // We need to restore the original content, but we've lost it
+        // In a more robust implementation, we'd store it in state
+        setEditingNote(noteId);
+        setEditContent(currentNote.content); // Use current content as fallback
+      }
+      
       setErrorDialog({
         open: true,
-        title: "Failed to update note",
-        description: "Failed to update note",
+        title: "Connection Error", 
+        description: "Failed to save note. Please try again.",
       });
     }
   };
@@ -893,11 +926,22 @@ export default function BoardPage({
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
+
       const targetBoardId =
-        boardId === "all-notes" && currentNote?.board?.id
+        boardId === "all-notes" && currentNote.board?.id
           ? currentNote.board.id
           : boardId;
 
+      // OPTIMISTIC UPDATE: Update UI immediately
+      const optimisticNote = {
+        ...currentNote,
+        done: !currentDone,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+
+      // Send to server in background
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
         {
@@ -910,11 +954,35 @@ export default function BoardPage({
       );
 
       if (response.ok) {
+        // Server succeeded, confirm with actual server response
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+      } else {
+        // Server failed, revert to original state
+        console.error("Server error, reverting optimistic update");
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        
+        setErrorDialog({
+          open: true,
+          title: "Update Failed",
+          description: "Failed to update note status. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Error toggling note done status:", error);
+      
+      // Revert optimistic update on network error
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (currentNote) {
+        const revertedNote = { ...currentNote, done: currentDone };
+        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
+      }
+      
+      setErrorDialog({
+        open: true,
+        title: "Connection Error",
+        description: "Failed to sync changes. Please check your connection.",
+      });
     }
   };
 
@@ -988,6 +1056,16 @@ export default function BoardPage({
       // Check if all items are checked to mark note as done
       const allItemsChecked = updatedItems.every((item) => item.checked);
 
+      // OPTIMISTIC UPDATE
+      const optimisticNote = {
+        ...currentNote,
+        checklistItems: updatedItems,
+        done: allItemsChecked,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+      setNewChecklistItemContent("");
+    
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
         {
@@ -1006,9 +1084,34 @@ export default function BoardPage({
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
         setNewChecklistItemContent("");
+      } else {
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        setAddingChecklistItem(noteId);
+        setNewChecklistItemContent(newItem.content);
+
+        setErrorDialog({
+          open: true,
+          title: "Failed to Add Item",
+          description: "Failed to add checklist item. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Error adding checklist item:", error);
+      
+      // Revert optimistic update on network error
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (currentNote) {
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        // Re-enable adding state for retry
+        setAddingChecklistItem(noteId);
+        setNewChecklistItemContent(newChecklistItemContent);
+      }
+      
+      setErrorDialog({
+        open: true,
+        title: "Connection Error",
+        description: "Failed to add item. Please check your connection.",
+      });
     }
   };
 
@@ -1022,49 +1125,77 @@ export default function BoardPage({
           ? currentNote.board.id
           : boardId;
 
+      // OPTIMISTIC UPDATE
       const updatedItems = currentNote.checklistItems.map((item) =>
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
 
-      // Add item to animating set for visual feedback
+      const sortedItems = [
+        ...updatedItems
+          .filter((item) => !item.checked)
+          .sort((a, b) => a.order - b.order),
+        ...updatedItems
+          .filter((item) => item.checked)
+          .sort((a, b) => a.order - b.order),
+      ];
+
+      const allItemsChecked = sortedItems.every((item) => item.checked);
+
+      // OPTIMISTIC UPDATE
+      const optimisticNote = {
+        ...currentNote,
+        checklistItems: sortedItems,
+        done: allItemsChecked,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+
       setAnimatingItems((prev) => new Set([...prev, itemId]));
 
-      // Small delay to show animation before reordering
       setTimeout(() => {
-        // Sort items: unchecked first, then checked
-        const sortedItems = [
-          ...updatedItems
-            .filter((item) => !item.checked)
-            .sort((a, b) => a.order - b.order),
-          ...updatedItems
-            .filter((item) => item.checked)
-            .sort((a, b) => a.order - b.order),
-        ];
-
-        // Check if all items are checked to mark note as done
-        const allItemsChecked = sortedItems.every((item) => item.checked);
-
-        fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: sortedItems,
-            done: allItemsChecked,
-          }),
-        })
-          .then((response) => response.json())
-          .then(({ note }) => {
-            setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-            // Remove from animating set after update
-            setAnimatingItems((prev) => {
-              const newSet = new Set(prev);
-              newSet.delete(itemId);
-              return newSet;
-            });
-          });
+        setAnimatingItems((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(itemId);
+          return newSet;
+        });
       }, 200);
+
+      // Send to server in background
+      fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          checklistItems: sortedItems,
+          done: allItemsChecked,
+        }),
+      })
+        .then(async (response) => {
+          if (!response.ok) {
+            console.error("Server error, reverting optimistic update");
+            setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+            
+            setErrorDialog({
+              open: true,
+              title: "Update Failed",
+              description: "Failed to update checklist item. Please try again.",
+            });
+          } else {
+            const { note } = await response.json();
+            setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+          }
+        })
+        .catch((error) => {
+          console.error("Error toggling checklist item:", error);
+          setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+          
+          setErrorDialog({
+            open: true,
+            title: "Connection Error",
+            description: "Failed to sync changes. Please check your connection.",
+          });
+        });
     } catch (error) {
       console.error("Error toggling checklist item:", error);
     }
@@ -1080,6 +1211,10 @@ export default function BoardPage({
           ? currentNote.board.id
           : boardId;
 
+      // Store the item being deleted for potential rollback
+      const deletedItem = currentNote.checklistItems.find((item) => item.id === itemId);
+      if (!deletedItem) return;
+
       const updatedItems = currentNote.checklistItems.filter(
         (item) => item.id !== itemId
       );
@@ -1090,6 +1225,16 @@ export default function BoardPage({
           ? updatedItems.every((item) => item.checked)
           : false;
 
+      // OPTIMISTIC UPDATE: Update UI immediately
+      const optimisticNote = {
+        ...currentNote,
+        checklistItems: updatedItems,
+        done: allItemsChecked,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+
+      // Send to server in background
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
         {
@@ -1107,9 +1252,30 @@ export default function BoardPage({
       if (response.ok) {
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+      } else {
+        console.error("Server error, reverting optimistic update");
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+
+        setErrorDialog({
+          open: true,
+          title: "Failed to Delete Item",
+          description: "Failed to delete checklist item. Please try again.",
+        });
       }
     } catch (error) {
       console.error("Error deleting checklist item:", error);
+      
+      // Revert optimistic update on network error
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (currentNote) {
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+      }
+      
+      setErrorDialog({
+        open: true,
+        title: "Connection Error",
+        description: "Failed to delete item. Please check your connection.",
+      });
     }
   };
 
@@ -1755,9 +1921,10 @@ export default function BoardPage({
                   />
                 </div>
               ) : note.isChecklist ? (
-                <div className="flex-1 overflow-hidden flex flex-col space-y-1">
-                  {/* Checklist Items */}
-                  {note.checklistItems?.map((item) => (
+                <div className="flex-1 flex flex-col">
+                  <div className="overflow-y-auto space-y-1 flex-1">
+                    {/* Checklist Items */}
+                    {note.checklistItems?.map((item) => (
                     <div
                       key={item.id}
                       className={`flex items-center group/item hover:bg-white dark:hover:bg-gray-800 hover:bg-opacity-40 dark:hover:bg-opacity-40 rounded gap-3 transition-all duration-200 ${
@@ -1883,7 +2050,8 @@ export default function BoardPage({
                         </Button>
                       )}
                     </div>
-                  ))}
+                    ))}
+                  </div>
 
                   {/* Add task button - everpresent for checklist notes and authorized users */}
                   {note.isChecklist &&
@@ -1903,7 +2071,7 @@ export default function BoardPage({
                     )}
                 </div>
               ) : (
-                <div className="flex-1 overflow-hidden flex flex-col relative">
+                <div className="flex-1 flex flex-col relative">
                   <p
                     className={`text-base whitespace-pre-wrap break-words leading-7 m-0 p-0 flex-1 transition-all duration-200 ${
                       note.done
