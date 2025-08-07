@@ -64,7 +64,6 @@ export default function Dashboard() {
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
-  const [newBoardIsPublic, setNewBoardIsPublic] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
     open: boolean;
@@ -161,7 +160,6 @@ export default function Dashboard() {
         body: JSON.stringify({
           name: newBoardName,
           description: newBoardDescription,
-          isPublic: newBoardIsPublic,
         }),
       });
 
@@ -355,7 +353,6 @@ export default function Dashboard() {
               setShowAddBoard(false);
               setNewBoardName("");
               setNewBoardDescription("");
-              setNewBoardIsPublic(false);
             }}
           >
             <div
@@ -377,6 +374,7 @@ export default function Dashboard() {
                       onChange={(e) => setNewBoardName(e.target.value)}
                       placeholder="Enter board name"
                       required
+                      autoFocus
                       className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
                     />
                   </div>
@@ -392,16 +390,6 @@ export default function Dashboard() {
                       className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
                     />
                   </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={newBoardIsPublic}
-                      onCheckedChange={setNewBoardIsPublic}
-                    />
-                    <label className="text-sm font-medium text-foreground dark:text-zinc-200">
-                      Make this board public
-                    </label>
-                  </div>
                 </div>
                 <div className="flex justify-end space-x-3 mt-6">
                   <Button
@@ -411,7 +399,6 @@ export default function Dashboard() {
                       setShowAddBoard(false);
                       setNewBoardName("");
                       setNewBoardDescription("");
-                      setNewBoardIsPublic(false);
                     }}
                     className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
