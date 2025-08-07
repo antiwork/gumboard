@@ -2109,7 +2109,7 @@ export default function BoardPage({
 
                   {/* Add new item input */}
                   {addingChecklistItem === note.id && (
-                    <div className="flex items-center group/item rounded pr-3 py-1 -ml-0 -mr-0 transition-all duration-200">
+                    <div className="flex items-center group/item rounded gap-3 transition-all duration-200">
                       <Checkbox
                         checked={false}
                         disabled
