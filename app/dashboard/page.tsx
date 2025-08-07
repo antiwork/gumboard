@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { signOut } from "next-auth/react";
@@ -18,6 +19,8 @@ import {
   LogOut,
   ChevronDown,
   Grid3x3,
+  Copy,
+  Edit3,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -39,6 +42,7 @@ interface Board {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  isPublic: boolean;
   _count: {
     notes: number;
   };
@@ -61,6 +65,7 @@ export default function Dashboard() {
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
+  const [editingBoard, setEditingBoard] = useState<Board | null>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
     open: boolean;
@@ -72,6 +77,7 @@ export default function Dashboard() {
     title: string;
     description: string;
   }>({ open: false, title: "", description: "" });
+  const [copiedBoardId, setCopiedBoardId] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -94,6 +100,7 @@ export default function Dashboard() {
           setShowAddBoard(false);
           setNewBoardName("");
           setNewBoardDescription("");
+          setEditingBoard(null);
         }
         if (showUserDropdown) {
           setShowUserDropdown(false);
@@ -148,39 +155,75 @@ export default function Dashboard() {
     if (!newBoardName.trim()) return;
 
     try {
-      const response = await fetch("/api/boards", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newBoardName,
-          description: newBoardDescription,
-        }),
-      });
-
-      if (response.ok) {
-        const { board } = await response.json();
-        setBoards([board, ...boards]);
-        setNewBoardName("");
-        setNewBoardDescription("");
-        setShowAddBoard(false);
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to create board",
-          description: errorData.error || "Failed to create board",
+      if (editingBoard) {
+        const response = await fetch(`/api/boards/${editingBoard.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newBoardName,
+            description: newBoardDescription,
+          }),
         });
+
+        if (response.ok) {
+          const { board } = await response.json();
+          setBoards(boards.map((b) => (b.id === editingBoard.id ? board : b)));
+          setNewBoardName("");
+          setNewBoardDescription("");
+          setEditingBoard(null);
+          setShowAddBoard(false);
+        } else {
+          const errorData = await response.json();
+          setErrorDialog({
+            open: true,
+            title: "Failed to update board",
+            description: errorData.error || "Failed to update board",
+          });
+        }
+      } else {
+        const response = await fetch("/api/boards", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newBoardName,
+            description: newBoardDescription,
+          }),
+        });
+
+        if (response.ok) {
+          const { board } = await response.json();
+          setBoards([board, ...boards]);
+          setNewBoardName("");
+          setNewBoardDescription("");
+          setShowAddBoard(false);
+        } else {
+          const errorData = await response.json();
+          setErrorDialog({
+            open: true,
+            title: "Failed to create board",
+            description: errorData.error || "Failed to create board",
+          });
+        }
       }
     } catch (error) {
-      console.error("Error creating board:", error);
+      console.error("Error with board:", error);
       setErrorDialog({
         open: true,
-        title: "Failed to create board",
-        description: "Failed to create board",
+        title: editingBoard ? "Failed to update board" : "Failed to create board",
+        description: editingBoard ? "Failed to update board" : "Failed to create board",
       });
     }
+  };
+
+  const handleEditBoard = (board: Board) => {
+    setEditingBoard(board);
+    setNewBoardName(board.name);
+    setNewBoardDescription(board.description || "");
+    setShowAddBoard(true);
   };
 
   const handleDeleteBoard = (boardId: string, boardName: string) => {
@@ -214,6 +257,44 @@ export default function Dashboard() {
         title: "Failed to delete board",
         description: "Failed to delete board",
       });
+    }
+  };
+
+  const handleTogglePublic = async (boardId: string, isPublic: boolean) => {
+    try {
+      const response = await fetch(`/api/boards/${boardId}/public`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ isPublic }),
+      });
+
+      if (response.ok) {
+        setBoards(boards.map((board) => 
+          board.id === boardId ? { ...board, isPublic } : board
+        ));
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update board",
+          description: errorData.error || "Failed to update board settings",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating board:", error);
+    }
+  };
+
+  const handleCopyPublicUrl = async (boardId: string) => {
+    const publicUrl = `${window.location.origin}/public/boards/${boardId}`;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiedBoardId(boardId);
+      setTimeout(() => setCopiedBoardId(null), 2000);
+    } catch (error) {
+      console.error("Failed to copy URL:", error);
     }
   };
 
@@ -311,6 +392,7 @@ export default function Dashboard() {
               setShowAddBoard(false);
               setNewBoardName("");
               setNewBoardDescription("");
+              setEditingBoard(null);
             }}
           >
             <div
@@ -318,7 +400,7 @@ export default function Dashboard() {
               onClick={(e) => e.stopPropagation()}
             >
               <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
-                Create New Board
+                {editingBoard ? "Edit Board" : "Create New Board"}
               </h3>
               <form onSubmit={handleAddBoard}>
                 <div className="space-y-4">
@@ -332,6 +414,7 @@ export default function Dashboard() {
                       onChange={(e) => setNewBoardName(e.target.value)}
                       placeholder="Enter board name"
                       required
+                      autoFocus
                       className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
                     />
                   </div>
@@ -356,6 +439,7 @@ export default function Dashboard() {
                       setShowAddBoard(false);
                       setNewBoardName("");
                       setNewBoardDescription("");
+                      setEditingBoard(null);
                     }}
                     className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                   >
@@ -365,7 +449,7 @@ export default function Dashboard() {
                     type="submit"
                     className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
                   >
-                    Create Board
+                    {editingBoard ? "Update board" : "Create board"}
                   </Button>
                 </div>
               </form>
@@ -417,23 +501,77 @@ export default function Dashboard() {
                             {board.description}
                           </CardDescription>
                         )}
+                        
+                        <div className="mt-3 flex items-center justify-between" onClick={(e) => e.preventDefault()}>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              checked={board.isPublic}
+                              onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
+                              disabled={user?.id !== board.createdBy && !user?.isAdmin}
+                            />
+                            <span className="text-xs text-muted-foreground dark:text-zinc-400">
+                              {board.isPublic ? "Public" : "Private"}
+                            </span>
+                          </div>
+                          
+                          {board.isPublic && (
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleCopyPublicUrl(board.id);
+                              }}
+                              className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                              title="Copy public link"
+                            >
+                              {copiedBoardId === board.id ? (
+                                <>
+                                  <span>✓</span>
+                                  <span>Copied!</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Copy className="w-3 h-3" />
+                                  <span>Copy link</span>
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
                       </div>
                       {(user?.id === board.createdBy || user?.isAdmin) && (
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteBoard(board.id, board.name);
-                          }}
-                          className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity ml-2"
-                          title={
-                            user?.id === board.createdBy
-                              ? "Delete board"
-                              : "Delete board (Admin)"
-                          }
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEditBoard(board);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                            title={
+                              user?.id === board.createdBy
+                                ? "Edit board"
+                                : "Edit board (Admin)"
+                            }
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteBoard(board.id, board.name);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                            title={
+                              user?.id === board.createdBy
+                                ? "Delete board"
+                                : "Delete board (Admin)"
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </CardHeader>

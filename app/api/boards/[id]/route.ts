@@ -8,14 +8,8 @@ export async function GET(
 ) {
   try {
     const session = await auth()
-    
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const boardId = (await params).id
 
-    // Check if board exists and user has access
     const board = await db.board.findUnique({
       where: { id: boardId },
       include: { organization: { include: { members: true } } }
@@ -23,6 +17,23 @@ export async function GET(
 
     if (!board) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 })
+    }
+
+    if (board.isPublic) {
+      const { organization, ...boardData } = board
+      return NextResponse.json({ 
+        board: {
+          ...boardData,
+          organization: {
+            id: organization.id,
+            name: organization.name
+          }
+        }
+      })
+    }
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
     // Check if user is member of the organization
@@ -62,12 +73,23 @@ export async function PUT(
     }
 
     const boardId = (await params).id
-    const { sendSlackUpdates } = await request.json()
+    const { name, description, sendSlackUpdates } = await request.json()
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
       where: { id: boardId },
-      include: { organization: { include: { members: true } } }
+      include: { 
+        organization: { 
+          include: { 
+            members: {
+              select: {
+                id: true,
+                isAdmin: true
+              }
+            }
+          } 
+        } 
+      }
     })
 
     if (!board) {
@@ -75,16 +97,34 @@ export async function PUT(
     }
 
     // Check if user is member of the organization
-    const isMember = board.organization.members.some(member => member.id === session?.user?.id)
+    const currentUser = board.organization.members.find(member => member.id === session?.user?.id)
     
-    if (!isMember) {
+    if (!currentUser) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
+    // For name/description updates, check if user can edit this board (board creator or admin)
+    if ((name !== undefined || description !== undefined) && 
+        board.createdBy !== session.user.id && !currentUser.isAdmin) {
+      return NextResponse.json({ error: "Only the board creator or admin can edit this board" }, { status: 403 })
+    }
+
+    const updateData: {
+      name?: string;
+      description?: string;
+      sendSlackUpdates?: boolean;
+    } = {}
+    if (name !== undefined) updateData.name = name?.trim() || board.name
+    if (description !== undefined) updateData.description = description?.trim() || board.description
+    if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates
+
     const updatedBoard = await db.board.update({
       where: { id: boardId },
-      data: { sendSlackUpdates },
+      data: updateData,
       include: {
+        _count: {
+          select: { notes: true }
+        },
         organization: {
           select: {
             id: true,
@@ -100,7 +140,6 @@ export async function PUT(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -159,4 +198,4 @@ export async function DELETE(
     console.error("Error deleting board:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}  
+}         

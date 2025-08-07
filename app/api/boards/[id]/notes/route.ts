@@ -11,21 +11,7 @@ export async function GET(
 ) {
   try {
     const session = await auth()
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const boardId = (await params).id
-
-    // Verify user has access to this board (same organization)
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { organization: true }
-    })
-
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 })
-    }
 
     const board = await db.board.findUnique({
       where: { id: boardId },
@@ -49,6 +35,23 @@ export async function GET(
 
     if (!board) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 })
+    }
+
+    if (board.isPublic) {
+      return NextResponse.json({ notes: board.notes })
+    }
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      include: { organization: true }
+    })
+
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
     if (board.organizationId !== user.organizationId) {
