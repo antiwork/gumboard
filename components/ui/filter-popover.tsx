@@ -33,7 +33,7 @@ function FilterPopover({
   selectedAuthor,
   authors,
   onAuthorChange,
-  showCompleted = false,
+  showCompleted = true,
   onShowCompletedChange,
   className,
   disabled = false,

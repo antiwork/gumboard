@@ -104,7 +104,7 @@ export default function BoardPage({
     endDate: null,
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [showDoneNotes, setShowDoneNotes] = useState(false);
+  const [showDoneNotes, setShowDoneNotes] = useState(true);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
     null
   );
@@ -170,9 +170,9 @@ export default function BoardPage({
       params.set("author", currentAuthor);
     }
 
-    if (currentShowDone) {
-      // Only add if not default (false)
-      params.set("showDone", "true");
+    if (!currentShowDone) {
+      // Only add if not default (true)
+      params.set("showDone", "false");
     }
 
     const queryString = params.toString();
@@ -210,8 +210,8 @@ export default function BoardPage({
 
     setDateRange({ startDate, endDate });
     setSelectedAuthor(urlAuthor);
-    // Default to false if not specified, otherwise parse the boolean
-    setShowDoneNotes(urlShowDone === null ? false : urlShowDone === "true");
+    // Default to true if not specified, otherwise parse the boolean
+    setShowDoneNotes(urlShowDone === null ? true : urlShowDone === "true");
   };
 
   // Enhanced responsive grid configuration
@@ -1791,12 +1791,12 @@ export default function BoardPage({
                   setSearchTerm("");
                   setDateRange({ startDate: null, endDate: null });
                   setSelectedAuthor(null);
-                  setShowDoneNotes(false);
+                  setShowDoneNotes(true);
                   updateURL(
                     "",
                     { startDate: null, endDate: null },
                     null,
-                    false
+                    true
                   );
                 }}
                 className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-xs underline"
@@ -2224,12 +2224,12 @@ export default function BoardPage({
                   setSearchTerm("");
                   setDateRange({ startDate: null, endDate: null });
                   setSelectedAuthor(null);
-                  setShowDoneNotes(false);
+                  setShowDoneNotes(true);
                   updateURL(
                     "",
                     { startDate: null, endDate: null },
                     null,
-                    false
+                    true
                   );
                 }}
                 variant="outline"

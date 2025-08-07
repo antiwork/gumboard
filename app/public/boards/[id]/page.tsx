@@ -56,7 +56,7 @@ export default function PublicBoardPage({
     endDate: null,
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [showDoneNotes, setShowDoneNotes] = useState(false);
+  const [showDoneNotes, setShowDoneNotes] = useState(true);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
