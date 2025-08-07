@@ -22,7 +22,6 @@ interface Note {
   done: boolean;
   createdAt: string;
   updatedAt: string;
-  isChecklist?: boolean;
   checklistItems?: ChecklistItem[];
   user: {
     id: string;
@@ -122,7 +121,7 @@ export default function PublicBoardPage({
     const paddingHeight = actualNotePadding * 2;
     const minContentHeight = 84;
 
-    if (note.isChecklist && note.checklistItems) {
+    if (note.checklistItems) {
       const itemHeight = 32;
       const itemSpacing = 8;
       const checklistItemsCount = note.checklistItems.length;
@@ -572,7 +571,7 @@ export default function PublicBoardPage({
               </div>
 
               <div className="flex-1 overflow-hidden">
-                {note.isChecklist && note.checklistItems ? (
+                {note.checklistItems ? (
                   <div className="space-y-2">
                     {note.checklistItems
                       .sort((a, b) => a.order - b.order)

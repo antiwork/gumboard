@@ -22,7 +22,6 @@ interface NoteProps {
   color: string;
   done: boolean;
   createdAt: string;
-  isChecklist?: boolean;
   checklistItems?: ChecklistItemData[];
   user: {
     id: string;
@@ -67,7 +66,6 @@ export function Note({
   color,
   done,
   createdAt,
-  isChecklist = false,
   checklistItems = [],
   user,
   board,
@@ -181,7 +179,7 @@ export function Note({
                 : user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
-              {!isChecklist && (
+              {false && (
                 <span className="text-xs text-gray-500 dark:text-gray-400 opacity-70">
                   {new Date(createdAt).toLocaleDateString("en-US", {
                     month: "short",
@@ -205,7 +203,7 @@ export function Note({
         <div className="flex items-center space-x-2">
           {canEdit && (
             <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              {!isChecklist && (
+              {false && (
                 <Button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -237,21 +235,13 @@ export function Note({
               <Checkbox
                 checked={done}
                 onCheckedChange={() => {
-                  if (isChecklist) {
-                    onToggleAllChecklistItems?.(id);
-                  } else {
-                    onToggleDone?.(id, done);
-                  }
+                  onToggleAllChecklistItems?.(id);
                 }}
                 className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                 title={
-                  isChecklist
-                    ? done
-                      ? "Uncheck all items"
-                      : "Check all items"
-                    : done
-                      ? "Mark as not done"
-                      : "Mark as done"
+                  done
+                    ? "Uncheck all items"
+                    : "Check all items"
                 }
               />
             </div>
@@ -260,7 +250,7 @@ export function Note({
       </div>
 
       {/* Content */}
-      {isEditing && !isChecklist ? (
+      {false ? (
         <div className="flex-1 min-h-0">
           <textarea
             value={editContent}
@@ -287,7 +277,7 @@ export function Note({
             autoFocus
           />
         </div>
-      ) : isChecklist ? (
+      ) : (
         <div className="flex-1 flex flex-col">
           <div className="overflow-y-auto space-y-1 flex-1">
             {checklistItems.map((item) => (
@@ -366,7 +356,7 @@ export function Note({
             )}
           </div>
 
-          {isChecklist && canEdit && (
+          {canEdit && (
             <Button
               variant="ghost"
               size="sm"

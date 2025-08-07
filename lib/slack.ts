@@ -100,7 +100,7 @@ export async function updateSlackMessage(webhookUrl: string, originalText: strin
   }
 }
 
-export function formatNoteForSlack(note: { content: string; isChecklist?: boolean }, boardName: string, userName: string): string {
+export function formatNoteForSlack(note: { content: string }, boardName: string, userName: string): string {
   return `:heavy_plus_sign: ${note.content} by ${userName} in ${boardName}`
 }
 

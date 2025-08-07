@@ -44,7 +44,6 @@ interface Note {
   done: boolean;
   createdAt: string;
   updatedAt: string;
-  isChecklist?: boolean;
   checklistItems?: ChecklistItem[];
   user: {
     id: string;
@@ -284,7 +283,7 @@ export default function BoardPage({
     const paddingHeight = actualNotePadding * 2; // Top and bottom padding
     const minContentHeight = 84; // Minimum content area (3 lines)
 
-    if (note.isChecklist && note.checklistItems) {
+    if (note.checklistItems) {
       // For checklist items, calculate height based on number of items
       const itemHeight = 32; // Each checklist item is about 32px tall (text + padding)
       const itemSpacing = 8; // Space between items
@@ -793,7 +792,6 @@ export default function BoardPage({
           },
           body: JSON.stringify({
             content: "",
-            isChecklist: true,
             checklistItems: [],
             ...(isAllNotesView && { boardId: targetBoardId }),
           }),
@@ -930,69 +928,6 @@ export default function BoardPage({
     }
   };
 
-  const handleToggleDone = async (noteId: string, currentDone: boolean) => {
-    try {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      // OPTIMISTIC UPDATE: Update UI immediately
-      const optimisticNote = {
-        ...currentNote,
-        done: !currentDone,
-      };
-
-      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-
-      // Send to server in background
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ done: !currentDone }),
-        }
-      );
-
-      if (response.ok) {
-        // Server succeeded, confirm with actual server response
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      } else {
-        // Server failed, revert to original state
-        console.error("Server error, reverting optimistic update");
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-        
-        setErrorDialog({
-          open: true,
-          title: "Update Failed",
-          description: "Failed to update note status. Please try again.",
-        });
-      }
-    } catch (error) {
-      console.error("Error toggling note done status:", error);
-      
-      // Revert optimistic update on network error
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (currentNote) {
-        const revertedNote = { ...currentNote, done: currentDone };
-        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
-      }
-      
-      setErrorDialog({
-        open: true,
-        title: "Connection Error",
-        description: "Failed to sync changes. Please check your connection.",
-      });
-    }
-  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -1373,7 +1308,7 @@ export default function BoardPage({
     }, EDIT_DEBOUNCE_DURATION);
     
     editDebounceMap.current.set(key, timeout);
-  }, [handleEditChecklistItem]);
+  }, [handleEditChecklistItem, boardId]);
 
   const handleToggleAllChecklistItems = async (noteId: string) => {
     try {
