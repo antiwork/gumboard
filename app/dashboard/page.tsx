@@ -21,6 +21,9 @@ import {
   Grid3x3,
   Copy,
   Edit3,
+  Lock,
+  Globe,
+  FileText,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -141,7 +144,6 @@ export default function Dashboard() {
       if (boardsResponse.ok) {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
-
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -213,8 +215,12 @@ export default function Dashboard() {
       console.error("Error with board:", error);
       setErrorDialog({
         open: true,
-        title: editingBoard ? "Failed to update board" : "Failed to create board",
-        description: editingBoard ? "Failed to update board" : "Failed to create board",
+        title: editingBoard
+          ? "Failed to update board"
+          : "Failed to create board",
+        description: editingBoard
+          ? "Failed to update board"
+          : "Failed to create board",
       });
     }
   };
@@ -236,12 +242,17 @@ export default function Dashboard() {
 
   const confirmDeleteBoard = async () => {
     try {
-      const response = await fetch(`/api/boards/${deleteConfirmDialog.boardId}`, {
-        method: "DELETE",
-      });
+      const response = await fetch(
+        `/api/boards/${deleteConfirmDialog.boardId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
       if (response.ok) {
-        setBoards(boards.filter((board) => board.id !== deleteConfirmDialog.boardId));
+        setBoards(
+          boards.filter((board) => board.id !== deleteConfirmDialog.boardId)
+        );
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -271,9 +282,11 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        setBoards(boards.map((board) => 
-          board.id === boardId ? { ...board, isPublic } : board
-        ));
+        setBoards(
+          boards.map((board) =>
+            board.id === boardId ? { ...board, isPublic } : board
+          )
+        );
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -484,95 +497,60 @@ export default function Dashboard() {
                 className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800"
               >
                 <Link href={`/boards/${board.id}`}>
-                  <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-1">
-                          <CardTitle className="text-lg dark:text-zinc-100">
-                            {board.name}
-                          </CardTitle>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            {board._count.notes}{" "}
-                            {board._count.notes === 1 ? "note" : "notes"}
-                          </span>
-                        </div>
-                        {board.description && (
-                          <CardDescription className="mt-1 dark:text-zinc-400">
-                            {board.description}
-                          </CardDescription>
-                        )}
-                        
-                        <div className="mt-3 flex items-center justify-between" onClick={(e) => e.preventDefault()}>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              checked={board.isPublic}
-                              onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
-                              disabled={user?.id !== board.createdBy && !user?.isAdmin}
-                            />
-                            <span className="text-xs text-muted-foreground dark:text-zinc-400">
-                              {board.isPublic ? "Public" : "Private"}
-                            </span>
-                          </div>
-                          
-                          {board.isPublic && (
+                  <CardHeader className="h-full ">
+                    <div className="flex flex-col justify-between relative">
+                      {/* Top row: title and actions */}
+                      <div className="flex items-start justify-between">
+                        <CardTitle className="text-lg dark:text-zinc-100">
+                          {board.name}
+                        </CardTitle>
+
+                        {(user?.id === board.createdBy || user?.isAdmin) && (
+                          <div className="flex items-center space-x-1">
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
-                                handleCopyPublicUrl(board.id);
+                                handleEditBoard(board);
                               }}
-                              className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                              title="Copy public link"
+                              className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                              title="Edit board"
                             >
-                              {copiedBoardId === board.id ? (
-                                <>
-                                  <span>✓</span>
-                                  <span>Copied!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  <span>Copy link</span>
-                                </>
-                              )}
+                              <Edit3 className="w-4 h-4" />
                             </button>
-                          )}
-                        </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDeleteBoard(board.id, board.name);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                              title="Delete board"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      {(user?.id === board.createdBy || user?.isAdmin) && (
-                        <div className="flex items-center space-x-1">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEditBoard(board);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Edit board"
-                                : "Edit board (Admin)"
-                            }
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDeleteBoard(board.id, board.name);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Delete board"
-                                : "Delete board (Admin)"
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
+
+                      {/* Public/Private row */}
+                      <div className="flex items-center space-x-2 text-xs text-muted-foreground dark:text-zinc-400">
+                        {board.isPublic ? (
+                          <Globe className="w-3 h-3" />
+                        ) : (
+                          <Lock className="w-3 h-3" />
+                        )}
+                        <span>{board.isPublic ? "Public" : "Private"}</span>
+                      </div>
+
+                      {/* Notes count badge row */}
+                      <div className="flex w-full  items-center justify-end">
+                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                          <FileText className="w-3 h-3 mr-1" />
+                          {board._count.notes}{" "}
+                          {board._count.notes === 1 ? "note" : "notes"}
+                        </span>
+                      </div>
                     </div>
                   </CardHeader>
                 </Link>
@@ -601,14 +579,21 @@ export default function Dashboard() {
         )}
       </div>
 
-      <AlertDialog open={deleteConfirmDialog.open} onOpenChange={(open) => setDeleteConfirmDialog({ open, boardId: "", boardName: "" })}>
+      <AlertDialog
+        open={deleteConfirmDialog.open}
+        onOpenChange={(open) =>
+          setDeleteConfirmDialog({ open, boardId: "", boardName: "" })
+        }
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Delete board
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete &quot;{deleteConfirmDialog.boardName}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;
+              {deleteConfirmDialog.boardName}&quot;? This action cannot be
+              undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -625,7 +610,12 @@ export default function Dashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
+      <AlertDialog
+        open={errorDialog.open}
+        onOpenChange={(open) =>
+          setErrorDialog({ open, title: "", description: "" })
+        }
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
@@ -637,7 +627,9 @@ export default function Dashboard() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
-              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
+              onClick={() =>
+                setErrorDialog({ open: false, title: "", description: "" })
+              }
               className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               OK
