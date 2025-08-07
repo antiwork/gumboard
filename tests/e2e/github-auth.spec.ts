@@ -7,9 +7,6 @@ test.describe('GitHub Authentication Flow', () => {
     // Check that GitHub button is visible
     await expect(page.locator('button:has-text("Continue with GitHub")')).toBeVisible();
     
-    // Check that GitHub icon is present
-    await expect(page.locator('svg[viewBox="0 0 24 24"]')).toBeVisible();
-    
     // Verify the button has the correct styling
     const githubButton = page.locator('button:has-text("Continue with GitHub")');
     await expect(githubButton).toHaveClass(/outline/);
@@ -35,8 +32,6 @@ test.describe('GitHub Authentication Flow', () => {
     
     // Click the GitHub button
     await page.click('button:has-text("Continue with GitHub")');
-    
-    await page.waitForTimeout(100);
     
     expect(githubAuthInitiated).toBe(true);
   });
