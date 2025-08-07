@@ -533,6 +533,11 @@ export default function Dashboard() {
                         )}
                       </div>
 
+                      <div>
+                        <CardDescription className="mt-1 text-xs text-muted-foreground dark:text-zinc-400">{board.description}</CardDescription>
+                      </div>
+
+                      <div className="flex justify-between items-center w-full mt-4">
                       {/* Public/Private row */}
                       <div className="flex items-center space-x-2 text-xs text-muted-foreground dark:text-zinc-400">
                         {board.isPublic ? (
@@ -544,12 +549,13 @@ export default function Dashboard() {
                       </div>
 
                       {/* Notes count badge row */}
-                      <div className="flex w-full  items-center justify-end">
+                      <div className="flex">
                         <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
                           <FileText className="w-3 h-3 mr-1" />
                           {board._count.notes}{" "}
                           {board._count.notes === 1 ? "note" : "notes"}
                         </span>
+                      </div>
                       </div>
                     </div>
                   </CardHeader>
