@@ -136,7 +136,7 @@ export async function notifySlackForNoteChanges(params: {
   noteSlackMessageId?: string | null;
   itemChanges?: {
     created: { id: string; content: string; checked: boolean; order: number }[];
-    updated: { id: string; content: string; checked: boolean; order: number; previous: { checked: boolean } }[];
+    updated: { id: string; content: string; checked: boolean; order: number; previous: { checked: boolean } & Record<string, unknown> }[];
     deleted?: unknown[];
   };
 }): Promise<{ noteMessageId?: string | null; itemMessageIds?: Record<string, string> }> {

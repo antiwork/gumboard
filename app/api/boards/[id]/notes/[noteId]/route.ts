@@ -37,6 +37,18 @@ export async function PUT(
       } catch {
         return NextResponse.json({ error: "Invalid checklist items format" }, { status: 400 })
       }
+      if (Array.isArray(rawBody.checklistItems) && checklistItems!.length !== rawBody.checklistItems.length) {
+        return NextResponse.json({ error: "Invalid checklist item payload (missing id/content)" }, { status: 400 })
+      }
+      if (checklistItems) {
+        const ids = new Set<string>();
+        for (const it of checklistItems) {
+          if (ids.has(it.id)) {
+            return NextResponse.json({ error: "Duplicate checklist item ids in payload" }, { status: 400 })
+          }
+          ids.add(it.id);
+        }
+      }
     }
 
     // Verify user has access to this board (same organization)
@@ -44,6 +56,8 @@ export async function PUT(
       where: { id: session.user.id },
       include: { organization: true }
     })
+
+    const orgWebhook = user?.organization?.slackWebhookUrl ?? null;
 
     if (!user?.organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
@@ -217,9 +231,9 @@ export async function PUT(
     // Handle Slack notifications after the database transaction
     if (updatedNote) {
       // Use centralized Slack notifications
-      if (user?.organization?.slackWebhookUrl && updatedNote.board.sendSlackUpdates) {
+      if (orgWebhook && updatedNote.board.sendSlackUpdates) {
         const res = await notifySlackForNoteChanges({
-          webhookUrl: user.organization.slackWebhookUrl,
+          webhookUrl: orgWebhook,
           boardName: updatedNote.board.name,
           boardId: updatedNote.boardId,
           sendSlackUpdates: updatedNote.board.sendSlackUpdates,
@@ -252,7 +266,7 @@ export async function PUT(
           const noteContent = updatedNote.content || (updatedNote.checklistItems && updatedNote.checklistItems.length > 0 ? updatedNote.checklistItems[0].content : 'Note')
           if (hasValidContent(noteContent)) {
             await updateSlackMessage(
-              user.organization.slackWebhookUrl,
+              orgWebhook!,
               noteContent,
               done,
               updatedNote.board.name,
