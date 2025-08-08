@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -52,6 +52,7 @@ interface NoteProps {
   note: Note;
   currentUser?: User;
   boardId: string;
+  addingChecklistItem?: string | null;
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
@@ -65,6 +66,7 @@ export function Note({
   note,
   currentUser,
   boardId,
+  addingChecklistItem,
   onUpdate,
   onDelete,
   onArchive,
@@ -86,6 +88,12 @@ export function Note({
   const [newItemContent, setNewItemContent] = useState("");
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+
+  useEffect(() => {
+    if (addingChecklistItem === note.id && canEdit) {
+      setAddingItem(true);
+    }
+  }, [addingChecklistItem, note.id, canEdit]);
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {

@@ -362,6 +362,7 @@ export function StickyNotesDemo() {
                   onUpdate={handleUpdateNote}
                   onDelete={handleDeleteNote}
                   boardId="demo-board"
+                  addingChecklistItem={null}
                   className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                 />
               </motion.div>

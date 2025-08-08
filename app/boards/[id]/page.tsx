@@ -1239,6 +1239,7 @@ export default function BoardPage({
               note={note as Note}
               currentUser={user as User}
               boardId={boardId}
+              addingChecklistItem={addingChecklistItem}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
