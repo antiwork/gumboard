@@ -808,7 +808,7 @@ export default function BoardPage({
       const isAllNotesView = boardId === "all-notes";
 
       const response = await fetch(
-        `/api/boards/${isAllNotesView ? "all-notes" : actualTargetBoardId}/notes`,
+        `/api/boards/${actualTargetBoardId}/notes`,
         {
           method: "POST",
           headers: {
