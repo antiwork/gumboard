@@ -8,7 +8,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
-import { Trash2, Plus } from "lucide-react";
+import { Trash2, Plus, Palette } from "lucide-react";
+import { NOTE_COLORS } from "@/lib/constants";
 
 // Core domain types
 export interface User {
@@ -59,10 +60,14 @@ interface NoteProps {
   onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
   onSplitChecklistItem?: (noteId: string, itemId: string, content: string, cursorPosition: number) => void;
   onToggleAllChecklistItems?: (noteId: string) => void;
+  onUpdateColor?: (noteId: string, color: string) => void;
   readonly?: boolean;
   showBoardName?: boolean;
+  showColorPicker?: string | null;
+  onShowColorPickerChange?: (noteId: string | null) => void;
   className?: string;
   style?: React.CSSProperties;
+  "data-testid"?: string;
 }
 
 export function Note({
@@ -76,10 +81,14 @@ export function Note({
   onDeleteChecklistItem,
   onSplitChecklistItem,
   onToggleAllChecklistItems,
+  onUpdateColor,
   readonly = false,
   showBoardName = false,
+  showColorPicker,
+  onShowColorPickerChange,
   className,
   style,
+  "data-testid": dataTestId,
 }: NoteProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
@@ -170,11 +179,11 @@ export function Note({
         className
       )}
       style={{
-        backgroundColor: note.color,
         ...style,
       }}
+      data-testid={dataTestId}
     >
-      <div className="flex items-start justify-between mb-4 flex-shrink-0">
+      <div className="flex items-start relative justify-between mb-4 flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
             <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
@@ -199,21 +208,33 @@ export function Note({
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          {canEdit && (
-            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete?.(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
-                variant="ghost"
-                size="icon"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
+                     {canEdit && (
+             <div className={`flex space-x-1 items-center gap-2 transition-opacity ${
+               showColorPicker === note.id 
+                 ? 'opacity-100' 
+                 : 'opacity-0 group-hover:opacity-100'
+             }`}>
+                <button 
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   onShowColorPickerChange?.(showColorPicker === note.id ? null : note.id);
+                 }}
+                 className=""
+                 data-testid="palette-button"
+               >
+                 <Palette className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" />
+               </button>
+               <button
+                 onClick={(e) => {
+                   e.stopPropagation();
+                   onDelete?.(note.id);
+                 }}
+                 className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+               >
+                 <Trash2 className="w-4 h-4" />
+               </button>
+             </div>
+           )}
           {canEdit && (
             <div className="flex items-center">
               <Checkbox
@@ -222,6 +243,30 @@ export function Note({
                 className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                 title={note.done ? "Uncheck all items" : "Check all items"}
               />
+            </div>
+          )}
+          {showColorPicker === note.id && (
+            <div className="absolute top-full right-0 mt-1 z-50 color-picker">
+              <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 p-2">
+                <div className="grid grid-cols-4 gap-2">
+                  {NOTE_COLORS.map((color) => (
+                    <button
+                      key={color}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onUpdateColor?.(note.id, color);
+                      }}
+                      className={`w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                        note.color === color
+                          ? "border-gray-800 dark:border-gray-200 scale-110"
+                          : "border-gray-300 dark:border-gray-600"
+                      }`}
+                      style={{ backgroundColor: color }}
+                      title={`Set color to ${color}`}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </div>
