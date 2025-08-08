@@ -1646,7 +1646,7 @@ export default function BoardPage({
                   setSearchTerm("");
                   setDateRange({ startDate: null, endDate: null });
                   setSelectedAuthor(null);
-                  setShowDoneNotes(true);
+                  setShowDoneNotes(false);
                   updateURL(
                     "",
                     { startDate: null, endDate: null },
