@@ -82,7 +82,7 @@ test.describe('Board Settings', () => {
   test('should open board settings dialog and display current settings', async ({ page }) => {
     await page.goto('/boards/test-board');
     
-    await page.click('button:has-text("Test Board")');
+    await page.click('button:has(div:has-text("Test Board"))');
     await page.click('button:has-text("Board settings")');
     
     await expect(page.locator('text=Board settings')).toBeVisible();
@@ -133,7 +133,7 @@ test.describe('Board Settings', () => {
 
     await page.goto('/boards/test-board');
     
-    await page.click('button:has-text("Test Board")');
+    await page.click('button:has(div:has-text("Test Board"))');
     await page.click('button:has-text("Board settings")');
     
     const checkbox = page.locator('#sendSlackUpdates');
@@ -255,7 +255,7 @@ test.describe('Board Settings', () => {
 
     await page.goto('/boards/test-board');
     
-    await page.click('button:has-text("Test Board")');
+    await page.click('button:has(div:has-text("Demo Board"))');
     await page.click('button:has-text("Board settings")');
     
     await expect(page.locator('text=Board settings')).toBeVisible();
@@ -269,7 +269,7 @@ test.describe('Board Settings', () => {
   test('should cancel board settings changes', async ({ page }) => {
     await page.goto('/boards/test-board');
     
-    await page.click('button:has-text("Test Board")');
+    await page.click('button:has(div:has-text("Test Board"))');
     await page.click('button:has-text("Board settings")');
     
     const checkbox = page.locator('#sendSlackUpdates');
@@ -282,7 +282,7 @@ test.describe('Board Settings', () => {
     
     await expect(page.locator('text=Board settings')).not.toBeVisible();
     
-    await page.click('button:has-text("Test Board")');
+    await page.click('button:has(div:has-text("Test Board"))');
     await page.click('button:has-text("Board settings")');
     
     await expect(checkbox).toBeChecked();
