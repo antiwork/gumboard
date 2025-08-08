@@ -15,6 +15,7 @@ import {
   LogOut,
   Search,
   User,
+  Palette,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
@@ -31,6 +32,24 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { NOTE_COLORS } from "@/lib/constants";
+
+// Function to map hex colors to Tailwind classes
+const getNoteColorClass = (color: string): string => {
+  const colorMap: Record<string, string> = {
+    "#fef3c7": "bg-yellow-100/20",    // yellow
+    "#fce7f3": "bg-pink-100/20",      // pink
+    "#dbeafe": "bg-blue-100/20",      // blue
+    "#dcfce7": "bg-green-100/20",     // green
+    "#fed7d7": "bg-red-100/20",       // red
+    "#e0e7ff": "bg-indigo-100/20",    // indigo
+    "#f3e8ff": "bg-purple-100/20",    // purple
+    "#fef4e6": "bg-orange-100/20",    // orange
+    "#18181B": "bg-zinc-800", // Default dark color
+  };
+  
+  return colorMap[color] || "bg-zinc-800"; // Default to dark if color not found
+};
 
 interface ChecklistItem {
   id: string;
@@ -125,6 +144,7 @@ export default function BoardPage({
   }>({ open: false, title: "", description: "" });
   const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
   const [boardSettings, setBoardSettings] = useState({ sendSlackUpdates: true });
+  const [showColorPicker, setShowColorPicker] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -483,18 +503,20 @@ export default function BoardPage({
   // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showBoardDropdown || showUserDropdown || showAddBoard) {
-        const target = event.target as Element;
-        if (
-          !target.closest(".board-dropdown") &&
-          !target.closest(".user-dropdown") &&
-          !target.closest(".add-board-modal")
-        ) {
-          setShowBoardDropdown(false);
-          setShowUserDropdown(false);
-          setShowAddBoard(false);
+              if (showBoardDropdown || showUserDropdown || showAddBoard || showColorPicker) {
+          const target = event.target as Element;
+          if (
+            !target.closest(".board-dropdown") &&
+            !target.closest(".user-dropdown") &&
+            !target.closest(".add-board-modal") &&
+            !target.closest(".color-picker")
+          ) {
+            setShowBoardDropdown(false);
+            setShowUserDropdown(false);
+            setShowAddBoard(false);
+            setShowColorPicker(null);
+          }
         }
-      }
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -522,6 +544,9 @@ export default function BoardPage({
           setNewBoardName("");
           setNewBoardDescription("");
         }
+        if (showColorPicker) {
+          setShowColorPicker(null);
+        }
       }
     };
 
@@ -535,6 +560,7 @@ export default function BoardPage({
     showBoardDropdown,
     showUserDropdown,
     showAddBoard,
+    showColorPicker,
     editingNote,
     addingChecklistItem,
     editingChecklistItem,
@@ -794,6 +820,7 @@ export default function BoardPage({
           },
           body: JSON.stringify({
             content: "",
+            color: "#18181B",
             checklistItems: [],
             ...(isAllNotesView && { boardId: targetBoardId }),
           }),
@@ -993,6 +1020,71 @@ export default function BoardPage({
       }
     } catch (error) {
       console.error("Error updating board settings:", error);
+    }
+  };
+
+  const handleUpdateNoteColor = async (noteId: string, color: string) => {
+    try {
+      // Find the note to get its board ID for all notes view
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
+      const targetBoardId =
+        boardId === "all-notes" && currentNote.board?.id
+          ? currentNote.board.id
+          : boardId;
+
+      // OPTIMISTIC UPDATE: Update UI immediately
+      const optimisticNote = {
+        ...currentNote,
+        color: color,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+      setShowColorPicker(null);
+
+      // Send to server in background
+      const response = await fetch(
+        `/api/boards/${targetBoardId}/notes/${noteId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ color }),
+        }
+      );
+
+      if (response.ok) {
+        // Server succeeded, confirm with actual server response
+        const { note } = await response.json();
+        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+      } else {
+        // Server failed, revert to original color
+        console.error("Server error, reverting optimistic update");
+        const revertedNote = { ...currentNote, color: currentNote.color };
+        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
+        
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update note color",
+          description: errorData.error || "Failed to update note color",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating note color:", error);
+      
+      // Revert optimistic update on network error
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (currentNote) {
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+      }
+      
+      setErrorDialog({
+        open: true,
+        title: "Connection Error", 
+        description: "Failed to update note color. Please try again.",
+      });
     }
   };
 
@@ -1778,16 +1870,10 @@ export default function BoardPage({
           {layoutNotes.map((note) => (
             <div
               key={note.id}
-              className={`absolute rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border note-background ${
+              className={`absolute rounded-lg ${getNoteColorClass(note.color)} shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border note-background ${
                 note.done ? "opacity-80" : ""
               }`}
               style={{
-                backgroundColor:
-                  typeof window !== "undefined" &&
-                  window.matchMedia &&
-                  window.matchMedia("(prefers-color-scheme: dark)").matches
-                    ? `${note.color}20`
-                    : note.color,
                 left: note.x,
                 top: note.y,
                 width: note.width,
@@ -1823,16 +1909,24 @@ export default function BoardPage({
                 <div className="flex items-center space-x-2">
                   {/* Show edit/delete buttons for note author or admin */}
                   {(user?.id === note.user.id || user?.isAdmin) && (
-                    <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Button
+                    <div className="flex space-x-1 items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowColorPicker(showColorPicker === note.id ? null : note.id);
+                        }}
+                        className=""
+                      >
+                        <Palette className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" />
+                      </button>
+                      <button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteNote(note.id);
                         }}
-                        className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
                       >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
+                        <Trash2 className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400" />
+                      </button>
                     </div>
                   )}
                   {/* Beautiful checkbox for done status - show to author or admin */}
@@ -1854,6 +1948,32 @@ export default function BoardPage({
                   )}
                 </div>
               </div>
+
+              {/* Color Picker Dropdown */}
+              {showColorPicker === note.id && (
+                <div className="absolute top-12 right-0 z-50 color-picker">
+                  <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 p-2">
+                    <div className="grid grid-cols-4 gap-2">
+                      {NOTE_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleUpdateNoteColor(note.id, color);
+                          }}
+                          className={`w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
+                            note.color === color
+                              ? "border-gray-800 dark:border-gray-200 scale-110"
+                              : "border-gray-300 dark:border-gray-600"
+                          }`}
+                          style={{ backgroundColor: color }}
+                          title={`Set color to ${color}`}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {editingNote === note.id ? (
                 <div className="flex-1 min-h-0">
