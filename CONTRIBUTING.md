@@ -16,40 +16,6 @@
 8. Self-review your PR with explanatory comments for any non-intuitive or non-obvious changes to help reviewers understand your reasoning
 9. The PR will be merged once you have the sign-off of at least one other developer
 
-## Quick Start
-
-### Prerequisites
-- Docker Compose
-- Node.js
-
-### Setup
-```bash
-npm install
-cp env.example .env.local
-npm run docker:up
-npm run db:push
-npm run dev
-```
-
-## Development
-
-### Running Tests
-```bash
-npm test              # Unit tests with Jest
-npm run test:watch    # Watch mode for unit tests
-npm run test:e2e      # End-to-end tests with Playwright
-npm run test:e2e:ui   # Playwright UI mode
-```
-
-### Database Commands
-```bash
-npm run db:generate   # Generate Prisma client
-npm run db:push       # Push schema changes
-npm run db:migrate    # Create and run migrations
-npm run db:studio     # Open Prisma Studio
-npm run db:reset      # Reset database
-```
-
 ## Style Guide
 
 - Follow the existing code patterns
