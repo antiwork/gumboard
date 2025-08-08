@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -425,7 +425,7 @@ export default function PublicBoardPage({
     }
   };
 
-  const uniqueAuthors = getUniqueAuthors(notes);
+  const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
   const filteredNotes = filterAndSortNotes(
     notes,
     searchTerm,
@@ -520,6 +520,7 @@ export default function PublicBoardPage({
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
               <input
+                aria-label="Search notes"
                 type="text"
                 placeholder="Search notes..."
                 value={searchTerm}
