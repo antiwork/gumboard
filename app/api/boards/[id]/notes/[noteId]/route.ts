@@ -152,11 +152,9 @@ export async function PUT(
         }
       }
 
-      // Remaining existingById are deleted
       if (existingById.size > 0) {
         const toDelete = Array.from(existingById.values())
         changes.deleted = toDelete
-        // Soft-delete is not defined for items; perform hard delete
         await tx.checklistItem.deleteMany({ where: { id: { in: toDelete.map((i) => i.id) } } })
       }
 
@@ -171,7 +169,6 @@ export async function PUT(
       const userName = user.name || user.email || 'Unknown User'
       const boardName = updatedNote.board.name
 
-      // New items -> 'added' and store message ID for dedup
       for (const item of created) {
         if (!hasValidContent(item.content)) continue
         if (!shouldSendNotification(session.user.id, boardId, boardName, updatedNote.board.sendSlackUpdates)) continue
@@ -187,12 +184,10 @@ export async function PUT(
         }
       }
 
-      // Toggled completed -> 'completed' or 'reopened'
       for (const { prev, item } of toggledCompleted) {
         if (!hasValidContent(item.content)) continue
         if (!shouldSendNotification(session.user.id, boardId, boardName, updatedNote.board.sendSlackUpdates)) continue
         if (item.slackMessageId) {
-          // Update existing Slack message to avoid duplication
           await updateSlackMessage(
             user.organization.slackWebhookUrl,
             item.content,
@@ -245,7 +240,6 @@ export async function PUT(
       await updateSlackMessage(user.organization.slackWebhookUrl, note.content, done, boardName, userName)
     }
 
-    // Return full note with checklist items
     const fullNote = await db.note.findUnique({
       where: { id: noteId },
       include: {
