@@ -690,14 +690,32 @@ export default function BoardPage({
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
   // Get filtered and sorted notes for display
-  const filteredNotes = filterAndSortNotes(
-    notes,
-    searchTerm,
-    dateRange,
-    selectedAuthor,
-    showDoneNotes,
-    user
+  const filteredNotes = useMemo(
+    () =>
+      filterAndSortNotes(
+        notes,
+        searchTerm,
+        dateRange,
+        selectedAuthor,
+        showDoneNotes,
+        user
+      ),
+    [notes, searchTerm, dateRange, selectedAuthor, showDoneNotes, user]
   );
+  const layoutNotes = useMemo(
+    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
+    [isMobile, filteredNotes, calculateMobileLayout, calculateGridLayout]
+  );
+
+  const boardHeight = useMemo(() => {
+    if (layoutNotes.length === 0) {
+      return "calc(100vh - 64px)";
+    }
+    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
+    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
+    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
+    return `${calculatedHeight}px`;
+  }, [layoutNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -1446,26 +1464,6 @@ export default function BoardPage({
     );
   }
 
-  const layoutNotes = isMobile
-    ? calculateMobileLayout()
-    : calculateGridLayout();
-
-  // Calculate the total height needed for the board area
-  const calculateBoardHeight = () => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)"; // Default minimum height when no notes
-    }
-
-    // Find the bottommost note position
-    const maxBottom = Math.max(
-      ...layoutNotes.map((note) => note.y + note.height)
-    );
-    const minHeight =
-      typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600; // Different min heights for mobile/desktop
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100); // Add 100px padding at bottom
-
-    return `${calculatedHeight}px`;
-  };
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
@@ -1698,7 +1696,7 @@ export default function BoardPage({
         ref={boardRef}
         className="relative w-full bg-gray-50 dark:bg-zinc-950"
         style={{
-          height: calculateBoardHeight(),
+          height: boardHeight,
           minHeight: "calc(100vh - 64px)", // Account for header height
         }}
       >

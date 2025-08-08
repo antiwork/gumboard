@@ -66,9 +66,9 @@ export async function POST(request: NextRequest) {
     }
 
     const { content, color, boardId } = await request.json()
-
-    if (!content || !boardId) {
-      return NextResponse.json({ error: "Content and board ID are required" }, { status: 400 })
+    
+    if (!boardId) {
+      return NextResponse.json({ error: "Board ID is required" }, { status: 400 })
     }
 
     // Verify user has access to the specified board (same organization)
