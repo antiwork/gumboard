@@ -702,6 +702,20 @@ export default function BoardPage({
       ),
     [notes, searchTerm, dateRange, selectedAuthor, showDoneNotes, user]
   );
+  const layoutNotes = useMemo(
+    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
+    [isMobile, filteredNotes, calculateMobileLayout, calculateGridLayout]
+  );
+
+  const boardHeight = useMemo(() => {
+    if (layoutNotes.length === 0) {
+      return "calc(100vh - 64px)";
+    }
+    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
+    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
+    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
+    return `${calculatedHeight}px`;
+  }, [layoutNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -1450,28 +1464,6 @@ export default function BoardPage({
     );
   }
 
-  const layoutNotes = useMemo(
-    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, filteredNotes]
-  );
-
-  // Calculate the total height needed for the board area
-  const calculateBoardHeight = () => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)"; // Default minimum height when no notes
-    }
-
-    // Find the bottommost note position
-    const maxBottom = Math.max(
-      ...layoutNotes.map((note) => note.y + note.height)
-    );
-    const minHeight =
-      typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600; // Different min heights for mobile/desktop
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100); // Add 100px padding at bottom
-
-    return `${calculatedHeight}px`;
-  };
-  const boardHeight = useMemo(() => calculateBoardHeight(), [layoutNotes]);
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">

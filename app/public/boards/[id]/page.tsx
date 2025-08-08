@@ -440,10 +440,10 @@ export default function PublicBoardPage({
 
   const layoutNotes = useMemo(
     () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, filteredNotes]
+    [isMobile, filteredNotes, calculateMobileLayout, calculateGridLayout]
   );
 
-  const calculateBoardHeight = () => {
+  const boardHeight = useMemo(() => {
     if (layoutNotes.length === 0) {
       return "calc(100vh - 64px)";
     }
@@ -456,8 +456,7 @@ export default function PublicBoardPage({
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
 
     return `${calculatedHeight}px`;
-  };
-  const boardHeight = useMemo(() => calculateBoardHeight(), [layoutNotes]);
+  }, [layoutNotes]);
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
