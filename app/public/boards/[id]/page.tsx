@@ -425,7 +425,8 @@ export default function PublicBoardPage({
     }
   };
 
-  const uniqueAuthors = getUniqueAuthors(notes);
+  const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
+
   const filteredNotes = useMemo(
     () =>
       filterAndSortNotes(
@@ -525,6 +526,7 @@ export default function PublicBoardPage({
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
               <input
+                aria-label="Search notes"
                 type="text"
                 placeholder="Search notes..."
                 value={searchTerm}

@@ -687,7 +687,7 @@ export default function BoardPage({
   };
 
   // Get unique authors for dropdown
-  const uniqueAuthors = getUniqueAuthors(notes);
+  const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
   // Get filtered and sorted notes for display
   const filteredNotes = useMemo(
@@ -1603,6 +1603,7 @@ export default function BoardPage({
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
               <input
+                aria-label="Search notes"
                 type="text"
                 placeholder="Search notes..."
                 value={searchTerm}
