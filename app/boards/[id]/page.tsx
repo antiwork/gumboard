@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,7 @@ import {
   Search,
   User,
 } from "lucide-react";
-import { Note } from "@/components/note";
+import { NoteContainer } from "@/components/note-container";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -82,7 +82,6 @@ export default function BoardPage({
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editingNote, setEditingNote] = useState<string | null>(null);
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
@@ -100,18 +99,6 @@ export default function BoardPage({
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [showDoneNotes, setShowDoneNotes] = useState(true);
-  const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
-    null
-  );
-  const [newChecklistItemContent, setNewChecklistItemContent] = useState("");
-  const [editingChecklistItem, setEditingChecklistItem] = useState<{
-    noteId: string;
-    itemId: string;
-  } | null>(null);
-  const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
-    open: boolean;
-    noteId: string;
-  }>({ open: false, noteId: "" });
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
     title: string;
@@ -284,7 +271,7 @@ export default function BoardPage({
       const itemHeight = 32; // Each checklist item is about 32px tall (text + padding)
       const itemSpacing = 8; // Space between items
       const checklistItemsCount = note.checklistItems.length;
-      const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
+      const addingItemHeight = 0; // Height for input field now handled internally by component
 
       const checklistHeight =
         checklistItemsCount * itemHeight +
@@ -493,16 +480,6 @@ export default function BoardPage({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (editingNote) {
-          setEditingNote(null);
-        }
-        if (addingChecklistItem) {
-          setAddingChecklistItem(null);
-          setNewChecklistItemContent("");
-        }
-        if (editingChecklistItem) {
-          setEditingChecklistItem(null);
-        }
         if (showBoardDropdown) {
           setShowBoardDropdown(false);
         }
@@ -527,9 +504,6 @@ export default function BoardPage({
     showBoardDropdown,
     showUserDropdown,
     showAddBoard,
-    editingNote,
-    addingChecklistItem,
-    editingChecklistItem,
   ]);
 
 
@@ -788,64 +762,17 @@ export default function BoardPage({
       if (response.ok) {
         const { note } = await response.json();
         setNotes([...notes, note]);
-        setAddingChecklistItem(note.id);
-        setNewChecklistItemContent("");
       }
     } catch (error) {
       console.error("Error creating note:", error);
     }
   };
 
-  const handleUpdateNote = (noteId: string, content: string) => {
-    setNotes(prevNotes => prevNotes.map(note => 
-      note.id === noteId 
-        ? { ...note, content } 
-        : note
-    ));
-  };
 
   const handleDeleteNote = (noteId: string) => {
-    setDeleteNoteDialog({
-      open: true,
-      noteId,
-    });
+    setNotes(notes.filter(n => n.id !== noteId));
   };
 
-  const confirmDeleteNote = async () => {
-    try {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === deleteNoteDialog.noteId);
-      const targetBoardId =
-        boardId === "all-notes" && currentNote?.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${deleteNoteDialog.noteId}`,
-        {
-          method: "DELETE",
-        }
-      );
-
-      if (response.ok) {
-        setNotes(notes.filter((n) => n.id !== deleteNoteDialog.noteId));
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to delete note",
-          description: errorData.error || "Failed to delete note",
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting note:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to delete note",
-        description: "Failed to delete note",
-      });
-    }
-  };
 
 
   const handleSignOut = async () => {
@@ -913,13 +840,6 @@ export default function BoardPage({
     }
   };
 
-  const handleChecklistUpdate = (noteId: string, items: ChecklistItem[], done: boolean) => {
-    setNotes(prevNotes => prevNotes.map(note => 
-      note.id === noteId 
-        ? { ...note, checklistItems: items, done } 
-        : note
-    ));
-  };
 
 
   if (loading) {
@@ -1264,38 +1184,15 @@ export default function BoardPage({
         {/* Notes */}
         <div className="relative w-full h-full">
           {layoutNotes.map((note) => (
-            <Note
+            <NoteContainer
               key={note.id}
-              {...note}
+              noteId={note.id}
+              boardId={boardId === "all-notes" && note.board?.id ? note.board.id : boardId || ""}
+              initialData={note}
               currentUserId={user?.id}
               isAdmin={user?.isAdmin}
               showBoardName={boardId === "all-notes"}
-              isEditing={editingNote === note.id}
-              editingChecklistItemId={editingChecklistItem?.noteId === note.id ? editingChecklistItem.itemId : null}
-              isAddingChecklistItem={addingChecklistItem === note.id}
-              newChecklistItemContent={addingChecklistItem === note.id ? newChecklistItemContent : ""}
-              onUpdate={handleUpdateNote}
-              onDelete={handleDeleteNote}
-              onChecklistUpdate={handleChecklistUpdate}
-              boardId={boardId === "all-notes" && note.board?.id ? note.board.id : boardId || ""}
-              onEditStart={(noteId: string) => {
-                setEditingNote(noteId);
-              }}
-              onEditEnd={() => {
-                setEditingNote(null);
-              }}
-              onChecklistItemEditStart={(noteId, itemId) => {
-                setEditingChecklistItem({ noteId, itemId });
-              }}
-              onChecklistItemEditEnd={() => {
-                setEditingChecklistItem(null);
-              }}
-              onNewChecklistItemChange={(content) => setNewChecklistItemContent(content)}
-              onAddTaskClick={() => setAddingChecklistItem(note.id)}
-              onCancelAddingItem={() => {
-                setAddingChecklistItem(null);
-                setNewChecklistItemContent("");
-              }}
+              onDelete={() => handleDeleteNote(note.id)}
               className="absolute note-background"
               style={{
                 left: note.x,
@@ -1456,33 +1353,6 @@ export default function BoardPage({
         </div>
       )}
 
-      <AlertDialog
-        open={deleteNoteDialog.open}
-        onOpenChange={(open: boolean) => setDeleteNoteDialog({ open, noteId: "" })}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              Delete note
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete this note? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteNote}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              Delete note
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog
         open={errorDialog.open}
