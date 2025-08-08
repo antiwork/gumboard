@@ -169,7 +169,7 @@ export function Note({
         className
       )}
       style={{
-        backgroundColor: typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "#374151" : note.color,
+        backgroundColor: typeof window !== "undefined" && document.documentElement.classList.contains('dark') ? "#374151" : note.color,
         ...style,
       }}
     >
