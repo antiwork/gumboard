@@ -657,7 +657,7 @@ export default function BoardPage({
   );
   const layoutNotes = useMemo(
     () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, calculateMobileLayout, calculateGridLayout]
+    [isMobile, filteredNotes, calculateMobileLayout, calculateGridLayout]
   );
 
   const boardHeight = useMemo(() => {
@@ -1767,7 +1767,7 @@ export default function BoardPage({
               showBoardName={boardId === "all-notes"}
               showColorPicker={showColorPicker}
               onShowColorPickerChange={setShowColorPicker}
-              className={`note-background ${getNoteColorClass(note.color, isDark)}`}
+              className={`note-background absolute ${getNoteColorClass(note.color, isDark)}`}
               style={{
                 left: note.x,
                 top: note.y,
