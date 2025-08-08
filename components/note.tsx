@@ -19,7 +19,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
-// ChecklistItem type is unified via components/checklist-item.tsx -> lib/types/checklist
 import { cn } from "@/lib/utils";
 import { Trash2, Plus } from "lucide-react";
 import { reorderChecklistItems } from "@/lib/checklist-item";

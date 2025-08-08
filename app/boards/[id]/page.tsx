@@ -630,12 +630,12 @@ export default function BoardPage({
   const filteredNotes = useMemo(
     () =>
       filterAndSortNotes(
-        notes,
-        searchTerm,
-        dateRange,
-        selectedAuthor,
-        showDoneNotes,
-        user
+    notes,
+    searchTerm,
+    dateRange,
+    selectedAuthor,
+    showDoneNotes,
+    user
       ),
     [notes, searchTerm, dateRange, selectedAuthor, showDoneNotes, user]
   );
@@ -852,7 +852,7 @@ export default function BoardPage({
       }
       setErrorDialog({
         open: true,
-        title: "Connection Error",
+        title: "Connection Error", 
         description: "Failed to add item. Please check your connection.",
       });
     }
