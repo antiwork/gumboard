@@ -2,16 +2,9 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { updateSlackMessage, formatNoteForSlack, sendSlackMessage, sendTodoNotification, hasValidContent, shouldSendNotification } from "@/lib/slack"
+import { ChecklistItem } from "@/components"
 
-interface ChecklistItemDTO {
-  id: string
-  content: string
-  checked: boolean
-  order: number
-}
-
-// Normalize incoming items
-function sanitizeIncomingItems(items: any[]): ChecklistItemDTO[] {
+function sanitizeIncomingItems(items: any[]): ChecklistItem[] {
   if (!Array.isArray(items)) return []
   return items
     .filter((i) => i && typeof i.content === 'string')
@@ -23,7 +16,6 @@ function sanitizeIncomingItems(items: any[]): ChecklistItemDTO[] {
     }))
 }
 
-// Update a note
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; noteId: string }> }
@@ -87,12 +79,9 @@ export async function PUT(
     if (note.createdBy !== session.user.id && !user.isAdmin) {
       return NextResponse.json({ error: "Only the note author or admin can edit this note" }, { status: 403 })
     }
-
-    // Prepare to update note fields, then reconcile checklist items relationally in a transaction
     const sanitizedIncoming = Array.isArray(checklistItems) ? sanitizeIncomingItems(checklistItems) : undefined
 
     const result = await db.$transaction(async (tx) => {
-      // Update note core fields first
       const updated = await tx.note.update({
         where: { id: noteId },
         data: {
@@ -108,12 +97,10 @@ export async function PUT(
         }
       })
 
-      // If no checklist updates provided, return early
       if (!sanitizedIncoming) {
         return { updated, itemChanges: null }
       }
 
-      // Fetch existing items
       const existingItems = await tx.checklistItem.findMany({
         where: { noteId },
         orderBy: { order: 'asc' }
