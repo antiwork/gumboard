@@ -30,6 +30,7 @@ export async function PUT(
     const { content, color, done } = rawBody
     const { id: boardId, noteId } = await params
 
+    // Server-side input sanitization for checklistItems
     let checklistItems: IncomingItem[] | undefined;
     if (rawBody.checklistItems !== undefined) {
       try {
@@ -37,9 +38,11 @@ export async function PUT(
       } catch {
         return NextResponse.json({ error: "Invalid checklist items format" }, { status: 400 })
       }
+      // If sanitization removed any items, reject instead of silently deleting them
       if (Array.isArray(rawBody.checklistItems) && checklistItems!.length !== rawBody.checklistItems.length) {
         return NextResponse.json({ error: "Invalid checklist item payload (missing id/content)" }, { status: 400 })
       }
+      // Optional: verify ids are unique in the payload
       if (checklistItems) {
         const ids = new Set<string>();
         for (const it of checklistItems) {
@@ -166,7 +169,7 @@ export async function PUT(
                 content: existing.content,
                 checked: existing.checked,
                 order: existing.order
-              } : { id: item.id, content: '', checked: false, order: 0 }
+              } : { id: item.id, content: '', checked: false, order: 0 } // fallback
             };
           }),
           deleted: deletedItems
@@ -344,4 +347,4 @@ export async function DELETE(
     console.error("Error deleting note:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}
+}                                                                

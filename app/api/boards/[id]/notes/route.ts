@@ -95,7 +95,13 @@ export async function POST(
     }
 
     const board = await db.board.findUnique({
-      where: { id: boardId }
+      where: { id: boardId },
+      select: {
+        id: true,
+        name: true,
+        organizationId: true,
+        sendSlackUpdates: true
+      }
     })
 
     if (!board) {
@@ -153,4 +159,4 @@ export async function POST(
     console.error("Error creating note:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}                                                                                                                                
+}                                                                                                                                                                                                                                                                
