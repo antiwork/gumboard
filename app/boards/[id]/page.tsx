@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -690,13 +690,17 @@ export default function BoardPage({
   const uniqueAuthors = getUniqueAuthors(notes);
 
   // Get filtered and sorted notes for display
-  const filteredNotes = filterAndSortNotes(
-    notes,
-    searchTerm,
-    dateRange,
-    selectedAuthor,
-    showDoneNotes,
-    user
+  const filteredNotes = useMemo(
+    () =>
+      filterAndSortNotes(
+        notes,
+        searchTerm,
+        dateRange,
+        selectedAuthor,
+        showDoneNotes,
+        user
+      ),
+    [notes, searchTerm, dateRange, selectedAuthor, showDoneNotes, user]
   );
 
   const fetchBoardData = async () => {
@@ -1446,9 +1450,10 @@ export default function BoardPage({
     );
   }
 
-  const layoutNotes = isMobile
-    ? calculateMobileLayout()
-    : calculateGridLayout();
+  const layoutNotes = useMemo(
+    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
+    [isMobile, filteredNotes]
+  );
 
   // Calculate the total height needed for the board area
   const calculateBoardHeight = () => {
@@ -1466,6 +1471,7 @@ export default function BoardPage({
 
     return `${calculatedHeight}px`;
   };
+  const boardHeight = useMemo(() => calculateBoardHeight(), [layoutNotes]);
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
@@ -1697,7 +1703,7 @@ export default function BoardPage({
         ref={boardRef}
         className="relative w-full bg-gray-50 dark:bg-zinc-950"
         style={{
-          height: calculateBoardHeight(),
+          height: boardHeight,
           minHeight: "calc(100vh - 64px)", // Account for header height
         }}
       >

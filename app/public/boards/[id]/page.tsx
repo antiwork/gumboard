@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -426,17 +426,22 @@ export default function PublicBoardPage({
   };
 
   const uniqueAuthors = getUniqueAuthors(notes);
-  const filteredNotes = filterAndSortNotes(
-    notes,
-    searchTerm,
-    dateRange,
-    selectedAuthor,
-    showDoneNotes
+  const filteredNotes = useMemo(
+    () =>
+      filterAndSortNotes(
+        notes,
+        searchTerm,
+        dateRange,
+        selectedAuthor,
+        showDoneNotes
+      ),
+    [notes, searchTerm, dateRange, selectedAuthor, showDoneNotes]
   );
 
-  const layoutNotes = isMobile
-    ? calculateMobileLayout()
-    : calculateGridLayout();
+  const layoutNotes = useMemo(
+    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
+    [isMobile, filteredNotes]
+  );
 
   const calculateBoardHeight = () => {
     if (layoutNotes.length === 0) {
@@ -452,6 +457,7 @@ export default function PublicBoardPage({
 
     return `${calculatedHeight}px`;
   };
+  const boardHeight = useMemo(() => calculateBoardHeight(), [layoutNotes]);
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
@@ -537,7 +543,7 @@ export default function PublicBoardPage({
         </div>
       </div>
 
-      <div className="relative" style={{ height: calculateBoardHeight() }} ref={boardRef}>
+      <div className="relative" style={{ height: boardHeight }} ref={boardRef}>
         {layoutNotes.map((note) => (
           <div
             key={note.id}
