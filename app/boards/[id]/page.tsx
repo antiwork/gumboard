@@ -32,24 +32,18 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
-import { NOTE_COLORS } from "@/lib/constants";
+import { useTheme } from "next-themes";
+import { colorConfig } from "@/lib/constants";
 
-// Function to map hex colors to Tailwind classes
-const getNoteColorClass = (color: string): string => {
-  const colorMap: Record<string, string> = {
-    "#fef3c7": "bg-yellow-100/20",    // yellow
-    "#fce7f3": "bg-pink-100/20",      // pink
-    "#dbeafe": "bg-blue-100/20",      // blue
-    "#dcfce7": "bg-green-100/20",     // green
-    "#fed7d7": "bg-red-100/20",       // red
-    "#e0e7ff": "bg-indigo-100/20",    // indigo
-    "#f3e8ff": "bg-purple-100/20",    // purple
-    "#fef4e6": "bg-orange-100/20",    // orange
-    "#18181B": "bg-zinc-800", // Default dark color
-  };
+function getNoteColorClass(color: string, isDark: boolean) {
+  const config = colorConfig[color];
   
-  return colorMap[color] || "bg-zinc-800"; // Default to dark if color not found
-};
+  if (config) {
+    return isDark ? config.dark : config.light;
+  }
+
+  return isDark ? "bg-zinc-800" : "bg-[#f4f4f5]";
+}
 
 interface ChecklistItem {
   id: string;
@@ -148,6 +142,8 @@ export default function BoardPage({
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { systemTheme } = useTheme();
+  const isDark = systemTheme === "dark" ? true : false;
 
   // Update URL with current filter state
   const updateURL = (
@@ -1870,7 +1866,8 @@ export default function BoardPage({
           {layoutNotes.map((note) => (
             <div
               key={note.id}
-              className={`absolute rounded-lg ${getNoteColorClass(note.color)} shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border note-background ${
+              data-testid="note-card"
+              className={`absolute rounded-lg ${getNoteColorClass(note.color, isDark)} shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border note-background ${
                 note.done ? "opacity-80" : ""
               }`}
               style={{
@@ -1916,6 +1913,7 @@ export default function BoardPage({
                           setShowColorPicker(showColorPicker === note.id ? null : note.id);
                         }}
                         className=""
+                        data-testid="palette-button"
                       >
                         <Palette className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" />
                       </button>
@@ -1954,7 +1952,7 @@ export default function BoardPage({
                 <div className="absolute top-12 right-0 z-50 color-picker">
                   <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 p-2">
                     <div className="grid grid-cols-4 gap-2">
-                      {NOTE_COLORS.map((color) => (
+                      {Object.entries(colorConfig).map(([color]) => (
                         <button
                           key={color}
                           onClick={(e) => {
