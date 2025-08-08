@@ -1,14 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
-import { Trash2, Plus, Palette } from "lucide-react";
+import { Trash2, Plus, Palette, Archive } from "lucide-react";
 import { NOTE_COLORS } from "@/lib/constants";
 
 // Core domain types
@@ -54,12 +55,12 @@ interface NoteProps {
   currentUser?: User;
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
+  onArchive?: (noteId: string) => void;
   onAddChecklistItem?: (noteId: string, content: string) => void;
   onToggleChecklistItem?: (noteId: string, itemId: string) => void;
   onEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
   onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
   onSplitChecklistItem?: (noteId: string, itemId: string, content: string, cursorPosition: number) => void;
-  onToggleAllChecklistItems?: (noteId: string) => void;
   onUpdateColor?: (noteId: string, color: string) => void;
   readonly?: boolean;
   showBoardName?: boolean;
@@ -75,12 +76,12 @@ export function Note({
   currentUser,
   onUpdate,
   onDelete,
+  onArchive,
   onAddChecklistItem,
   onToggleChecklistItem,
   onEditChecklistItem,
   onDeleteChecklistItem,
   onSplitChecklistItem,
-  onToggleAllChecklistItems,
   onUpdateColor,
   readonly = false,
   showBoardName = false,
@@ -101,8 +102,21 @@ export function Note({
     (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
+  const paletteButtonRef = useRef<HTMLButtonElement>(null);
+  const [colorPickerPosition, setColorPickerPosition] = useState({ top: 0, left: 0 });
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+
+  // Calculate color picker position when it should be shown
+  useEffect(() => {
+    if (showColorPicker === note.id && paletteButtonRef.current) {
+      const rect = paletteButtonRef.current.getBoundingClientRect();
+      setColorPickerPosition({
+        top: rect.bottom + window.scrollY + 4,
+        left: rect.right - 120, // Adjust for color picker width
+      });
+    }
+  }, [showColorPicker, note.id]);
 
   const handleStartEdit = () => {
     if (canEdit) {
@@ -175,7 +189,6 @@ export function Note({
     <div
       className={cn(
         "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
-        note.done && "opacity-80",
         className
       )}
       style={{
@@ -215,6 +228,7 @@ export function Note({
                  : 'opacity-0 group-hover:opacity-100'
              }`}>
                 <button 
+                 ref={paletteButtonRef}
                  onClick={(e) => {
                    e.stopPropagation();
                    onShowColorPickerChange?.(showColorPicker === note.id ? null : note.id);
@@ -235,18 +249,31 @@ export function Note({
                </button>
              </div>
            )}
-          {canEdit && (
+
+          {canEdit && onArchive && (
             <div className="flex items-center">
-              <Checkbox
-                checked={note.done}
-                onCheckedChange={() => onToggleAllChecklistItems?.(note.id)}
-                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
-                title={note.done ? "Uncheck all items" : "Check all items"}
-              />
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onArchive(note?.id);
+                }}
+                className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                variant="ghost"
+                size="icon"
+                title="Archive note"
+              >
+                <Archive className="w-3 h-3" />
+              </Button>
             </div>
           )}
-          {showColorPicker === note.id && (
-            <div className="absolute top-full right-0 mt-1 z-50 color-picker">
+          {showColorPicker === note.id && typeof window !== 'undefined' && createPortal(
+            <div 
+              className="fixed z-[9999] color-picker"
+              style={{
+                top: colorPickerPosition.top,
+                left: colorPickerPosition.left,
+              }}
+            >
               <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 p-2">
                 <div className="grid grid-cols-4 gap-2">
                   {NOTE_COLORS.map((color) => (
@@ -267,7 +294,8 @@ export function Note({
                   ))}
                 </div>
               </div>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </div>
@@ -322,7 +350,7 @@ export function Note({
                   type="text"
                   value={newItemContent}
                   onChange={(e) => setNewItemContent(e.target.value)}
-                  className="h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-auto flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
                   placeholder="Add new item..."
                   onBlur={handleAddItem}
                   onKeyDown={handleKeyDownNewItem}

@@ -28,7 +28,6 @@ export default function PublicBoardPage({
     endDate: null,
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [showDoneNotes, setShowDoneNotes] = useState(true);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -156,14 +155,9 @@ export default function PublicBoardPage({
     notes: Note[],
     searchTerm: string,
     dateRange: { startDate: Date | null; endDate: Date | null },
-    authorId: string | null,
-    showDone: boolean
+    authorId: string | null
   ): Note[] => {
     let filteredNotes = notes;
-
-    if (!showDone) {
-      filteredNotes = filteredNotes.filter((note) => !note.done);
-    }
 
     if (searchTerm.trim()) {
       const search = searchTerm.toLowerCase();
@@ -209,9 +203,6 @@ export default function PublicBoardPage({
     }
 
     filteredNotes.sort((a, b) => {
-      if (showDone && a.done !== b.done) {
-        return a.done ? 1 : -1;
-      }
       return (
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
@@ -406,10 +397,9 @@ export default function PublicBoardPage({
         notes,
         searchTerm,
         dateRange,
-        selectedAuthor,
-        showDoneNotes
+        selectedAuthor
       ),
-    [notes, searchTerm, dateRange, selectedAuthor, showDoneNotes]
+    [notes, searchTerm, dateRange, selectedAuthor]
   );
 
   const layoutNotes = useMemo(
@@ -483,10 +473,6 @@ export default function PublicBoardPage({
                 authors={uniqueAuthors}
                 onAuthorChange={(authorId) => {
                   setSelectedAuthor(authorId);
-                }}
-                showCompleted={showDoneNotes}
-                onShowCompletedChange={(show) => {
-                  setShowDoneNotes(show);
                 }}
                 className="min-w-fit"
               />
