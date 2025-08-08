@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useRef, useEffect } from "react"
-import { Filter, ChevronDown, User, Eye, EyeOff } from "lucide-react"
+import { Filter, ChevronDown, User } from "lucide-react"
 import { clsx } from "clsx"
 
 const cn = (...classes: (string | undefined | null | false)[]) => {
@@ -19,9 +19,6 @@ interface FilterPopoverProps {
   authors: Array<{ id: string; name: string; email: string }>
   onAuthorChange?: (authorId: string | null) => void
   
-  showCompleted?: boolean
-  onShowCompletedChange?: (show: boolean) => void
-  
   className?: string
   disabled?: boolean
 }
@@ -33,8 +30,6 @@ function FilterPopover({
   selectedAuthor,
   authors,
   onAuthorChange,
-  showCompleted = true,
-  onShowCompletedChange,
   className,
   disabled = false,
 }: FilterPopoverProps) {
@@ -45,7 +40,6 @@ function FilterPopover({
     let count = 0
     if (startDate || endDate) count++
     if (selectedAuthor) count++
-    if (showCompleted) count++
     return count
   }
 
@@ -162,29 +156,6 @@ function FilterPopover({
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="block text-xs font-medium text-muted-foreground dark:text-zinc-300">
-                Completed notes
-              </label>
-              <button
-                onClick={() => onShowCompletedChange?.(!showCompleted)}
-                className={cn(
-                  "w-full flex items-center justify-center space-x-2 px-3 py-2 text-sm border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent transition-colors",
-                  showCompleted
-                    ? "border-blue-300 dark:border-blue-600 bg-blue-50 dark:bg-zinc-900/70 hover:bg-blue-100 dark:hover:bg-zinc-900/80 text-blue-700 dark:text-blue-300"
-                    : "border-border dark:border-zinc-800 bg-card dark:bg-zinc-900 hover:bg-accent dark:hover:bg-zinc-800 text-foreground dark:text-zinc-100"
-                )}
-              >
-                {showCompleted ? (
-                  <EyeOff className="w-4 h-4" />
-                ) : (
-                  <Eye className="w-4 h-4" />
-                )}
-                <span>
-                  {showCompleted ? "Hide completed" : "Show completed"}
-                </span>
-              </button>
-            </div>
           </div>
         </div>
       )}
