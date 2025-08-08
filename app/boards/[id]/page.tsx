@@ -30,13 +30,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-// cn not used in this module after extraction
 import { arrayMove } from "@dnd-kit/sortable";
 import { useDebouncedChecklistEdit } from "@/hooks/useDebouncedChecklistEdit";
 import ChecklistList from "@/components/checklist/ChecklistList";
 import type { ChecklistItem as ChecklistItemType } from "@/lib/checklist";
 
-// moved to components/checklist/SortableChecklistItem
 
 type ChecklistItem = ChecklistItemType;
  
@@ -132,7 +130,6 @@ export default function BoardPage({
   const searchParams = useSearchParams();
 
   // DnD sensors reused for all note lists
-  // sensors moved into ChecklistList component
 
   // Update URL with current filter state
   const updateURL = (
