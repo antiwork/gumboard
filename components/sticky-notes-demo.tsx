@@ -3,84 +3,48 @@
 import * as React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Note } from "@/components/note"
+import { StickyNoteCard, type Note } from "@/components/sticky-note-card"
 import { Plus } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
-interface DemoNote {
-  id: string;
-  content: string;
-  color: string;
-  done: boolean;
-  createdAt: string;
-  updatedAt: string;
-  checklistItems: {
-    id: string;
-    content: string;
-    checked: boolean;
-    order: number;
-  }[];
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-}
-
-const initialNotes: DemoNote[] = [
+const initialNotes: Note[] = [
   {
-    id: "1",
-    content: "",
+    id: 1,
+    author: { name: "Sahil", initial: "S" },
     color: "bg-green-200/70",
-    done: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    checklistItems: [
-      { id: "101", content: "Gumboard release by Friday", checked: false, order: 0 },
-      { id: "102", content: "Finance update by Friday", checked: false, order: 1 },
-      { id: "103", content: "Jacquez", checked: true, order: 2 },
+    tasks: [
+      { id: 101, text: "Gumboard release by Friday", completed: false },
+      { id: 102, text: "Finance update by Friday", completed: false },
+      { id: 103, text: "Jacquez", completed: true },
     ],
-    user: { id: "sahil", name: "Sahil", email: "sahil@example.com" },
   },
   {
-    id: "2",
-    content: "",
+    id: 2,
+    author: { name: "Michelle", initial: "M" },
     color: "bg-purple-200/60",
-    done: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    checklistItems: [
-      { id: "201", content: "Helper Tix (Mon-Fri)", checked: false, order: 0 },
-      { id: "202", content: "Active Refunds (2x a week)", checked: false, order: 1 },
-      { id: "203", content: "Card Tester Metabase (DAILY)", checked: true, order: 2 },
+    tasks: [
+      { id: 201, text: "Helper Tix (Mon-Fri)", completed: false },
+      { id: 202, text: "Active Refunds (2x a week)", completed: false },
+      { id: 203, text: "Card Tester Metabase (DAILY)", completed: true },
     ],
-    user: { id: "michelle", name: "Michelle", email: "michelle@example.com" },
   },
   {
-    id: "3",
-    content: "",
+    id: 3,
+    author: { name: "Steve", initial: "S" },
     color: "bg-blue-200/60",
-    done: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    checklistItems: [
-      { id: "301", content: "Review support huddle", checked: false, order: 0 },
-      { id: "302", content: "Metabase queries", checked: false, order: 1 },
+    tasks: [
+      { id: 301, text: "Review support huddle", completed: false },
+      { id: 302, text: "Metabase queries", completed: false },
     ],
-    user: { id: "steve", name: "Steve", email: "steve@example.com" },
   },
   {
-    id: "4",
-    content: "",
+    id: 4,
+    author: { name: "Daniel", initial: "D" },
     color: "bg-pink-200/70",
-    done: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-    checklistItems: [
-      { id: "401", content: "Fixed unnecessary description", checked: false, order: 0 },
-      { id: "402", content: "PR reviews", checked: true, order: 1 },
+    tasks: [
+      { id: 401, text: "Fixed unnecessary description", completed: false },
+      { id: 402, text: "PR reviews", completed: true },
     ],
-    user: { id: "daniel", name: "Daniel", email: "daniel@example.com" },
   },
 ]
 
@@ -307,28 +271,24 @@ const itemVariants = {
 }
 
 export function StickyNotesDemo() {
-  const [notes, setNotes] = useState<DemoNote[]>(initialNotes)
+  const [notes, setNotes] = useState<Note[]>(initialNotes)
 
-  const handleUpdateNote = (updatedNote: DemoNote) => {
+  const handleUpdateNote = (updatedNote: Note) => {
     setNotes(notes.map((note) => (note.id === updatedNote.id ? updatedNote : note)))
   }
 
-  const handleDeleteNote = (noteId: string) => {
+  const handleDeleteNote = (noteId: number) => {
     setNotes(notes.filter((note) => note.id !== noteId))
   }
 
   const handleAddNote = () => {
     const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)]
     const randomAuthor = authors[Math.floor(Math.random() * authors.length)]
-    const newNote: DemoNote = {
-      id: Date.now().toString(),
-      content: "",
+    const newNote: Note = {
+      id: Date.now(),
+      author: randomAuthor,
       color: randomColor,
-      done: false,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      checklistItems: [{ id: (Date.now() + 1).toString(), content: "New to-do", checked: false, order: 0 }],
-      user: { id: randomAuthor.name.toLowerCase(), name: randomAuthor.name, email: `${randomAuthor.name.toLowerCase()}@example.com` },
+      tasks: [{ id: Date.now() + 1, text: "New to-do", completed: false }],
     }
     setNotes([newNote, ...notes])
   }
@@ -351,17 +311,7 @@ export function StickyNotesDemo() {
           <AnimatePresence>
             {notes.map((note) => (
               <motion.div key={note.id} className="mb-4 break-inside-avoid" variants={itemVariants} exit="exit" layout>
-                <Note 
-                  noteId={note.id}
-                  boardId="demo-board"
-                  initialData={note}
-                  currentUserId={note.user.id}
-                  onDelete={() => handleDeleteNote(note.id)}
-                  className="h-auto"
-                  style={{
-                    backgroundColor: note.color.startsWith('#') ? note.color : undefined,
-                  }}
-                />
+                <StickyNoteCard note={note} onUpdate={handleUpdateNote} onDelete={handleDeleteNote} />
               </motion.div>
             ))}
           </AnimatePresence>
