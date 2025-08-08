@@ -1,3 +1,6 @@
+-- Ensure pgcrypto is available for gen_random_uuid()
+CREATE EXTENSION IF NOT EXISTS pgcrypto;
+
 -- CreateTable
 CREATE TABLE "checklist_items" (
     "id" TEXT NOT NULL,

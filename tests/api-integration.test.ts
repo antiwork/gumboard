@@ -2,8 +2,8 @@
  * Integration test for the Notes API with checklist items
  * Tests the complete flow including Slack notifications
  */
-import { NextRequest } from 'next/server'
 import { PUT } from '../app/api/boards/[id]/notes/[noteId]/route'
+import type { NextRequest } from 'next/server'
 
 // Mock external dependencies
 jest.mock('../auth', () => ({
@@ -114,15 +114,16 @@ describe('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
     
     ;(db.$transaction as jest.Mock).mockImplementation(mockTransaction)
     
-    const request = new NextRequest('http://localhost/api/boards/board-1/notes/note-1', {
+    const request = new Request('http://localhost/api/boards/board-1/notes/note-1', {
       method: 'PUT',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         checklistItems: [
           { id: 'item-1', content: 'Task 1', checked: true, order: 0 }, // toggled
           { id: 'item-2', content: 'New Task', checked: false, order: 1 } // created
         ]
       })
-    })
+    }) as NextRequest
 
     await PUT(request, {
       params: Promise.resolve({ id: 'board-1', noteId: 'note-1' })
@@ -204,8 +205,9 @@ describe('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
     
     ;(db.$transaction as jest.Mock).mockImplementation(mockTransaction)
 
-    const request = new NextRequest('http://localhost/api/boards/board-1/notes/note-1', {
+    const request = new Request('http://localhost/api/boards/board-1/notes/note-1', {
       method: 'PUT',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         checklistItems: [
           { id: 'item-1', content: 'Task 1', checked: false, order: 0 },
@@ -213,7 +215,7 @@ describe('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
           { id: 'item-3', content: 'Task 3', checked: false, order: 2 }
         ]
       })
-    })
+    }) as NextRequest
 
     await PUT(request, {
       params: Promise.resolve({ id: 'board-1', noteId: 'note-1' })
@@ -273,15 +275,16 @@ describe('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
     
     ;(db.$transaction as jest.Mock).mockImplementation(mockTransaction)
 
-    const request = new NextRequest('http://localhost/api/boards/board-1/notes/note-1', {
+    const request = new Request('http://localhost/api/boards/board-1/notes/note-1', {
       method: 'PUT',
+      headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         checklistItems: [
           { id: 'item-2', content: 'Task 2', checked: false, order: 0 }, // reordered to top (order changed 1->0)
           { id: 'item-1', content: 'Task 1', checked: false, order: 1 }  // reordered to bottom (order changed 0->1)
         ]
       })
-    })
+    }) as NextRequest
 
     await PUT(request, {
       params: Promise.resolve({ id: 'board-1', noteId: 'note-1' })

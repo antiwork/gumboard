@@ -7,13 +7,29 @@ type IncomingItem = { id: string; content: string; checked: boolean; order: numb
 
 const serverSanitize = (items: unknown): IncomingItem[] =>
   (Array.isArray(items) ? items : [])
-    .filter((i): i is Record<string, unknown> => i && typeof i === 'object' && i !== null && typeof (i as Record<string, unknown>).id === 'string' && typeof (i as Record<string, unknown>).content === 'string')
-    .map(i => ({
-      id: String(i.id),
-      content: String(i.content),
-      checked: Boolean(i.checked),
-      order: Number.isFinite(i.order) ? Number(i.order) : 0
-    }));
+    .filter(
+      (i): i is Record<string, unknown> =>
+        i && typeof i === 'object' && i !== null &&
+        typeof (i as Record<string, unknown>).id === 'string' &&
+        typeof (i as Record<string, unknown>).content === 'string'
+    )
+    .map((i) => {
+      const item = i as Record<string, unknown>
+      const rawChecked = item.checked
+      const rawOrder = Number(item.order)
+
+      const checked =
+        typeof rawChecked === 'boolean'
+          ? rawChecked
+          : String(rawChecked).toLowerCase() === 'true'
+
+      return {
+        id: String(item.id),
+        content: String(item.content),
+        checked,
+        order: Number.isFinite(rawOrder) ? rawOrder : 0,
+      }
+    })
 
 // Update a note
 export async function PUT(
