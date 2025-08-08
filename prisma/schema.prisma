@@ -98,7 +98,7 @@ model Board {
 model Note {
   id        String @id @default(cuid())
   content   String @db.Text
-  color     String
+  color     String @default("#fef3c7")
   done      Boolean @default(false) // Track completion status
   checklistItems Json? // Store checklist items as JSON
   slackMessageId String?
