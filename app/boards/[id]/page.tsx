@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -700,7 +700,7 @@ export default function BoardPage({
   };
 
   // Get unique authors for dropdown
-  const uniqueAuthors = getUniqueAuthors(notes);
+  const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
   // Get filtered and sorted notes for display
   const filteredNotes = filterAndSortNotes(
@@ -1618,6 +1618,7 @@ export default function BoardPage({
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
               <input
+                aria-label="Search notes"
                 type="text"
                 placeholder="Search notes..."
                 value={searchTerm}
