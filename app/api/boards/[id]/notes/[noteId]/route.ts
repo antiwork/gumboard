@@ -17,7 +17,7 @@ function sanitizeIncomingItems(items: any[]): ChecklistItemDTO[] {
     .filter((i) => i && typeof i.content === 'string')
     .map((i, idx) => ({
       id: typeof i.id === 'string' ? i.id : '',
-      content: String(i.content),
+      content: String(i.content), 
       checked: Boolean(i?.checked),
       order: Number.isFinite(i?.order) ? Number(i.order) : idx,
     }))
