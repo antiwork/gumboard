@@ -212,7 +212,12 @@ test.describe('Note Management with Newlines', () => {
     
     await page.waitForTimeout(500);
     
-    const input = page.locator('input.bg-transparent');
+    // With modular components, we need to click "Add task" first
+    const addTaskButton = page.locator('button:has-text("Add task")');
+    await expect(addTaskButton).toBeVisible();
+    await addTaskButton.click();
+    
+    const input = page.locator('input[placeholder="Add new item..."]');
     await expect(input).toBeVisible();
     await input.fill('Test checklist item');
     await input.blur();
@@ -229,13 +234,33 @@ test.describe('Note Management with Newlines', () => {
     
     await page.waitForTimeout(500);
     
-    const input = page.locator('input.bg-transparent');
+    // Click "Add task" to add first item
+    let addTaskButton = page.locator('button:has-text("Add task")');
+    await expect(addTaskButton).toBeVisible();
+    await addTaskButton.click();
+    
+    let input = page.locator('input[placeholder="Add new item..."]');
     await expect(input).toBeVisible();
     await input.fill('First item');
     await input.blur();
     
     await page.waitForTimeout(500);
     
+    await expect(page.locator('text=First item')).toBeVisible();
+    
+    // Click "Add task" to add second item
+    addTaskButton = page.locator('button:has-text("Add task")');
+    await expect(addTaskButton).toBeVisible();
+    await addTaskButton.click();
+    
+    input = page.locator('input[placeholder="Add new item..."]');
+    await expect(input).toBeVisible();
+    await input.fill('Second item');
+    await input.blur();
+    
+    await page.waitForTimeout(500);
+    
+    await expect(page.locator('text=Second item')).toBeVisible();
     await expect(page.locator('text=First item')).toBeVisible();
   });
 
