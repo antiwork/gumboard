@@ -29,7 +29,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-// Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import type { ChecklistItem } from "@/lib/types/checklist-item";
 
@@ -43,7 +42,6 @@ export default function BoardPage({
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
@@ -64,7 +62,6 @@ export default function BoardPage({
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
     null
   );
-  // Per-item edit and animations are handled inside Note component now
   const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
     open: boolean;
     noteId: string;
@@ -80,7 +77,6 @@ export default function BoardPage({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // DnD sensors reused for all note lists
 
   // Update URL with current filter state
   const updateURL = (
@@ -724,7 +720,7 @@ export default function BoardPage({
     }
   };
 
-  // Adapter: bridge component Note -> persist content/checklist changes
+  
   const handleUpdateNoteFromComponent = async (
     updatedNote: Note
   ) => {
@@ -784,7 +780,7 @@ export default function BoardPage({
     }
   };
 
-  // Adapter: component Note provides content directly
+  
   const handleAddChecklistItemFromComponent = async (
     noteId: string,
     content: string
@@ -899,7 +895,7 @@ export default function BoardPage({
     }
   };
 
-  // Removed legacy handleUpdateNote; Note component now calls handleUpdateNoteFromComponent
+  
 
   const handleDeleteNote = (noteId: string) => {
     setDeleteNoteDialog({
@@ -1010,7 +1006,7 @@ export default function BoardPage({
     }
   };
 
-  // Note: add-checklist-item logic is handled by the Note component via handleAddChecklistItemFromComponent
+  
 
   const handleToggleChecklistItem = async (noteId: string, itemId: string) => {
     try {
@@ -1166,7 +1162,7 @@ export default function BoardPage({
     }
   };
 
-  // Reordering is handled by the Note component
+  
 
   const handleEditChecklistItem = useCallback(async (
     noteId: string,
@@ -1212,8 +1208,7 @@ export default function BoardPage({
     }
   }, [notes, boardId]);
 
-  // Removed external debounce; Note component handles UX concerns
-  // Removed external debounce; Note component handles UX concerns
+  
 
   const handleToggleAllChecklistItems = async (noteId: string) => {
     try {
