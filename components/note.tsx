@@ -118,13 +118,44 @@ export function Note({
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     if (!note.checklistItems || note.checklistItems.length === 0) return;
+
     const items = note.checklistItems as ChecklistItem[];
-    const fromIndex = items.findIndex((i) => i.id === String(active.id));
-    const toIndex = items.findIndex((i) => i.id === String(over.id));
-    if (fromIndex < 0 || toIndex < 0) return;
-    const newItems = reorderChecklistItems(items, fromIndex, toIndex);
-    // Persist via parent handler
-    onUpdate?.({ ...note, checklistItems: newItems });
+    const byId = new Map(items.map((i) => [i.id, i]));
+    const activeItem = byId.get(String(active.id));
+    const overItem = byId.get(String(over.id));
+    if (!activeItem || !overItem) return;
+
+    // Restrict reordering within same checked group
+    if (activeItem.checked !== overItem.checked) return;
+
+    const uncheckedItems = items
+      .filter((i) => !i.checked)
+      .sort((a, b) => a.order - b.order);
+    const checkedItems = items
+      .filter((i) => i.checked)
+      .sort((a, b) => a.order - b.order);
+
+    let reorderedUnchecked = uncheckedItems;
+    let reorderedChecked = checkedItems;
+
+    if (!activeItem.checked) {
+      const from = uncheckedItems.findIndex((i) => i.id === String(active.id));
+      const to = uncheckedItems.findIndex((i) => i.id === String(over.id));
+      if (from < 0 || to < 0) return;
+      reorderedUnchecked = reorderChecklistItems(uncheckedItems, from, to);
+    } else {
+      const from = checkedItems.findIndex((i) => i.id === String(active.id));
+      const to = checkedItems.findIndex((i) => i.id === String(over.id));
+      if (from < 0 || to < 0) return;
+      reorderedChecked = reorderChecklistItems(checkedItems, from, to);
+    }
+
+    const merged = [...reorderedUnchecked, ...reorderedChecked].map((item, index) => ({
+      ...item,
+      order: index,
+    }));
+
+    onUpdate?.({ ...note, checklistItems: merged });
   };
 
   const handleStartEdit = () => {
@@ -290,29 +321,63 @@ export function Note({
                 modifiers={[restrictToVerticalAxis, restrictToParentElement]}
                 onDragEnd={handleDragEnd}
               >
-                <SortableContext
-                  items={note.checklistItems.map((i) => i.id)}
-                  strategy={verticalListSortingStrategy}
-                >
-                  {note.checklistItems.map((item) => (
-                    <SortableChecklistRow key={item.id} item={item} canEdit={canEdit}>
-                      <ChecklistItemComponent
-                        item={item}
-                        onToggle={(itemId) => onToggleChecklistItem?.(note.id, itemId)}
-                        onEdit={handleEditItem}
-                        onDelete={handleDeleteItem}
-                        onSplit={handleSplitItem}
-                        isEditing={editingItem === item.id}
-                        editContent={editingItem === item.id ? editingItemContent : undefined}
-                        onEditContentChange={setEditingItemContent}
-                        onStartEdit={handleStartEditItem}
-                        onStopEdit={handleStopEditItem}
-                        readonly={readonly}
-                        showDeleteButton={canEdit}
-                      />
-                    </SortableChecklistRow>
-                  ))}
-                </SortableContext>
+                {(() => {
+                  const allItems = (note.checklistItems as ChecklistItem[]).slice();
+                  const uncheckedItems = allItems
+                    .filter((i) => !i.checked)
+                    .sort((a, b) => a.order - b.order);
+                  const checkedItems = allItems
+                    .filter((i) => i.checked)
+                    .sort((a, b) => a.order - b.order);
+
+                  return (
+                    <>
+                      <SortableContext items={uncheckedItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                        {uncheckedItems.map((item) => (
+                          <SortableChecklistRow key={item.id} item={item} canEdit={canEdit}>
+                            <ChecklistItemComponent
+                              item={item}
+                              onToggle={(itemId) => onToggleChecklistItem?.(note.id, itemId)}
+                              onEdit={handleEditItem}
+                              onDelete={handleDeleteItem}
+                              onSplit={handleSplitItem}
+                              isEditing={editingItem === item.id}
+                              editContent={editingItem === item.id ? editingItemContent : undefined}
+                              onEditContentChange={setEditingItemContent}
+                              onStartEdit={handleStartEditItem}
+                              onStopEdit={handleStopEditItem}
+                              readonly={readonly}
+                              showDeleteButton={canEdit}
+                            />
+                          </SortableChecklistRow>
+                        ))}
+                      </SortableContext>
+
+                      {checkedItems.length > 0 && <div className="h-2" />}
+
+                      <SortableContext items={checkedItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
+                        {checkedItems.map((item) => (
+                          <SortableChecklistRow key={item.id} item={item} canEdit={canEdit}>
+                            <ChecklistItemComponent
+                              item={item}
+                              onToggle={(itemId) => onToggleChecklistItem?.(note.id, itemId)}
+                              onEdit={handleEditItem}
+                              onDelete={handleDeleteItem}
+                              onSplit={handleSplitItem}
+                              isEditing={editingItem === item.id}
+                              editContent={editingItem === item.id ? editingItemContent : undefined}
+                              onEditContentChange={setEditingItemContent}
+                              onStartEdit={handleStartEditItem}
+                              onStopEdit={handleStopEditItem}
+                              readonly={readonly}
+                              showDeleteButton={canEdit}
+                            />
+                          </SortableChecklistRow>
+                        ))}
+                      </SortableContext>
+                    </>
+                  );
+                })()}
               </DndContext>
             )}
 
