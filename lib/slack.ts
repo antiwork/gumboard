@@ -104,14 +104,28 @@ export function formatNoteForSlack(note: { content: string }, boardName: string,
   return `:heavy_plus_sign: ${note.content} by ${userName} in ${boardName}`
 }
 
-export function formatTodoForSlack(todoContent: string, boardName: string, userName: string, action: 'added' | 'completed'): string {
+export function formatTodoForSlack(
+  todoContent: string,
+  boardName: string,
+  userName: string,
+  action: 'added' | 'completed' | 'reopened'
+): string {
   if (action === 'completed') {
     return `:white_check_mark: ${todoContent} by ${userName} in ${boardName}`
+  }
+  if (action === 'reopened') {
+    return `:arrows_counterclockwise: ${todoContent} by ${userName} in ${boardName}`
   }
   return `:heavy_plus_sign: ${todoContent} by ${userName} in ${boardName}`
 }
 
-export async function sendTodoNotification(webhookUrl: string, todoContent: string, boardName: string, userName: string, action: 'added' | 'completed'): Promise<string | null> {
+export async function sendTodoNotification(
+  webhookUrl: string,
+  todoContent: string,
+  boardName: string,
+  userName: string,
+  action: 'added' | 'completed' | 'reopened'
+): Promise<string | null> {
   const message = formatTodoForSlack(todoContent, boardName, userName, action)
   return await sendSlackMessage(webhookUrl, {
     text: message,

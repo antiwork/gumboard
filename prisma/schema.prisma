@@ -100,17 +100,32 @@ model Note {
   content   String @db.Text
   color     String @default("#fef3c7") // Default yellow color
   done      Boolean @default(false) // Track completion status
-  checklistItems Json? // Store checklist items as JSON
-  slackMessageId String?
+  isChecklist Boolean @default(false) // Track if note is a checklist
+  slackMessageId String? // Slack message ID for updates
   boardId   String
   board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   createdBy String
   user      User   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  checklistItems ChecklistItem[] // Reference to checklist items table
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete timestamp
 
   @@map("notes")
+}
+
+model ChecklistItem {
+  id        String @id @default(cuid())
+  content   String @db.Text
+  checked   Boolean @default(false)
+  order     Int @default(0)
+  noteId    String
+  slackMessageId String? // Slack message ID for individual item updates
+  note      Note @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("checklist_items")
 }
 
 model OrganizationInvite {

@@ -43,6 +43,10 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true
           }
+        },
+        checklistItems: {
+          orderBy: { order: 'asc' },
+          select: { id: true, content: true, checked: true, order: true }
         }
       },
       orderBy: {
