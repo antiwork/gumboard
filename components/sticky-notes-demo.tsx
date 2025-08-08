@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Note as NoteComponent } from "@/components/note"
 import type { Note } from "@/components/note"
-import type { ChecklistItem } from "@/components/checklist-item"
+import type { ChecklistItem } from "@/lib/types/checklist-item"
 import { Plus } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 

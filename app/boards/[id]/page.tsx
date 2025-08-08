@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
-import type { ChecklistItem } from "@/components/checklist-item";
+import type { ChecklistItem } from "@/lib/types/checklist-item";
 
 export default function BoardPage({
   params,

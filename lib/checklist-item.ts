@@ -1,9 +1,4 @@
-export type ChecklistItem = {
-  id: string;
-  content: string;
-  checked: boolean;
-  order: number;
-};
+import type { ChecklistItem } from "@/lib/types/checklist-item";
 
 export function reorderChecklistItems(
   items: ChecklistItem[],

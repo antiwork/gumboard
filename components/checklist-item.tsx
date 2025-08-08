@@ -6,13 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
+import type { ChecklistItem as ChecklistItemType } from "@/lib/types/checklist-item";
 
-export interface ChecklistItem {
-  id: string;
-  content: string;
-  checked: boolean;
-  order: number;
-}
+export type ChecklistItem = ChecklistItemType;
 
 interface ChecklistItemProps {
   item: ChecklistItem;
