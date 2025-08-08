@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Trash2 } from "lucide-react";
-import { ChecklistContainer } from "./checklist-container";
+import { Checklist } from "./checklist";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -44,7 +44,7 @@ interface NoteData {
   };
 }
 
-interface NoteContainerProps {
+interface NoteProps {
   noteId: string;
   boardId: string;
   initialData?: NoteData;
@@ -56,7 +56,7 @@ interface NoteContainerProps {
   style?: React.CSSProperties;
 }
 
-export function NoteContainer({
+export function Note({
   noteId,
   boardId,
   initialData,
@@ -66,7 +66,7 @@ export function NoteContainer({
   onDelete,
   className,
   style,
-}: NoteContainerProps) {
+}: NoteProps) {
   const [note, setNote] = useState<NoteData | null>(initialData || null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(initialData?.content || "");
@@ -81,7 +81,7 @@ export function NoteContainer({
       fetchNote();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [noteId, boardId, initialData]);
+  }, [noteId, boardId]);
 
   const fetchNote = async () => {
     try {
@@ -271,7 +271,7 @@ export function NoteContainer({
                 </Button>
               </div>
             )}
-            {canEdit && (
+            {canEdit && note.checklistItems && note.checklistItems.length > 0 && (
               <div className="flex items-center">
                 <Checkbox
                   checked={note.done}
@@ -313,7 +313,7 @@ export function NoteContainer({
             />
           </div>
         ) : (
-          <ChecklistContainer
+          <Checklist
             noteId={noteId}
             boardId={boardId}
             items={note.checklistItems || []}

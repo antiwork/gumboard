@@ -14,7 +14,7 @@ interface ChecklistItemData {
   order: number;
 }
 
-interface ChecklistContainerProps {
+interface ChecklistProps {
   noteId: string;
   boardId: string;
   items: ChecklistItemData[];
@@ -23,20 +23,39 @@ interface ChecklistContainerProps {
   onContentEdit?: () => void;
 }
 
-export function ChecklistContainer({
+export function Checklist({
   noteId,
   boardId,
   items,
   canEdit,
   onItemsUpdate,
   onContentEdit,
-}: ChecklistContainerProps) {
+}: ChecklistProps) {
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
   const [isAddingItem, setIsAddingItem] = useState(false);
   const [newItemContent, setNewItemContent] = useState("");
   const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
   const editDebounceMap = useRef(new Map<string, NodeJS.Timeout>());
   const EDIT_DEBOUNCE_DURATION = 1000;
+
+  const updateNoteOnServer = async (checklistItems: ChecklistItemData[], done: boolean) => {
+    const response = await fetch(`/api/boards/${boardId}/notes/${noteId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        checklistItems,
+        done,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to update note");
+    }
+
+    return response.json();
+  };
 
   const handleAddChecklistItem = async () => {
     if (!newItemContent.trim()) return;
@@ -57,29 +76,18 @@ export function ChecklistContainer({
       setNewItemContent("");
       setIsAddingItem(false);
 
-      const response = await fetch(`/api/boards/${boardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          checklistItems: updatedItems,
-          done: allItemsChecked,
-        }),
-      });
-
-      if (response.ok) {
-        const { note } = await response.json();
+      try {
+        const { note } = await updateNoteOnServer(updatedItems, allItemsChecked);
         onItemsUpdate(note.checklistItems, note.done);
-      } else {
+      } catch (error) {
         // Revert on error
         onItemsUpdate(items, items.every((item) => item.checked));
         setIsAddingItem(true);
         setNewItemContent(newItem.content);
+        console.error("Error adding checklist item:", error);
       }
     } catch (error) {
       console.error("Error adding checklist item:", error);
-      onItemsUpdate(items, items.every((item) => item.checked));
     }
   };
 
@@ -112,24 +120,9 @@ export function ChecklistContainer({
       }, 200);
 
       // Send to server in background
-      fetch(`/api/boards/${boardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          checklistItems: sortedItems,
-          done: allItemsChecked,
-        }),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            console.error("Server error, reverting optimistic update");
-            onItemsUpdate(items, items.every((item) => item.checked));
-          } else {
-            const { note } = await response.json();
-            onItemsUpdate(note.checklistItems, note.done);
-          }
+      updateNoteOnServer(sortedItems, allItemsChecked)
+        .then(({ note }) => {
+          onItemsUpdate(note.checklistItems, note.done);
         })
         .catch((error) => {
           console.error("Error toggling checklist item:", error);
@@ -148,21 +141,10 @@ export function ChecklistContainer({
       // Optimistic update
       onItemsUpdate(updatedItems, allItemsChecked);
 
-      const response = await fetch(`/api/boards/${boardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          checklistItems: updatedItems,
-          done: allItemsChecked,
-        }),
-      });
-
-      if (response.ok) {
-        const { note } = await response.json();
+      try {
+        const { note } = await updateNoteOnServer(updatedItems, allItemsChecked);
         onItemsUpdate(note.checklistItems, note.done);
-      } else {
+      } catch (error) {
         console.error("Server error, reverting optimistic update");
         onItemsUpdate(items, items.every((item) => item.checked));
       }
@@ -180,22 +162,9 @@ export function ChecklistContainer({
 
       const allItemsChecked = updatedItems.every((item) => item.checked);
 
-      const response = await fetch(`/api/boards/${boardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          checklistItems: updatedItems,
-          done: allItemsChecked,
-        }),
-      });
-
-      if (response.ok) {
-        const { note } = await response.json();
-        onItemsUpdate(note.checklistItems, note.done);
-        setEditingItemId(null);
-      }
+      const { note } = await updateNoteOnServer(updatedItems, allItemsChecked);
+      onItemsUpdate(note.checklistItems, note.done);
+      setEditingItemId(null);
     } catch (error) {
       console.error("Error editing checklist item:", error);
     }
@@ -242,19 +211,9 @@ export function ChecklistContainer({
 
       const allItems = [...updatedItems, newItem].sort((a, b) => a.order - b.order);
 
-      const response = await fetch(`/api/boards/${boardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          checklistItems: allItems,
-        }),
-      });
-
-      if (response.ok) {
-        const { note } = await response.json();
-        onItemsUpdate(note.checklistItems, note.done);
-        setEditingItemId(newItem.id);
-      }
+      const { note } = await updateNoteOnServer(allItems, items.every((item) => item.checked));
+      onItemsUpdate(note.checklistItems, note.done);
+      setEditingItemId(newItem.id);
     } catch (error) {
       console.error("Error splitting checklist item:", error);
     }

@@ -14,7 +14,7 @@ import {
   Search,
   User,
 } from "lucide-react";
-import { NoteContainer } from "@/components/note-container";
+import { Note } from "@/components/note";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -1184,7 +1184,7 @@ export default function BoardPage({
         {/* Notes */}
         <div className="relative w-full h-full">
           {layoutNotes.map((note) => (
-            <NoteContainer
+            <Note
               key={note.id}
               noteId={note.id}
               boardId={boardId === "all-notes" && note.board?.id ? note.board.id : boardId || ""}

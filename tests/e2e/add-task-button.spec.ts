@@ -335,7 +335,7 @@ test.describe('Add Task Button', () => {
       }
     });
 
-    // Mock individual note fetch for NoteContainer
+    // Mock individual note fetch for Note component
     await page.route('**/api/boards/test-board/notes/checklist-note', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
