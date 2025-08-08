@@ -39,7 +39,7 @@ jest.mock('../lib/slack', () => ({
 import { db } from '../lib/db'
 import { notifySlackForNoteChanges } from '../lib/slack'
 
-describe.skip('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
+describe('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
   beforeEach(() => {
     jest.clearAllMocks()
     
@@ -71,9 +71,36 @@ describe.skip('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
   })
 
   it('should call centralized Slack notifications after DB transaction', async () => {
+    const finalNoteData = {
+      id: 'note-1',
+      content: 'Original content',
+      done: false,
+      createdBy: 'test-user',
+      slackMessageId: null,
+      boardId: 'board-1',
+      user: {
+        id: 'test-user',
+        name: null,
+        email: 'test@example.com'
+      },
+      board: {
+        id: 'board-1',
+        name: 'Test Board',
+        organizationId: 'org-1',
+        sendSlackUpdates: true
+      },
+      checklistItems: [
+        { id: 'item-1', content: 'Task 1', checked: true, order: 0, slackMessageId: null },
+        { id: 'item-2', content: 'New Task', checked: false, order: 1, slackMessageId: null }
+      ]
+    }
+
     const mockTransaction = jest.fn().mockImplementation(async (callback) => {
       return callback({
-        note: { update: jest.fn() },
+        note: { 
+          update: jest.fn(),
+          findUnique: jest.fn().mockResolvedValue(finalNoteData)
+        },
         checklistItem: {
           findMany: jest.fn().mockResolvedValue([
             { id: 'item-1', content: 'Task 1', checked: false, order: 0 }
@@ -139,7 +166,33 @@ describe.skip('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
 
     const mockTransaction = jest.fn().mockImplementation(async (callback) => {
       return callback({
-        note: { update: jest.fn() },
+        note: { 
+          update: jest.fn(),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'note-1',
+            content: 'Original content',
+            done: false,
+            createdBy: 'test-user',
+            slackMessageId: null,
+            boardId: 'board-1',
+            user: {
+              id: 'test-user',
+              name: null,
+              email: 'test@example.com'
+            },
+            board: {
+              id: 'board-1',
+              name: 'Test Board',
+              organizationId: 'org-1',
+              sendSlackUpdates: true
+            },
+            checklistItems: [
+              { id: 'item-1', content: 'Task 1', checked: false, order: 0 },
+              { id: 'item-2', content: 'Task 2', checked: false, order: 1 },
+              { id: 'item-3', content: 'Task 3', checked: false, order: 2 }
+            ]
+          })
+        },
         checklistItem: {
           findMany: jest.fn().mockResolvedValue([]),
           deleteMany: jest.fn(),
