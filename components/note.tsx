@@ -6,7 +6,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
+import {
+  ChecklistItem as ChecklistItemComponent,
+  ChecklistItem,
+} from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive } from "lucide-react";
 
@@ -56,9 +59,18 @@ interface NoteProps {
   onArchive?: (noteId: string) => void;
   onAddChecklistItem?: (noteId: string, content: string) => void;
   onToggleChecklistItem?: (noteId: string, itemId: string) => void;
-  onEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
+  onEditChecklistItem?: (
+    noteId: string,
+    itemId: string,
+    content: string
+  ) => void;
   onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
-  onSplitChecklistItem?: (noteId: string, itemId: string, content: string, cursorPosition: number) => void;
+  onSplitChecklistItem?: (
+    noteId: string,
+    itemId: string,
+    content: string,
+    cursorPosition: number
+  ) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -87,13 +99,14 @@ export function Note({
   const [editingItemContent, setEditingItemContent] = useState("");
   const [addingItem, setAddingItem] = useState(
     !readonly &&
-    currentUser &&
-    (currentUser.id === note.user.id || currentUser.isAdmin) &&
-    (!note.checklistItems || note.checklistItems.length === 0)
+      currentUser &&
+      (currentUser.id === note.user.id || currentUser.isAdmin) &&
+      (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
 
-  const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+  const canEdit =
+    !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
   const handleStartEdit = () => {
     if (canEdit) {
@@ -136,7 +149,11 @@ export function Note({
     handleStopEditItem();
   };
 
-  const handleSplitItem = (itemId: string, content: string, cursorPosition: number) => {
+  const handleSplitItem = (
+    itemId: string,
+    content: string,
+    cursorPosition: number
+  ) => {
     if (onSplitChecklistItem) {
       onSplitChecklistItem(note.id, itemId, content, cursorPosition);
     }
@@ -165,15 +182,19 @@ export function Note({
   return (
     <div
       className={cn(
-        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "rounded-lg h-fit shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
         className
       )}
       style={{
-        backgroundColor: typeof window !== "undefined" && document.documentElement.classList.contains('dark') ? "#374151" : note.color,
+        backgroundColor:
+          typeof window !== "undefined" &&
+          document.documentElement.classList.contains("dark")
+            ? "#374151"
+            : note.color,
         ...style,
       }}
     >
-      <div className="flex items-start justify-between mb-4 flex-shrink-0">
+      <div className="flex items-center justify-between mb-4 flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
             <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
@@ -197,6 +218,7 @@ export function Note({
             </div>
           </div>
         </div>
+
         <div className="flex items-center space-x-2">
           {canEdit && (
             <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -265,7 +287,9 @@ export function Note({
                 onDelete={handleDeleteItem}
                 onSplit={handleSplitItem}
                 isEditing={editingItem === item.id}
-                editContent={editingItem === item.id ? editingItemContent : undefined}
+                editContent={
+                  editingItem === item.id ? editingItemContent : undefined
+                }
                 onEditContentChange={setEditingItemContent}
                 onStartEdit={handleStartEditItem}
                 onStopEdit={handleStopEditItem}
@@ -277,7 +301,10 @@ export function Note({
             {/* Add New Item Input */}
             {addingItem && canEdit && (
               <div className="flex items-center gap-3">
-                <Checkbox disabled className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600" />
+                <Checkbox
+                  disabled
+                  className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                />
                 <Input
                   type="text"
                   value={newItemContent}
@@ -292,27 +319,26 @@ export function Note({
             )}
 
             {/* Content as text if no checklist items */}
-            {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
-              <div
-                className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
-                onClick={handleStartEdit}
-              >
-                {note.content || "Click to add content..."}
-              </div>
-            )}
+            {(!note.checklistItems || note.checklistItems.length === 0) &&
+              !isEditing && (
+                <div
+                  className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
+                  onClick={handleStartEdit}
+                >
+                  {note.content || "Click to add content..."}
+                </div>
+              )}
           </div>
 
           {/* Add Item Button */}
           {canEdit && (
-            <Button
-              variant="ghost"
-              size="sm"
+            <button
               onClick={() => setAddingItem(true)}
-              className="mt-2 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+              className="mt-10 flex items-center cursor-pointer justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
             >
               <Plus className="mr-2 h-4 w-4" />
-              Add task
-            </Button>
+              <p className="pb-0.5">Add task</p>
+            </button>
           )}
         </div>
       )}
