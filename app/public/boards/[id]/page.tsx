@@ -520,6 +520,7 @@ export default function PublicBoardPage({
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
               <input
+                aria-label="Search notes"
                 type="text"
                 placeholder="Search notes..."
                 value={searchTerm}
