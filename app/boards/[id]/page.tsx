@@ -100,19 +100,20 @@ function SortableChecklistItem(props: SortableChecklistItemProps) {
     editDebounceMap,
   } = props;
 
-  const { attributes, listeners, setNodeRef, transform, transition } =
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id, disabled: !canEdit });
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
-    transition,
+    transition: isDragging ? undefined : transition,
+    willChange: "transform",
   };
 
   return (
     <div
       ref={setNodeRef}
       style={style}
-      className={`flex items-center group/item rounded gap-2 sm:gap-3 transition-all duration-200 ${
+      className={`flex items-center group/item rounded gap-2 sm:gap-3 transform-gpu ${
         animating ? "animate-pulse" : ""
       }`}
       {...attributes}
