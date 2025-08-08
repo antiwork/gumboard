@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,7 +31,6 @@ import {
 } from "@/components/ui/alert-dialog";
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
-import type { ChecklistItem } from "@/components/checklist-item";
 
 export default function BoardPage({
   params,
@@ -718,78 +717,6 @@ export default function BoardPage({
     await handleUpdateNote(updatedNote.id, updatedNote.content);
   };
 
-  // Adapter: component Note provides content directly
-  const handleAddChecklistItemFromComponent = async (
-    noteId: string,
-    content: string
-  ) => {
-    if (!content.trim()) return;
-
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      const newItem: ChecklistItem = {
-        id: `item-${Date.now()}`,
-        content: content.trim(),
-        checked: false,
-        order: (currentNote.checklistItems || []).length,
-      };
-
-      const updatedItems = [...(currentNote.checklistItems || []), newItem];
-
-      const allItemsChecked = updatedItems.every((item) => item.checked);
-
-      const optimisticNote = {
-        ...currentNote,
-        checklistItems: updatedItems,
-        done: allItemsChecked,
-      };
-
-      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      } else {
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-        setErrorDialog({
-          open: true,
-          title: "Failed to Add Item",
-          description: "Failed to add checklist item. Please try again.",
-        });
-      }
-    } catch (error) {
-      console.error("Error adding checklist item:", error);
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (currentNote) {
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-      }
-      setErrorDialog({
-        open: true,
-        title: "Connection Error",
-        description: "Failed to add item. Please check your connection.",
-      });
-    }
-  };
 
   const handleAddNote = async (targetBoardId?: string) => {
     // For all notes view, ensure a board is selected
@@ -1042,255 +969,6 @@ export default function BoardPage({
     }
   };
 
-  // Note: add-checklist-item logic is handled by the Note component via handleAddChecklistItemFromComponent
-
-  const handleToggleChecklistItem = async (noteId: string, itemId: string) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote || !currentNote.checklistItems) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      // OPTIMISTIC UPDATE
-      const updatedItems = currentNote.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, checked: !item.checked } : item
-      );
-
-      const sortedItems = [
-        ...updatedItems
-          .filter((item) => !item.checked)
-          .sort((a, b) => a.order - b.order),
-        ...updatedItems
-          .filter((item) => item.checked)
-          .sort((a, b) => a.order - b.order),
-      ];
-
-      // OPTIMISTIC UPDATE
-      const optimisticNote = {
-        ...currentNote,
-        checklistItems: sortedItems,
-      };
-
-      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-
-      // Send to server in background
-      fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          checklistItems: sortedItems,
-        }),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            console.error("Server error, reverting optimistic update");
-            setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-            
-            setErrorDialog({
-              open: true,
-              title: "Update Failed",
-              description: "Failed to update checklist item. Please try again.",
-            });
-          } else {
-            const { note } = await response.json();
-            setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-          }
-        })
-        .catch((error) => {
-          console.error("Error toggling checklist item:", error);
-          setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-          
-          setErrorDialog({
-            open: true,
-            title: "Connection Error",
-            description: "Failed to sync changes. Please check your connection.",
-          });
-        });
-    } catch (error) {
-      console.error("Error toggling checklist item:", error);
-    }
-  };
-
-  const handleDeleteChecklistItem = async (noteId: string, itemId: string) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote || !currentNote.checklistItems) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      // Store the item being deleted for potential rollback
-      const deletedItem = currentNote.checklistItems.find((item) => item.id === itemId);
-      if (!deletedItem) return;
-
-      const updatedItems = currentNote.checklistItems.filter(
-        (item) => item.id !== itemId
-      );
-
-      // OPTIMISTIC UPDATE: Update UI immediately
-      const optimisticNote = {
-        ...currentNote,
-        checklistItems: updatedItems,
-      };
-
-      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-
-      // Send to server in background
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      } else {
-        console.error("Server error, reverting optimistic update");
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-
-        setErrorDialog({
-          open: true,
-          title: "Failed to Delete Item",
-          description: "Failed to delete checklist item. Please try again.",
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting checklist item:", error);
-      
-      // Revert optimistic update on network error
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (currentNote) {
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-      }
-      
-      setErrorDialog({
-        open: true,
-        title: "Connection Error",
-        description: "Failed to delete item. Please check your connection.",
-      });
-    }
-  };
-
-  const handleEditChecklistItem = useCallback(async (
-    noteId: string,
-    itemId: string,
-    content: string
-  ) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote || !currentNote.checklistItems) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      const updatedItems = currentNote.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, content } : item
-      );
-
-
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      }
-    } catch (error) {
-      console.error("Error editing checklist item:", error);
-    }
-  }, [notes, boardId]);
-
-  // Removed external debounce; Note component handles UX concerns
-
-
-  const handleSplitChecklistItem = async (
-    noteId: string,
-    itemId: string,
-    content: string,
-    cursorPosition: number
-  ) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote || !currentNote.checklistItems) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      const firstHalf = content.substring(0, cursorPosition).trim();
-      const secondHalf = content.substring(cursorPosition).trim();
-
-      // Update current item with first half
-      const updatedItems = currentNote.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, content: firstHalf } : item
-      );
-
-      // Find the current item's order to insert new item after it
-      const currentItem = currentNote.checklistItems.find(
-        (item) => item.id === itemId
-      );
-      const currentOrder = currentItem?.order || 0;
-
-      // Create new item with second half
-      const newItem = {
-        id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: secondHalf,
-        checked: false,
-        order: currentOrder + 0.5,
-      };
-
-      const allItems = [...updatedItems, newItem].sort(
-        (a, b) => a.order - b.order
-      );
-
-      // Update the note with both changes
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            checklistItems: allItems,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      }
-    } catch (error) {
-      console.error("Error splitting checklist item:", error);
-    }
-  };
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
@@ -1560,14 +1238,10 @@ export default function BoardPage({
               key={note.id}
               note={note as Note}
               currentUser={user as User}
+              boardId={boardId}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onAddChecklistItem={handleAddChecklistItemFromComponent}
-              onToggleChecklistItem={handleToggleChecklistItem}
-              onEditChecklistItem={handleEditChecklistItem}
-              onDeleteChecklistItem={handleDeleteChecklistItem}
-              onSplitChecklistItem={handleSplitChecklistItem}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
               style={{
