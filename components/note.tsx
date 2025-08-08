@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
-import { Trash2, Plus, Palette } from "lucide-react";
+import { Trash2, Plus, Palette, Archive } from "lucide-react";
 import { NOTE_COLORS } from "@/lib/constants";
 
 // Core domain types
@@ -54,6 +54,7 @@ interface NoteProps {
   currentUser?: User;
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
+  onArchive?: (noteId: string) => void;
   onAddChecklistItem?: (noteId: string, content: string) => void;
   onToggleChecklistItem?: (noteId: string, itemId: string) => void;
   onEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
@@ -75,6 +76,7 @@ export function Note({
   currentUser,
   onUpdate,
   onDelete,
+  onArchive,
   onAddChecklistItem,
   onToggleChecklistItem,
   onEditChecklistItem,
@@ -175,7 +177,6 @@ export function Note({
     <div
       className={cn(
         "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
-        note.done && "opacity-80",
         className
       )}
       style={{
@@ -236,13 +237,34 @@ export function Note({
              </div>
            )}
           {canEdit && (
+            <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete?.(note.id);
+                }}
+                className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                variant="ghost"
+                size="icon"
+              >
+                <Trash2 className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+          {canEdit && onArchive && (
             <div className="flex items-center">
-              <Checkbox
-                checked={note.done}
-                onCheckedChange={() => onToggleAllChecklistItems?.(note.id)}
-                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
-                title={note.done ? "Uncheck all items" : "Check all items"}
-              />
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onArchive(note.id);
+                }}
+                className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                variant="ghost"
+                size="icon"
+                title="Archive note"
+              >
+                <Archive className="w-3 h-3" />
+              </Button>
             </div>
           )}
           {showColorPicker === note.id && (
