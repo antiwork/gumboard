@@ -47,6 +47,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { restrictToVerticalAxis, restrictToParentElement } from "@dnd-kit/modifiers";
 
 interface SortableChecklistItemProps {
   noteId: string;
@@ -1751,7 +1752,7 @@ export default function BoardPage({
               </button>
 
               {showBoardDropdown && (
-                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
+                    <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 max-h-80 overflow-y-auto overflow-x-hidden">
                   <div className="py-1">
                     {/* All Notes Option */}
                     <Link
@@ -1850,7 +1851,7 @@ export default function BoardPage({
           {/* Right side - Search, Add Note and User dropdown */}
           <div className="flex items-center space-x-2 px-3 ">
             {/* Search Box */}
-            <div className="relative block">
+            <div className="relative block overflow-hidden">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
@@ -1945,7 +1946,7 @@ export default function BoardPage({
       {/* Board Area */}
       <div
         ref={boardRef}
-        className="relative w-full bg-gray-50 dark:bg-zinc-950"
+        className="relative w-full bg-gray-50 dark:bg-zinc-950 overflow-hidden"
         style={{
           height: calculateBoardHeight(),
           minHeight: "calc(100vh - 64px)", // Account for header height
@@ -2142,6 +2143,7 @@ export default function BoardPage({
                       <DndContext
                         sensors={sensors}
                         collisionDetection={closestCenter}
+                        modifiers={[restrictToVerticalAxis, restrictToParentElement]}
                         onDragEnd={(event: DragEndEvent) => {
                           const { active, over } = event;
                           if (over && active.id !== over.id) {
@@ -2302,7 +2304,7 @@ export default function BoardPage({
           )}
 
         {notes.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-96 text-gray-500 dark:text-gray-400">
+          <div className="flex flex-col items-center justify-center h-96 text-gray-500 dark:text-gray-400 overflow-hidden">
             <div className="text-xl mb-2">No notes yet</div>
             <div className="text-sm mb-4">
               Click &ldquo;Add Note&rdquo; to get started
