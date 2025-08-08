@@ -15,6 +15,10 @@ const serverSanitize = (items: unknown): IncomingItem[] =>
     )
     .map((i) => {
       const item = i as Record<string, unknown>
+      if (!('checked' in item) || !('order' in item)) {
+        throw new Error('invalid');
+      }
+      
       const rawChecked = item.checked
       const rawOrder = Number(item.order)
 
@@ -46,7 +50,6 @@ export async function PUT(
     const { content, color, done } = rawBody
     const { id: boardId, noteId } = await params
 
-    // Server-side input sanitization for checklistItems
     let checklistItems: IncomingItem[] | undefined;
     if (rawBody.checklistItems !== undefined) {
       try {
@@ -58,7 +61,6 @@ export async function PUT(
       if (Array.isArray(rawBody.checklistItems) && checklistItems!.length !== rawBody.checklistItems.length) {
         return NextResponse.json({ error: "Invalid checklist item payload (missing id/content)" }, { status: 400 })
       }
-      // Optional: verify ids are unique in the payload
       if (checklistItems) {
         const ids = new Set<string>();
         for (const it of checklistItems) {
@@ -70,7 +72,6 @@ export async function PUT(
       }
     }
 
-    // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       include: { organization: true }
@@ -82,7 +83,6 @@ export async function PUT(
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
-    // Verify the note belongs to a board in the user's organization
     const note = await db.note.findUnique({
       where: { id: noteId },
       include: { 
@@ -106,7 +106,6 @@ export async function PUT(
       return NextResponse.json({ error: "Note not found" }, { status: 404 })
     }
 
-    // Check if note is soft-deleted
     if (note.deletedAt) {
       return NextResponse.json({ error: "Note not found" }, { status: 404 })
     }
@@ -115,16 +114,13 @@ export async function PUT(
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    // Check if user is the author of the note or an admin
     if (note.createdBy !== session.user.id && !user.isAdmin) {
       return NextResponse.json({ error: "Only the note author or admin can edit this note" }, { status: 403 })
     }
 
-    // Use a transaction to update note and checklist items together
     let checklistChanges: { created: { id: string; content: string; checked: boolean; order: number }[]; updated: { id: string; content: string; checked: boolean; order: number; previous: { id: string; content: string; checked: boolean; order: number } }[]; deleted: { id: string; content: string; checked: boolean; order: number }[] } | null = { created: [], updated: [], deleted: [] };
 
     const updatedNote = await db.$transaction(async (tx) => {
-      // Update the note
       const updatedNote = await tx.note.update({
         where: { id: noteId },
         data: {
@@ -149,18 +145,21 @@ export async function PUT(
         }
       })
 
-      // Handle checklist items update if provided
       if (checklistItems !== undefined && Array.isArray(checklistItems)) {
+        const normalizedItems = [...checklistItems]
+          .sort((a, b) => a.order - b.order)
+          .map((item, index) => ({ ...item, order: index }));
+
         const existingItems = await tx.checklistItem.findMany({
           where: { noteId },
           orderBy: { order: 'asc' }
         })
 
         const existingItemsMap = new Map(existingItems.map(item => [item.id, item]))
-        const newItemsMap = new Map(checklistItems.map(item => [item.id, item]))
+        const newItemsMap = new Map(normalizedItems.map(item => [item.id, item]))
 
-        const createdItems = checklistItems.filter(item => !existingItemsMap.has(item.id))
-        const updatedItems = checklistItems.filter(item => {
+        const createdItems = normalizedItems.filter(item => !existingItemsMap.has(item.id))
+        const updatedItems = normalizedItems.filter(item => {
           const existing = existingItemsMap.get(item.id)
           return existing && (
             existing.content !== item.content || 

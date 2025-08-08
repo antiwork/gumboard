@@ -160,26 +160,25 @@ export async function notifySlackForNoteChanges(params: {
   }
 
   // Checklist items
-  const ids: Record<string, string> = {};
-  if (itemChanges) {
-    // created => 'added'
-    for (const c of itemChanges.created ?? []) {
-      if (!hasValidContent(c.content)) continue;
-      if (!shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) continue;
-      const id = await sendTodoNotification(webhookUrl!, c.content, boardName, userName, 'added');
-      if (id) ids[c.id] = id;
-    }
-    // updated => notify ONLY on checked toggle
-    for (const u of itemChanges.updated ?? []) {
-      const toggled = u.previous && u.previous.checked !== u.checked;
-      if (!toggled) continue;
-      if (!hasValidContent(u.content)) continue;
-      if (!shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) continue;
-      const action = u.checked ? 'completed' : 'reopened';
-      const id = await sendTodoNotification(webhookUrl!, u.content, boardName, userName, action);
-      if (id) ids[u.id] = id;
+  const created = itemChanges?.created ?? [];
+  const updated = itemChanges?.updated ?? [];
+  const itemMessageIds: Record<string, string> = {};
+  if (created.length > 0) {
+    const first = created.find(c => hasValidContent(c.content));
+    if (first && shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
+      const id = await sendTodoNotification(webhookUrl!, first.content, boardName, userName, 'added');
+      if (id) itemMessageIds[first.id] = id;
     }
   }
-  if (Object.keys(ids).length) out.itemMessageIds = ids;
+  for (const u of updated) {
+    const toggled = !!u.previous && u.previous.checked !== u.checked;
+    if (!toggled) continue;
+    if (!hasValidContent(u.content)) continue;
+    if (!shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) continue;
+    const action = u.checked ? 'completed' : 'reopened';
+    const id = await sendTodoNotification(webhookUrl!, u.content, boardName, userName, action);
+    if (id) itemMessageIds[u.id] = id;
+  }
+  if (Object.keys(itemMessageIds).length > 0) out.itemMessageIds = itemMessageIds;
   return out;
 }
