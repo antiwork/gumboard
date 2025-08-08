@@ -21,6 +21,7 @@ import {
   Grid3x3,
   Copy,
   Edit3,
+  Archive,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -465,6 +466,28 @@ export default function Dashboard() {
                 </CardHeader>
               </Link>
             </Card>
+
+            {/* Archive Board */}
+            <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
+              <Link href="/boards/archive">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
+                          Archive
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-gray-700 dark:text-gray-300">
+                        View archived notes
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Link>
+            </Card>
+
             {boards.map((board) => (
               <Card
                 key={board.id}

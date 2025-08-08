@@ -385,24 +385,6 @@ export function StickyNotesDemo() {
     handleUpdateNote(updatedNote)
   }
 
-  const handleToggleAllChecklistItems = (noteId: string) => {
-    const note = notes.find((n) => n.id === noteId)
-    if (!note || !note.checklistItems) return
-
-    const allChecked = note.checklistItems.every((item) => item.checked)
-    const updatedItems = note.checklistItems.map((item) => ({
-      ...item,
-      checked: !allChecked,
-    }))
-
-    const updatedNote = {
-      ...note,
-      checklistItems: updatedItems,
-      done: !allChecked,
-    }
-
-    handleUpdateNote(updatedNote)
-  }
 
   const handleAddNote = () => {
     const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)]
@@ -453,7 +435,6 @@ export function StickyNotesDemo() {
                   onToggleChecklistItem={handleToggleChecklistItem}
                   onEditChecklistItem={handleEditChecklistItem}
                   onDeleteChecklistItem={handleDeleteChecklistItem}
-                  onToggleAllChecklistItems={handleToggleAllChecklistItems}
                   className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                 />
               </motion.div>
