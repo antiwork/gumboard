@@ -27,3 +27,6 @@ END$$;
 
 -- Helpful index
 CREATE INDEX IF NOT EXISTS idx_checklist_items_noteId ON "checklist_items"("noteId");
+
+-- Helpful composite index for ordered queries
+CREATE INDEX IF NOT EXISTS idx_checklist_items_noteId_order ON "checklist_items"("noteId","order");

@@ -3,6 +3,18 @@ import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { notifySlackForNoteChanges, updateSlackMessage, hasValidContent, shouldSendNotification } from "@/lib/slack"
 
+type IncomingItem = { id: string; content: string; checked: boolean; order: number };
+
+const serverSanitize = (items: unknown): IncomingItem[] =>
+  (Array.isArray(items) ? items : [])
+    .filter((i): i is Record<string, unknown> => i && typeof i === 'object' && i !== null && typeof (i as Record<string, unknown>).id === 'string' && typeof (i as Record<string, unknown>).content === 'string')
+    .map(i => ({
+      id: String(i.id),
+      content: String(i.content),
+      checked: Boolean(i.checked),
+      order: Number.isFinite(i.order) ? Number(i.order) : 0
+    }));
+
 // Update a note
 export async function PUT(
   request: NextRequest,
@@ -14,8 +26,18 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { content, color, done, checklistItems } = await request.json()
+    const rawBody = await request.json()
+    const { content, color, done } = rawBody
     const { id: boardId, noteId } = await params
+
+    let checklistItems: IncomingItem[] | undefined;
+    if (rawBody.checklistItems !== undefined) {
+      try {
+        checklistItems = serverSanitize(rawBody.checklistItems);
+      } catch {
+        return NextResponse.json({ error: "Invalid checklist items format" }, { status: 400 })
+      }
+    }
 
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
@@ -121,10 +143,18 @@ export async function PUT(
         // Store changes for Slack notifications
         checklistChanges = {
           created: createdItems,
-          updated: updatedItems.map(item => ({
-            ...item,
-            previous: existingItemsMap.get(item.id)
-          })),
+          updated: updatedItems.map(item => {
+            const existing = existingItemsMap.get(item.id);
+            return {
+              ...item,
+              previous: existing ? {
+                id: existing.id,
+                content: existing.content,
+                checked: existing.checked,
+                order: existing.order
+              } : { id: item.id, content: '', checked: false, order: 0 }
+            };
+          }),
           deleted: deletedItems
         }
 
@@ -186,11 +216,6 @@ export async function PUT(
 
     // Handle Slack notifications after the database transaction
     if (updatedNote) {
-      const user = await db.user.findUnique({
-        where: { id: session.user.id },
-        include: { organization: true }
-      })
-
       // Use centralized Slack notifications
       if (user?.organization?.slackWebhookUrl && updatedNote.board.sendSlackUpdates) {
         const res = await notifySlackForNoteChanges({

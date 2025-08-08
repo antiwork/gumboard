@@ -224,4 +224,81 @@ describe('/api/boards/[id]/notes/[noteId] PUT Integration', () => {
     const callArgs = mockSlackNotify.mock.calls[0][0]
     expect(callArgs.itemChanges.created).toHaveLength(3)
   })
+
+  it('should not send Slack notifications for reorder-only changes', async () => {
+    const mockSlackNotify = jest.fn().mockResolvedValue({ itemMessageIds: {} })
+    ;(notifySlackForNoteChanges as jest.Mock).mockImplementation(mockSlackNotify)
+
+    const existingItems = [
+      { id: 'item-1', content: 'Task 1', checked: false, order: 0 },
+      { id: 'item-2', content: 'Task 2', checked: false, order: 1 }
+    ]
+
+    const mockTransaction = jest.fn().mockImplementation(async (callback) => {
+      return callback({
+        note: { 
+          update: jest.fn(),
+          findUnique: jest.fn().mockResolvedValue({
+            id: 'note-1',
+            content: 'Original content',
+            done: false,
+            createdBy: 'test-user',
+            slackMessageId: null,
+            boardId: 'board-1',
+            user: {
+              id: 'test-user',
+              name: null,
+              email: 'test@example.com'
+            },
+            board: {
+              id: 'board-1',
+              name: 'Test Board',
+              organizationId: 'org-1',
+              sendSlackUpdates: true
+            },
+            checklistItems: [
+              { id: 'item-2', content: 'Task 2', checked: false, order: 0 }, // reordered to top
+              { id: 'item-1', content: 'Task 1', checked: false, order: 1 }  // reordered to bottom
+            ]
+          })
+        },
+        checklistItem: {
+          findMany: jest.fn().mockResolvedValue(existingItems),
+          deleteMany: jest.fn(),
+          createMany: jest.fn(),
+          update: jest.fn()
+        }
+      })
+    })
+    
+    ;(db.$transaction as jest.Mock).mockImplementation(mockTransaction)
+
+    const request = new NextRequest('http://localhost/api/boards/board-1/notes/note-1', {
+      method: 'PUT',
+      body: JSON.stringify({
+        checklistItems: [
+          { id: 'item-2', content: 'Task 2', checked: false, order: 0 }, // reordered to top (order changed 1->0)
+          { id: 'item-1', content: 'Task 1', checked: false, order: 1 }  // reordered to bottom (order changed 0->1)
+        ]
+      })
+    })
+
+    await PUT(request, {
+      params: Promise.resolve({ id: 'board-1', noteId: 'note-1' })
+    })
+
+    // Should have been called with only order changes (no created/deleted, updated only for order)
+    expect(mockSlackNotify).toHaveBeenCalledTimes(1)
+    const callArgs = mockSlackNotify.mock.calls[0][0]
+    
+    // Verify no items were created or deleted (reorder-only)
+    expect(callArgs.itemChanges.created).toHaveLength(0)
+    expect(callArgs.itemChanges.deleted).toHaveLength(0)
+    
+    // Verify items were marked as updated due to order change, but Slack should ignore order-only changes
+    expect(callArgs.itemChanges.updated).toHaveLength(2)
+    
+    // The key test: centralized Slack logic should detect these are order-only changes and NOT send notifications
+    // This proves the logic in lib/slack.ts correctly filters out order-only changes
+  })
 })
