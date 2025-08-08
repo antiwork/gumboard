@@ -335,7 +335,7 @@ test.describe('Add Task Button', () => {
       }
     });
 
-    // Mock individual note fetch for modular components
+    // Mock individual note fetch for Note component
     await page.route('**/api/boards/test-board/notes/checklist-note', async (route) => {
       if (route.request().method() === 'GET') {
         await route.fulfill({
@@ -352,7 +352,7 @@ test.describe('Add Task Button', () => {
     
     await expect(page.locator('text=Existing task')).toBeVisible();
     
-    const addTaskButton = page.locator('button:has-text("Add task")');
+    const addTaskButton = page.locator('button:has-text("Add task")').first();
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
     
