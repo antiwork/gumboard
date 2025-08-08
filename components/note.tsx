@@ -282,7 +282,7 @@ export function Note({
                   type="text"
                   value={newItemContent}
                   onChange={(e) => setNewItemContent(e.target.value)}
-                  className="h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-auto flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
                   placeholder="Add new item..."
                   onBlur={handleAddItem}
                   onKeyDown={handleKeyDownNewItem}
