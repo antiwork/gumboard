@@ -4,7 +4,7 @@ Keep on top of your team's to-dos.
 
 ## Getting Started
 
-### Prequisities
+### Prerequisites
 
 - Docker Compose
 - Node

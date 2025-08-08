@@ -2,13 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { updateSlackMessage, formatNoteForSlack, sendSlackMessage, sendTodoNotification, hasValidContent, shouldSendNotification } from "@/lib/slack"
-
-interface ChecklistItem {
-  id: string
-  content: string
-  checked: boolean
-  order: number
-}
+import type { ChecklistItem } from "@/components/checklist-item"
 
 // Helper function to detect checklist item changes
 function detectChecklistChanges(oldItems: ChecklistItem[] = [], newItems: ChecklistItem[] = []) {
@@ -137,7 +131,7 @@ export async function PUT(
       
       // Send notifications for newly added todos
       for (const addedItem of addedItems) {
-        if (hasValidContent(addedItem.content) && shouldSendNotification(session.user.id, boardId, boardName, note.board.sendSlackUpdates)) {
+        if (hasValidContent(addedItem.content) && shouldSendNotification(session.user.id, boardId, boardName, updatedNote.board.sendSlackUpdates)) {
           await sendTodoNotification(
             user.organization.slackWebhookUrl,
             addedItem.content,
@@ -150,13 +144,15 @@ export async function PUT(
       
       // Send notifications for newly completed todos
       for (const completedItem of completedItems) {
-        await sendTodoNotification(
-          user.organization.slackWebhookUrl,
-          completedItem.content,
-          boardName,
-          userName,
-          'completed'
-        )
+        if (shouldSendNotification(session.user.id, boardId, boardName, updatedNote.board.sendSlackUpdates)) {
+          await sendTodoNotification(
+            user.organization.slackWebhookUrl,
+            completedItem.content,
+            boardName,
+            userName,
+            'completed'
+          )
+        }
       }
     }
 
@@ -165,7 +161,7 @@ export async function PUT(
       const wasEmpty = !hasValidContent(note.content)
       const hasContent = hasValidContent(content)
       
-      if (wasEmpty && hasContent && shouldSendNotification(session.user.id, boardId, updatedNote.board.name, note.board.sendSlackUpdates)) {
+      if (wasEmpty && hasContent && shouldSendNotification(session.user.id, boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
         const slackMessage = formatNoteForSlack(updatedNote, updatedNote.board.name, user.name || user.email || 'Unknown User')
         const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
           text: slackMessage,
@@ -256,4 +252,4 @@ export async function DELETE(
     console.error("Error deleting note:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
-}                                                                
+}                                                                                                                                
