@@ -37,6 +37,10 @@ interface ChecklistItem {
   content: string;
   checked: boolean;
   order: number;
+  slackMessageId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+  noteId?: string;
 }
 
 interface Note {
@@ -73,6 +77,15 @@ interface User {
     name: string;
   } | null;
 }
+
+// Helper functions for checklist item management
+const sanitizeChecklistItems = (items: ChecklistItem[]): ChecklistItem[] =>
+  items.map(i => ({ id: i.id, content: i.content, checked: i.checked, order: i.order }));
+
+const newChecklistId = () =>
+  (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
+    ? crypto.randomUUID()
+    : `item-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 export default function BoardPage({
   params,
@@ -1009,7 +1022,7 @@ export default function BoardPage({
           : boardId;
 
       const newItem: ChecklistItem = {
-        id: `item-${Date.now()}`,
+        id: newChecklistId(),
         content: newChecklistItemContent,
         checked: false,
         order: (currentNote.checklistItems || []).length,
@@ -1038,7 +1051,7 @@ export default function BoardPage({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: updatedItems,
+            checklistItems: sanitizeChecklistItems(updatedItems),
             done: allItemsChecked,
           }),
         }
@@ -1131,7 +1144,7 @@ export default function BoardPage({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          checklistItems: sortedItems,
+          checklistItems: sanitizeChecklistItems(sortedItems),
           done: allItemsChecked,
         }),
       })
@@ -1207,7 +1220,7 @@ export default function BoardPage({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: updatedItems,
+            checklistItems: sanitizeChecklistItems(updatedItems),
             done: allItemsChecked,
           }),
         }
@@ -1272,7 +1285,7 @@ export default function BoardPage({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: updatedItems,
+            checklistItems: sanitizeChecklistItems(updatedItems),
             done: allItemsChecked,
           }),
         }
@@ -1355,7 +1368,7 @@ export default function BoardPage({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: sortedItems,
+            checklistItems: sanitizeChecklistItems(sortedItems),
             done: noteIsDone,
           }),
         }

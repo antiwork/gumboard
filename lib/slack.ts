@@ -104,18 +104,82 @@ export function formatNoteForSlack(note: { content: string }, boardName: string,
   return `:heavy_plus_sign: ${note.content} by ${userName} in ${boardName}`
 }
 
-export function formatTodoForSlack(todoContent: string, boardName: string, userName: string, action: 'added' | 'completed'): string {
+export function formatTodoForSlack(todoContent: string, boardName: string, userName: string, action: 'added' | 'completed' | 'reopened'): string {
   if (action === 'completed') {
     return `:white_check_mark: ${todoContent} by ${userName} in ${boardName}`
+  }
+  if (action === 'reopened') {
+    return `:arrows_counterclockwise: ${todoContent} by ${userName} in ${boardName}`
   }
   return `:heavy_plus_sign: ${todoContent} by ${userName} in ${boardName}`
 }
 
-export async function sendTodoNotification(webhookUrl: string, todoContent: string, boardName: string, userName: string, action: 'added' | 'completed'): Promise<string | null> {
+export async function sendTodoNotification(webhookUrl: string, todoContent: string, boardName: string, userName: string, action: 'added' | 'completed' | 'reopened'): Promise<string | null> {
   const message = formatTodoForSlack(todoContent, boardName, userName, action)
   return await sendSlackMessage(webhookUrl, {
     text: message,
     username: 'Gumboard',
     icon_emoji: ':clipboard:'
   })
+}
+
+// New centralized notifier (runs AFTER DB commit)
+export async function notifySlackForNoteChanges(params: {
+  webhookUrl?: string | null;
+  boardName: string;
+  boardId: string;
+  sendSlackUpdates: boolean;
+  userId: string;
+  userName: string;
+  prevContent?: string | null;
+  nextContent?: string | null;
+  noteSlackMessageId?: string | null;
+  itemChanges?: {
+    created: { id: string; content: string; checked: boolean; order: number }[];
+    updated: { id: string; content: string; checked: boolean; order: number; previous: { checked: boolean } }[];
+    deleted?: unknown[];
+  };
+}): Promise<{ noteMessageId?: string | null; itemMessageIds?: Record<string, string> }> {
+  const {
+    webhookUrl, boardName, boardId, sendSlackUpdates,
+    userId, userName, prevContent, nextContent, noteSlackMessageId, itemChanges
+  } = params;
+
+  const out: { noteMessageId?: string | null; itemMessageIds?: Record<string, string> } = {};
+  if (!webhookUrl || !sendSlackUpdates) return out;
+
+  // Note: empty -> non-empty
+  const had = hasValidContent(prevContent);
+  const has = hasValidContent(nextContent);
+  if (!noteSlackMessageId && !had && has && shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
+    out.noteMessageId = await sendSlackMessage(webhookUrl, {
+      text: formatNoteForSlack({ content: nextContent as string }, boardName, userName),
+      username: 'Gumboard',
+      icon_emoji: ':clipboard:'
+    });
+  }
+
+  // Checklist items
+  const ids: Record<string, string> = {};
+  if (itemChanges) {
+    // created => 'added'
+    for (const c of itemChanges.created ?? []) {
+      if (!hasValidContent(c.content)) continue;
+      if (!shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) continue;
+      const id = await sendTodoNotification(webhookUrl!, c.content, boardName, userName, 'added');
+      if (id) ids[c.id] = id;
+    }
+    // updated => notify ONLY on checked toggle
+    for (const u of itemChanges.updated ?? []) {
+      const toggled = u.previous && u.previous.checked !== u.checked;
+      if (!toggled) continue;
+      if (!hasValidContent(u.content)) continue;
+      if (!shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) continue;
+      const action = u.checked ? 'completed' : 'reopened';
+      const id = await sendTodoNotification(webhookUrl!, u.content, boardName, userName, action);
+      if (id) ids[u.id] = id;
+    }
+  }
+  if (Object.keys(ids).length) out.itemMessageIds = ids;
+  return out;
 }

@@ -118,7 +118,7 @@ model ChecklistItem {
   id        String @id @default(cuid())
   content   String @db.Text
   checked   Boolean @default(false)
-  order     Int @default(0)
+  order     Float @default(0)    // Float for fractional reordering support
   noteId    String
   slackMessageId String? // Slack message ID for individual item updates
   note      Note @relation(fields: [noteId], references: [id], onDelete: Cascade)

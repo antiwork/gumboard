@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
-import { sendSlackMessage, formatNoteForSlack, hasValidContent, shouldSendNotification, updateSlackMessage, sendTodoNotification } from "@/lib/slack"
+import { notifySlackForNoteChanges, updateSlackMessage, hasValidContent, shouldSendNotification } from "@/lib/slack"
 
 // Update a note
 export async function PUT(
@@ -191,76 +191,39 @@ export async function PUT(
         include: { organization: true }
       })
 
-      // Send Slack notification for content updates
+      // Use centralized Slack notifications
       if (user?.organization?.slackWebhookUrl && updatedNote.board.sendSlackUpdates) {
-        if (content !== undefined && hasValidContent(content) && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
-          const slackMessage = formatNoteForSlack({ content }, updatedNote.board.name, user.name || user.email)
-          const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
-            text: slackMessage,
-            username: 'Gumboard',
-            icon_emoji: ':clipboard:'
-          })
+        const res = await notifySlackForNoteChanges({
+          webhookUrl: user.organization.slackWebhookUrl,
+          boardName: updatedNote.board.name,
+          boardId: updatedNote.boardId,
+          sendSlackUpdates: updatedNote.board.sendSlackUpdates,
+          userId: session.user.id,
+          userName: user.name || user.email,
+          prevContent: note.content,
+          nextContent: content ?? note.content,
+          noteSlackMessageId: note.slackMessageId,
+          itemChanges: checklistChanges || undefined,
+        })
 
-          if (messageId && !updatedNote.slackMessageId) {
-            await db.note.update({
-              where: { id: noteId },
-              data: { slackMessageId: messageId }
+        // Persist Slack message IDs
+        if (res.noteMessageId && !updatedNote.slackMessageId) {
+          await db.note.update({ 
+            where: { id: noteId }, 
+            data: { slackMessageId: res.noteMessageId } 
+          })
+        }
+        if (res.itemMessageIds) {
+          for (const [itemId, msgId] of Object.entries(res.itemMessageIds)) {
+            await db.checklistItem.update({ 
+              where: { id: itemId }, 
+              data: { slackMessageId: msgId } 
             })
           }
         }
 
-        // Handle checklist item changes with proper diffing
-        if (checklistChanges && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
-          // Send notification only for new items
-          if (checklistChanges.created) {
-            for (const item of checklistChanges.created) {
-              if (hasValidContent(item.content)) {
-                const messageId = await sendTodoNotification(
-                  user.organization.slackWebhookUrl,
-                  item.content,
-                  updatedNote.board.name,
-                  user.name || user.email,
-                  'added'
-                )
-
-                if (messageId) {
-                  await db.checklistItem.update({
-                    where: { id: item.id },
-                    data: { slackMessageId: messageId }
-                  })
-                }
-              }
-            }
-          }
-
-          if (checklistChanges.updated) {
-            for (const item of checklistChanges.updated) {
-              if (hasValidContent(item.content) && item.previous) {
-                // Only notify if checked status changed
-                if (item.previous.checked !== item.checked) {
-                  const action = item.checked ? 'completed' : 'added'
-                  const messageId = await sendTodoNotification(
-                    user.organization.slackWebhookUrl,
-                    item.content,
-                    updatedNote.board.name,
-                    user.name || user.email,
-                    action
-                  )
-
-                  if (messageId) {
-                    await db.checklistItem.update({
-                      where: { id: item.id },
-                      data: { slackMessageId: messageId }
-                    })
-                  }
-                }
-              }
-            }
-          }
-        }
-
-        // Send completion notification for the note itself
-        if (done !== undefined && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
+        // Handle note-level done toggle separately
+        if (done !== undefined && note.done !== done && shouldSendNotification(session.user.id, updatedNote.boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
           const noteContent = updatedNote.content || (updatedNote.checklistItems && updatedNote.checklistItems.length > 0 ? updatedNote.checklistItems[0].content : 'Note')
           if (hasValidContent(noteContent)) {
             await updateSlackMessage(
