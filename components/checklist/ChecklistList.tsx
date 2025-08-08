@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { DndContext, closestCenter, DragEndEvent, KeyboardSensor, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core";
+import { DndContext, closestCenter, DragEndEvent, KeyboardSensor, PointerSensor, useSensor, useSensors } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
 import SortableChecklistItem from "./SortableChecklistItem";
@@ -60,10 +60,7 @@ export function ChecklistList(props: ChecklistListProps) {
   } = props;
 
   const sensors = useSensors(
-    // Instant drag on mouse for a snappier feel
-    useSensor(MouseSensor, { activationConstraint: { distance: 0 } }),
-    // Small delay + tolerance on touch to avoid accidental drags while tapping/scrolling
-    useSensor(TouchSensor, { activationConstraint: { delay: 120, tolerance: 8 } }),
+    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor)
   );
 
