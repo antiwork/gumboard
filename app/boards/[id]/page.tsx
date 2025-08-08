@@ -711,10 +711,65 @@ export default function BoardPage({
   };
 
   // Adapter: bridge component Note -> existing update handler
-  const handleUpdateNoteFromComponent = async (
-    updatedNote: { id: string; content: string }
-  ) => {
-    await handleUpdateNote(updatedNote.id, updatedNote.content);
+  const handleUpdateNoteFromComponent = async (updatedNote: Note) => {
+    try {
+      // Find the note to get its board ID for all notes view
+      const currentNote = notes.find((n) => n.id === updatedNote.id);
+      if (!currentNote) return;
+      const targetBoardId =
+        boardId === "all-notes" && currentNote.board?.id
+          ? currentNote.board.id
+          : boardId;
+
+      // OPTIMISTIC UPDATE: Update UI immediately
+      setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
+
+      // Send to server in background
+      const response = await fetch(
+        `/api/boards/${targetBoardId}/notes/${updatedNote.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: updatedNote.content,
+            checklistItems: updatedNote.checklistItems,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        // Server succeeded, confirm with actual server response
+        const { note } = await response.json();
+        setNotes(notes.map((n) => (n.id === updatedNote.id ? note : n)));
+      } else {
+        // Server failed, revert to original note
+        console.error("Server error, reverting optimistic update");
+        setNotes(notes.map((n) => (n.id === updatedNote.id ? currentNote : n)));
+        
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update note",
+          description: errorData.error || "Failed to update note",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating note:", error);
+      
+      // Revert optimistic update on network error
+      const currentNote = notes.find((n) => n.id === updatedNote.id);
+      if (currentNote) {
+        setNotes(notes.map((n) => (n.id === updatedNote.id ? currentNote : n)));
+      }
+      
+      setErrorDialog({
+        open: true,
+        title: "Connection Error", 
+        description: "Failed to save note. Please try again.",
+      });
+    }
   };
 
 
@@ -759,74 +814,6 @@ export default function BoardPage({
     }
   };
 
-  const handleUpdateNote = async (noteId: string, content: string) => {
-    try {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote) return;
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      // Store original content for potential rollback
-      const originalContent = currentNote.content;
-
-      // OPTIMISTIC UPDATE: Update UI immediately
-      const optimisticNote = {
-        ...currentNote,
-        content: content,
-      };
-
-      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-
-      // Send to server in background
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ content }),
-        }
-      );
-
-      if (response.ok) {
-        // Server succeeded, confirm with actual server response
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      } else {
-        // Server failed, revert to original content
-        console.error("Server error, reverting optimistic update");
-        const revertedNote = { ...currentNote, content: originalContent };
-        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
-        
-        // Show error dialog; editing handled inside Note component
-
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to update note",
-          description: errorData.error || "Failed to update note",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating note:", error);
-      
-      // Revert optimistic update on network error
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (currentNote) {
-        // Editing handled within Note component; just keep UI consistent
-      }
-      
-      setErrorDialog({
-        open: true,
-        title: "Connection Error", 
-        description: "Failed to save note. Please try again.",
-      });
-    }
-  };
 
   const handleDeleteNote = (noteId: string) => {
     setDeleteNoteDialog({
