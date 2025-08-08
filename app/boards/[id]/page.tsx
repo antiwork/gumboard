@@ -2,25 +2,24 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Pencil,
-  Trash2,
   Plus,
   ChevronDown,
   Settings,
   LogOut,
   Search,
-  User,
   Palette,
 } from "lucide-react";
 import Link from "next/link";
 import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
+import { Note as NoteCard } from "@/components/note";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,6 +30,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+// Use shared types from components
+import type { Note, Board, User } from "@/components/note";
+import type { ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { colorConfig } from "@/lib/constants";
@@ -97,8 +99,7 @@ export default function BoardPage({
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editingNote, setEditingNote] = useState<string | null>(null);
-  const [editContent, setEditContent] = useState("");
+  // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
@@ -119,14 +120,7 @@ export default function BoardPage({
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
     null
   );
-  const [newChecklistItemContent, setNewChecklistItemContent] = useState("");
-  const [editingChecklistItem, setEditingChecklistItem] = useState<{
-    noteId: string;
-    itemId: string;
-  } | null>(null);
-  const [editingChecklistItemContent, setEditingChecklistItemContent] =
-    useState("");
-  const [animatingItems, setAnimatingItems] = useState<Set<string>>(new Set());
+  // Per-item edit and animations are handled inside Note component now
   const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
     open: boolean;
     noteId: string;
@@ -517,17 +511,8 @@ export default function BoardPage({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (editingNote) {
-          setEditingNote(null);
-          setEditContent("");
-        }
         if (addingChecklistItem) {
           setAddingChecklistItem(null);
-          setNewChecklistItemContent("");
-        }
-        if (editingChecklistItem) {
-          setEditingChecklistItem(null);
-          setEditingChecklistItemContent("");
         }
         if (showBoardDropdown) {
           setShowBoardDropdown(false);
@@ -559,16 +544,9 @@ export default function BoardPage({
     showColorPicker,
     editingNote,
     addingChecklistItem,
-    editingChecklistItem,
   ]);
 
-  useEffect(() => {
-    if (!editingChecklistItem) {
-      // Clear all pending timeouts when exiting edit mode
-      editDebounceMap.current.forEach((timeout) => clearTimeout(timeout));
-      editDebounceMap.current.clear();
-    }
-  }, [editingChecklistItem]);
+  // Removed debounce cleanup effect; editing is scoped to Note
 
   // Enhanced responsive handling with debounced resize and better breakpoints
   useEffect(() => {
@@ -809,6 +787,87 @@ export default function BoardPage({
     }
   };
 
+  // Adapter: bridge component Note -> existing update handler
+  const handleUpdateNoteFromComponent = async (
+    updatedNote: { id: string; content: string }
+  ) => {
+    await handleUpdateNote(updatedNote.id, updatedNote.content);
+  };
+
+  // Adapter: component Note provides content directly
+  const handleAddChecklistItemFromComponent = async (
+    noteId: string,
+    content: string
+  ) => {
+    if (!content.trim()) return;
+
+    try {
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
+
+      const targetBoardId =
+        boardId === "all-notes" && currentNote.board?.id
+          ? currentNote.board.id
+          : boardId;
+
+      const newItem: ChecklistItem = {
+        id: `item-${Date.now()}`,
+        content: content.trim(),
+        checked: false,
+        order: (currentNote.checklistItems || []).length,
+      };
+
+      const updatedItems = [...(currentNote.checklistItems || []), newItem];
+
+      const allItemsChecked = updatedItems.every((item) => item.checked);
+
+      const optimisticNote = {
+        ...currentNote,
+        checklistItems: updatedItems,
+        done: allItemsChecked,
+      };
+
+      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
+
+      const response = await fetch(
+        `/api/boards/${targetBoardId}/notes/${noteId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: updatedItems,
+            done: allItemsChecked,
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const { note } = await response.json();
+        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+      } else {
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        setErrorDialog({
+          open: true,
+          title: "Failed to Add Item",
+          description: "Failed to add checklist item. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding checklist item:", error);
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (currentNote) {
+        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+      }
+      setErrorDialog({
+        open: true,
+        title: "Connection Error",
+        description: "Failed to add item. Please check your connection.",
+      });
+    }
+  };
+
   const handleAddNote = async (targetBoardId?: string) => {
     // For all notes view, ensure a board is selected
     if (boardId === "all-notes" && !targetBoardId) {
@@ -845,7 +904,6 @@ export default function BoardPage({
         const { note } = await response.json();
         setNotes([...notes, note]);
         setAddingChecklistItem(note.id);
-        setNewChecklistItemContent("");
       }
     } catch (error) {
       console.error("Error creating note:", error);
@@ -872,8 +930,6 @@ export default function BoardPage({
       };
 
       setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-      setEditingNote(null);
-      setEditContent("");
 
       // Send to server in background
       const response = await fetch(
@@ -897,9 +953,7 @@ export default function BoardPage({
         const revertedNote = { ...currentNote, content: originalContent };
         setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
         
-        // Re-enable editing with original content
-        setEditingNote(noteId);
-        setEditContent(originalContent);
+        // Show error dialog; editing handled inside Note component
 
         const errorData = await response.json();
         setErrorDialog({
@@ -914,10 +968,7 @@ export default function BoardPage({
       // Revert optimistic update on network error
       const currentNote = notes.find((n) => n.id === noteId);
       if (currentNote) {
-        // We need to restore the original content, but we've lost it
-        // In a more robust implementation, we'd store it in state
-        setEditingNote(noteId);
-        setEditContent(currentNote.content); // Use current content as fallback
+        // Editing handled within Note component; just keep UI consistent
       }
       
       setErrorDialog({
@@ -1102,40 +1153,26 @@ export default function BoardPage({
     }
   };
 
-  const handleAddChecklistItem = async (noteId: string) => {
-    if (!newChecklistItemContent.trim()) return;
-
+  const handleUpdateNoteColor = async (noteId: string, color: string) => {
     try {
+      // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
-
       const targetBoardId =
         boardId === "all-notes" && currentNote.board?.id
           ? currentNote.board.id
           : boardId;
 
-      const newItem: ChecklistItem = {
-        id: `item-${Date.now()}`,
-        content: newChecklistItemContent,
-        checked: false,
-        order: (currentNote.checklistItems || []).length,
-      };
-
-      const updatedItems = [...(currentNote.checklistItems || []), newItem];
-
-      // Check if all items are checked to mark note as done
-      const allItemsChecked = updatedItems.every((item) => item.checked);
-
-      // OPTIMISTIC UPDATE
+      // OPTIMISTIC UPDATE: Update UI immediately
       const optimisticNote = {
         ...currentNote,
-        checklistItems: updatedItems,
-        done: allItemsChecked,
+        color: color,
       };
 
       setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-      setNewChecklistItemContent("");
-    
+      setShowColorPicker(null);
+
+      // Send to server in background
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
         {
@@ -1143,47 +1180,45 @@ export default function BoardPage({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-            done: allItemsChecked,
-          }),
+          body: JSON.stringify({ color }),
         }
       );
 
       if (response.ok) {
+        // Server succeeded, confirm with actual server response
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-        setNewChecklistItemContent("");
       } else {
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-        setAddingChecklistItem(noteId);
-        setNewChecklistItemContent(newItem.content);
-
+        // Server failed, revert to original color
+        console.error("Server error, reverting optimistic update");
+        const revertedNote = { ...currentNote, color: currentNote.color };
+        setNotes(notes.map((n) => (n.id === noteId ? revertedNote : n)));
+        
+        const errorData = await response.json();
         setErrorDialog({
           open: true,
-          title: "Failed to Add Item",
-          description: "Failed to add checklist item. Please try again.",
+          title: "Failed to update note color",
+          description: errorData.error || "Failed to update note color",
         });
       }
     } catch (error) {
-      console.error("Error adding checklist item:", error);
+      console.error("Error updating note color:", error);
       
       // Revert optimistic update on network error
       const currentNote = notes.find((n) => n.id === noteId);
       if (currentNote) {
         setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-        // Re-enable adding state for retry
-        setAddingChecklistItem(noteId);
-        setNewChecklistItemContent(newChecklistItemContent);
       }
       
       setErrorDialog({
         open: true,
-        title: "Connection Error",
-        description: "Failed to add item. Please check your connection.",
+        title: "Connection Error", 
+        description: "Failed to update note color. Please try again.",
       });
     }
   };
+
+  // Note: add-checklist-item logic is handled by the Note component via handleAddChecklistItemFromComponent
 
   const handleToggleChecklistItem = async (noteId: string, itemId: string) => {
     try {
@@ -1219,16 +1254,6 @@ export default function BoardPage({
       };
 
       setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-
-      setAnimatingItems((prev) => new Set([...prev, itemId]));
-
-      setTimeout(() => {
-        setAnimatingItems((prev) => {
-          const newSet = new Set(prev);
-          newSet.delete(itemId);
-          return newSet;
-        });
-      }, 200);
 
       // Send to server in background
       fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
@@ -1387,36 +1412,13 @@ export default function BoardPage({
       if (response.ok) {
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-        setEditingChecklistItem(null);
-        setEditingChecklistItemContent("");
       }
     } catch (error) {
       console.error("Error editing checklist item:", error);
     }
-  }, [notes]);
+  }, [notes, boardId]);
 
-  const editDebounceMap = useRef(new Map<string, NodeJS.Timeout>());
-  const EDIT_DEBOUNCE_DURATION = 1000;
-
-  const debouncedEditChecklistItem = useCallback((
-    noteId: string,
-    itemId: string,
-    content: string
-  ) => {
-    const key = `${noteId}-${itemId}`;
-    
-    const existingTimeout = editDebounceMap.current.get(key);
-    if (existingTimeout) {
-      clearTimeout(existingTimeout);
-    }
-    
-    const timeout = setTimeout(() => {
-      handleEditChecklistItem(noteId, itemId, content);
-      editDebounceMap.current.delete(key);
-    }, EDIT_DEBOUNCE_DURATION);
-    
-    editDebounceMap.current.set(key, timeout);
-  }, [handleEditChecklistItem, boardId]);
+  // Removed external debounce; Note component handles UX concerns
 
   const handleToggleAllChecklistItems = async (noteId: string) => {
     try {
@@ -1532,8 +1534,6 @@ export default function BoardPage({
       if (response.ok) {
         const { note } = await response.json();
         setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-        setEditingChecklistItem({ noteId, itemId: newItem.id });
-        setEditingChecklistItemContent(secondHalf);
       }
     } catch (error) {
       console.error("Error splitting checklist item:", error);
@@ -1864,11 +1864,25 @@ export default function BoardPage({
           {layoutNotes.map((note) => (
             <div
               key={note.id}
-              data-testid="note-card"
-              className={`absolute rounded-lg ${getNoteColorClass(note.color, isDark)} shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border note-background ${
-                note.done ? "opacity-80" : ""
-              }`}
+              note={note as Note}
+              currentUser={user as User}
+              onUpdate={handleUpdateNoteFromComponent}
+              onDelete={handleDeleteNote}
+              onAddChecklistItem={handleAddChecklistItemFromComponent}
+              onToggleChecklistItem={handleToggleChecklistItem}
+              onEditChecklistItem={handleEditChecklistItem}
+              onDeleteChecklistItem={handleDeleteChecklistItem}
+              onSplitChecklistItem={handleSplitChecklistItem}
+              onToggleAllChecklistItems={handleToggleAllChecklistItems}
+              showBoardName={boardId === "all-notes"}
+              className="note-background"
               style={{
+                backgroundColor:
+                  typeof window !== "undefined" &&
+                  window.matchMedia &&
+                  window.matchMedia("(prefers-color-scheme: dark)").matches
+                    ? `${note.color}20`
+                    : note.color,
                 left: note.x,
                 top: note.y,
                 width: note.width,
@@ -1904,25 +1918,16 @@ export default function BoardPage({
                 <div className="flex items-center space-x-2">
                   {/* Show edit/delete buttons for note author or admin */}
                   {(user?.id === note.user.id || user?.isAdmin) && (
-                    <div className="flex space-x-1 items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setShowColorPicker(showColorPicker === note.id ? null : note.id);
-                        }}
-                        className=""
-                        data-testid="palette-button"
-                      >
-                        <Palette className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400" />
-                      </button>
-                      <button
+                    <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
                         onClick={(e) => {
                           e.stopPropagation();
                           handleDeleteNote(note.id);
                         }}
+                        className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
                       >
-                        <Trash2 className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400" />
-                      </button>
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
                     </div>
                   )}
                   {/* Beautiful checkbox for done status - show to author or admin */}
@@ -1944,32 +1949,6 @@ export default function BoardPage({
                   )}
                 </div>
               </div>
-
-              {/* Color Picker Dropdown */}
-              {showColorPicker === note.id && (
-                <div className="absolute top-12 right-0 z-50 color-picker">
-                  <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-gray-200 dark:border-zinc-700 p-2">
-                    <div className="grid grid-cols-4 gap-2">
-                      {Object.entries(colorConfig).map(([color]) => (
-                        <button
-                          key={color}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleUpdateNoteColor(note.id, color);
-                          }}
-                          className={`w-6 h-6 rounded-full border-2 transition-all duration-200 hover:scale-110 ${
-                            note.color === color
-                              ? "border-gray-800 dark:border-gray-200 scale-110"
-                              : "border-gray-300 dark:border-gray-600"
-                          }`}
-                          style={{ backgroundColor: color }}
-                          title={`Set color to ${color}`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {editingNote === note.id ? (
                 <div className="flex-1 min-h-0">

@@ -7,34 +7,7 @@ import { Search } from "lucide-react";
 import Link from "next/link";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
-
-interface ChecklistItem {
-  id: string;
-  content: string;
-  checked: boolean;
-  order: number;
-}
-
-interface Note {
-  id: string;
-  content: string;
-  color: string;
-  done: boolean;
-  createdAt: string;
-  updatedAt: string;
-  checklistItems?: ChecklistItem[];
-  user: {
-    id: string;
-    name: string | null;
-    email: string;
-  };
-}
-
-interface Board {
-  id: string;
-  name: string;
-  description: string | null;
-}
+import type { Note, Board } from "@/components/note";
 
 export default function PublicBoardPage({
   params,
