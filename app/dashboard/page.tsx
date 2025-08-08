@@ -19,11 +19,10 @@ import {
   LogOut,
   ChevronDown,
   Grid3x3,
-  Copy,
   Edit3,
   Lock,
-  Globe,
   FileText,
+  Link as LinkIcon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -81,6 +80,7 @@ export default function Dashboard() {
     description: string;
   }>({ open: false, title: "", description: "" });
   const [copiedBoardId, setCopiedBoardId] = useState<string | null>(null);
+
   const router = useRouter();
 
   useEffect(() => {
@@ -169,14 +169,30 @@ export default function Dashboard() {
           }),
         });
 
-        if (response.ok) {
-          const { board } = await response.json();
-          setBoards(boards.map((b) => (b.id === editingBoard.id ? board : b)));
-          setNewBoardName("");
-          setNewBoardDescription("");
-          setEditingBoard(null);
-          setShowAddBoard(false);
-        } else {
+                 if (response.ok) {
+           const { board } = await response.json();
+           const updatedBoard = { ...board, isPublic: editingBoard.isPublic };
+           setBoards(boards.map((b) => (b.id === editingBoard.id ? updatedBoard : b)));
+           
+           if (board.isPublic !== editingBoard.isPublic) {
+             try {
+               await fetch(`/api/boards/${editingBoard.id}/public`, {
+                 method: "PUT",
+                 headers: {
+                   "Content-Type": "application/json",
+                 },
+                 body: JSON.stringify({ isPublic: editingBoard.isPublic }),
+               });
+             } catch (error) {
+               console.error("Error updating public status:", error);
+             }
+           }
+           
+           setNewBoardName("");
+           setNewBoardDescription("");
+           setEditingBoard(null);
+           setShowAddBoard(false);
+         } else {
           const errorData = await response.json();
           setErrorDialog({
             open: true,
@@ -271,34 +287,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleTogglePublic = async (boardId: string, isPublic: boolean) => {
-    try {
-      const response = await fetch(`/api/boards/${boardId}/public`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ isPublic }),
-      });
 
-      if (response.ok) {
-        setBoards(
-          boards.map((board) =>
-            board.id === boardId ? { ...board, isPublic } : board
-          )
-        );
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to update board",
-          description: errorData.error || "Failed to update board settings",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating board:", error);
-    }
-  };
 
   const handleCopyPublicUrl = async (boardId: string) => {
     const publicUrl = `${window.location.origin}/public/boards/${boardId}`;
@@ -310,6 +299,8 @@ export default function Dashboard() {
       console.error("Failed to copy URL:", error);
     }
   };
+
+
 
   const handleSignOut = async () => {
     await signOut();
@@ -416,34 +407,49 @@ export default function Dashboard() {
                 {editingBoard ? "Edit Board" : "Create New Board"}
               </h3>
               <form onSubmit={handleAddBoard}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                      Board Name
-                    </label>
-                    <Input
-                      type="text"
-                      value={newBoardName}
-                      onChange={(e) => setNewBoardName(e.target.value)}
-                      placeholder="Enter board name"
-                      required
-                      autoFocus
-                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                      Description (Optional)
-                    </label>
-                    <Input
-                      type="text"
-                      value={newBoardDescription}
-                      onChange={(e) => setNewBoardDescription(e.target.value)}
-                      placeholder="Enter board description"
-                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
-                    />
-                  </div>
-                </div>
+                 <div className="space-y-4">
+                   <div>
+                     <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                       Board Name
+                     </label>
+                     <Input
+                       type="text"
+                       value={newBoardName}
+                       onChange={(e) => setNewBoardName(e.target.value)}
+                       placeholder="Enter board name"
+                       required
+                       autoFocus
+                       className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
+                     />
+                   </div>
+                   <div>
+                     <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                       Description (Optional)
+                     </label>
+                     <Input
+                       type="text"
+                       value={newBoardDescription}
+                       onChange={(e) => setNewBoardDescription(e.target.value)}
+                       placeholder="Enter board description"
+                       className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
+                     />
+                   </div>
+                   {editingBoard && (
+                     <div className="flex items-center space-x-2">
+                       <Switch
+                         checked={editingBoard.isPublic}
+                         onCheckedChange={(checked) => {
+                           const updatedBoard = { ...editingBoard, isPublic: checked };
+                           setEditingBoard(updatedBoard);
+                         }}
+                         disabled={user?.id !== editingBoard.createdBy && !user?.isAdmin}
+                       />
+                       <span className="text-sm text-foreground dark:text-zinc-200">
+                         {editingBoard.isPublic ? "Public" : "Private"}
+                       </span>
+                     </div>
+                   )}
+                 </div>
                 <div className="flex justify-end space-x-3 mt-6">
                   <Button
                     type="button"
@@ -499,7 +505,6 @@ export default function Dashboard() {
                 <Link href={`/boards/${board.id}`}>
                   <CardHeader className="h-full ">
                     <div className="flex flex-col justify-between relative">
-                      {/* Top row: title and actions */}
                       <div className="flex items-start justify-between">
                         <CardTitle className="text-lg dark:text-zinc-100">
                           {board.name}
@@ -538,25 +543,36 @@ export default function Dashboard() {
                       </div>
 
                       <div className="flex justify-between items-center w-full mt-4">
-                      {/* Public/Private row */}
-                      <div className="flex items-center space-x-2 text-xs text-muted-foreground dark:text-zinc-400">
-                        {board.isPublic ? (
-                          <Globe className="w-3 h-3" />
-                        ) : (
-                          <Lock className="w-3 h-3" />
-                        )}
-                        <span>{board.isPublic ? "Public" : "Private"}</span>
-                      </div>
+                         <div className="flex items-center space-x-2 text-xs text-muted-foreground dark:text-zinc-400">
+                           {board.isPublic ? (
+                             <button
+                               onClick={(e) => {
+                                 e.preventDefault();
+                                 e.stopPropagation();
+                                 handleCopyPublicUrl(board.id);
+                               }}
+                               className="flex items-center space-x-1 hover:text-blue-500 dark:hover:text-blue-400 transition-colors"
+                               title="Copy public URL"
+                             >
+                               <LinkIcon className="w-3 h-3" />
+                               <span>{copiedBoardId === board.id ? "Copied!" : "Public"}</span>
+                             </button>
+                           ) : (
+                             <div className="flex items-center space-x-1">
+                               <Lock className="w-3 h-3" />
+                               <span>Private</span>
+                             </div>
+                           )}
+                         </div>
 
-                      {/* Notes count badge row */}
-                      <div className="flex">
-                        <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
-                          <FileText className="w-3 h-3 mr-1" />
-                          {board._count.notes}{" "}
-                          {board._count.notes === 1 ? "note" : "notes"}
-                        </span>
-                      </div>
-                      </div>
+                         <div className="flex">
+                           <span className="inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+                             <FileText className="w-3 h-3 mr-1" />
+                             {board._count.notes}{" "}
+                             {board._count.notes === 1 ? "note" : "notes"}
+                           </span>
+                         </div>
+                       </div>
                     </div>
                   </CardHeader>
                 </Link>
