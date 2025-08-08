@@ -1552,68 +1552,6 @@ export default function BoardPage({
           minHeight: "calc(100vh - 64px)", // Account for header height
         }}
       >
-        {/* Search Results Info */}
-        {(searchTerm ||
-          dateRange.startDate ||
-          dateRange.endDate ||
-          selectedAuthor) && (
-          <div className="px-4 py-2 bg-blue-50 dark:bg-blue-900/50 border-b border-blue-100 dark:border-blue-800 text-sm text-blue-700 dark:text-blue-300">
-            <div className="flex flex-wrap items-center gap-2">
-              <span>
-                {filteredNotes.length === 1
-                  ? `1 note found`
-                  : `${filteredNotes.length} notes found`}
-              </span>
-              {searchTerm && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200">
-                  Search: &quot;{searchTerm}&quot;
-                </span>
-              )}
-              {selectedAuthor && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200">
-                  Author:{" "}
-                  {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name ||
-                    "Unknown"}
-                </span>
-              )}
-              {(dateRange.startDate || dateRange.endDate) && (
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-800/50 text-blue-800 dark:text-blue-200">
-                  Date:{" "}
-                  {dateRange.startDate
-                    ? dateRange.startDate.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "..."}{" "}
-                  -{" "}
-                  {dateRange.endDate
-                    ? dateRange.endDate.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                      })
-                    : "..."}
-                </span>
-              )}
-              <button
-                onClick={() => {
-                  setSearchTerm("");
-                  setDateRange({ startDate: null, endDate: null });
-                  setSelectedAuthor(null);
-                  updateURL(
-                    "",
-                    { startDate: null, endDate: null },
-                    null
-                  );
-                }}
-                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200 text-xs underline"
-              >
-                Clear all filters
-              </button>
-            </div>
-          </div>
-        )}
 
         {/* Notes */}
         <div className="relative w-full h-full">
