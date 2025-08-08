@@ -8,14 +8,12 @@ import type { Note } from "@/components/note"
 import type { ChecklistItem } from "@/components/checklist-item"
 import { Plus } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
-import { NOTE_COLORS } from "@/lib/constants"
-import { getNoteColorClass } from "@/lib/note-colors"
 
 const initialNotes: Note[] = [
   {
     id: "1",
     content: "",
-    color: NOTE_COLORS[4],
+    color: "bg-green-200/70",
     done: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -33,7 +31,7 @@ const initialNotes: Note[] = [
   {
     id: "2",
     content: "",
-    color: NOTE_COLORS[6],
+    color: "bg-purple-200/60",
     done: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -51,7 +49,7 @@ const initialNotes: Note[] = [
   {
     id: "3",
     content: "",
-    color: NOTE_COLORS[2],
+    color: "bg-blue-200/60",
     done: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -68,7 +66,7 @@ const initialNotes: Note[] = [
   {
     id: "4",
     content: "",
-    color: NOTE_COLORS[1],
+    color: "bg-pink-200/70",
     done: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -84,7 +82,7 @@ const initialNotes: Note[] = [
   },
 ]
 
-const noteColors = NOTE_COLORS.slice(0, 3)
+const noteColors = ["bg-yellow-200/70", "bg-teal-200/70", "bg-orange-200/70"]
 const authors = [
   { name: "Aaron", initial: "A" },
   { name: "Abdul", initial: "A" },
@@ -437,7 +435,7 @@ export function StickyNotesDemo() {
                   onToggleChecklistItem={handleToggleChecklistItem}
                   onEditChecklistItem={handleEditChecklistItem}
                   onDeleteChecklistItem={handleDeleteChecklistItem}
-                  className={getNoteColorClass(note.color)}
+                  className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                 />
               </motion.div>
             ))}
