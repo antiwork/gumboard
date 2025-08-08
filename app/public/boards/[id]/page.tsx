@@ -7,6 +7,7 @@ import { Search } from "lucide-react";
 import Link from "next/link";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
+import { useNoteColors } from "@/lib/note-colors";
 import type { Note, Board } from "@/components/note";
 
 export default function PublicBoardPage({
@@ -30,6 +31,7 @@ export default function PublicBoardPage({
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { getNoteColor } = useNoteColors();
 
   const getResponsiveConfig = () => {
     if (typeof window === "undefined")
@@ -516,7 +518,8 @@ export default function PublicBoardPage({
             }}
           >
             <div
-              className={`h-full rounded-lg shadow-md border-2 p-4 ${note.color} transition-all duration-200`}
+              className="h-full rounded-lg shadow-md border-2 p-4 transition-all duration-200"
+              style={{ backgroundColor: getNoteColor(note.color) }}
             >
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center space-x-2">

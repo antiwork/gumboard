@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
+import { useNoteColors } from "@/lib/note-colors";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -83,6 +84,7 @@ export function Note({
 }: NoteProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(note.content);
+  const { getNoteColor } = useNoteColors();
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [addingItem, setAddingItem] = useState(
@@ -169,7 +171,7 @@ export function Note({
         className
       )}
       style={{
-        backgroundColor: note.color,
+        backgroundColor: getNoteColor(note.color),
         ...style,
       }}
     >

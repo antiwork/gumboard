@@ -78,6 +78,7 @@ export default function BoardPage({
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { getNoteColor } = useNoteColors();
 
   // Update URL with current filter state
   const updateURL = (
@@ -1577,12 +1578,7 @@ export default function BoardPage({
                 width: note.width,
                 height: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor:
-                  typeof window !== "undefined" &&
-                  window.matchMedia &&
-                  window.matchMedia("(prefers-color-scheme: dark)").matches
-                    ? `${note.color}20`
-                    : note.color,
+                backgroundColor: getNoteColor(note.color),
               }}
             />
           ))}
