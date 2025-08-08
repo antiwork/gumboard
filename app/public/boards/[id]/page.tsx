@@ -426,19 +426,25 @@ export default function PublicBoardPage({
   };
 
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
-  const filteredNotes = filterAndSortNotes(
-    notes,
-    searchTerm,
-    dateRange,
-    selectedAuthor,
-    showDoneNotes
+
+  const filteredNotes = useMemo(
+    () =>
+      filterAndSortNotes(
+        notes,
+        searchTerm,
+        dateRange,
+        selectedAuthor,
+        showDoneNotes
+      ),
+    [notes, searchTerm, dateRange, selectedAuthor, showDoneNotes]
   );
 
-  const layoutNotes = isMobile
-    ? calculateMobileLayout()
-    : calculateGridLayout();
+  const layoutNotes = useMemo(
+    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
+    [isMobile, filteredNotes, calculateMobileLayout, calculateGridLayout]
+  );
 
-  const calculateBoardHeight = () => {
+  const boardHeight = useMemo(() => {
     if (layoutNotes.length === 0) {
       return "calc(100vh - 64px)";
     }
@@ -451,7 +457,7 @@ export default function PublicBoardPage({
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
 
     return `${calculatedHeight}px`;
-  };
+  }, [layoutNotes]);
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
@@ -538,7 +544,7 @@ export default function PublicBoardPage({
         </div>
       </div>
 
-      <div className="relative" style={{ height: calculateBoardHeight() }} ref={boardRef}>
+      <div className="relative" style={{ height: boardHeight }} ref={boardRef}>
         {layoutNotes.map((note) => (
           <div
             key={note.id}
