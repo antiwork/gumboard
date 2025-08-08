@@ -21,6 +21,7 @@ import {
   Grid3x3,
   Copy,
   Edit3,
+  Archive,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -34,32 +35,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import type { User, Board } from "@/components/note";
 
-interface Board {
-  id: string;
-  name: string;
-  description: string | null;
+// Dashboard-specific extended types
+export type DashboardBoard = Board & {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
-  _count: {
-    notes: number;
-  };
-}
-
-interface User {
-  id: string;
-  name: string | null;
-  email: string;
-  isAdmin: boolean;
-  organization: {
-    name: string;
-  } | null;
-}
+  _count: { notes: number };
+};
 
 export default function Dashboard() {
-  const [boards, setBoards] = useState<Board[]>([]);
+  const [boards, setBoards] = useState<DashboardBoard[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddBoard, setShowAddBoard] = useState(false);
@@ -478,6 +466,28 @@ export default function Dashboard() {
                 </CardHeader>
               </Link>
             </Card>
+
+            {/* Archive Board */}
+            <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
+              <Link href="/boards/archive">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2 mb-1">
+                        <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
+                          Archive
+                        </CardTitle>
+                      </div>
+                      <CardDescription className="text-gray-700 dark:text-gray-300">
+                        View archived notes
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+              </Link>
+            </Card>
+
             {boards.map((board) => (
               <Card
                 key={board.id}

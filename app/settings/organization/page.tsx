@@ -29,11 +29,10 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-interface User {
-  id: string;
-  name: string | null;
-  email: string;
-  isAdmin: boolean;
+import type { User } from "@/components/note";
+
+// Settings-specific extended types
+export type UserWithOrganization = User & {
   organization: {
     id: string;
     name: string;
@@ -45,7 +44,7 @@ interface User {
       isAdmin: boolean;
     }[];
   } | null;
-}
+};
 
 interface OrganizationInvite {
   id: string;
@@ -70,7 +69,7 @@ interface SelfServeInvite {
 }
 
 export default function OrganizationSettingsPage() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserWithOrganization | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -582,7 +581,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="space-y-3">
-            {user?.organization?.members?.map((member) => (
+            {user?.organization?.members?.map((member: { id: string; name: string | null; email: string; isAdmin: boolean }) => (
               <div
                 key={member.id}
                 className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"

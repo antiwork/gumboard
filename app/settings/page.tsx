@@ -8,21 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
-
-interface User {
-  id: string;
-  name: string | null;
-  email: string;
-  organization: {
-    id: string;
-    name: string;
-    members: {
-      id: string;
-      name: string | null;
-      email: string;
-    }[];
-  } | null;
-}
+import type { User } from "@/components/note";
 
 export default function ProfileSettingsPage() {
   const [user, setUser] = useState<User | null>(null);

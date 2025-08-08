@@ -1,9 +1,7 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches: ["main"]
 
 permissions:
   contents: read
@@ -11,6 +9,12 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      GITHUB_CLIENT_ID: dummy-client-id
+      GITHUB_CLIENT_SECRET: dummy-client-secret
+      AUTH_SECRET: sample-auth-secret
+      AUTH_URL: http://localhost:3000
+
     steps:
       - uses: actions/checkout@v4
 

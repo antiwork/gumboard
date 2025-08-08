@@ -2,25 +2,11 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { User, Building2, ArrowLeft, Settings, LogOut, ChevronDown } from "lucide-react"
+import { User as UserIcon, Building2, ArrowLeft, Settings, LogOut, ChevronDown } from "lucide-react"
 import Link from "next/link"
 import { signOut } from "next-auth/react"
 import { FullPageLoader } from "@/components/ui/loader"
-
-interface User {
-  id: string
-  name: string | null
-  email: string
-  organization: {
-    id: string
-    name: string
-    members: {
-      id: string
-      name: string | null
-      email: string
-    }[]
-  } | null
-}
+import type { User } from "@/components/note"
 
 export default function SettingsLayout({
   children,
@@ -159,7 +145,7 @@ export default function SettingsLayout({
                     : "text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
                 }`}
               >
-                <User className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                 <span className="text-sm sm:text-base whitespace-nowrap">Profile</span>
               </Link>
               <Link
