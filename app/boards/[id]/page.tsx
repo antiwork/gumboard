@@ -1554,34 +1554,36 @@ export default function BoardPage({
       >
 
         {/* Notes */}
-        <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onAddChecklistItem={handleAddChecklistItemFromComponent}
-              onToggleChecklistItem={handleToggleChecklistItem}
-              onEditChecklistItem={handleEditChecklistItem}
-              onDeleteChecklistItem={handleDeleteChecklistItem}
-              onSplitChecklistItem={handleSplitChecklistItem}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="note-background"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: typeof window !== "undefined" && document.documentElement.classList.contains('dark') ? "#374151" : note.color,
-              }}
-            />
-          ))}
-        </div>
+        {filteredNotes.length > 0 && (
+          <div className={`relative w-full ${filteredNotes.length === 0 ? 'h-auto' : 'h-full'}`}>
+            {layoutNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note as Note}
+                currentUser={user as User}
+                onUpdate={handleUpdateNoteFromComponent}
+                onDelete={handleDeleteNote}
+                onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                onAddChecklistItem={handleAddChecklistItemFromComponent}
+                onToggleChecklistItem={handleToggleChecklistItem}
+                onEditChecklistItem={handleEditChecklistItem}
+                onDeleteChecklistItem={handleDeleteChecklistItem}
+                onSplitChecklistItem={handleSplitChecklistItem}
+                showBoardName={boardId === "all-notes" || boardId === "archive"}
+                className="note-background"
+                style={{
+                  position: "absolute",
+                  left: note.x,
+                  top: note.y,
+                  width: note.width,
+                  height: note.height,
+                  padding: `${getResponsiveConfig().notePadding}px`,
+                  backgroundColor: typeof window !== "undefined" && document.documentElement.classList.contains('dark') ? "#374151" : note.color,
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         {/* Empty State */}
         {filteredNotes.length === 0 &&
