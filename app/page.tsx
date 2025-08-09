@@ -18,6 +18,33 @@ export default async function HomePage() {
     redirect("/dashboard");
   }
 
+  const features = [
+    {
+      icon: StickyNote,
+      bg: "bg-blue-100 dark:bg-blue-900/30",
+      iconColor: "text-blue-600 dark:text-blue-400",
+      title: "Sticky notes & tasks",
+      description:
+        "Create colorful sticky notes with interactive checklists to track your team's progress.",
+    },
+    {
+      icon: Users,
+      bg: "bg-green-100 dark:bg-green-900/30",
+      iconColor: "text-green-600 dark:text-green-400",
+      title: "Real-time collaboration",
+      description:
+        "Work together seamlessly with your team in real-time. See updates instantly as they happen.",
+    },
+    {
+      icon: Building2,
+      bg: "bg-purple-100 dark:bg-purple-900/30",
+      iconColor: "text-purple-600 dark:text-purple-400",
+      title: "Organization management",
+      description:
+        "Invite team members, manage permissions, and keep your workspace organized across projects.",
+    },
+  ];
+
   return (
     <div className="flex min-h-[100dvh] flex-col bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100">
       <main className="flex-1">
@@ -69,50 +96,17 @@ export default async function HomePage() {
             </div>
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
-              <Card className="text-center dark:bg-zinc-900 dark:border-zinc-800">
-                <CardContent className="pt-6">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-lg flex items-center justify-center dark:bg-blue-900/30">
-                    <StickyNote className="h-6 w-6 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <CardTitle className="mb-2">
-                    Sticky notes &amp; tasks
-                  </CardTitle>
-                  <CardDescription className="dark:text-zinc-300">
-                    Create colorful sticky notes with interactive checklists to
-                    track your team&apos;s progress.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center dark:bg-zinc-900 dark:border-zinc-800">
-                <CardContent className="pt-6">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-lg flex items-center justify-center dark:bg-green-900/30">
-                    <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
-                  </div>
-                  <CardTitle className="mb-2">
-                    Real-time collaboration
-                  </CardTitle>
-                  <CardDescription className="dark:text-zinc-300">
-                    Work together seamlessly with your team in real-time. See
-                    updates instantly as they happen.
-                  </CardDescription>
-                </CardContent>
-              </Card>
-
-              <Card className="text-center dark:bg-zinc-900 dark:border-zinc-800">
-                <CardContent className="pt-6">
-                  <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-lg flex items-center justify-center dark:bg-purple-900/30">
-                    <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                  </div>
-                  <CardTitle className="mb-2">
-                    Organization management
-                  </CardTitle>
-                  <CardDescription className="dark:text-zinc-300">
-                    Invite team members, manage permissions, and keep your
-                    workspace organized across projects.
-                  </CardDescription>
-                </CardContent>
-              </Card>
+              {features.map((feature, index) => (
+                <Card key={index} className="text-center dark:bg-zinc-900 dark:border-zinc-800">
+                  <CardContent className="pt-6">
+                    <div className={`w-12 h-12 mx-auto mb-4 rounded-lg flex items-center justify-center ${feature.bg}`}>
+                      <feature.icon className={`h-6 w-6 ${feature.iconColor}`} />
+                    </div>
+                    <CardTitle className="mb-2">{feature.title}</CardTitle>
+                    <CardDescription className="dark:text-zinc-300">{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
