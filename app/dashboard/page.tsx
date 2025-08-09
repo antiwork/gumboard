@@ -429,7 +429,7 @@ export default function Dashboard() {
                       setNewBoardDescription("");
                       setEditingBoard(null);
                     }}
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer"
                   >
                     Cancel
                   </Button>

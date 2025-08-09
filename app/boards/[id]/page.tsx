@@ -1403,7 +1403,7 @@ export default function BoardPage({
                         setShowAddBoard(true);
                         setShowBoardDropdown(false);
                       }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                      className="flex items-center cursor-pointer w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       <span className="font-medium">Create new board</span>
@@ -1415,7 +1415,7 @@ export default function BoardPage({
                           setBoardSettingsDialog(true);
                           setShowBoardDropdown(false);
                         }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                        className="flex items-center cursor-pointer w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         <span className="font-medium">Board settings</span>
@@ -1471,7 +1471,7 @@ export default function BoardPage({
                     setSearchTerm("");
                     updateURL("");
                   }}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
                 >
                   ×
                 </button>
@@ -1486,7 +1486,7 @@ export default function BoardPage({
                   handleAddNote();
                 }
               }}
-              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
+              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium cursor-pointer"
             >
               <Pencil className="w-4 h-4" />
             </Button>
@@ -1628,7 +1628,7 @@ export default function BoardPage({
                   );
                 }}
                 variant="outline"
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 cursor-pointer"
               >
                 <span>Clear All Filters</span>
               </Button>
@@ -1655,7 +1655,7 @@ export default function BoardPage({
                   handleAddNote();
                 }
               }}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 cursor-pointer"
             >
               <Pencil className="w-4 h-4" />
               <span>Add Your First Note</span>
@@ -1717,7 +1717,7 @@ export default function BoardPage({
                     setNewBoardName("");
                     setNewBoardDescription("");
                   }}
-                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="bg-white cursor-pointer dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
                   Cancel
                 </Button>
