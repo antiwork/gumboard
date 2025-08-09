@@ -9,11 +9,28 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        ports: ['5432:5432']
+        env:
+          POSTGRES_DB: gumboard
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    
     env:
       GITHUB_CLIENT_ID: dummy-client-id
       GITHUB_CLIENT_SECRET: dummy-client-secret
       AUTH_SECRET: sample-auth-secret
       AUTH_URL: http://localhost:3000
+      TEST_DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/gumboard"
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/gumboard"
 
     steps:
       - uses: actions/checkout@v4
@@ -25,6 +42,12 @@ jobs:
 
       - run: npm ci
 
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run Prisma Migrations
+        run: npx prisma migrate deploy
+
       - name: Lint
         run: npm run lint
 
@@ -33,7 +56,6 @@ jobs:
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
-
 
       - name: E2E Tests
         run: npm run test:e2e

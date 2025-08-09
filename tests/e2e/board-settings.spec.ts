@@ -25,7 +25,8 @@ test.describe('Board Settings', () => {
           organization: {
             id: 'test-org',
             name: 'Test Organization',
-            slackWebhookUrl: 'https://hooks.slack.com/test-webhook',
+            slackApiToken: 'xoxb-test-token',
+            slackChannelId: '#general',
             members: [],
           },
         }),
@@ -96,7 +97,7 @@ test.describe('Board Settings', () => {
 
   test('should toggle Slack updates setting and save changes', async ({ page }) => {
     let boardUpdateCalled = false;
-    let updatedSettings: any = null;
+    let updatedSettings: { sendSlackUpdates: boolean } | null = null;
 
     await page.route('**/api/boards/test-board', async (route) => {
       if (route.request().method() === 'GET') {
@@ -124,7 +125,7 @@ test.describe('Board Settings', () => {
               id: 'test-board',
               name: 'Test Board',
               description: 'A test board',
-              sendSlackUpdates: updatedSettings.sendSlackUpdates,
+              sendSlackUpdates: updatedSettings?.sendSlackUpdates ?? true,
             },
           }),
         });
@@ -146,7 +147,7 @@ test.describe('Board Settings', () => {
     
     expect(boardUpdateCalled).toBe(true);
     expect(updatedSettings).not.toBeNull();
-    expect(updatedSettings.sendSlackUpdates).toBe(false);
+    expect(updatedSettings!.sendSlackUpdates).toBe(false);
     
     await expect(page.locator('text=Board settings')).not.toBeVisible();
   });
@@ -207,12 +208,12 @@ test.describe('Board Settings', () => {
       }
     });
 
-    await page.route('https://hooks.slack.com/test-webhook', async (route) => {
+    await page.route('https://slack.com/api/chat.postMessage', async (route) => {
       slackNotificationSent = true;
       await route.fulfill({
         status: 200,
-        contentType: 'text/plain',
-        body: 'ok',
+        contentType: 'application/json',
+        body: JSON.stringify({ ok: true, ts: '1234567890.123456' }),
       });
     });
 

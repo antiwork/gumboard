@@ -10,7 +10,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, slackWebhookUrl } = await request.json()
+    const { name, slackApiToken, slackChannelId } = await request.json()
 
     if (!name || typeof name !== 'string') {
       return NextResponse.json({ error: "Organization name is required" }, { status: 400 })
@@ -38,12 +38,13 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Only admins can update organization settings" }, { status: 403 })
     }
 
-    // Update organization name and Slack webhook URL
+    // Update organization name and Slack settings
     await db.organization.update({
       where: { id: user.organizationId },
       data: { 
         name: name.trim(),
-        ...(slackWebhookUrl !== undefined && { slackWebhookUrl: slackWebhookUrl?.trim() || null })
+        ...(slackApiToken !== undefined && { slackApiToken: slackApiToken?.trim() || null }),
+        ...(slackChannelId !== undefined && { slackChannelId: slackChannelId?.trim() || null })
       }
     })
 
@@ -74,7 +75,8 @@ export async function PUT(request: NextRequest) {
       organization: updatedUser!.organization ? {
         id: updatedUser!.organization.id,
         name: updatedUser!.organization.name,
-        slackWebhookUrl: updatedUser!.organization.slackWebhookUrl,
+        slackApiToken: updatedUser!.organization.slackApiToken,
+        slackChannelId: updatedUser!.organization.slackChannelId,
         members: updatedUser!.organization.members
       } : null
     })

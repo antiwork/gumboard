@@ -81,6 +81,14 @@ export default function BoardPage({
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  const generateItemId = () => {
+    try {
+      return crypto.randomUUID();
+    } catch {
+      return `item-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    }
+  };
+
   // Update URL with current filter state
   const updateURL = (
     newSearchTerm?: string,
@@ -271,133 +279,6 @@ export default function BoardPage({
         headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight)
       );
     }
-  };
-
-  // Helper function to calculate bin-packed layout for desktop
-  const calculateGridLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / noteWidthWithGap
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate the actual available width and adjust note width to fill better
-    const availableWidthForNotes =
-      containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(
-      availableWidthForNotes / actualColumnsCount
-    );
-    // Ensure notes don't get too narrow or too wide based on screen size
-    const minWidth = config.noteWidth - 40;
-    const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(
-      minWidth,
-      Math.min(maxWidth, calculatedNoteWidth)
-    );
-
-    // Use full width with minimal left offset
-    const offsetX = config.containerPadding;
-
-    // Bin-packing algorithm: track the bottom Y position of each column
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
-      config.containerPadding
-    );
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(
-        note,
-        adjustedNoteWidth,
-        config.notePadding
-      );
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: adjustedNoteWidth,
-        height: noteHeight,
-      };
-    });
-  };
-
-  // Helper function to calculate mobile layout (optimized single/double column)
-  const calculateMobileLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const minNoteWidth = config.noteWidth - 20; // Slightly smaller minimum for mobile
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate note width for mobile
-    const availableWidthForNotes =
-      containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-
-    // Bin-packing for mobile with fewer columns
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
-      config.containerPadding
-    );
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(
-        note,
-        noteWidth,
-        config.notePadding
-      );
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x =
-        config.containerPadding + bestColumn * (noteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: noteWidth,
-        height: noteHeight,
-      };
-    });
   };
 
   useEffect(() => {
@@ -615,12 +496,137 @@ export default function BoardPage({
       ),
     [notes, searchTerm, dateRange, selectedAuthor, user]
   );
-  const layoutNotes = useMemo(
-    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, calculateMobileLayout, calculateGridLayout]
-  );
 
-  const boardHeight = useMemo(() => {
+  // Helper function to calculate bin-packed layout for desktop
+  const calculateGridLayout = () => {
+    if (typeof window === "undefined") return [];
+
+    const config = getResponsiveConfig();
+    const containerWidth = window.innerWidth - config.containerPadding * 2;
+    const noteWidthWithGap = config.noteWidth + config.gridGap;
+    const columnsCount = Math.floor(
+      (containerWidth + config.gridGap) / noteWidthWithGap
+    );
+    const actualColumnsCount = Math.max(1, columnsCount);
+
+    // Calculate the actual available width and adjust note width to fill better
+    const availableWidthForNotes =
+      containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const calculatedNoteWidth = Math.floor(
+      availableWidthForNotes / actualColumnsCount
+    );
+    // Ensure notes don't get too narrow or too wide based on screen size
+    const minWidth = config.noteWidth - 40;
+    const maxWidth = config.noteWidth + 80;
+    const adjustedNoteWidth = Math.max(
+      minWidth,
+      Math.min(maxWidth, calculatedNoteWidth)
+    );
+
+    // Use full width with minimal left offset
+    const offsetX = config.containerPadding;
+
+    // Bin-packing algorithm: track the bottom Y position of each column
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
+      config.containerPadding
+    );
+
+    return filteredNotes.map((note) => {
+      const noteHeight = calculateNoteHeight(
+        note,
+        adjustedNoteWidth,
+        config.notePadding
+      );
+
+      // Find the column with the lowest bottom position
+      let bestColumn = 0;
+      let minBottom = columnBottoms[0];
+
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+
+      // Place the note in the best column
+      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
+      const y = columnBottoms[bestColumn];
+
+      // Update the column bottom position
+      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
+
+      return {
+        ...note,
+        x,
+        y,
+        width: adjustedNoteWidth,
+        height: noteHeight,
+      };
+    });
+  };
+
+  // Helper function to calculate mobile layout (optimized single/double column)
+  const calculateMobileLayout = () => {
+    if (typeof window === "undefined") return [];
+
+    const config = getResponsiveConfig();
+    const containerWidth = window.innerWidth - config.containerPadding * 2;
+    const minNoteWidth = config.noteWidth - 20; // Slightly smaller minimum for mobile
+    const columnsCount = Math.floor(
+      (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
+    );
+    const actualColumnsCount = Math.max(1, columnsCount);
+
+    // Calculate note width for mobile
+    const availableWidthForNotes =
+      containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
+
+    // Bin-packing for mobile with fewer columns
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
+      config.containerPadding
+    );
+
+    return filteredNotes.map((note) => {
+      const noteHeight = calculateNoteHeight(
+        note,
+        noteWidth,
+        config.notePadding
+      );
+
+      // Find the column with the lowest bottom position
+      let bestColumn = 0;
+      let minBottom = columnBottoms[0];
+
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+
+      // Place the note in the best column
+      const x =
+        config.containerPadding + bestColumn * (noteWidth + config.gridGap);
+      const y = columnBottoms[bestColumn];
+
+      // Update the column bottom position
+      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
+
+      return {
+        ...note,
+        x,
+        y,
+        width: noteWidth,
+        height: noteHeight,
+      };
+    });
+  };
+
+  const layoutNotes = isMobile ? calculateMobileLayout() : calculateGridLayout();
+
+  const boardHeight = (() => {
     if (layoutNotes.length === 0) {
       return "calc(100vh - 64px)";
     }
@@ -628,7 +634,7 @@ export default function BoardPage({
     const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
     return `${calculatedHeight}px`;
-  }, [layoutNotes]);
+  })();
 
   const fetchBoardData = async () => {
     try {
@@ -737,7 +743,7 @@ export default function BoardPage({
           : boardId;
 
       const newItem: ChecklistItem = {
-        id: `item-${Date.now()}`,
+        id: generateItemId(),
         content: content.trim(),
         checked: false,
         order: (currentNote.checklistItems || []).length,
@@ -818,7 +824,6 @@ export default function BoardPage({
           },
           body: JSON.stringify({
             content: "",
-            checklistItems: [],
             ...(isAllNotesView && { boardId: targetBoardId }),
           }),
         }
@@ -1090,22 +1095,25 @@ export default function BoardPage({
       })
         .then(async (response) => {
           if (!response.ok) {
-            console.error("Server error, reverting optimistic update");
-            setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+            const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+            console.error("Server error, reverting optimistic update. Status:", response.status, "Error:", errorData);
+            
+            // Use a fresh copy of notes to avoid stale state
+            setNotes(prev => prev.map((n) => (n.id === noteId ? currentNote : n)));
             
             setErrorDialog({
               open: true,
               title: "Update Failed",
-              description: "Failed to update checklist item. Please try again.",
+              description: `Failed to update checklist item. ${errorData.error || 'Please try again.'}`,
             });
           } else {
             const { note } = await response.json();
-            setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+            setNotes(prev => prev.map((n) => (n.id === noteId ? note : n)));
           }
         })
         .catch((error) => {
           console.error("Error toggling checklist item:", error);
-          setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+          setNotes(prev => prev.map((n) => (n.id === noteId ? currentNote : n)));
           
           setErrorDialog({
             open: true,
@@ -1160,24 +1168,25 @@ export default function BoardPage({
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
+        setNotes(prev => prev.map((n) => (n.id === noteId ? note : n)));
       } else {
-        console.error("Server error, reverting optimistic update");
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        console.error("Server error, reverting optimistic update. Status:", response.status, "Error:", errorData);
+        setNotes(prev => prev.map((n) => (n.id === noteId ? currentNote : n)));
 
         setErrorDialog({
           open: true,
           title: "Failed to Delete Item",
-          description: "Failed to delete checklist item. Please try again.",
+          description: `Failed to delete checklist item. ${errorData.error || 'Please try again.'}`,
         });
       }
     } catch (error) {
       console.error("Error deleting checklist item:", error);
       
       // Revert optimistic update on network error
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (currentNote) {
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+      const noteToRevert = notes.find((n) => n.id === noteId);
+      if (noteToRevert) {
+        setNotes(prev => prev.map((n) => (n.id === noteId ? noteToRevert : n)));
       }
       
       setErrorDialog({
@@ -1231,7 +1240,6 @@ export default function BoardPage({
 
   // Removed external debounce; Note component handles UX concerns
 
-
   const handleSplitChecklistItem = async (
     noteId: string,
     itemId: string,
@@ -1263,7 +1271,7 @@ export default function BoardPage({
 
       // Create new item with second half
       const newItem = {
-        id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: generateItemId(),
         content: secondHalf,
         checked: false,
         order: currentOrder + 0.5,
@@ -1571,6 +1579,7 @@ export default function BoardPage({
               onDeleteChecklistItem={handleDeleteChecklistItem}
               onSplitChecklistItem={handleSplitChecklistItem}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
+              showAddingItemInput={addingChecklistItem === note.id}
               className="note-background"
               style={{
                 position: "absolute",

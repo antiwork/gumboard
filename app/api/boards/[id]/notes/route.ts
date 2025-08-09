@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
-import { sendSlackMessage, formatNoteForSlack, hasValidContent, shouldSendNotification } from "@/lib/slack"
+import { sendSlackApiMessage, formatNoteForSlack, hasValidContent, shouldSendNotification } from "@/lib/slack"
 import { NOTE_COLORS } from "@/lib/constants"
 
 // Get all notes for a board
@@ -27,7 +27,8 @@ export async function GET(
                 name: true,
                 email: true
               }
-            }
+            },
+            checklistItems: { orderBy: { order: 'asc' } }
           }
         }
       }
@@ -76,7 +77,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { content, color, checklistItems } = await request.json()
+    const { content, color } = await request.json()
     const boardId = (await params).id
 
     // Verify user has access to this board (same organization)
@@ -115,7 +116,6 @@ export async function POST(
         color: randomColor,
         boardId,
         createdBy: session.user.id,
-        ...(checklistItems !== undefined && { checklistItems }),
       },
       include: {
         user: {
@@ -124,16 +124,16 @@ export async function POST(
             name: true,
             email: true
           }
-        }
+        },
+        checklistItems: { orderBy: { order: 'asc' } }
       }
     })
 
-    if (user.organization?.slackWebhookUrl && hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)) {
+    if (user.organization?.slackApiToken && user.organization?.slackChannelId && hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)) {
       const slackMessage = formatNoteForSlack(note, board.name, user.name || user.email)
-      const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
-        text: slackMessage,
-        username: 'Gumboard',
-        icon_emoji: ':clipboard:'
+      const messageId = await sendSlackApiMessage(user.organization.slackApiToken, {
+        channel: user.organization.slackChannelId,
+        text: slackMessage
       })
 
       if (messageId) {

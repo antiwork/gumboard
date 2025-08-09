@@ -68,7 +68,8 @@ model User {
 model Organization {
   id        String   @id @default(cuid())
   name      String
-  slackWebhookUrl String?
+  slackApiToken String?
+  slackChannelId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   members   User[]
@@ -100,7 +101,7 @@ model Note {
   content   String @db.Text
   color     String @default("#fef3c7") // Default yellow color
   done      Boolean @default(false) // Track completion status
-  checklistItems Json? // Store checklist items as JSON
+  checklistItems ChecklistItem[]
   slackMessageId String?
   boardId   String
   board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
@@ -111,6 +112,22 @@ model Note {
   deletedAt DateTime? // Soft delete timestamp
 
   @@map("notes")
+}
+
+model ChecklistItem {
+  id             String   @id @default(cuid())
+  content        String   @db.Text
+  checked        Boolean  @default(false)
+  order          Int      @default(0)
+  noteId         String
+  slackMessageId String?
+  note           Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("checklist_items")
+  @@index([noteId])
+  @@index([noteId, order])
 }
 
 model OrganizationInvite {
