@@ -61,6 +61,8 @@ export default function BoardPage({
     startDate: null,
     endDate: null,
   });
+
+  const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
     null
@@ -226,20 +228,14 @@ export default function BoardPage({
     const paddingHeight = actualNotePadding * 2; // Top and bottom padding
     const minContentHeight = 84; // Minimum content area (3 lines)
 
-    if (note.checklistItems) {
-      // For checklist items, calculate height based on number of items
-      const itemHeight = 32; // Each checklist item is about 32px tall (text + padding)
-      const itemSpacing = 8; // Space between items
-      const checklistItemsCount = note.checklistItems.length;
-      const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
+    if (note.checklistItems?.length) {
 
-      const checklistHeight =
-        checklistItemsCount * itemHeight +
-        (checklistItemsCount - 1) * itemSpacing +
-        addingItemHeight;
-      const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
+      const measuredHeight = measuredHeights[note.id];
+      if (measuredHeight) {
+        return headerHeight + paddingHeight + measuredHeight + 40;
+      }
+      return headerHeight + paddingHeight + (note.checklistItems.length * 40) + 40;
 
-      return headerHeight + paddingHeight + totalChecklistHeight + 40; // Extra space for + button
     } else {
       // Original logic for regular notes
       const lines = note.content.split("\n");
@@ -272,6 +268,16 @@ export default function BoardPage({
       );
     }
   };
+
+  const handleHeightMeasured = useCallback((noteId: string, height: number) => {
+    setMeasuredHeights(prev => {
+      // Only update if height changed significantly (prevents micro-updates)
+      if (Math.abs((prev[noteId] || 0) - height) > 10) {
+        return { ...prev, [noteId]: height };
+      }
+      return prev;
+    });
+  }, []);
 
   // Helper function to calculate bin-packed layout for desktop
   const calculateGridLayout = () => {
@@ -1570,6 +1576,7 @@ export default function BoardPage({
               onEditChecklistItem={handleEditChecklistItem}
               onDeleteChecklistItem={handleDeleteChecklistItem}
               onSplitChecklistItem={handleSplitChecklistItem}
+              onHeightMeasured={handleHeightMeasured}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
               style={{
@@ -1578,6 +1585,8 @@ export default function BoardPage({
                 top: note.y,
                 width: note.width,
                 height: note.height,
+                wordWrap: "break-word",
+                whiteSpace: "normal",
                 padding: `${getResponsiveConfig().notePadding}px`,
                 backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
               }}
