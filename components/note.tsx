@@ -9,7 +9,6 @@ import { Input } from "@/components/ui/input";
 import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
-  Comment,
 } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive } from "lucide-react";
@@ -39,7 +38,6 @@ export interface Note {
   createdAt: string;
   updatedAt: string;
   checklistItems?: ChecklistItem[];
-  comments?: Comment[];
   user: {
     id: string;
     name: string | null;
@@ -102,7 +100,6 @@ export function Note({
     (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
-  const [newComment, setNewComment] = useState("");
   const [newItemComments, setNewItemComments] = useState<Record<string, string>>({});
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
@@ -173,14 +170,6 @@ export function Note({
       setAddingItem(false);
       setNewItemContent("");
     }
-  };
-
-  const handleAddComment = () => {
-    const content = newComment.trim();
-    if (!content) return;
-    const updatedComments = [...(note.comments || []), { id: nanoid(), content }];
-    onUpdate?.({ ...note, comments: updatedComments });
-    setNewComment("");
   };
 
   const handleAddItemComment = (itemId: string) => {
@@ -383,37 +372,6 @@ export function Note({
               {note.description}
             </p>
           )}
-          {note.comments?.map((c) => (
-            <div
-              key={c.id}
-              className="mt-1 text-sm text-zinc-700 dark:text-zinc-300"
-            >
-              {c.content}
-            </div>
-          ))}
-          {canEdit && (
-            <div className="mt-2 flex items-center gap-2">
-              <Input
-                type="text"
-                placeholder="Add comment"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAddComment();
-                }}
-                className="h-7 flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
-              />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-7 px-2"
-                onClick={handleAddComment}
-                disabled={!newComment.trim()}
-              >
-                Add
-              </Button>
-            </div>
-          )}
 
           {/* Add Item Button */}
           {canEdit && (
@@ -432,3 +390,4 @@ export function Note({
     </div>
   );
 }
+
