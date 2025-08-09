@@ -1555,7 +1555,7 @@ export default function BoardPage({
 
         {/* Notes */}
         {filteredNotes.length > 0 && (
-          <div className={`relative w-full ${filteredNotes.length === 0 ? 'h-auto' : 'h-full'}`}>
+          <div className="relative w-full h-full">
             {layoutNotes.map((note) => (
               <NoteCard
                 key={note.id}
