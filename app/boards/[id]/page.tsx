@@ -59,6 +59,8 @@ export default function BoardPage({
     startDate: null,
     endDate: null,
   });
+
+  const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
     null
@@ -224,28 +226,14 @@ export default function BoardPage({
     const paddingHeight = actualNotePadding * 2; // Top and bottom padding
     const minContentHeight = 84; // Minimum content area (3 lines)
 
-    if (note.checklistItems) {
-      const checklistItems = note.checklistItems || [];
+    if (note.checklistItems?.length) {
 
-      const baseItemHeight = 32; // Minimum height for single line
-      const lineHeight = 24; // CSS leading-6 = 24px
-      const avgCharWidth = 8; // Approximate character width
-      const contentWidth = actualNoteWidth - actualNotePadding * 2 - 48; // Available width for text
-      const charsPerLine = Math.floor(contentWidth / avgCharWidth);
+      const measuredHeight = measuredHeights[note.id];
+      if (measuredHeight) {
+        return headerHeight + paddingHeight + measuredHeight + 40;
+      }
+      return headerHeight + paddingHeight + (note.checklistItems.length * 40) + 40;
 
-      let totalHeight = 0;
-
-      checklistItems.forEach((item, index) => {
-        const contentLines = Math.max(1, Math.ceil(item.content.length / charsPerLine));
-        const itemHeight = Math.max(baseItemHeight, contentLines * lineHeight + 8);
-        totalHeight += itemHeight;
-
-        if (index < checklistItems.length - 1) {
-          totalHeight += 8;
-        }
-      });
-
-      return headerHeight + paddingHeight + totalHeight + 40;
     } else {
       // Original logic for regular notes
       const lines = note.content.split("\n");
@@ -278,6 +266,16 @@ export default function BoardPage({
       );
     }
   };
+
+  const handleHeightMeasured = useCallback((noteId: string, height: number) => {
+    setMeasuredHeights(prev => {
+      // Only update if height changed significantly (prevents micro-updates)
+      if (Math.abs((prev[noteId] || 0) - height) > 10) {
+        return { ...prev, [noteId]: height };
+      }
+      return prev;
+    });
+  }, []);
 
   // Helper function to calculate bin-packed layout for desktop
   const calculateGridLayout = () => {
@@ -1576,6 +1574,7 @@ export default function BoardPage({
               onEditChecklistItem={handleEditChecklistItem}
               onDeleteChecklistItem={handleDeleteChecklistItem}
               onSplitChecklistItem={handleSplitChecklistItem}
+              onHeightMeasured={handleHeightMeasured}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
               style={{

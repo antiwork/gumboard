@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive } from "lucide-react";
+import { useLayoutEffect, useCallback, useRef } from "react";
 
 // Core domain types
 export interface User {
@@ -59,6 +60,7 @@ interface NoteProps {
   onEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
   onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
   onSplitChecklistItem?: (noteId: string, itemId: string, content: string, cursorPosition: number) => void;
+  onHeightMeasured?: (noteId: string, height: number) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -76,6 +78,7 @@ export function Note({
   onEditChecklistItem,
   onDeleteChecklistItem,
   onSplitChecklistItem,
+  onHeightMeasured,
   readonly = false,
   showBoardName = false,
   className,
@@ -85,6 +88,7 @@ export function Note({
   const [editContent, setEditContent] = useState(note.content);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
+  const contentRef = useRef<HTMLDivElement>(null);
   const [addingItem, setAddingItem] = useState(
     !readonly &&
     currentUser &&
@@ -92,6 +96,23 @@ export function Note({
     (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
+
+
+  const measureHeight = useCallback(() => {
+    if (contentRef.current && onHeightMeasured) {
+      const height = contentRef.current.scrollHeight;
+      onHeightMeasured(note.id, height);
+    }
+  }, [note.id, onHeightMeasured]);
+
+  useLayoutEffect(() => {
+    if (note.checklistItems?.length) {
+      // Use setTimeout to avoid measuring during render
+      const timer = setTimeout(measureHeight, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [note.checklistItems?.length, measureHeight]);
+
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -254,7 +275,9 @@ export function Note({
         </div>
       ) : (
         <div className="flex-1 flex flex-col">
-          <div className="overflow-y-auto space-y-1 flex-1">
+          <div 
+            ref={contentRef}
+            className="overflow-y-auto space-y-1 flex-1">
             {/* Checklist Items */}
             {note.checklistItems?.map((item) => (
               <ChecklistItemComponent
