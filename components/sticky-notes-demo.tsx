@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Note as NoteComponent } from "@/components/note"
 import type { Note } from "@/components/note"
-import type { ChecklistItem } from "@/components/checklist-item"
+import type { ChecklistItem, Comment } from "@/components/checklist-item"
 import { Plus } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -360,12 +360,17 @@ export function StickyNotesDemo() {
     handleUpdateNote(updatedNote)
   }
 
-  const handleEditChecklistItem = (noteId: string, itemId: string, content: string) => {
+  const handleEditChecklistItem = (
+    noteId: string,
+    itemId: string,
+    content: string,
+    comments: Comment[]
+  ) => {
     const note = notes.find((n) => n.id === noteId)
     if (!note || !note.checklistItems) return
 
     const updatedItems = note.checklistItems.map((item) =>
-      item.id === itemId ? { ...item, content } : item
+      item.id === itemId ? { ...item, content, comments } : item
     )
 
     const updatedNote = {
