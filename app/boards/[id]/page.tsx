@@ -225,19 +225,27 @@ export default function BoardPage({
     const minContentHeight = 84; // Minimum content area (3 lines)
 
     if (note.checklistItems) {
-      // For checklist items, calculate height based on number of items
-      const itemHeight = 32; // Each checklist item is about 32px tall (text + padding)
-      const itemSpacing = 8; // Space between items
-      const checklistItemsCount = note.checklistItems.length;
-      const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
+      const checklistItems = note.checklistItems || [];
 
-      const checklistHeight =
-        checklistItemsCount * itemHeight +
-        (checklistItemsCount - 1) * itemSpacing +
-        addingItemHeight;
-      const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
+      const baseItemHeight = 32; // Minimum height for single line
+      const lineHeight = 24; // CSS leading-6 = 24px
+      const avgCharWidth = 8; // Approximate character width
+      const contentWidth = actualNoteWidth - actualNotePadding * 2 - 48; // Available width for text
+      const charsPerLine = Math.floor(contentWidth / avgCharWidth);
 
-      return headerHeight + paddingHeight + totalChecklistHeight + 40; // Extra space for + button
+      let totalHeight = 0;
+
+      checklistItems.forEach((item, index) => {
+        const contentLines = Math.max(1, Math.ceil(item.content.length / charsPerLine));
+        const itemHeight = Math.max(baseItemHeight, contentLines * lineHeight + 8);
+        totalHeight += itemHeight;
+
+        if (index < checklistItems.length - 1) {
+          totalHeight += 8;
+        }
+      });
+
+      return headerHeight + paddingHeight + totalHeight + 40;
     } else {
       // Original logic for regular notes
       const lines = note.content.split("\n");
@@ -1576,6 +1584,8 @@ export default function BoardPage({
                 top: note.y,
                 width: note.width,
                 height: note.height,
+                wordWrap: "break-word",
+                whiteSpace: "normal",
                 padding: `${getResponsiveConfig().notePadding}px`,
                 backgroundColor: typeof window !== "undefined" && document.documentElement.classList.contains('dark') ? "#374151" : note.color,
               }}
