@@ -416,31 +416,37 @@ export function StickyNotesDemo() {
           Add Note
         </Button>
       </div>
-      <div>
-        <motion.div
-          className="columns-1 gap-4 sm:columns-2"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <AnimatePresence>
-            {notes.map((note) => (
-              <motion.div key={note.id} className="mb-4 break-inside-avoid" variants={itemVariants} exit="exit" layout>
-                <NoteComponent
-                  note={note}
-                  currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
-                  onUpdate={handleUpdateNote}
-                  onDelete={handleDeleteNote}
-                  onAddChecklistItem={handleAddChecklistItem}
-                  onToggleChecklistItem={handleToggleChecklistItem}
-                  onEditChecklistItem={handleEditChecklistItem}
-                  onDeleteChecklistItem={handleDeleteChecklistItem}
-                  className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
-                />
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+      <div className="relative h-[420px] md:h-[520px] rounded-xl bg-transparent">
+        <div className="h-full overflow-y-auto">
+          <div className="pb-4 pt-4">
+            <motion.div
+              className="columns-1 gap-4 sm:columns-2"
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+            >
+              <AnimatePresence>
+                {notes.map((note) => (
+                  <motion.div key={note.id} className="mb-4 break-inside-avoid" variants={itemVariants} exit="exit" layout>
+                    <NoteComponent
+                      note={note}
+                      currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
+                      onUpdate={handleUpdateNote}
+                      onDelete={handleDeleteNote}
+                      onAddChecklistItem={handleAddChecklistItem}
+                      onToggleChecklistItem={handleToggleChecklistItem}
+                      onEditChecklistItem={handleEditChecklistItem}
+                      onDeleteChecklistItem={handleDeleteChecklistItem}
+                      className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          </div>
+        </div>
+        <div className="pointer-events-none absolute top-0 left-0 w-full  h-16 bg-gradient-to-b from-[#F8FAFC] dark:from-[#09090B] to-transparent z-10 " />
+        <div className="pointer-events-none absolute bottom-0 left-0 w-full h-16 bg-gradient-to-t from-[#F8FAFC] dark:from-[#09090B] to-transparent z-10" />
       </div>
     </div>
   )
