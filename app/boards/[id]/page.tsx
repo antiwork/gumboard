@@ -242,7 +242,7 @@ export default function BoardPage({
         addingItemHeight;
       const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
 
-      return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
+      return headerHeight + paddingHeight + totalChecklistHeight + 40; // Extra space for + button
     } else {
       // Original logic for regular notes
       const lines = note.content.split("\n");
@@ -1203,6 +1203,8 @@ export default function BoardPage({
                 top: note.y,
                 width: note.width,
                 height: note.height,
+                wordWrap: "break-word",
+                whiteSpace: "normal",
                 padding: `${getResponsiveConfig().notePadding}px`,
                 backgroundColor:
                   resolvedTheme === "dark" ? "#18181B" : note.color,
