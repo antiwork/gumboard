@@ -368,6 +368,17 @@ export function StickyNotesDemo() {
 
     handleUpdateNote(updatedNote)
   }
+  
+  const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItem[]) => {
+    const note = notes.find((n) => n.id === noteId)
+    if (!note || !note.checklistItems) return;
+
+    const allItemsChecked = newItems.every((item) => item.checked);
+
+    setNotes(notes.map((n) =>
+      n.id === noteId ? { ...n, checklistItems: newItems, done: allItemsChecked } : n
+    ));
+  }
 
   const handleDeleteChecklistItem = (noteId: string, itemId: string) => {
     const note = notes.find((n) => n.id === noteId)
@@ -435,6 +446,7 @@ export function StickyNotesDemo() {
                   onToggleChecklistItem={handleToggleChecklistItem}
                   onEditChecklistItem={handleEditChecklistItem}
                   onDeleteChecklistItem={handleDeleteChecklistItem}
+                  onReorderChecklistItems={handleReorderChecklistItems}
                   className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                 />
               </motion.div>

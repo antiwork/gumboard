@@ -104,8 +104,11 @@ export function ChecklistItem({
             item.checked
               ? "line-through text-gray-500 dark:text-gray-400"
               : "text-gray-900 dark:text-gray-100",
-            !readonly && "hover:bg-gray-100 dark:hover:bg-gray-800 rounded px-1 py-0.5"
+            !readonly && "rounded px-1 py-0.5"
           )}
+          // Avoid flaky test
+          data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
+          data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
           onClick={() => !readonly && onStartEdit?.(item.id)}
         >
           {item.content}

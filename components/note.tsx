@@ -8,6 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
+import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { Trash2, Plus, Archive } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -60,6 +61,7 @@ interface NoteProps {
   onEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
   onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
   onSplitChecklistItem?: (noteId: string, itemId: string, content: string, cursorPosition: number) => void;
+  onReorderChecklistItems?: (noteId: string, newItems: ChecklistItem[]) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -77,6 +79,7 @@ export function Note({
   onEditChecklistItem,
   onDeleteChecklistItem,
   onSplitChecklistItem,
+  onReorderChecklistItems,
   readonly = false,
   showBoardName = false,
   className,
@@ -163,6 +166,18 @@ export function Note({
       setNewItemContent("");
     }
   };
+
+  const handleReorderChecklistItems= (noteId: string, newItems: ChecklistItem[]) => {
+    // Disallow unchecked items to be after checked items
+    const firstCheckedIndex = newItems.findIndex((element) => element.checked);
+    const lastUncheckedIndex = newItems.map(element => element.checked).lastIndexOf(false);
+    if (firstCheckedIndex !== -1 && lastUncheckedIndex !== -1 && lastUncheckedIndex > firstCheckedIndex) {
+      return;
+    }
+
+    onReorderChecklistItems?.(noteId, newItems);
+  };
+
 
   return (
     <div
@@ -258,23 +273,36 @@ export function Note({
         <div className="flex-1 flex flex-col">
           <div className="overflow-y-auto space-y-1 flex-1">
             {/* Checklist Items */}
-            {note.checklistItems?.map((item) => (
-              <ChecklistItemComponent
-                key={item.id}
-                item={item}
-                onToggle={(itemId) => onToggleChecklistItem?.(note.id, itemId)}
-                onEdit={handleEditItem}
-                onDelete={handleDeleteItem}
-                onSplit={handleSplitItem}
-                isEditing={editingItem === item.id}
-                editContent={editingItem === item.id ? editingItemContent : undefined}
-                onEditContentChange={setEditingItemContent}
-                onStartEdit={handleStartEditItem}
-                onStopEdit={handleStopEditItem}
-                readonly={readonly}
-                showDeleteButton={canEdit}
-              />
-            ))}
+            <DraggableRoot 
+              items={note.checklistItems ?? []} 
+              onItemsChange={(newItems) => {
+                handleReorderChecklistItems(note.id, newItems);
+              }}
+            >
+            <DraggableContainer className="space-y-1">
+              {note.checklistItems?.map((item) => (
+                <DraggableItem
+                    key={item.id} 
+                    id={item.id}
+                  >
+                    <ChecklistItemComponent
+                      key={item.id}
+                      item={item}
+                      onToggle={(itemId) => onToggleChecklistItem?.(note.id, itemId)}
+                      onEdit={handleEditItem}
+                      onDelete={handleDeleteItem}
+                      onSplit={handleSplitItem}
+                      isEditing={editingItem === item.id}
+                      editContent={editingItem === item.id ? editingItemContent : undefined}
+                      onEditContentChange={setEditingItemContent}
+                      onStartEdit={handleStartEditItem}
+                      onStopEdit={handleStopEditItem}
+                      readonly={readonly}
+                      showDeleteButton={canEdit}
+                    />
+                  </DraggableItem>
+              ))}
+            </DraggableContainer>
 
             {/* Add New Item Input */}
             {addingItem && canEdit && (
@@ -302,6 +330,7 @@ export function Note({
                 {note.content || "Click to add content..."}
               </div>
             )}
+            </DraggableRoot>
           </div>
 
           {/* Add Item Button */}
