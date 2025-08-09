@@ -6,7 +6,12 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
+import {
+  ChecklistItem as ChecklistItemComponent,
+  ChecklistItem,
+  Comment,
+} from "@/components/checklist-item";
+import { ChecklistItemModal } from "@/components/checklist-item-modal";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -28,6 +33,7 @@ export interface Board {
 export interface Note {
   id: string;
   content: string;
+  description?: string;
   color: string;
   done: boolean;
   createdAt: string;
@@ -57,9 +63,13 @@ interface NoteProps {
   onArchive?: (noteId: string) => void;
   onAddChecklistItem?: (noteId: string, content: string) => void;
   onToggleChecklistItem?: (noteId: string, itemId: string) => void;
-  onEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
+  onEditChecklistItem?: (
+    noteId: string,
+    itemId: string,
+    content: string,
+    comments: Comment[]
+  ) => void;
   onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
-  onSplitChecklistItem?: (noteId: string, itemId: string, content: string, cursorPosition: number) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -76,7 +86,6 @@ export function Note({
   onToggleChecklistItem,
   onEditChecklistItem,
   onDeleteChecklistItem,
-  onSplitChecklistItem,
   readonly = false,
   showBoardName = false,
   className,
@@ -85,8 +94,8 @@ export function Note({
   const [isEditing, setIsEditing] = useState(false);
   const { resolvedTheme } = useTheme();
   const [editContent, setEditContent] = useState(note.content);
-  const [editingItem, setEditingItem] = useState<string | null>(null);
-  const [editingItemContent, setEditingItemContent] = useState("");
+  const [editDescription, setEditDescription] = useState(note.description || "");
+  const [activeItem, setActiveItem] = useState<ChecklistItem | null>(null);
   const [addingItem, setAddingItem] = useState(
     !readonly &&
     currentUser &&
@@ -101,48 +110,40 @@ export function Note({
     if (canEdit) {
       setIsEditing(true);
       setEditContent(note.content);
+      setEditDescription(note.description || "");
     }
   };
 
   const handleStopEdit = () => {
     setIsEditing(false);
-    if (onUpdate && editContent !== note.content) {
-      onUpdate({ ...note, content: editContent });
+    if (onUpdate && (editContent !== note.content || editDescription !== (note.description || ""))) {
+      onUpdate({ ...note, content: editContent, description: editDescription });
     }
-  };
-
-  const handleStartEditItem = (itemId: string) => {
-    const item = note.checklistItems?.find((i) => i.id === itemId);
-    if (item && canEdit) {
-      setEditingItem(itemId);
-      setEditingItemContent(item.content);
-    }
-  };
-
-  const handleStopEditItem = () => {
-    setEditingItem(null);
-    setEditingItemContent("");
-  };
-
-  const handleEditItem = (itemId: string, content: string) => {
-    if (onEditChecklistItem) {
-      onEditChecklistItem(note.id, itemId, content);
-    }
-    handleStopEditItem();
   };
 
   const handleDeleteItem = (itemId: string) => {
     if (onDeleteChecklistItem) {
       onDeleteChecklistItem(note.id, itemId);
     }
-    handleStopEditItem();
   };
 
-  const handleSplitItem = (itemId: string, content: string, cursorPosition: number) => {
-    if (onSplitChecklistItem) {
-      onSplitChecklistItem(note.id, itemId, content, cursorPosition);
+  const handleOpenItem = (itemId: string) => {
+    const item = note.checklistItems?.find((i) => i.id === itemId);
+    if (item && canEdit) {
+      setActiveItem(item);
     }
-    handleStopEditItem();
+  };
+
+  const handleSaveItem = (itemId: string, content: string, comments: Comment[]) => {
+    if (onEditChecklistItem) {
+      onEditChecklistItem(note.id, itemId, content, comments);
+    } else if (onUpdate) {
+      const updatedItems = (note.checklistItems || []).map((i) =>
+        i.id === itemId ? { ...i, content, comments } : i
+      );
+      onUpdate({ ...note, checklistItems: updatedItems });
+    }
+    setActiveItem(null);
   };
 
   const handleAddItem = () => {
@@ -235,7 +236,7 @@ export function Note({
       </div>
 
       {isEditing ? (
-        <div className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 space-y-2">
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
@@ -249,28 +250,29 @@ export function Note({
               if (e.key === "Escape") {
                 setIsEditing(false);
                 setEditContent(note.content);
+                setEditDescription(note.description || "");
               }
             }}
             autoFocus
           />
+          <textarea
+            value={editDescription}
+            onChange={(e) => setEditDescription(e.target.value)}
+            className="w-full p-2 bg-transparent border-none resize-none focus:outline-none text-sm leading-6 text-gray-700 dark:text-gray-300"
+            placeholder="Add description..."
+          />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col">
-          <div className="overflow-y-auto space-y-1 flex-1">
+        <div className="flex flex-col">
+          <div className="space-y-1">
             {/* Checklist Items */}
             {note.checklistItems?.map((item) => (
               <ChecklistItemComponent
                 key={item.id}
                 item={item}
                 onToggle={(itemId) => onToggleChecklistItem?.(note.id, itemId)}
-                onEdit={handleEditItem}
                 onDelete={handleDeleteItem}
-                onSplit={handleSplitItem}
-                isEditing={editingItem === item.id}
-                editContent={editingItem === item.id ? editingItemContent : undefined}
-                onEditContentChange={setEditingItemContent}
-                onStartEdit={handleStartEditItem}
-                onStopEdit={handleStopEditItem}
+                onClick={handleOpenItem}
                 readonly={readonly}
                 showDeleteButton={canEdit}
               />
@@ -304,6 +306,12 @@ export function Note({
             )}
           </div>
 
+          {note.description && (
+            <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
+              {note.description}
+            </p>
+          )}
+
           {/* Add Item Button */}
           {canEdit && (
             <Button
@@ -318,6 +326,17 @@ export function Note({
           )}
         </div>
       )}
+      {activeItem && (
+        <ChecklistItemModal
+          item={activeItem}
+          open={true}
+          onOpenChange={(open) => !open && setActiveItem(null)}
+          onSave={(content, comments) =>
+            handleSaveItem(activeItem.id, content, comments)
+          }
+        />
+      )}
     </div>
   );
 }
+

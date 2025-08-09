@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
-import type { ChecklistItem } from "@/components/checklist-item";
+import type { ChecklistItem, Comment } from "@/components/checklist-item";
 import { useTheme } from "next-themes";
 
 export default function BoardPage({
@@ -1191,7 +1191,8 @@ export default function BoardPage({
   const handleEditChecklistItem = useCallback(async (
     noteId: string,
     itemId: string,
-    content: string
+    content: string,
+    comments: Comment[]
   ) => {
     try {
       const currentNote = notes.find((n) => n.id === noteId);
@@ -1203,7 +1204,7 @@ export default function BoardPage({
           : boardId;
 
       const updatedItems = currentNote.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, content } : item
+        item.id === itemId ? { ...item, content, comments } : item
       );
 
 
@@ -1232,67 +1233,6 @@ export default function BoardPage({
   // Removed external debounce; Note component handles UX concerns
 
 
-  const handleSplitChecklistItem = async (
-    noteId: string,
-    itemId: string,
-    content: string,
-    cursorPosition: number
-  ) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote || !currentNote.checklistItems) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      const firstHalf = content.substring(0, cursorPosition).trim();
-      const secondHalf = content.substring(cursorPosition).trim();
-
-      // Update current item with first half
-      const updatedItems = currentNote.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, content: firstHalf } : item
-      );
-
-      // Find the current item's order to insert new item after it
-      const currentItem = currentNote.checklistItems.find(
-        (item) => item.id === itemId
-      );
-      const currentOrder = currentItem?.order || 0;
-
-      // Create new item with second half
-      const newItem = {
-        id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: secondHalf,
-        checked: false,
-        order: currentOrder + 0.5,
-      };
-
-      const allItems = [...updatedItems, newItem].sort(
-        (a, b) => a.order - b.order
-      );
-
-      // Update the note with both changes
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            checklistItems: allItems,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-      }
-    } catch (error) {
-      console.error("Error splitting checklist item:", error);
-    }
-  };
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
@@ -1569,7 +1509,6 @@ export default function BoardPage({
               onToggleChecklistItem={handleToggleChecklistItem}
               onEditChecklistItem={handleEditChecklistItem}
               onDeleteChecklistItem={handleDeleteChecklistItem}
-              onSplitChecklistItem={handleSplitChecklistItem}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
               style={{

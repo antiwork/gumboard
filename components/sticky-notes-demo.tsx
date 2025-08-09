@@ -5,7 +5,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Note as NoteComponent } from "@/components/note"
 import type { Note } from "@/components/note"
-import type { ChecklistItem } from "@/components/checklist-item"
+import type { ChecklistItem, Comment } from "@/components/checklist-item"
 import { Plus } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -13,6 +13,7 @@ const initialNotes: Note[] = [
   {
     id: "1",
     content: "",
+    description: "Launch tasks",
     color: "bg-green-200/70",
     done: false,
     createdAt: new Date().toISOString(),
@@ -23,7 +24,13 @@ const initialNotes: Note[] = [
       email: "sahil@example.com",
     },
     checklistItems: [
-      { id: "101", content: "Gumboard release by Friday", checked: false, order: 0 },
+      {
+        id: "101",
+        content: "Gumboard release by Friday",
+        checked: false,
+        order: 0,
+        comments: [{ id: "c1011", content: "Waiting on design" }],
+      },
       { id: "102", content: "Finance update by Friday", checked: false, order: 1 },
       { id: "103", content: "Jacquez", checked: true, order: 2 },
     ],
@@ -353,12 +360,17 @@ export function StickyNotesDemo() {
     handleUpdateNote(updatedNote)
   }
 
-  const handleEditChecklistItem = (noteId: string, itemId: string, content: string) => {
+  const handleEditChecklistItem = (
+    noteId: string,
+    itemId: string,
+    content: string,
+    comments: Comment[]
+  ) => {
     const note = notes.find((n) => n.id === noteId)
     if (!note || !note.checklistItems) return
 
     const updatedItems = note.checklistItems.map((item) =>
-      item.id === itemId ? { ...item, content } : item
+      item.id === itemId ? { ...item, content, comments } : item
     )
 
     const updatedNote = {
@@ -392,6 +404,7 @@ export function StickyNotesDemo() {
     const newNote: Note = {
       id: `${Date.now()}`,
       content: "",
+      description: "",
       color: randomColor,
       done: false,
       createdAt: new Date().toISOString(),
@@ -445,3 +458,4 @@ export function StickyNotesDemo() {
     </div>
   )
 }
+
