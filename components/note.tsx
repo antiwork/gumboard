@@ -282,8 +282,8 @@ export function Note({
           />
         </div>
       ) : (
-        <div className="flex-1 flex flex-col">
-          <div className="overflow-y-auto space-y-1 flex-1">
+        <div className="flex flex-col">
+          <div className="space-y-1">
             {/* Checklist Items */}
             {note.checklistItems?.map((item) => (
               <div key={item.id} className="space-y-1">
