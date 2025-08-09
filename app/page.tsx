@@ -10,6 +10,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import Image from "next/image";
 
 export default async function HomePage() {
   const session = await auth();
@@ -26,7 +27,7 @@ export default async function HomePage() {
             <div className="grid gap-12 lg:grid-cols-2 lg:items-start lg:gap-16 xl:gap-24">
               <div className="flex flex-col justify-center space-y-6 lg:mt-14">
                 <div className="flex items-center gap-3">
-                  <StickyNote className="h-9 w-9 text-blue-600 dark:text-blue-400" />
+                  <Image src="/logo/gumboard.svg" alt="Gumboard" width={50} height={50} />
                   <span className="text-4xl font-bold">Gumboard</span>
                 </div>
                 <div className="space-y-2">
