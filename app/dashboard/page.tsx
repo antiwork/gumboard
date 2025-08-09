@@ -492,10 +492,9 @@ export default function Dashboard() {
               <Link href={`/boards/${board.id}`} key={board.id}>
                 <Card className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                   <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                      <div>
                         <div className="flex items-center justify-between mb-1">
-                          <CardTitle className="text-lg dark:text-zinc-100">
+                          <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
                             {board.name}
                           </CardTitle>
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -503,6 +502,40 @@ export default function Dashboard() {
                             {board._count.notes === 1 ? "note" : "notes"}
                           </span>
                         </div>
+                        {(user?.id === board.createdBy || user?.isAdmin) && (
+                        <div className="flex justify-end items-center space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEditBoard(board);
+                            }}
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                            title={
+                              user?.id === board.createdBy
+                                ? "Edit board"
+                                : "Edit board (Admin)"
+                            }
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteBoard(board.id, board.name);
+                            }}
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                            title={
+                              user?.id === board.createdBy
+                                ? "Delete board"
+                                : "Delete board (Admin)"
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
                         {board.description && (
                           <CardDescription className="mt-1 dark:text-zinc-400">
                             {board.description}
@@ -545,42 +578,7 @@ export default function Dashboard() {
                             </button>
                           )}
                         </div>
-                      </div>
-                      {(user?.id === board.createdBy || user?.isAdmin) && (
-                        <div className="flex items-center space-x-1">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEditBoard(board);
-                            }}
-                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Edit board"
-                                : "Edit board (Admin)"
-                            }
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDeleteBoard(board.id, board.name);
-                            }}
-                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Delete board"
-                                : "Delete board (Admin)"
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                      </div>       
                   </CardHeader>
                 </Card>
               </Link>
