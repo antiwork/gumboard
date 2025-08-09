@@ -19,6 +19,22 @@ export interface User {
   isAdmin?: boolean;
 }
 
+export interface Comment {
+  id: string;
+  content: string;
+  checklistItemId: string;
+  noteId: string;
+  createdBy: string;
+  user: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+}
+
 export interface Board {
   id: string;
   name: string;
@@ -262,6 +278,8 @@ export function Note({
               <ChecklistItemComponent
                 key={item.id}
                 item={item}
+                noteId={note.id}
+                currentUser={currentUser}
                 onToggle={(itemId) => onToggleChecklistItem?.(note.id, itemId)}
                 onEdit={handleEditItem}
                 onDelete={handleDeleteItem}
