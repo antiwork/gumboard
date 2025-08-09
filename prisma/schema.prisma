@@ -55,9 +55,7 @@ model User {
   sessions       Session[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
-  organizationId String?
-  isAdmin        Boolean      @default(false) // Admin role for organization
-  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizations  UserOrganization[]
   invitedOrganizations OrganizationInvite[]
   createdSelfServeInvites OrganizationSelfServeInvite[]
   notes          Note[]
@@ -71,12 +69,25 @@ model Organization {
   slackWebhookUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  members   User[]
+  members   UserOrganization[]
   invites   OrganizationInvite[]
   boards    Board[]
   selfServeInvites OrganizationSelfServeInvite[]
 
   @@map("organizations")
+}
+
+model UserOrganization {
+  id             String       @id @default(cuid())
+  userId         String
+  organizationId String
+  role           OrganizationRole @default(MEMBER)
+  joinedAt       DateTime     @default(now())
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("user_organizations")
 }
 
 model Board {
@@ -148,6 +159,11 @@ enum InviteStatus {
   PENDING
   ACCEPTED
   DECLINED
+}
+
+enum OrganizationRole {
+  ADMIN
+  MEMBER
 }
 
 model VerificationToken {
