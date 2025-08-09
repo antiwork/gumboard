@@ -18,7 +18,8 @@ export async function GET(
       include: { 
         notes: {
           where: {
-            deletedAt: null // Only include non-deleted notes
+            deletedAt: null, // Only include non-deleted notes
+            done: false
           },
           include: {
             user: {
