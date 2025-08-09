@@ -446,149 +446,150 @@ export default function Dashboard() {
         )}
 
         {boards.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-            <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950">
-              <Link href="/boards/all-notes">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
-                          All Notes
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-blue-700 dark:text-blue-300">
-                        View notes from all boards
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Link>
-            </Card>
-
-            {/* Archive Board */}
-            <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
-              <Link href="/boards/archive">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
-                          Archive
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-gray-700 dark:text-gray-300">
-                        View archived notes
-                      </CardDescription>
-                    </div>
-                  </div>
-                </CardHeader>
-              </Link>
-            </Card>
-
-            {boards.map((board) => (
-              <Card
-                key={board.id}
-                className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800"
-              >
-                <Link href={`/boards/${board.id}`}>
+          <>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+              <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950">
+                <Link href="/boards/all-notes">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                          <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
+                            All Notes
+                          </CardTitle>
+                        </div>
+                        <CardDescription className="text-blue-700 dark:text-blue-300">
+                          View notes from all boards
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Link>
+              </Card>
+
+              {/* Archive Board */}
+              <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
+                <Link href="/boards/archive">
+                  <CardHeader className="pb-3">
+                    <div className="flex justify-between items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2 mb-1">
+                          <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                          <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
+                            Archive
+                          </CardTitle>
+                        </div>
+                        <CardDescription className="text-gray-700 dark:text-gray-300">
+                          View archived notes
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                </Link>
+              </Card>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6 mt-8">
+              {boards.map((board) => (
+                <Card
+                  key={board.id}
+                  className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 min-h-[220px] flex flex-col"
+                >
+                  <Link href={`/boards/${board.id}`} className="flex flex-col h-full">
+                    <CardHeader className="pb-3  flex-1 flex flex-col">
+                      <div className="flex-1 w-full flex flex-col">
                         <div className="flex items-center justify-between mb-1">
                           <CardTitle className="text-lg dark:text-zinc-100">
                             {board.name}
                           </CardTitle>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            {board._count.notes}{" "}
-                            {board._count.notes === 1 ? "note" : "notes"}
-                          </span>
+                          {(user?.id === board.createdBy || user?.isAdmin) && (
+                          <div className="flex justify-end items-center space-x-2">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleEditBoard(board);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                              title={
+                                user?.id === board.createdBy
+                                  ? "Edit board"
+                                  : "Edit board (Admin)"
+                              }
+                            >
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                handleDeleteBoard(board.id, board.name);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                              title={
+                                user?.id === board.createdBy
+                                  ? "Delete board"
+                                  : "Delete board (Admin)"
+                              }
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                         </div>
+                        <span className="inline-flex w-fit items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {board._count.notes}{" "}
+                            {board._count.notes <= 1 ? "note" : "notes"}
+                          </span>
+                      
                         {board.description && (
                           <CardDescription className="mt-1 dark:text-zinc-400">
                             {board.description}
                           </CardDescription>
                         )}
-                        
-                        <div className="mt-3 flex items-center justify-between" onClick={(e) => e.preventDefault()}>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              checked={board.isPublic}
-                              onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
-                              disabled={user?.id !== board.createdBy && !user?.isAdmin}
-                            />
-                            <span className="text-xs text-muted-foreground dark:text-zinc-400">
-                              {board.isPublic ? "Public" : "Private"}
-                            </span>
-                          </div>
-                          
-                          {board.isPublic && (
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleCopyPublicUrl(board.id);
-                              }}
-                              className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                              title="Copy public link"
-                            >
-                              {copiedBoardId === board.id ? (
-                                <>
-                                  <span>✓</span>
-                                  <span>Copied!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  <span>Copy link</span>
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </div>
                       </div>
-                      {(user?.id === board.createdBy || user?.isAdmin) && (
-                        <div className="flex items-center space-x-1">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEditBoard(board);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Edit board"
-                                : "Edit board (Admin)"
-                            }
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDeleteBoard(board.id, board.name);
-                            }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Delete board"
-                                : "Delete board (Admin)"
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                      <div className="mt-auto pt-3 w-full flex items-center justify-between" onClick={(e) => e.preventDefault()}>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            checked={board.isPublic}
+                            onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
+                            disabled={user?.id !== board.createdBy && !user?.isAdmin}
+                          />
+                          <span className="text-xs text-muted-foreground dark:text-zinc-400">
+                            {board.isPublic ? "Public" : "Private"}
+                          </span>
                         </div>
-                      )}
-                    </div>
-                  </CardHeader>
-                </Link>
-              </Card>
-            ))}
-          </div>
+                        {board.isPublic && (
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleCopyPublicUrl(board.id);
+                            }}
+                            className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                            title="Copy public link"
+                          >
+                            {copiedBoardId === board.id ? (
+                              <>
+                                <span>✓</span>
+                                <span>Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy link</span>
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </CardHeader>
+                  </Link>
+                </Card>
+              ))}
+            </div>
+          </>
         )}
         {boards.length === 0 && (
           <div className="text-center py-12">
