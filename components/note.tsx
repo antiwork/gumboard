@@ -171,7 +171,7 @@ export function Note({
         className
       )}
       style={{
-        backgroundColor: resolvedTheme === 'dark' ? "#374151" : note.color,
+        backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
         ...style,
       }}
     >

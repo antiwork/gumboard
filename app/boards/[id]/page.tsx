@@ -1579,7 +1579,7 @@ export default function BoardPage({
                 width: note.width,
                 height: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === 'dark' ? "#374151" : note.color,
+                backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
               }}
             />
           ))}
