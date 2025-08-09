@@ -21,17 +21,17 @@ export function getGitHubAvatarUrl(username: string, size: number = 200): string
 
 /**
  * Get the best available avatar URL for a user
- * Priority: uploadedImage > user.image (OAuth) > Gravatar > fallback to null
+ * Priority: uploadedProfileImage > user.image (OAuth) > Gravatar > fallback to null
  */
 export async function getUserAvatarUrl(
   email: string, 
   existingImage?: string | null,
-  profileImageId?: string | null,
+  uploadedProfileImageId?: string | null,
   size: number = 200
 ): Promise<string | null> {
   // If user has an uploaded profile image, prioritize it
-  if (profileImageId) {
-    return `/api/images/${profileImageId}`
+  if (uploadedProfileImageId) {
+    return `/api/images/${uploadedProfileImageId}`
   }
 
   // If user already has an external image (from OAuth), use it

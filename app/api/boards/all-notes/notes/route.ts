@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             image: true,
-            profileImageId: true
+            uploadedProfileImageId: true
           }
         },
         board: {
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
             name: true,
             email: true,
             image: true,
-            profileImageId: true
+            uploadedProfileImageId: true
           }
         },
         board: {

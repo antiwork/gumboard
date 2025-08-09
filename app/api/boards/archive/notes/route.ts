@@ -33,7 +33,7 @@ export async function GET() {
             name: true,
             email: true,
             image: true,
-            profileImageId: true
+            uploadedProfileImageId: true
           }
         },
         board: {

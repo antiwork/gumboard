@@ -1,7 +1,7 @@
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { getUserAvatarUrl, getGravatarUrl, isValidImageUrl } from "@/lib/avatar"
-import { deleteUploadedImage } from "@/lib/upload"
+import { deleteUploadedProfileImage } from "@/lib/upload"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function PUT(request: NextRequest) {
@@ -56,11 +56,11 @@ export async function PUT(request: NextRequest) {
       // Remove current image and uploaded image
       const currentUser = await db.user.findUnique({
         where: { id: session.user.id },
-        select: { profileImageId: true }
+        select: { uploadedProfileImageId: true }
       })
       
-      if (currentUser?.profileImageId) {
-        await deleteUploadedImage(`/api/images/${currentUser.profileImageId}`)
+      if (currentUser?.uploadedProfileImageId) {
+        await deleteUploadedProfileImage(`/api/images/${currentUser.uploadedProfileImageId}`)
       }
       
       finalImageUrl = null
@@ -83,7 +83,7 @@ export async function PUT(request: NextRequest) {
       where: { id: session.user.id },
       data: { 
         image: finalImageUrl,
-        profileImageId: source === 'remove' ? null : undefined
+        uploadedProfileImageId: source === 'remove' ? null : undefined
       },
       select: {
         id: true,
@@ -134,7 +134,7 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { email: true, image: true, profileImageId: true }
+      select: { email: true, image: true, uploadedProfileImageId: true }
     })
 
     if (!user) {
@@ -142,10 +142,10 @@ export async function GET() {
     }
 
     // Get available avatar options
-    const currentAvatarUrl = user.profileImageId 
-      ? `/api/images/${user.profileImageId}` 
+    const currentAvatarUrl = user.uploadedProfileImageId 
+      ? `/api/images/${user.uploadedProfileImageId}` 
       : user.image
-    const avatarUrl = await getUserAvatarUrl(user.email, user.image, user.profileImageId)
+    const avatarUrl = await getUserAvatarUrl(user.email, user.image, user.uploadedProfileImageId)
     const gravatarUrl = getGravatarUrl(user.email)
     
     // Check if user has GitHub account

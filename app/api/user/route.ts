@@ -22,7 +22,7 @@ export async function GET() {
                 name: true,
                 email: true,
                 image: true,
-                profileImageId: true,
+                uploadedProfileImageId: true,
                 isAdmin: true
               }
             }
@@ -36,8 +36,8 @@ export async function GET() {
     }
 
     // Get the current avatar URL (prioritize uploaded images)
-    const currentAvatarUrl = user.profileImageId 
-      ? `/api/images/${user.profileImageId}` 
+    const currentAvatarUrl = user.uploadedProfileImageId 
+      ? `/api/images/${user.uploadedProfileImageId}` 
       : user.image
 
     return NextResponse.json({
@@ -52,7 +52,7 @@ export async function GET() {
         slackWebhookUrl: user.organization.slackWebhookUrl,
         members: user.organization.members.map(member => ({
           ...member,
-          image: member.profileImageId ? `/api/images/${member.profileImageId}` : member.image
+          image: member.uploadedProfileImageId ? `/api/images/${member.uploadedProfileImageId}` : member.image
         }))
       } : null
     })

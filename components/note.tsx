@@ -16,14 +16,14 @@ export interface User {
   name: string | null;
   email: string;
   image?: string | null;
-  profileImageId?: string | null;
+  uploadedProfileImageId?: string | null;
   isAdmin?: boolean;
 }
 
 // Helper function to get the correct avatar URL
-function getUserAvatarUrl(user: { image?: string | null; profileImageId?: string | null }): string | undefined {
-  if (user.profileImageId) {
-    return `/api/images/${user.profileImageId}`
+function getUserAvatarUrl(user: { image?: string | null; uploadedProfileImageId?: string | null }): string | undefined {
+  if (user.uploadedProfileImageId) {
+    return `/api/images/${user.uploadedProfileImageId}`
   }
   return user.image || undefined
 }
@@ -47,7 +47,7 @@ export interface Note {
     name: string | null;
     email: string;
     image?: string | null;
-    profileImageId?: string | null;
+    uploadedProfileImageId?: string | null;
   };
   board?: {
     id: string;

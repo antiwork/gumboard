@@ -51,8 +51,8 @@ model User {
   email                   String                        @unique
   emailVerified           DateTime?
   image                   String? // URL for external images (OAuth, Gravatar, custom URLs)
-  profileImageId          String? // Reference to uploaded profile photo in database
-  profileImage            ProfileImage?                 @relation(fields: [profileImageId], references: [id])
+  uploadedProfileImageId  String? // Reference to uploaded profile photo in database
+  uploadedProfileImage    ProfileImage?                 @relation(fields: [uploadedProfileImageId], references: [id])
   accounts                Account[]
   sessions                Session[]
   createdAt               DateTime                      @default(now())
@@ -164,7 +164,7 @@ model VerificationToken {
 model ProfileImage {
   id        String   @id @default(cuid())
   data      Bytes    // Binary profile photo data
-  mimeType  String   // Image MIME type (always 'image/jpeg' for consistency)
+  mimeType  String   // Image MIME type (always 'image/webp' for better compression)
   size      Int      // File size in bytes
   width     Int      // Image width in pixels (always 200)
   height    Int      // Image height in pixels (always 200)

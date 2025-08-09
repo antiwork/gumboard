@@ -73,7 +73,7 @@ export async function PUT(
             name: true,
             email: true,
             image: true,
-            profileImageId: true
+            uploadedProfileImageId: true
           }
         }
       }
@@ -112,7 +112,7 @@ export async function PUT(
             name: true,
             email: true,
             image: true,
-            profileImageId: true
+            uploadedProfileImageId: true
           }
         },
         board: {

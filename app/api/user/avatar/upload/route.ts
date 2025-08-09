@@ -1,6 +1,6 @@
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
-import { processAndSaveImage, deleteUploadedImage } from "@/lib/upload"
+import { processAndSaveImage, deleteUploadedProfileImage } from "@/lib/upload"
 import { NextRequest, NextResponse } from "next/server"
 
 export async function POST(request: NextRequest) {
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Get current user to check for existing uploaded image
     const currentUser = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { image: true, profileImageId: true }
+      select: { image: true, uploadedProfileImageId: true }
     })
 
     // Process and save the new image
@@ -30,16 +30,16 @@ export async function POST(request: NextRequest) {
     const imageId = imageUrl.split('/').pop() // Extract ID from /api/images/{id}
 
     // Delete old uploaded image if it exists
-    if (currentUser?.profileImageId) {
-      await deleteUploadedImage(`/api/images/${currentUser.profileImageId}`)
+    if (currentUser?.uploadedProfileImageId) {
+      await deleteUploadedProfileImage(`/api/images/${currentUser.uploadedProfileImageId}`)
     }
 
-    // Update user's image and profileImageId in database
+    // Update user's image and uploadedProfileImageId in database
     const updatedUser = await db.user.update({
       where: { id: session.user.id },
       data: { 
         image: null, // Clear external image URL
-        profileImageId: imageId // Set reference to uploaded image
+        uploadedProfileImageId: imageId // Set reference to uploaded image
       },
       select: {
         id: true,

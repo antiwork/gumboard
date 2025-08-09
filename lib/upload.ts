@@ -41,34 +41,30 @@ export async function processAndSaveImage(file: File): Promise<string> {
         fit: 'cover',
         position: 'center'
       })
-      .jpeg({ quality: 85 }) // Convert to JPEG for consistency
+      .webp({ quality: 90 })
       .toBuffer()
 
-    // Get image metadata
     const metadata = await sharp(processedBuffer).metadata()
-    
-    // Save to database
+
     const profileImage = await db.profileImage.create({
       data: {
         data: processedBuffer,
-        mimeType: 'image/jpeg',
+        mimeType: 'image/webp',
         size: processedBuffer.length,
         width: metadata.width || AVATAR_SIZE,
         height: metadata.height || AVATAR_SIZE
       }
     })
 
-    // Return the database image URL
     return `/api/images/${profileImage.id}`
   } catch (error) {
     throw new Error('Failed to process image: ' + (error instanceof Error ? error.message : 'Unknown error'))
   }
 }
 
-// Delete uploaded image from database
-export async function deleteUploadedImage(imageUrl: string): Promise<void> {
+export async function deleteUploadedProfileImage(imageUrl: string): Promise<void> {
   if (!imageUrl.startsWith('/api/images/')) {
-    return // Not a database image, ignore
+    return
   }
 
   try {
@@ -79,7 +75,6 @@ export async function deleteUploadedImage(imageUrl: string): Promise<void> {
       })
     }
   } catch (error) {
-    console.error('Failed to delete uploaded image:', error)
-    // Don't throw error - image deletion is not critical
+    console.error('Failed to delete uploaded profile image:', error)
   }
 }
