@@ -21,6 +21,8 @@ export async function GET() {
                 id: true,
                 name: true,
                 email: true,
+                image: true,
+                profileImageId: true,
                 isAdmin: true
               }
             }
@@ -33,16 +35,25 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
+    // Get the current avatar URL (prioritize uploaded images)
+    const currentAvatarUrl = user.profileImageId 
+      ? `/api/images/${user.profileImageId}` 
+      : user.image
+
     return NextResponse.json({
       id: user.id,
       name: user.name,
       email: user.email,
+      image: currentAvatarUrl,
       isAdmin: user.isAdmin,
       organization: user.organization ? {
         id: user.organization.id,
         name: user.organization.name,
         slackWebhookUrl: user.organization.slackWebhookUrl,
-        members: user.organization.members
+        members: user.organization.members.map(member => ({
+          ...member,
+          image: member.profileImageId ? `/api/images/${member.profileImageId}` : member.image
+        }))
       } : null
     })
   } catch (error) {

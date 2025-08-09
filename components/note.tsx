@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useState } from "react";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,17 @@ export interface User {
   id: string;
   name: string | null;
   email: string;
+  image?: string | null;
+  profileImageId?: string | null;
   isAdmin?: boolean;
+}
+
+// Helper function to get the correct avatar URL
+function getUserAvatarUrl(user: { image?: string | null; profileImageId?: string | null }): string | undefined {
+  if (user.profileImageId) {
+    return `/api/images/${user.profileImageId}`
+  }
+  return user.image || undefined
 }
 
 export interface Board {
@@ -36,6 +46,8 @@ export interface Note {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
+    profileImageId?: string | null;
   };
   board?: {
     id: string;
@@ -176,6 +188,10 @@ export function Note({
       <div className="flex items-start justify-between mb-4 flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
+            <AvatarImage 
+              src={getUserAvatarUrl(note.user)}
+              alt={`${note.user.name || note.user.email} avatar`}
+            />
             <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
               {note.user.name
                 ? note.user.name.charAt(0).toUpperCase()

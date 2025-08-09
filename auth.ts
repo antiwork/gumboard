@@ -30,7 +30,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/auth/error",
   },
   callbacks: {
-    async signIn() {
+    async signIn({ user, account, profile }) {
+      if (account && profile && user.id) {
+        // Automatically set profile image from OAuth providers
+        let imageUrl = null
+        
+        if (account.provider === "google" && profile.picture) {
+          imageUrl = profile.picture
+        } else if (account.provider === "github" && profile.avatar_url) {
+          imageUrl = profile.avatar_url
+        }
+        
+        if (imageUrl && user.image !== imageUrl) {
+          await prisma.user.update({
+            where: { id: user.id },
+            data: { image: imageUrl }
+          })
+        }
+      }
       return true
     },
     async redirect({ url, baseUrl }) {

@@ -25,7 +25,9 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                email: true
+                email: true,
+                image: true,
+                profileImageId: true
               }
             }
           }
@@ -122,7 +124,9 @@ export async function POST(
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            image: true,
+            profileImageId: true
           }
         }
       }

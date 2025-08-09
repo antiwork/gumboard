@@ -23,6 +23,7 @@ import {
   Edit3,
   Archive,
 } from "lucide-react";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
 import {
@@ -318,13 +319,17 @@ export default function Dashboard() {
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center space-x-2 text-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 sm:px-3 py-2 dark:text-zinc-100"
               >
-                <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage 
+                    src={user?.image || undefined}
+                    alt={`${user?.name || user?.email} avatar`}
+                  />
+                  <AvatarFallback className="bg-blue-500 dark:bg-blue-600 text-white text-sm font-medium">
                     {user?.name
                       ? user.name.charAt(0).toUpperCase()
                       : user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                  </AvatarFallback>
+                </Avatar>
                 <span className="text-sm font-medium hidden sm:inline">
                   {user?.name?.split(" ")[0] || "User"}
                 </span>

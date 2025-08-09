@@ -35,7 +35,9 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            image: true,
+            profileImageId: true
           }
         },
         board: {
@@ -107,7 +109,9 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            image: true,
+            profileImageId: true
           }
         },
         board: {

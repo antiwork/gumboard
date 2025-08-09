@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
+import { ProfileImagePicker } from "@/components/profile-image-picker";
 import type { User } from "@/components/note";
 
 export default function ProfileSettingsPage() {
@@ -83,6 +84,20 @@ export default function ProfileSettingsPage() {
           <p className="text-muted-foreground dark:text-zinc-400">
             Manage your personal information and preferences.
           </p>
+        </div>
+
+        {/* Profile Picture Section */}
+        <div className="space-y-4">
+          <ProfileImagePicker 
+            userEmail={user?.email || ""}
+            userName={user?.name || undefined}
+            currentImage={user?.image}
+            showTitle={true}
+            size="md"
+            onImageSelected={(imageUrl) => {
+              setUser(prev => prev ? { ...prev, image: imageUrl } : null)
+            }}
+          />
         </div>
 
         <div className="space-y-4">

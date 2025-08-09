@@ -71,7 +71,9 @@ export async function PUT(
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            image: true,
+            profileImageId: true
           }
         }
       }
@@ -108,7 +110,9 @@ export async function PUT(
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            image: true,
+            profileImageId: true
           }
         },
         board: {

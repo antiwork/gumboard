@@ -18,6 +18,7 @@ import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 import {
   AlertDialog,
@@ -1497,13 +1498,17 @@ export default function BoardPage({
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center space-x-2 text-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-md px-2 py-1"
               >
-                <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
+                <Avatar className="w-8 h-8">
+                  <AvatarImage 
+                    src={user?.image || undefined}
+                    alt={`${user?.name || user?.email} avatar`}
+                  />
+                  <AvatarFallback className="bg-blue-500 dark:bg-blue-600 text-white text-sm font-medium">
                     {user?.name
                       ? user.name.charAt(0).toUpperCase()
                       : user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                  </AvatarFallback>
+                </Avatar>
                 <span className="text-sm font-medium hidden md:inline">
                   {user?.name?.split(" ")[0] || "User"}
                 </span>

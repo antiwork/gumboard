@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
+import { ProfileImagePicker } from "@/components/profile-image-picker"
 
 async function updateUserName(formData: FormData) {
   "use server"
@@ -73,17 +74,24 @@ export default async function ProfileSetup() {
           {/* Profile Setup Card */}
           <Card className="border-2">
             <CardHeader className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">
-                  {session.user.email?.charAt(0).toUpperCase()}
-                </span>
-              </div>
               <CardTitle className="text-xl">Welcome!</CardTitle>
               <CardDescription className="text-base">
                 {session.user.email}
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-6">
+              {/* Profile Picture Selection */}
+              <div>
+                <ProfileImagePicker 
+                  userEmail={session.user.email!}
+                  userName={session.user.name || undefined}
+                  currentImage={session.user.image}
+                  showTitle={true}
+                  size="lg"
+                />
+              </div>
+
+              {/* Name Input */}
               <form action={updateUserName} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Your Name</Label>
@@ -98,7 +106,7 @@ export default async function ProfileSetup() {
                 </div>
                 
                 <Button type="submit" className="w-full">
-                  Save
+                  Continue to Dashboard
                 </Button>
               </form>
             </CardContent>
