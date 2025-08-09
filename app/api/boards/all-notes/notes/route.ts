@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { content, color, boardId } = await request.json()
-    
+
     if (!boardId) {
       return NextResponse.json({ error: "Board ID is required" }, { status: 400 })
     }
