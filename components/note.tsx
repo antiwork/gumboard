@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useLayoutEffect, useCallback, useRef } from "react";
 
 // Core domain types
 export interface User {
@@ -57,6 +57,11 @@ interface NoteProps {
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
+  onAddChecklistItem?: (noteId: string, content: string) => void;
+  onToggleChecklistItem?: (noteId: string, itemId: string) => void;
+  onEditChecklistItem?: (noteId: string, itemId: string, content: string) => void;
+  onDeleteChecklistItem?: (noteId: string, itemId: string) => void;
+  onSplitChecklistItem?: (noteId: string, itemId: string, content: string, cursorPosition: number) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -70,6 +75,11 @@ export function Note({
   onUpdate,
   onDelete,
   onArchive,
+  onAddChecklistItem,
+  onToggleChecklistItem,
+  onEditChecklistItem,
+  onDeleteChecklistItem,
+  onSplitChecklistItem,
   readonly = false,
   showBoardName = false,
   className,
@@ -80,6 +90,7 @@ export function Note({
   const [editContent, setEditContent] = useState(note.content);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
+  const contentRef = useRef<HTMLDivElement>(null);
   const [addingItem, setAddingItem] = useState(
     !readonly &&
     currentUser &&
@@ -87,7 +98,6 @@ export function Note({
     (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
-  const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -468,8 +478,8 @@ export function Note({
           />
         </div>
       ) : (
-        <div className="flex flex-col">
-          <div className="overflow-y-auto space-y-1">
+        <div className="flex-1 flex flex-col">
+          <div className="overflow-y-auto space-y-1 flex-1">
             {/* Checklist Items */}
             {note.checklistItems?.map((item) => (
               <ChecklistItemComponent
