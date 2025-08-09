@@ -731,10 +731,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const newItem: ChecklistItem = {
         id: `item-${Date.now()}`,
@@ -839,10 +836,7 @@ export default function BoardPage({
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       // Store original content for potential rollback
       const originalContent = currentNote.content;
@@ -914,10 +908,7 @@ export default function BoardPage({
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === deleteNoteDialog.noteId);
-      const targetBoardId =
-        boardId === "all-notes" && currentNote?.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${deleteNoteDialog.noteId}`,
@@ -952,9 +943,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
       
-      const targetBoardId = boardId === "all-notes" && currentNote.board?.id 
-        ? currentNote.board.id 
-        : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const archivedNote = { ...currentNote, done: true };
       setNotes(notes.map((n) => (n.id === noteId ? archivedNote : n)));
@@ -1051,10 +1040,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote || !currentNote.checklistItems) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       // OPTIMISTIC UPDATE
       const updatedItems = currentNote.checklistItems.map((item) =>
@@ -1123,10 +1109,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote || !currentNote.checklistItems) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       // Store the item being deleted for potential rollback
       const deletedItem = currentNote.checklistItems.find((item) => item.id === itemId);
@@ -1197,10 +1180,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote || !currentNote.checklistItems) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const updatedItems = currentNote.checklistItems.map((item) =>
         item.id === itemId ? { ...item, content } : item
@@ -1242,10 +1222,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote || !currentNote.checklistItems) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();

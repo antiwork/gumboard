@@ -230,6 +230,11 @@ test.describe('Add Task Button', () => {
                     order: 0
                   }
                 ],
+                board: {
+                  id: 'test-board',
+                  name: 'Test Board',
+                },
+                boardId: 'test-board',
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 user: {

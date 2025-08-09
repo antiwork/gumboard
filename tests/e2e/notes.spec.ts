@@ -91,6 +91,11 @@ test.describe('Note Management with Newlines', () => {
               }],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
+              board: {
+                  id: 'test-board',
+                  name: 'Test Board',
+              },
+              boardId: 'test-board',
               user: {
                 id: 'test-user',
                 name: 'Test User',
@@ -206,6 +211,11 @@ test.describe('Note Management with Newlines', () => {
               }],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
+              board: {
+                  id: 'test-board',
+                  name: 'Test Board',
+                },
+                boardId: 'test-board',
               user: {
                 id: 'test-user',
                 name: 'Test User',
