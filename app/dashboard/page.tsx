@@ -557,7 +557,7 @@ export default function Dashboard() {
                               e.stopPropagation();
                               handleEditBoard(board);
                             }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
                             title={
                               user?.id === board.createdBy
                                 ? "Edit board"
@@ -572,7 +572,7 @@ export default function Dashboard() {
                               e.stopPropagation();
                               handleDeleteBoard(board.id, board.name);
                             }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
                             title={
                               user?.id === board.createdBy
                                 ? "Delete board"

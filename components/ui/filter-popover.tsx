@@ -94,7 +94,7 @@ function FilterPopover({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 mt-2 w-80 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 p-4">
+        <div className="fixed sm:absolute left-0 w-full sm:w-80 mt-2 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 p-4">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium text-foreground dark:text-zinc-100">Filters</h3>

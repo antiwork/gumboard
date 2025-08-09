@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
+import { useTheme } from "next-themes";
 
 export default function BoardPage({
   params,
@@ -39,6 +40,7 @@ export default function BoardPage({
 }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -973,8 +975,8 @@ export default function BoardPage({
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
       <div className="bg-card dark:bg-zinc-900 border-b border-border dark:border-zinc-800 shadow-sm">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
+        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:space-x-3 w-full sm:w-auto">
             {/* Company Name */}
             <Link
               href="/dashboard"
@@ -986,10 +988,10 @@ export default function BoardPage({
             </Link>
 
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown block">
+            <div className="relative board-dropdown flex-1 sm:flex-none">
               <button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center border border-border dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer"
+                className="flex items-center justify-between border border-border dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer w-full sm:w-auto"
               >
                 <div>
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
@@ -1004,7 +1006,7 @@ export default function BoardPage({
               </button>
 
               {showBoardDropdown && (
-                <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
+                <div className="fixed sm:absolute left-0 mt-2 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
                   <div className="py-1">
                     {/* All Notes Option */}
                     <Link
@@ -1092,7 +1094,7 @@ export default function BoardPage({
             </div>
 
             {/* Filter Popover */}
-            <div className="block">
+            <div className="relative board-dropdown flex-1 sm:flex-none">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
@@ -1113,9 +1115,9 @@ export default function BoardPage({
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="flex items-center space-x-2 px-3 ">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
             {/* Search Box */}
-            <div className="relative block">
+            <div className="relative flex-1 sm:flex-none min-w-[150px]">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
@@ -1128,7 +1130,7 @@ export default function BoardPage({
                   setSearchTerm(e.target.value);
                   updateURL(e.target.value);
                 }}
-                className="w-64 pl-10 pr-4 py-2 border border-border dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-border dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
               {searchTerm && (
                 <button
@@ -1151,7 +1153,7 @@ export default function BoardPage({
                   handleAddNote();
                 }
               }}
-              className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
+              className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
             >
               <Pencil className="w-4 h-4" />
             </Button>
@@ -1239,12 +1241,7 @@ export default function BoardPage({
                 width: note.width,
                 height: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor:
-                  typeof window !== "undefined" &&
-                  window.matchMedia &&
-                  window.matchMedia("(prefers-color-scheme: dark)").matches
-                    ? `${note.color}20`
-                    : note.color,
+                backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
               }}
             />
           ))}
@@ -1257,7 +1254,7 @@ export default function BoardPage({
             dateRange.startDate ||
             dateRange.endDate ||
             selectedAuthor) && (
-            <div className="flex flex-col items-center justify-center h-96 text-gray-500 dark:text-gray-400">
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-gray-500 dark:text-gray-400">
               <Search className="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500" />
               <div className="text-xl mb-2">No notes found</div>
               <div className="text-sm mb-4 text-center">
@@ -1303,7 +1300,7 @@ export default function BoardPage({
           )}
 
         {notes.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-96 text-gray-500 dark:text-gray-400">
+          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
             <div className="text-xl mb-2">No notes yet</div>
             <div className="text-sm mb-4">
               Click &ldquo;Add Note&rdquo; to get started
