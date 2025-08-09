@@ -3,6 +3,7 @@ import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { sendSlackMessage, formatNoteForSlack, hasValidContent, shouldSendNotification } from "@/lib/slack"
 import { NOTE_COLORS } from "@/lib/constants"
+import { checkEtagMatch, createEtagResponse } from "@/lib/etag"
 
 // Get all notes for a board
 export async function GET(
@@ -13,52 +14,74 @@ export async function GET(
     const session = await auth()
     const boardId = (await params).id
 
-    const board = await db.board.findUnique({
+    // First check board exists and permissions with minimal data
+    const boardMeta = await db.board.findUnique({
       where: { id: boardId },
-      include: { 
-        notes: {
-          where: {
-            deletedAt: null // Only include non-deleted notes
-          },
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            }
-          }
-        }
+      select: { 
+        id: true,
+        isPublic: true,
+        organizationId: true
       }
     })
 
-    if (!board) {
+    if (!boardMeta) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 })
     }
 
-    if (board.isPublic) {
-      return NextResponse.json({ notes: board.notes })
+    // Check permissions for non-public boards
+    if (!boardMeta.isPublic) {
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      }
+
+      const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        include: { organization: true }
+      })
+
+      if (!user?.organizationId) {
+        return NextResponse.json({ error: "No organization found" }, { status: 403 })
+      }
+
+      if (boardMeta.organizationId !== user.organizationId) {
+        return NextResponse.json({ error: "Access denied" }, { status: 403 })
+      }
     }
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
+    // Generate ETag from timestamp and count (minimal DB query)
+    const [latestNote, noteCount] = await Promise.all([
+      db.note.findFirst({
+        where: { boardId, deletedAt: null },
+        orderBy: { updatedAt: 'desc' },
+        select: { updatedAt: true }
+      }),
+      db.note.count({
+        where: { boardId, deletedAt: null }
+      })
+    ])
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { organization: true }
+    const etag = `${noteCount}-${latestNote?.updatedAt?.toISOString() || 'empty'}`
+    
+    // Check if client has matching ETag
+    const etagMatch = checkEtagMatch(request, etag)
+    if (etagMatch) return etagMatch
+
+    // Only fetch full notes if ETag doesn't match
+    const notes = await db.note.findMany({
+      where: { boardId, deletedAt: null },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
     })
 
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 })
-    }
-
-    if (board.organizationId !== user.organizationId) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 })
-    }
-
-    return NextResponse.json({ notes: board.notes })
+    return createEtagResponse({ notes }, etag)
   } catch (error) {
     console.error("Error fetching notes:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

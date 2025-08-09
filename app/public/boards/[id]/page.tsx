@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
+import { useBoardNotesPolling } from "@/lib/hooks/useBoardNotesPolling";
 import type { Note, Board } from "@/components/note";
 
 export default function PublicBoardPage({
@@ -30,6 +31,16 @@ export default function PublicBoardPage({
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  
+  
+  useBoardNotesPolling({
+    boardId,
+    enabled: !loading && !!boardId,
+    pollingInterval: 5000, 
+    onUpdate: useCallback((data: { notes: Note[] }) => {
+      setNotes(data.notes);
+    }, []),
+  });
 
   const getResponsiveConfig = () => {
     if (typeof window === "undefined")
@@ -323,6 +334,7 @@ export default function PublicBoardPage({
     });
   };
 
+
   useEffect(() => {
     const initializeParams = async () => {
       const resolvedParams = await params;
@@ -477,6 +489,7 @@ export default function PublicBoardPage({
                 className="min-w-fit"
               />
             </div>
+            
           </div>
 
           <div className="flex items-center space-x-2 px-3">

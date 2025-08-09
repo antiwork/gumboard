@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test'
 
 test.describe('Note Management with Newlines', () => {
+  let createdNotes: any[] = [];
+  
   test.beforeEach(async ({ page }) => {
+    createdNotes = [];
     await page.route('**/api/auth/session', async (route) => {
       await route.fulfill({
         status: 200,
@@ -69,35 +72,35 @@ test.describe('Note Management with Newlines', () => {
           status: 200,
           contentType: 'application/json',
           body: JSON.stringify({
-            notes: [],
+            notes: createdNotes,
           }),
         });
       } else if (route.request().method() === 'POST') {
         const postData = await route.request().postDataJSON();
+        const newNote = {
+          id: 'new-note-id',
+          content: '',
+          color: '#fef3c7',
+          done: false,
+          checklistItems: postData.checklistItems || [{
+            id: `item-${Date.now()}`,
+            content: '',
+            checked: false,
+            order: 0,
+          }],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          user: {
+            id: 'test-user',
+            name: 'Test User',
+            email: 'test@example.com',
+          },
+        };
+        createdNotes.push(newNote);
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
-          body: JSON.stringify({
-            note: {
-              id: 'new-note-id',
-              content: '',
-              color: '#fef3c7',
-              done: false,
-              checklistItems: postData.checklistItems || [{
-                id: `item-${Date.now()}`,
-                content: '',
-                checked: false,
-                order: 0,
-              }],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: 'test-user',
-                name: 'Test User',
-                email: 'test@example.com',
-              },
-            },
-          }),
+          body: JSON.stringify({ note: newNote }),
         });
       }
     });
@@ -212,6 +215,8 @@ test.describe('Note Management with Newlines', () => {
     
     await page.waitForTimeout(500);
     
+    await page.click('button:has-text("Add task")');
+    
     const input = page.locator('input.bg-transparent');
     await expect(input).toBeVisible();
     await input.fill('Test checklist item');
@@ -228,6 +233,8 @@ test.describe('Note Management with Newlines', () => {
     await page.click('button:has-text("Add Your First Note")');
     
     await page.waitForTimeout(500);
+    
+    await page.click('button:has-text("Add task")');
     
     const input = page.locator('input.bg-transparent');
     await expect(input).toBeVisible();
