@@ -1248,6 +1248,11 @@ export default function BoardPage({
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();
 
+      if (!secondHalf) {
+        await handleEditChecklistItem(noteId, itemId, firstHalf);
+        return;
+      }
+
       // Update current item with first half
       const updatedItems = currentNote.checklistItems.map((item) =>
         item.id === itemId ? { ...item, content: firstHalf } : item

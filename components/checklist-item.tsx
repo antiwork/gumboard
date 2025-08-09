@@ -45,13 +45,29 @@ export function ChecklistItem({
   showDeleteButton = true,
   className,
 }: ChecklistItemProps) {
+  const handleBlur = () => {
+    if (isEditing && editContent !== undefined && onEdit) {
+      onEdit(item.id, editContent);
+    }
+    onStopEdit?.();
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       const target = e.target as HTMLInputElement;
-      const cursorPosition = target.selectionStart || 0;
+      const cursorPosition = target.selectionStart ?? 0;
       if (onSplit && editContent !== undefined) {
-        onSplit(item.id, editContent, cursorPosition);
+        const hasContentAfterCursor =
+          cursorPosition < editContent.length &&
+          editContent.slice(cursorPosition).trim() !== "";
+        if (hasContentAfterCursor) {
+          onSplit(item.id, editContent, cursorPosition);
+        } else {
+          handleBlur();
+        }
+      } else {
+        handleBlur();
       }
     }
     if (e.key === "Escape") {
@@ -61,13 +77,6 @@ export function ChecklistItem({
       e.preventDefault();
       onDelete?.(item.id);
     }
-  };
-
-  const handleBlur = () => {
-    if (isEditing && editContent !== undefined && onEdit) {
-      onEdit(item.id, editContent);
-    }
-    onStopEdit?.();
   };
 
   return (

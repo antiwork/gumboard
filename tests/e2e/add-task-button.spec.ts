@@ -432,4 +432,91 @@ test.describe('Add Task Button', () => {
     await expect(newItemInput).not.toBeVisible();
     expect(noteUpdateCalled).toBe(false);
   });
+
+  test('should not create blank item when editing and pressing Enter', async ({ page }) => {
+    let updatedChecklistItems: any[] = [];
+
+    await page.route('**/api/boards/test-board/notes', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            notes: [
+              {
+                id: 'checklist-note',
+                content: '',
+                color: '#fef3c7',
+                done: false,
+                x: 100,
+                y: 100,
+                width: 200,
+                height: 150,
+                checklistItems: [
+                  {
+                    id: 'item-1',
+                    content: 'Existing task',
+                    checked: false,
+                    order: 0,
+                  },
+                ],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                user: {
+                  id: 'test-user',
+                  name: 'Test User',
+                  email: 'test@example.com',
+                },
+              },
+            ],
+          }),
+        });
+      }
+    });
+
+    await page.route('**/api/boards/test-board/notes/checklist-note', async (route) => {
+      if (route.request().method() === 'PUT') {
+        const requestBody = await route.request().postDataJSON();
+        updatedChecklistItems = requestBody.checklistItems;
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            note: {
+              id: 'checklist-note',
+              content: '',
+              color: '#fef3c7',
+              done: false,
+              x: 100,
+              y: 100,
+              width: 200,
+              height: 150,
+              checklistItems: requestBody.checklistItems,
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              user: {
+                id: 'test-user',
+                name: 'Test User',
+                email: 'test@example.com',
+              },
+            },
+          }),
+        });
+      }
+    });
+
+    await page.goto('/boards/test-board');
+
+    const item = page.locator('text=Existing task');
+    await expect(item).toBeVisible();
+    await item.click();
+
+    const editInput = page.locator('input[value="Existing task"]');
+    await expect(editInput).toBeFocused();
+    await editInput.fill('Edited task');
+    await editInput.press('Enter');
+
+    expect(updatedChecklistItems).toHaveLength(1);
+    expect(updatedChecklistItems[0].content).toBe('Edited task');
+  });
 });
