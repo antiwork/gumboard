@@ -4,7 +4,7 @@ import * as React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Trash2, MessageSquare } from "lucide-react";
 
 export interface Comment {
   id: string;
@@ -64,6 +64,16 @@ export function ChecklistItem({
       >
         {item.content}
       </span>
+
+      {item.comments && item.comments.length > 0 && (
+        <button
+          onClick={() => !readonly && onClick?.(item.id)}
+          className="flex items-center gap-1 text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
+        >
+          <MessageSquare className="h-3 w-3" />
+          <span className="text-xs">{item.comments.length}</span>
+        </button>
+      )}
 
       {showDeleteButton && !readonly && (
         <Button
