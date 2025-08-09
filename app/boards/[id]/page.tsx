@@ -1548,13 +1548,13 @@ export default function BoardPage({
         ref={boardRef}
         className="relative w-full bg-gray-50 dark:bg-zinc-950"
         style={{
-          height: boardHeight,
+          height: notes.length > 0 ? boardHeight : undefined,
           minHeight: "calc(100vh - 64px)", // Account for header height
         }}
       >
 
         {/* Notes */}
-        <div className="relative w-full h-full">
+        <div className="absolute inset-0">
           {layoutNotes.map((note) => (
             <NoteCard
               key={note.id}
@@ -1590,7 +1590,7 @@ export default function BoardPage({
             dateRange.startDate ||
             dateRange.endDate ||
             selectedAuthor) && (
-            <div className="flex flex-col items-center justify-center h-96 text-gray-500 dark:text-gray-400">
+            <div className="absolute inset-0 z-10 flex flex-col items-center justify-center px-4 text-center text-gray-500 dark:text-gray-400">
               <Search className="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500" />
               <div className="text-xl mb-2">No notes found</div>
               <div className="text-sm mb-4 text-center">
