@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive } from "lucide-react";
+import { useTheme } from "next-themes";
 
 // Core domain types
 export interface User {
@@ -82,6 +83,7 @@ export function Note({
   style,
 }: NoteProps) {
   const [isEditing, setIsEditing] = useState(false);
+  const { resolvedTheme } = useTheme();
   const [editContent, setEditContent] = useState(note.content);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
@@ -169,7 +171,7 @@ export function Note({
         className
       )}
       style={{
-        backgroundColor: typeof window !== "undefined" && document.documentElement.classList.contains('dark') ? "#374151" : note.color,
+        backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
         ...style,
       }}
     >

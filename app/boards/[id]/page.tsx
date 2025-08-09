@@ -32,6 +32,7 @@ import {
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import type { ChecklistItem } from "@/components/checklist-item";
+import { useTheme } from "next-themes";
 
 export default function BoardPage({
   params,
@@ -40,6 +41,7 @@ export default function BoardPage({
 }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1577,7 +1579,7 @@ export default function BoardPage({
                 width: note.width,
                 height: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: typeof window !== "undefined" && document.documentElement.classList.contains('dark') ? "#374151" : note.color,
+                backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
               }}
             />
           ))}
