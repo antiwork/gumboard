@@ -7,11 +7,17 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 
+export interface Comment {
+  id: string;
+  content: string;
+}
+
 export interface ChecklistItem {
   id: string;
   content: string;
   checked: boolean;
   order: number;
+  comments?: Comment[];
 }
 
 interface ChecklistItemProps {

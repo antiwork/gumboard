@@ -98,9 +98,11 @@ model Board {
 model Note {
   id        String @id @default(cuid())
   content   String @db.Text
+  description String?
   color     String @default("#fef3c7") // Default yellow color
   done      Boolean @default(false) // Track completion status
   checklistItems Json? // Store checklist items as JSON
+  comments Json?
   slackMessageId String?
   boardId   String
   board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)

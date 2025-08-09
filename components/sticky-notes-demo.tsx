@@ -13,6 +13,7 @@ const initialNotes: Note[] = [
   {
     id: "1",
     content: "",
+    description: "Launch tasks",
     color: "bg-green-200/70",
     done: false,
     createdAt: new Date().toISOString(),
@@ -23,10 +24,17 @@ const initialNotes: Note[] = [
       email: "sahil@example.com",
     },
     checklistItems: [
-      { id: "101", content: "Gumboard release by Friday", checked: false, order: 0 },
+      {
+        id: "101",
+        content: "Gumboard release by Friday",
+        checked: false,
+        order: 0,
+        comments: [{ id: "c1011", content: "Waiting on design" }],
+      },
       { id: "102", content: "Finance update by Friday", checked: false, order: 1 },
       { id: "103", content: "Jacquez", checked: true, order: 2 },
     ],
+    comments: [{ id: "n1c1", content: "Kickoff scheduled" }],
   },
   {
     id: "2",
@@ -392,6 +400,7 @@ export function StickyNotesDemo() {
     const newNote: Note = {
       id: `${Date.now()}`,
       content: "",
+      description: "",
       color: randomColor,
       done: false,
       createdAt: new Date().toISOString(),
@@ -404,6 +413,7 @@ export function StickyNotesDemo() {
       checklistItems: [
         { id: `${Date.now() + 1}`, content: "New to-do", checked: false, order: 0 },
       ],
+      comments: [],
     }
     setNotes([newNote, ...notes])
   }
