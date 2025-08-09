@@ -61,6 +61,7 @@ model User {
   invitedOrganizations OrganizationInvite[]
   createdSelfServeInvites OrganizationSelfServeInvite[]
   notes          Note[]
+  comments       Comment[]
 
   @@map("users")
 }
@@ -106,11 +107,27 @@ model Note {
   board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   createdBy String
   user      User   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  comments  Comment[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete timestamp
 
   @@map("notes")
+}
+
+model Comment {
+  id              String    @id @default(cuid())
+  content         String
+  noteId          String
+  createdBy       String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  deletedAt       DateTime?
+  checklistItemId String
+  user            User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  note            Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  @@map("comments")
 }
 
 model OrganizationInvite {
