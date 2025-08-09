@@ -46,7 +46,7 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6 dark:text-zinc-400">
       <div className="space-y-2">
         <Label htmlFor="organizationName">Organization Name</Label>
         <Input
