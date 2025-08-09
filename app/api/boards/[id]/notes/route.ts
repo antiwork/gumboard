@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { sendSlackMessage, formatNoteForSlack, hasValidContent, shouldSendNotification } from "@/lib/slack"
+import { sendDiscordMessage, formatNoteForDiscord } from "@/lib/discord"
 import { NOTE_COLORS } from "@/lib/constants"
 
 // Get all notes for a board
@@ -128,18 +129,31 @@ export async function POST(
       }
     })
 
-    if (user.organization?.slackWebhookUrl && hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)) {
-      const slackMessage = formatNoteForSlack(note, board.name, user.name || user.email)
-      const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
-        text: slackMessage,
-        username: 'Gumboard',
-        icon_emoji: ':clipboard:'
-      })
+    if (hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)) {
+      const author = user.name || user.email
 
-      if (messageId) {
-        await db.note.update({
-          where: { id: note.id },
-          data: { slackMessageId: messageId }
+      if (user.organization?.slackWebhookUrl) {
+        const slackMessage = formatNoteForSlack(note, board.name, author)
+        const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
+          text: slackMessage,
+          username: 'Gumboard',
+          icon_emoji: ':clipboard:'
+        })
+
+        if (messageId) {
+          await db.note.update({
+            where: { id: note.id },
+            data: { slackMessageId: messageId }
+          })
+        }
+      }
+
+      const discordWebhookUrl = user.organization?.discordWebhookUrl
+      if (discordWebhookUrl) {
+        const contentText = formatNoteForDiscord(note, board.name, author)
+        await sendDiscordMessage(discordWebhookUrl, {
+          content: contentText,
+          username: 'Gumboard'
         })
       }
     }

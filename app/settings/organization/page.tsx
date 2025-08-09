@@ -37,6 +37,7 @@ export type UserWithOrganization = User & {
     id: string;
     name: string;
     slackWebhookUrl?: string | null;
+    discordWebhookUrl?: string | null;
     members: {
       id: string;
       name: string | null;
@@ -76,6 +77,8 @@ export default function OrganizationSettingsPage() {
   const [originalOrgName, setOriginalOrgName] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
+  const [discordWebhookUrl, setDiscordWebhookUrl] = useState("");
+  const [originalDiscordWebhookUrl, setOriginalDiscordWebhookUrl] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -119,10 +122,13 @@ export default function OrganizationSettingsPage() {
         setUser(userData);
         const orgNameValue = userData.organization?.name || "";
         const slackWebhookValue = userData.organization?.slackWebhookUrl || "";
+        const discordWebhookValue = userData.organization?.discordWebhookUrl || "";
         setOrgName(orgNameValue);
         setOriginalOrgName(orgNameValue);
         setSlackWebhookUrl(slackWebhookValue);
         setOriginalSlackWebhookUrl(slackWebhookValue);
+        setDiscordWebhookUrl(discordWebhookValue);
+        setOriginalDiscordWebhookUrl(discordWebhookValue);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -172,6 +178,7 @@ export default function OrganizationSettingsPage() {
         body: JSON.stringify({
           name: orgName,
           slackWebhookUrl: slackWebhookUrl,
+          discordWebhookUrl: discordWebhookUrl,
         }),
       });
 
@@ -181,6 +188,7 @@ export default function OrganizationSettingsPage() {
         // Update the original values to reflect the saved state
         setOriginalOrgName(orgName);
         setOriginalSlackWebhookUrl(slackWebhookUrl);
+        setOriginalDiscordWebhookUrl(discordWebhookUrl);
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -551,6 +559,69 @@ export default function OrganizationSettingsPage() {
               disabled={
                 saving ||
                 slackWebhookUrl === originalSlackWebhookUrl ||
+                !user?.isAdmin
+              }
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+              title={
+                !user?.isAdmin
+                  ? "Only admins can update organization settings"
+                  : undefined
+              }
+            >
+              {saving ? "Saving..." : "Save changes"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Discord Integration */}
+      <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+              Discord Integration
+            </h3>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Configure Discord notifications for notes and todos.
+            </p>
+          </div>
+
+          <div>
+            <Label
+              htmlFor="discordWebhookUrl"
+              className="text-zinc-800 dark:text-zinc-200"
+            >
+              Discord Webhook URL
+            </Label>
+            <Input
+              id="discordWebhookUrl"
+              type="url"
+              value={discordWebhookUrl}
+              onChange={(e) => setDiscordWebhookUrl(e.target.value)}
+              placeholder="https://discord.com/api/webhooks/..."
+              className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              disabled={!user?.isAdmin}
+            />
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              Follow the guide to create a webhook in your Discord server. {""}
+              <a
+                href="https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+              >
+                Discord Webhooks Help
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </a>
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <Button
+              onClick={handleSaveOrganization}
+              disabled={
+                saving ||
+                discordWebhookUrl === originalDiscordWebhookUrl ||
                 !user?.isAdmin
               }
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"

@@ -42,6 +42,7 @@ export async function GET() {
         id: user.organization.id,
         name: user.organization.name,
         slackWebhookUrl: user.organization.slackWebhookUrl,
+        discordWebhookUrl: user.organization.discordWebhookUrl,
         members: user.organization.members
       } : null
     })
