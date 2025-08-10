@@ -447,8 +447,8 @@ export default function Dashboard() {
 
         {boards.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-            <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950">
-              <Link href="/boards/all-notes">
+            <Link href="/boards/all-notes">
+              <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -464,12 +464,12 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </CardHeader>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
 
             {/* Archive Board */}
-            <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
-              <Link href="/boards/archive">
+            <Link href="/boards/archive">
+              <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -485,15 +485,12 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </CardHeader>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
 
             {boards.map((board) => (
-              <Card
-                key={board.id}
-                className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800"
-              >
-                <Link href={`/boards/${board.id}`}>
+              <Link href={`/boards/${board.id}`} key={board.id}>
+                <Card className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                   <CardHeader className="pb-3">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -512,8 +509,8 @@ export default function Dashboard() {
                           </CardDescription>
                         )}
                         
-                        <div className="mt-3 flex items-center justify-between" onClick={(e) => e.preventDefault()}>
-                          <div className="flex items-center space-x-2">
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
                             <Switch
                               checked={board.isPublic}
                               onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
@@ -557,7 +554,7 @@ export default function Dashboard() {
                               e.stopPropagation();
                               handleEditBoard(board);
                             }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
                             title={
                               user?.id === board.createdBy
                                 ? "Edit board"
@@ -572,7 +569,7 @@ export default function Dashboard() {
                               e.stopPropagation();
                               handleDeleteBoard(board.id, board.name);
                             }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
                             title={
                               user?.id === board.createdBy
                                 ? "Delete board"
@@ -585,8 +582,8 @@ export default function Dashboard() {
                       )}
                     </div>
                   </CardHeader>
-                </Link>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
