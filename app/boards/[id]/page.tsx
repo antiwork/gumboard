@@ -1719,7 +1719,7 @@ export default function BoardPage({
                     setNewBoardName("");
                     setNewBoardDescription("");
                   }}
-                  className="bg-white cursor-pointer dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
                   Cancel
                 </Button>
