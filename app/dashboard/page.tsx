@@ -357,7 +357,7 @@ export default function Dashboard() {
                 <span className="text-sm font-medium hidden sm:inline">
                   {user?.name?.split(" ")[0] || "User"}
                 </span>
-                <ChevronDown className="w-4 h-4 ml-1 hidden sm:inline" />
+                <ChevronDown className={`w-4 h-4 ml-1 hidden sm:inline transition-all duration-200 ${showUserDropdown ? "rotate-180" : ""}`}  />
               </Button>
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50">
