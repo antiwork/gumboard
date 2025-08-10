@@ -14,30 +14,34 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { email } = await request.json()
+    const { email, organizationId } = await request.json()
 
     if (!email || typeof email !== 'string') {
       return NextResponse.json({ error: "Email is required" }, { status: 400 })
     }
 
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
+    }
+
     const cleanEmail = email.trim().toLowerCase()
 
-    // Get user with organizations
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { 
-        organizations: {
-          include: { organization: true }
+    // Verify user has admin access to this organization
+    const userOrg = await db.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: organizationId
         }
+      },
+      include: {
+        organization: true
       }
     })
 
-    if (!user?.organizations || user.organizations.length === 0) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+    if (!userOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
     }
-
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
     
     // Only admins can invite new members
     if (userOrg.role !== 'ADMIN') {
@@ -49,7 +53,7 @@ export async function POST(request: NextRequest) {
       where: { email: cleanEmail },
       include: {
         organizations: {
-          where: { organizationId: userOrg.organization.id }
+          where: { organizationId: organizationId }
         }
       }
     })
@@ -63,7 +67,7 @@ export async function POST(request: NextRequest) {
       where: {
         email_organizationId: {
           email: cleanEmail,
-          organizationId: userOrg.organization.id
+          organizationId: organizationId
         }
       }
     })
@@ -77,7 +81,7 @@ export async function POST(request: NextRequest) {
       where: {
         email_organizationId: {
           email: cleanEmail,
-          organizationId: userOrg.organization.id
+          organizationId: organizationId
         }
       },
       update: {
@@ -86,7 +90,7 @@ export async function POST(request: NextRequest) {
       },
       create: {
         email: cleanEmail,
-        organizationId: userOrg.organization.id,
+        organizationId: organizationId,
         invitedBy: session.user.id,
         status: 'PENDING'
       }
@@ -120,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ invite }, { status: 201 })
   } catch (error) {
-    console.error("Error creating invite:", error)
+    console.error("Error inviting member:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 } 

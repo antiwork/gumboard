@@ -37,24 +37,30 @@ async function joinOrganization(token: string) {
     throw new Error("This invitation link has reached its usage limit")
   }
 
-  // Check if user is already in an organization
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    include: { organization: true }
+  // Check if user is already in this organization
+  const existingMembership = await db.userOrganization.findUnique({
+    where: {
+      userId_organizationId: {
+        userId: session.user.id,
+        organizationId: invite.organizationId
+      }
+    }
   })
 
-  if (user?.organizationId === invite.organizationId) {
+  if (existingMembership) {
     throw new Error("You are already a member of this organization")
   }
 
-  if (user?.organizationId) {
-    throw new Error("You are already a member of another organization. Please leave your current organization first.")
-  }
+  // Note: Users can now be members of multiple organizations, so we don't need to check for existing memberships
+  // The system will allow joining multiple organizations
 
   // Join the organization
-  await db.user.update({
-    where: { id: session.user.id },
-    data: { organizationId: invite.organizationId }
+  await db.userOrganization.create({
+    data: {
+      userId: session.user.id,
+      organizationId: invite.organizationId,
+      role: 'MEMBER'
+    }
   })
 
   // Increment usage count
@@ -100,62 +106,58 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
       where: { email }
     })
 
-    // If user doesn't exist, create one with verified email and auto-join organization
-    if (!user) {
+    if (user) {
+      // Check if user is already in this organization
+      const existingMembership = await db.userOrganization.findUnique({
+        where: {
+          userId_organizationId: {
+            userId: user.id,
+            organizationId: invite.organizationId
+          }
+        }
+      })
+
+      if (existingMembership) {
+        throw new Error("You are already a member of this organization")
+      }
+
+             // Note: Users can now be members of multiple organizations, so we don't need to check for existing memberships
+       // The system will allow joining multiple organizations
+
+      // Join the organization
+      await db.userOrganization.create({
+        data: {
+          userId: user.id,
+          organizationId: invite.organizationId,
+          role: 'MEMBER'
+        }
+      })
+    } else {
+      // Create new user and join organization
       user = await db.user.create({
         data: {
           email,
-          emailVerified: new Date(), // Auto-verify since they clicked the invite link
-          organizationId: invite.organizationId // Auto-join the organization
+          name: email.split('@')[0], // Use email prefix as name
+          organizations: {
+            create: {
+              organizationId: invite.organizationId,
+              role: 'MEMBER'
+            }
+          }
         }
       })
-    } else if (!user.organizationId) {
-      // If user exists but isn't in an organization, add them to this one
-      user = await db.user.update({
-        where: { id: user.id },
-        data: { organizationId: invite.organizationId }
-      })
-    } else if (user.organizationId === invite.organizationId) {
-      // User is already in this organization, just continue
-    } else {
-      throw new Error("You are already a member of another organization")
     }
 
-    // Verify email if not already verified
-    if (!user.emailVerified) {
-      await db.user.update({
-        where: { id: user.id },
-        data: { emailVerified: new Date() }
-      })
-    }
-
-    // Increment usage count only if this is a new join
-    if (user.organizationId === invite.organizationId) {
-      await db.organizationSelfServeInvite.update({
-        where: { token: token },
-        data: { usageCount: { increment: 1 } }
-      })
-    }
-
-    // Create a session for the user
-    const sessionToken = crypto.randomUUID()
-    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
-
-    await db.session.create({
-      data: {
-        sessionToken,
-        userId: user.id,
-        expires,
-      }
+    // Increment usage count
+    await db.organizationSelfServeInvite.update({
+      where: { token: token },
+      data: { usageCount: { increment: 1 } }
     })
 
-    // Redirect to a special endpoint that will set the session cookie and redirect to dashboard
-    redirect(`/api/auth/set-session?token=${sessionToken}&redirectTo=${encodeURIComponent("/dashboard")}`)
-    
+    redirect("/dashboard")
   } catch (error) {
-    console.error("Auto-join error:", error)
-    // Fallback to regular auth flow
-    redirect(`/auth/signin?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(`/join/${token}`)}`)
+    console.error("Error joining organization:", error)
+    throw error
   }
 }
 
@@ -350,13 +352,20 @@ export default async function JoinPage({ params }: JoinPageProps) {
     )
   }
 
-  // Check if user is already in an organization
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    include: { organization: true }
+  // Check if user is already in this organization
+  const existingMembership = await db.userOrganization.findUnique({
+    where: {
+      userId_organizationId: {
+        userId: session.user.id as string,
+        organizationId: invite.organizationId
+      }
+    },
+    include: {
+      organization: true
+    }
   })
 
-  if (user?.organizationId === invite.organizationId) {
+  if (existingMembership) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
         <div className="container mx-auto px-4 py-8">
@@ -383,24 +392,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
     )
   }
 
-  if (user?.organizationId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-yellow-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl text-yellow-600">Already in Organization</CardTitle>
-                <CardDescription>
-                  You are already a member of {user.organization?.name}. You can only be a member of one organization at a time.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </div>
-    )
-  }
+     // Note: Users can now be members of multiple organizations, so we don't need to block them from joining additional organizations
 
   const usageInfo = invite.usageLimit ? `${invite.usageCount}/${invite.usageLimit} used` : `${invite.usageCount} members joined`
 
