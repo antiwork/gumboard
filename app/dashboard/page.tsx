@@ -26,10 +26,12 @@ import {
   Copy,
   Edit3,
   Archive,
+  X,
 } from "lucide-react";
 import OrganizationSwitcher from "@/components/organization-switcher";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
+import OrganizationSetupForm from "@/app/setup/organization/form";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -70,6 +72,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
+  const [showAddOrganization, setShowAddOrganization] = useState(false);
   const [editingBoard, setEditingBoard] = useState<Board | null>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [organizations, setOrganizations] = useState<Array<{id: string, name: string, role: 'ADMIN' | 'MEMBER'}>>([]);
@@ -356,6 +359,79 @@ export default function Dashboard() {
     }
   };
 
+  const handleCreateOrganization = async (orgName: string, teamEmails: string[]) => {
+    try {
+      const response = await fetch("/api/organization", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: orgName,
+          teamEmails,
+        }),
+      });
+
+      if (response.ok) {
+        await response.json();
+        // Refresh organizations list
+        const organizationsResponse = await fetch("/api/user/organizations");
+        if (organizationsResponse.ok) {
+          const { organizations } = await organizationsResponse.json();
+          setOrganizations(organizations);
+        }
+        setShowAddOrganization(false);
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to create organization",
+          description: errorData.error || "Failed to create organization",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating organization:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to create organization",
+        description: "Failed to create organization",
+      });
+    }
+  };
+
+  const handleCreateOrganization = async (organizationData: { name: string; description?: string }) => {
+    try {
+      const response = await fetch("/api/organization", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(organizationData),
+      });
+
+      if (response.ok) {
+        const { organization } = await response.json();
+        // Refresh organizations list
+        fetchInitialData();
+        setShowAddOrganization(false);
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to create organization",
+          description: errorData.error || "Failed to create organization",
+        });
+      }
+    } catch (error) {
+      console.error("Error creating organization:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to create organization",
+        description: "Failed to create organization",
+      });
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -381,6 +457,7 @@ export default function Dashboard() {
               organizations={organizations}
               onOrganizationChange={handleOrganizationChange}
               showAllOrganizations={showAllOrganizations}
+              onCreateOrganization={() => setShowAddOrganization(true)}
             />
             {currentOrganization && (
               <Button
@@ -518,7 +595,7 @@ export default function Dashboard() {
                 />
                 <DialogFooter>
                   <Button 
-                    type="submit" 
+                    type="submit"
                     disabled={!editingBoard && currentOrganization ? currentOrganization.role !== 'ADMIN' : false}
                     className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">
                     {editingBoard ? "Update board" : "Create board"}
@@ -529,7 +606,32 @@ export default function Dashboard() {
           </DialogContent>
         </Dialog>
 
-        {boards.length > 0 && (
+         {showAddOrganization && (
+           <div
+             className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/40 dark:bg-black/70 backdrop-blur-sm"
+             onClick={() => setShowAddOrganization(false)}
+           >
+             <div
+               className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-md sm:max-w-lg shadow-2xl border border-border dark:border-zinc-800"
+               onClick={(e) => e.stopPropagation()}
+             >
+               <div className="flex justify-between items-center mb-6">
+                 <h3 className="text-lg font-semibold text-foreground dark:text-zinc-100">
+                   Create New Organization
+                 </h3>
+                 <button
+                   onClick={() => setShowAddOrganization(false)}
+                   className="text-muted-foreground hover:text-foreground dark:text-zinc-400 dark:hover:text-zinc-100"
+                 >
+                   <X className="w-5 h-5" />
+                 </button>
+               </div>
+               <OrganizationSetupForm onSubmit={handleCreateOrganization} />
+             </div>
+           </div>
+         )}
+
+         {boards.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
             <Link href="/boards/all-notes">
               <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
