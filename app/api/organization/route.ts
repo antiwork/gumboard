@@ -1,6 +1,32 @@
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
+import { createOrganizationWithInvites } from "@/lib/organization"
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { name, teamEmails } = await request.json()
+
+    const organization = await createOrganizationWithInvites(
+      session.user.id,
+      session.user.name!,
+      session.user.email!,
+      name,
+      teamEmails || []
+    )
+
+    return NextResponse.json({ organization })
+  } catch (error) {
+    console.error("Error creating organization:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
 
 export async function PUT(request: NextRequest) {
   try {

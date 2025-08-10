@@ -15,6 +15,7 @@ interface OrganizationSwitcherProps {
   organizations: Organization[];
   onOrganizationChange: (organization: Organization | null) => void;
   showAllOrganizations?: boolean;
+  onCreateOrganization?: () => void;
 }
 
 export default function OrganizationSwitcher({
@@ -22,6 +23,7 @@ export default function OrganizationSwitcher({
   organizations,
   onOrganizationChange,
   showAllOrganizations = false,
+  onCreateOrganization,
 }: OrganizationSwitcherProps) {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -115,6 +117,24 @@ export default function OrganizationSwitcher({
                 )}
               </button>
             ))}
+
+            {onCreateOrganization && (
+              <>
+                <div className="border-t border-border dark:border-zinc-800 my-1"></div>
+                <button
+                  onClick={() => {
+                    onCreateOrganization();
+                    setIsOpen(false);
+                  }}
+                  className="flex items-center w-full px-4 py-2 text-sm text-left hover:bg-accent dark:hover:bg-zinc-800 text-blue-600 dark:text-blue-400"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Building2 className="w-4 h-4" />
+                    <span className="font-medium">Create New Organization</span>
+                  </div>
+                </button>
+              </>
+            )}
           </div>
         </div>
       )}
