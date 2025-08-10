@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -89,6 +89,7 @@ export function Note({
     (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
+  const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -505,6 +506,7 @@ export function Note({
               <div className="flex items-center gap-3">
                 <Checkbox disabled className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600" />
                 <Input
+                  ref={newItemInputRef}
                   type="text"
                   value={newItemContent}
                   onChange={(e) => setNewItemContent(e.target.value)}
@@ -533,7 +535,13 @@ export function Note({
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setAddingItem(true)}
+              onClick={() => {
+                if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                  newItemInputRef.current.focus();
+                } else {
+                  setAddingItem(true);
+                }
+              }}
               className="mt-2 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
             >
               <Plus className="mr-2 h-4 w-4" />
