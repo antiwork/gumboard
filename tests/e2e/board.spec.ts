@@ -123,15 +123,12 @@ test.describe('Board Management', () => {
   test('should validate board creation form', async ({ page }) => {
     await page.goto('/dashboard');
     
-    await page.click('button:has-text("Add Board")');
-    
+    await page.getByRole('button', { name: 'Add Board' }).click();   
     const nameInput = page.locator('input[placeholder*="board name"]');
-    const createButton = page.locator('button:has-text("Create Board")');
-    
+    const createButton = page.getByRole('button', { name: 'Create board' });
     await createButton.click();
     await expect(nameInput).toBeFocused();
-    
-    await page.fill('input[placeholder*="board name"]', 'Test Board');
+    await page.fill('input[placeholder*="board name"]', 'Test Board');    
     await expect(createButton).toBeEnabled();
   });
 });
