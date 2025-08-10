@@ -1,16 +1,27 @@
 import { test, expect } from '@playwright/test'
+import { 
+  createMockOrganization, 
+  createMockUserWithOrganization 
+} from '../fixtures/test-helpers';
 
 test.describe('Note Management with Newlines', () => {
   test.beforeEach(async ({ page }) => {
+    const testOrg = createMockOrganization({ id: 'test-org', name: 'Test Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'test-user',
+      email: 'test@example.com',
+      name: 'Test User'
+    });
+
     await page.route('**/api/auth/session', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'test-user',
-            email: 'test@example.com',
-            name: 'Test User',
+            id: testUser.id,
+            email: testUser.email,
+            name: testUser.name,
           }
         }),
       });
@@ -21,14 +32,17 @@ test.describe('Note Management with Newlines', () => {
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          id: 'test-user',
-          email: 'test@example.com',
-          name: 'Test User',
-          isAdmin: true,
+          id: testUser.id,
+          email: testUser.email,
+          name: testUser.name,
+          // Include both old and new format for compatibility
           organization: {
-            id: 'test-org',
-            name: 'Test Organization',
+            id: testOrg.id,
+            name: testOrg.name,
+            slackWebhookUrl: testOrg.slackWebhookUrl,
+            members: []
           },
+          organizations: testUser.organizations,
         }),
       });
     });
@@ -97,9 +111,9 @@ test.describe('Note Management with Newlines', () => {
               },
               boardId: 'test-board',
               user: {
-                id: 'test-user',
-                name: 'Test User',
-                email: 'test@example.com',
+                id: testUser.id,
+                name: testUser.name,
+                email: testUser.email,
               },
             },
           }),
@@ -123,9 +137,9 @@ test.describe('Note Management with Newlines', () => {
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               user: {
-                id: 'test-user',
-                name: 'Test User',
-                email: 'test@example.com',
+                id: testUser.id,
+                name: testUser.name,
+                email: testUser.email,
               },
             },
           }),
@@ -158,9 +172,9 @@ test.describe('Note Management with Newlines', () => {
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               user: {
-                id: 'test-user',
-                name: 'Test User',
-                email: 'test@example.com',
+                id: testUser.id,
+                name: testUser.name,
+                email: testUser.email,
               },
               board: {
                 id: postData.boardId || 'target-board-id',
