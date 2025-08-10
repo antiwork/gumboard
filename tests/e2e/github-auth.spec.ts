@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { 
+  createMockOrganization, 
+  createMockUserWithOrganization,
+  createMockUserWithMultipleOrganizations 
+} from '../fixtures/test-helpers';
 
 test.describe('GitHub Authentication Flow', () => {
   test('should display GitHub login button on signin page', async ({ page }) => {
@@ -39,6 +44,14 @@ test.describe('GitHub Authentication Flow', () => {
   });
 
   test('should handle GitHub OAuth callback and authenticate user', async ({ page }) => {
+    const testOrg = createMockOrganization({ id: 'github-org', name: 'GitHub Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'github-user-123',
+      email: 'github@example.com',
+      name: 'GitHub User',
+      image: 'https://avatars.githubusercontent.com/u/123?v=4'
+    });
+
     // Mock the session to simulate an authenticated user
     await page.route('**/api/auth/session', async (route) => {
       await route.fulfill({
@@ -46,10 +59,10 @@ test.describe('GitHub Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'github-user-123',
-            name: 'GitHub User',
-            email: 'github@example.com',
-            image: 'https://avatars.githubusercontent.com/u/123?v=4',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
           },
         }),
       });
@@ -62,10 +75,11 @@ test.describe('GitHub Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'github-user-123',
-            name: 'GitHub User',
-            email: 'github@example.com',
-            image: 'https://avatars.githubusercontent.com/u/123?v=4',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
+            organizations: testUser.organizations,
           },
         }),
       });
@@ -115,6 +129,14 @@ test.describe('GitHub Authentication Flow', () => {
 
   test('should link GitHub account with existing email account', async ({ page }) => {
     const testEmail = 'linked@example.com';
+    const testOrg = createMockOrganization({ id: 'linked-org', name: 'Linked Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'linked-user-id',
+      email: testEmail,
+      name: 'Linked User',
+      image: 'https://avatars.githubusercontent.com/u/456?v=4'
+    });
+
     let githubAuthInitiated = false;
     
     // Mock GitHub OAuth redirect
@@ -135,10 +157,10 @@ test.describe('GitHub Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'linked-user-id',
-            name: 'Linked User',
-            email: testEmail,
-            image: 'https://avatars.githubusercontent.com/u/456?v=4',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
             providers: ['email', 'github'],
           },
         }),
@@ -152,10 +174,11 @@ test.describe('GitHub Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'linked-user-id',
-            name: 'Linked User',
-            email: testEmail,
-            image: 'https://avatars.githubusercontent.com/u/456?v=4',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
+            organizations: testUser.organizations,
             providers: ['email', 'github'],
           },
         }),
@@ -190,6 +213,14 @@ test.describe('GitHub Authentication Flow', () => {
   });
 
   test('should maintain GitHub authentication state across page reloads', async ({ page }) => {
+    const testOrg = createMockOrganization({ id: 'github-org', name: 'GitHub Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'github-user-123',
+      email: 'github@example.com',
+      name: 'GitHub User',
+      image: 'https://avatars.githubusercontent.com/u/123?v=4'
+    });
+
     // Mock persistent session
     await page.route('**/api/auth/session', async (route) => {
       await route.fulfill({
@@ -197,10 +228,10 @@ test.describe('GitHub Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'github-user-123',
-            name: 'GitHub User',
-            email: 'github@example.com',
-            image: 'https://avatars.githubusercontent.com/u/123?v=4',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
           },
         }),
       });
@@ -212,10 +243,11 @@ test.describe('GitHub Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'github-user-123',
-            name: 'GitHub User',
-            email: 'github@example.com',
-            image: 'https://avatars.githubusercontent.com/u/123?v=4',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
+            organizations: testUser.organizations,
           },
         }),
       });
@@ -286,5 +318,70 @@ test.describe('GitHub Authentication Flow', () => {
     
     // Verify the "or continue with" text is present
     await expect(page.locator('text=or continue with')).toBeVisible();
+  });
+
+  test('should handle GitHub authentication with multiple organizations', async ({ page }) => {
+    const org1 = createMockOrganization({ id: 'org-1', name: 'Organization 1' });
+    const org2 = createMockOrganization({ id: 'org-2', name: 'Organization 2' });
+    const testUser = createMockUserWithMultipleOrganizations(
+      [org1, org2], 
+      ['ADMIN', 'MEMBER'],
+      {
+        id: 'github-multi-org-user',
+        email: 'github-multi@example.com',
+        name: 'GitHub Multi Org User',
+        image: 'https://avatars.githubusercontent.com/u/789?v=4'
+      }
+    );
+
+    // Mock the session to simulate an authenticated user
+    await page.route('**/api/auth/session', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: {
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
+          },
+        }),
+      });
+    });
+
+    // Mock user API
+    await page.route('**/api/user', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: {
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
+            organizations: testUser.organizations,
+          },
+        }),
+      });
+    });
+
+    // Mock boards API
+    await page.route('**/api/boards', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ boards: [] }),
+      });
+    });
+
+    await page.goto('/dashboard');
+    
+    // Should be on dashboard
+    await expect(page).toHaveURL(/.*dashboard/);
+    
+    // Verify user is authenticated
+    await expect(page.locator('text=No boards yet')).toBeVisible();
   });
 }); 

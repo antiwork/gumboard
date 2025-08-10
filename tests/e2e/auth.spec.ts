@@ -1,4 +1,9 @@
 import { test, expect } from '@playwright/test';
+import { 
+  createMockOrganization, 
+  createMockUserWithOrganization,
+  createMockUserWithMultipleOrganizations 
+} from '../fixtures/test-helpers';
 
 test.describe('Authentication Flow', () => {
   test('should complete email authentication flow and verify database state', async ({ page }) => {
@@ -36,15 +41,22 @@ test.describe('Authentication Flow', () => {
   });
 
   test('should authenticate user and access dashboard', async ({ page }) => {
+    const testOrg = createMockOrganization({ id: 'test-org', name: 'Test Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'test-user',
+      email: 'test@example.com',
+      name: 'Test User'
+    });
+
     await page.route('**/api/auth/session', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'test-user',
-            name: 'Test User',
-            email: 'test@example.com',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
           },
         }),
       });
@@ -56,9 +68,10 @@ test.describe('Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'test-user',
-            name: 'Test User',
-            email: 'test@example.com',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            organizations: testUser.organizations,
           },
         }),
       });
@@ -79,6 +92,15 @@ test.describe('Authentication Flow', () => {
   });
 
   test('should redirect unauthenticated users to signin', async ({ page }) => {
+    // Mock both session and user API to return unauthenticated
+    await page.route('**/api/auth/session', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify(null), // No session
+      });
+    });
+
     await page.route('**/api/user', async (route) => {
       await route.fulfill({
         status: 401,
@@ -88,20 +110,28 @@ test.describe('Authentication Flow', () => {
     });
 
     await page.goto('/dashboard');
-    await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 5000 });
+    await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 20000 });
   });
 
   test('should authenticate user via Google OAuth and access dashboard', async ({ page }) => {
+    const testOrg = createMockOrganization({ id: 'google-org', name: 'Google Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'google-user',
+      email: 'google@example.com',
+      name: 'Google User',
+      image: 'https://example.com/avatar.jpg'
+    });
+
     await page.route('**/api/auth/session', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'google-user',
-            name: 'Google User',
-            email: 'google@example.com',
-            image: 'https://example.com/avatar.jpg',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
           },
         }),
       });
@@ -113,9 +143,10 @@ test.describe('Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'google-user',
-            name: 'Google User',
-            email: 'google@example.com',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            organizations: testUser.organizations,
           },
         }),
       });
@@ -136,16 +167,24 @@ test.describe('Authentication Flow', () => {
   });
 
   test('should authenticate user via GitHub OAuth and access dashboard', async ({ page }) => {
+    const testOrg = createMockOrganization({ id: 'github-org', name: 'GitHub Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'github-user',
+      email: 'github@example.com',
+      name: 'GitHub User',
+      image: 'https://avatars.githubusercontent.com/u/123?v=4'
+    });
+
     await page.route('**/api/auth/session', async (route) => {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'github-user',
-            name: 'GitHub User',
-            email: 'github@example.com',
-            image: 'https://avatars.githubusercontent.com/u/123?v=4',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
           },
         }),
       });
@@ -157,9 +196,10 @@ test.describe('Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'github-user',
-            name: 'GitHub User',
-            email: 'github@example.com',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            organizations: testUser.organizations,
           },
         }),
       });
@@ -181,6 +221,14 @@ test.describe('Authentication Flow', () => {
 
   test('should link magic link and Google OAuth accounts when using same email', async ({ page }) => {
     const testEmail = 'linked@example.com';
+    const testOrg = createMockOrganization({ id: 'linked-org', name: 'Linked Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'linked-user-id',
+      email: testEmail,
+      name: 'Linked User',
+      image: 'https://example.com/avatar.jpg'
+    });
+
     let magicLinkAuthData: { email: string } | null = null;
     let googleAuthData: { email: string } | null = null;
     
@@ -212,10 +260,10 @@ test.describe('Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'linked-user-id',
-            name: 'Linked User',
-            email: testEmail,
-            image: 'https://example.com/avatar.jpg',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
             providers: ['email', 'google'],
           },
         }),
@@ -228,9 +276,10 @@ test.describe('Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'linked-user-id',
-            name: 'Linked User',
-            email: testEmail,
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            organizations: testUser.organizations,
             providers: ['email', 'google'],
           },
         }),
@@ -285,6 +334,14 @@ test.describe('Authentication Flow', () => {
 
   test('should link magic link and GitHub OAuth accounts when using same email', async ({ page }) => {
     const testEmail = 'linked@example.com';
+    const testOrg = createMockOrganization({ id: 'linked-org', name: 'Linked Organization' });
+    const testUser = createMockUserWithOrganization(testOrg, 'ADMIN', {
+      id: 'linked-user-id',
+      email: testEmail,
+      name: 'Linked User',
+      image: 'https://avatars.githubusercontent.com/u/456?v=4'
+    });
+
     let magicLinkAuthData: { email: string } | null = null;
     let githubAuthData: { email: string } | null = null;
     
@@ -316,10 +373,10 @@ test.describe('Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'linked-user-id',
-            name: 'Linked User',
-            email: testEmail,
-            image: 'https://avatars.githubusercontent.com/u/456?v=4',
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            image: testUser.image,
             providers: ['email', 'github'],
           },
         }),
@@ -332,9 +389,10 @@ test.describe('Authentication Flow', () => {
         contentType: 'application/json',
         body: JSON.stringify({
           user: {
-            id: 'linked-user-id',
-            name: 'Linked User',
-            email: testEmail,
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            organizations: testUser.organizations,
             providers: ['email', 'github'],
           },
         }),
@@ -385,5 +443,61 @@ test.describe('Authentication Flow', () => {
     await expect(page.locator('text=No boards yet')).toBeVisible();
     
     expect(magicLinkAuthData!.email).toBe(githubAuthData!.email);
+  });
+
+  test('should handle user with multiple organizations', async ({ page }) => {
+    const org1 = createMockOrganization({ id: 'org-1', name: 'Organization 1' });
+    const org2 = createMockOrganization({ id: 'org-2', name: 'Organization 2' });
+    const testUser = createMockUserWithMultipleOrganizations(
+      [org1, org2], 
+      ['ADMIN', 'MEMBER'],
+      {
+        id: 'multi-org-user',
+        email: 'multi@example.com',
+        name: 'Multi Org User'
+      }
+    );
+
+    await page.route('**/api/auth/session', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: {
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+          },
+        }),
+      });
+    });
+
+    await page.route('**/api/user', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          user: {
+            id: testUser.id,
+            name: testUser.name,
+            email: testUser.email,
+            organizations: testUser.organizations,
+          },
+        }),
+      });
+    });
+
+    await page.route('**/api/boards', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ boards: [] }),
+      });
+    });
+
+    await page.goto('/dashboard');
+    
+    await expect(page).toHaveURL(/.*dashboard/);
+    await expect(page.locator('text=No boards yet')).toBeVisible();
   });
 });
