@@ -468,6 +468,13 @@ export default function Dashboard() {
                   : "Fill out the details to create a new board."}
               </DialogDescription>
             </DialogHeader>
+            {!editingBoard && currentOrganization && currentOrganization.role !== 'ADMIN' && (
+              <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                  Only admins can create boards. You don&apos;t have enough permissions to create boards in this organization.
+                </p>
+              </div>
+            )}
             <Form {...form}>
               <form 
                 className="space-y-4"
@@ -483,6 +490,7 @@ export default function Dashboard() {
                           placeholder="Enter board name"
                           className="border border-zinc-200 dark:border-zinc-800"
                           autoFocus
+                          disabled={!editingBoard && currentOrganization ? currentOrganization.role !== 'ADMIN' : false}
                           {...field}
                         />
                       </FormControl>
@@ -500,6 +508,7 @@ export default function Dashboard() {
                         <Input
                           placeholder="Enter board description"
                           className="border border-zinc-200 dark:border-zinc-800"
+                          disabled={!editingBoard && currentOrganization ? currentOrganization.role !== 'ADMIN' : false}
                           {...field}
                         />
                       </FormControl>
@@ -508,7 +517,10 @@ export default function Dashboard() {
                   )}
                 />
                 <DialogFooter>
-                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                  <Button 
+                    type="submit" 
+                    disabled={!editingBoard && currentOrganization ? currentOrganization.role !== 'ADMIN' : false}
+                    className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed">
                     {editingBoard ? "Update board" : "Create board"}
                   </Button>
                 </DialogFooter>
@@ -650,7 +662,34 @@ export default function Dashboard() {
                             </Button>
                           )}
                         </div>
-                      </div>       
+                      </div>
+                      {currentOrganization?.role === 'ADMIN' && (
+                        <div className="flex items-center space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEditBoard(board);
+                            }}
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                            title="Edit board (Admin only)"
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteBoard(board.id, board.name);
+                            }}
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                            title="Delete board (Admin only)"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </CardHeader>
                 </Card>
               </Link>
