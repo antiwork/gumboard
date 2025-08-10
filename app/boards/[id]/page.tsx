@@ -962,76 +962,14 @@ export default function BoardPage({
   };
 
   // Note: add-checklist-item logic is handled by the Note component via handleAddChecklistItemFromComponent
-      if (!currentNote || !currentNote.checklistItems) return;
-
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
-
-      // OPTIMISTIC UPDATE
-      const updatedItems = currentNote.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, checked: !item.checked } : item
-      );
-
-      const sortedItems = [
-        ...updatedItems
-          .filter((item) => !item.checked)
-          .sort((a, b) => a.order - b.order),
-        ...updatedItems
-          .filter((item) => item.checked)
-          .sort((a, b) => a.order - b.order),
-      ];
-
-      // OPTIMISTIC UPDATE
-      const optimisticNote = {
-        ...currentNote,
-        checklistItems: sortedItems,
-      };
-
-      setNotes(notes.map((n) => (n.id === noteId ? optimisticNote : n)));
-
-      // Send to server in background
-      fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          checklistItems: sortedItems,
-        }),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            console.error("Server error, reverting optimistic update");
-            setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-            
-            setErrorDialog({
-              open: true,
-              title: "Update Failed",
-              description: "Failed to update checklist item. Please try again.",
-            });
-          } else {
-            const { note } = await response.json();
-            setNotes(notes.map((n) => (n.id === noteId ? note : n)));
-          }
-        })
-        .catch((error) => {
-          console.error("Error toggling checklist item:", error);
-          setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
-          
-          setErrorDialog({
-            open: true,
-            title: "Connection Error",
-            description: "Failed to sync changes. Please check your connection.",
-          });
-        });
-
-
-
 
 
   if (loading) {
+    return <FullPageLoader message="Loading board..." />;
+  }
+
+  // Don't render until boardId is available
+  if (!boardId) {
     return <FullPageLoader message="Loading board..." />;
   }
 
@@ -1299,7 +1237,7 @@ export default function BoardPage({
               key={note.id}
               note={note as Note}
               currentUser={user as User}
-              boardId={boardId}
+              boardId={boardId || ""}
               addingChecklistItem={addingChecklistItem}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
