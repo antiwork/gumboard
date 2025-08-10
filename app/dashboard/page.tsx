@@ -314,7 +314,7 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Add Board</span>
             </Button>
             <div className="relative user-dropdown">
-              <button
+              <Button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center space-x-2 text-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 sm:px-3 py-2 dark:text-zinc-100"
               >
@@ -329,7 +329,7 @@ export default function Dashboard() {
                   {user?.name?.split(" ")[0] || "User"}
                 </span>
                 <ChevronDown className="w-4 h-4 ml-1 hidden sm:inline" />
-              </button>
+              </Button>
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50">
                   <div className="py-1">
@@ -346,13 +346,13 @@ export default function Dashboard() {
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </Link>
-                    <button
+                    <Button
                       onClick={handleSignOut}
                       className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -447,8 +447,8 @@ export default function Dashboard() {
 
         {boards.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-            <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950">
-              <Link href="/boards/all-notes">
+            <Link href="/boards/all-notes">
+              <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -464,12 +464,12 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </CardHeader>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
 
             {/* Archive Board */}
-            <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
-              <Link href="/boards/archive">
+            <Link href="/boards/archive">
+              <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div className="flex-1">
@@ -485,20 +485,16 @@ export default function Dashboard() {
                     </div>
                   </div>
                 </CardHeader>
-              </Link>
-            </Card>
+              </Card>
+            </Link>
 
             {boards.map((board) => (
-              <Card
-                key={board.id}
-                className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800"
-              >
-                <Link href={`/boards/${board.id}`}>
+              <Link href={`/boards/${board.id}`} key={board.id}>
+                <Card className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                   <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                      <div>
                         <div className="flex items-center justify-between mb-1">
-                          <CardTitle className="text-lg dark:text-zinc-100">
+                          <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
                             {board.name}
                           </CardTitle>
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -506,14 +502,48 @@ export default function Dashboard() {
                             {board._count.notes === 1 ? "note" : "notes"}
                           </span>
                         </div>
+                        {(user?.id === board.createdBy || user?.isAdmin) && (
+                        <div className="flex justify-end items-center space-x-1">
+                          <Button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEditBoard(board);
+                            }}
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                            title={
+                              user?.id === board.createdBy
+                                ? "Edit board"
+                                : "Edit board (Admin)"
+                            }
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteBoard(board.id, board.name);
+                            }}
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                            title={
+                              user?.id === board.createdBy
+                                ? "Delete board"
+                                : "Delete board (Admin)"
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                         {board.description && (
                           <CardDescription className="mt-1 dark:text-zinc-400">
                             {board.description}
                           </CardDescription>
                         )}
                         
-                        <div className="mt-3 flex items-center justify-between" onClick={(e) => e.preventDefault()}>
-                          <div className="flex items-center space-x-2">
+                        <div className="mt-3 flex items-center justify-between">
+                          <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
                             <Switch
                               checked={board.isPublic}
                               onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
@@ -525,7 +555,7 @@ export default function Dashboard() {
                           </div>
                           
                           {board.isPublic && (
-                            <button
+                            <Button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -545,48 +575,13 @@ export default function Dashboard() {
                                   <span>Copy link</span>
                                 </>
                               )}
-                            </button>
+                            </Button>
                           )}
                         </div>
-                      </div>
-                      {(user?.id === board.createdBy || user?.isAdmin) && (
-                        <div className="flex items-center space-x-1">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEditBoard(board);
-                            }}
-                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Edit board"
-                                : "Edit board (Admin)"
-                            }
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDeleteBoard(board.id, board.name);
-                            }}
-                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Delete board"
-                                : "Delete board (Admin)"
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                      </div>       
                   </CardHeader>
-                </Link>
-              </Card>
+                </Card>
+              </Link>
             ))}
           </div>
         )}
