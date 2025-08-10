@@ -13,17 +13,26 @@ export async function GET() {
     // Get user with organization
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: {
+            organization: true
+          }
+        }
+      }
     })
 
-    if (!user?.organizationId) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
+
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
 
     // Get pending invites for this organization
     const invites = await db.organizationInvite.findMany({
       where: { 
-        organizationId: user.organizationId,
+        organizationId: userOrg.organization.id,
         status: 'PENDING'
       },
       orderBy: { createdAt: 'desc' }

@@ -43,6 +43,7 @@ export default function BoardPage({
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
+  const [currentUserIsAdmin, setCurrentUserIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState(true);
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
@@ -648,9 +649,18 @@ export default function BoardPage({
         return;
       }
 
+      let userData = null;
+      let userOrganizations = [];
       if (userResponse.ok) {
-        const userData = await userResponse.json();
+        userData = await userResponse.json();
         setUser(userData);
+        
+        // Fetch user's organizations for admin check
+        const organizationsResponse = await fetch("/api/user/organizations");
+        if (organizationsResponse.ok) {
+          const { organizations } = await organizationsResponse.json();
+          userOrganizations = organizations;
+        }
       }
 
       // Fetch all boards for the dropdown
@@ -668,6 +678,9 @@ export default function BoardPage({
           description: "Notes from all boards",
         });
 
+        const isAdminOfAnyOrg = userOrganizations.some((org: {id: string, name: string, role: 'ADMIN' | 'MEMBER'}) => org.role === 'ADMIN');
+        setCurrentUserIsAdmin(isAdminOfAnyOrg);
+
         // Fetch notes from all boards
         const notesResponse = await fetch(`/api/boards/all-notes/notes`);
         if (notesResponse.ok) {
@@ -680,6 +693,9 @@ export default function BoardPage({
           name: "Archive",
           description: "Archived notes from all boards",
         });
+
+        const isAdminOfAnyOrg = userOrganizations.some((org: {id: string, name: string, role: 'ADMIN' | 'MEMBER'}) => org.role === 'ADMIN');
+        setCurrentUserIsAdmin(isAdminOfAnyOrg);
 
         // Fetch archived notes from all boards
         const notesResponse = await fetch(`/api/boards/archive/notes`);
@@ -697,11 +713,13 @@ export default function BoardPage({
         if (boardResponse.ok) {
           const { board } = await boardResponse.json();
           setBoard(board);
-          setBoardSettings({
-            sendSlackUpdates:
-              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ??
-              true,
-          });
+          setBoardSettings({ sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true });
+          
+          // Check if current user is admin of this board's organization
+          if (userOrganizations.length > 0) {
+            const userOrg = userOrganizations.find((org: {id: string, name: string, role: 'ADMIN' | 'MEMBER'}) => org.id === board.organizationId);
+            setCurrentUserIsAdmin(userOrg?.role === 'ADMIN');
+          }
         }
 
         // Fetch notes for specific board
@@ -1192,6 +1210,7 @@ export default function BoardPage({
               note={note as Note}
               currentUser={user as User}
               addingChecklistItem={addingChecklistItem}
+              currentUserIsAdmin={currentUserIsAdmin}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}

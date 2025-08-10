@@ -2,13 +2,16 @@ import { auth } from "@/auth"
 import { db } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth()
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
+
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
 
     // Get user with organizations
     const user = await db.user.findUnique({
@@ -24,12 +27,14 @@ export async function GET() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
+    const organizationIds = user.organizations.map(org => org.organization.id)
     
-    // Get all boards for the organization
+    const whereClause = organizationId 
+      ? { organizationId: organizationId }
+      : { organizationId: { in: organizationIds } }
+    
     const boards = await db.board.findMany({
-      where: { organizationId: userOrg.organization.id },
+      where: whereClause,
       select: {
         id: true,
         name: true,
@@ -66,10 +71,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, description, isPublic } = await request.json()
+    const { name, description, isPublic, organizationId } = await request.json()
 
     if (!name) {
       return NextResponse.json({ error: "Board name is required" }, { status: 400 })
+    }
+
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
     }
 
     // Get user with organizations
@@ -86,8 +95,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
+    // Check if user is a member of the specified organization
+    const userOrg = user.organizations.find(org => org.organization.id === organizationId)
+    if (!userOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
+    }
     
     // Create new board
     const board = await db.board.create({

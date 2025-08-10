@@ -17,42 +17,62 @@ export async function PUT(
     const { isAdmin } = await request.json()
     const memberId = (await params).id
 
-    // Get current user with organization
+    // Get current user with organizations
     const currentUser = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: {
+            organization: true
+          }
+        }
+      }
     })
 
-    if (!currentUser?.organizationId || !currentUser.organization) {
+    if (!currentUser?.organizations || currentUser.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
-    // Only admins or the first user (organization creator) can change admin roles
-    if (!currentUser.isAdmin) {
+    // For now, use the first organization the user is a member of
+    const currentUserOrg = currentUser.organizations[0]
+
+    // Only admins can change admin roles
+    if (currentUserOrg.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only admins can change member roles" }, { status: 403 })
     }
 
     // Get the member to update
-    const member = await db.user.findUnique({
-      where: { id: memberId }
+    const memberOrg = await db.userOrganization.findUnique({
+      where: { 
+        userId_organizationId: {
+          userId: memberId,
+          organizationId: currentUserOrg.organization.id
+        }
+      },
+      include: {
+        user: true
+      }
     })
 
-    if (!member) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 })
+    if (!memberOrg) {
+      return NextResponse.json({ error: "Member not found in your organization" }, { status: 404 })
     }
 
-    // Check if member belongs to the same organization
-    if (member.organizationId !== currentUser.organizationId) {
-      return NextResponse.json({ error: "Member not in your organization" }, { status: 403 })
-    }
-
-    // Update the member's admin status
-    const updatedMember = await db.user.update({
-      where: { id: memberId },
-      data: { isAdmin: typeof isAdmin === 'boolean' ? isAdmin : false }
+    // Update the member's role
+    const updatedMemberOrg = await db.userOrganization.update({
+      where: { 
+        userId_organizationId: {
+          userId: memberId,
+          organizationId: currentUserOrg.organization.id
+        }
+      },
+      data: { role: isAdmin ? 'ADMIN' : 'MEMBER' },
+      include: {
+        user: true
+      }
     })
 
-    return NextResponse.json({ member: updatedMember })
+    return NextResponse.json({ member: updatedMemberOrg.user })
   } catch (error) {
     console.error("Error updating member:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })
@@ -73,51 +93,59 @@ export async function DELETE(
 
     const memberId = (await params).id
 
-    // Get current user with organization
+    // Get current user with organizations
     const currentUser = await db.user.findUnique({
       where: { id: session.user.id },
-      select: {
-        id: true,
-        isAdmin: true,
-        organizationId: true,
-        organization: true
+      include: { 
+        organizations: {
+          include: {
+            organization: true
+          }
+        }
       }
     })
 
-    if (!currentUser?.organizationId || !currentUser.organization) {
+    if (!currentUser?.organizations || currentUser.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
+    // For now, use the first organization the user is a member of
+    const currentUserOrg = currentUser.organizations[0]
+
     // Only admins can remove members
-    if (!currentUser.isAdmin) {
+    if (currentUserOrg.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only admins can remove members" }, { status: 403 })
     }
 
     // Get the member to remove
-    const member = await db.user.findUnique({
-      where: { id: memberId }
+    const memberOrg = await db.userOrganization.findUnique({
+      where: { 
+        userId_organizationId: {
+          userId: memberId,
+          organizationId: currentUserOrg.organization.id
+        }
+      },
+      include: {
+        user: true
+      }
     })
 
-    if (!member) {
-      return NextResponse.json({ error: "Member not found" }, { status: 404 })
-    }
-
-    // Check if member belongs to the same organization
-    if (member.organizationId !== currentUser.organizationId) {
-      return NextResponse.json({ error: "Member not in your organization" }, { status: 403 })
+    if (!memberOrg) {
+      return NextResponse.json({ error: "Member not found in your organization" }, { status: 404 })
     }
 
     // Can't remove yourself
-    if (member.id === currentUser.id) {
+    if (memberId === currentUser.id) {
       return NextResponse.json({ error: "Cannot remove yourself" }, { status: 400 })
     }
 
     // Remove member from organization
-    await db.user.update({
-      where: { id: memberId },
-      data: { 
-        organizationId: null,
-        isAdmin: false // Reset admin status when leaving organization
+    await db.userOrganization.delete({
+      where: { 
+        userId_organizationId: {
+          userId: memberId,
+          organizationId: currentUserOrg.organization.id
+        }
       }
     })
 

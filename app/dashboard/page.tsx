@@ -15,7 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Plus,
   Trash2,
@@ -27,6 +27,7 @@ import {
   Edit3,
   Archive,
 } from "lucide-react";
+import OrganizationSwitcher from "@/components/organization-switcher";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
 import {
@@ -71,6 +72,9 @@ export default function Dashboard() {
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
   const [editingBoard, setEditingBoard] = useState<Board | null>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
+  const [organizations, setOrganizations] = useState<Array<{id: string, name: string, role: 'ADMIN' | 'MEMBER'}>>([]);
+  const [currentOrganization, setCurrentOrganization] = useState<{id: string, name: string, role: 'ADMIN' | 'MEMBER'} | null>(null);
+  const [showAllOrganizations, setShowAllOrganizations] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
     open: boolean;
     boardId: string;
@@ -92,9 +96,71 @@ export default function Dashboard() {
     }
   })
 
-  useEffect(() => {
-    fetchUserAndBoards();
+  const fetchInitialData = useCallback(async () => {
+    try {
+      const userResponse = await fetch("/api/user");
+      if (userResponse.status === 401) {
+        router.push("/auth/signin");
+        return;
+      }
+
+      if (userResponse.ok) {
+        const userData = await userResponse.json();
+        setUser(userData);
+        console.log("user data is here", userData);
+        if (!userData.name) {
+          router.push("/setup/profile");
+          return;
+        }
+        if (!userData.organization) {
+          router.push("/setup/organization");
+          return;
+        }
+      }
+
+      const organizationsResponse = await fetch("/api/user/organizations");
+      if (organizationsResponse.ok) {
+        const { organizations } = await organizationsResponse.json();
+        setOrganizations(organizations);
+        
+        if (organizations.length > 0) {
+          const firstOrg = organizations[0];
+          setCurrentOrganization(firstOrg);
+          setShowAllOrganizations(false);
+          
+          
+          const boardsResponse = await fetch(`/api/boards?organizationId=${firstOrg.id}`);
+          if (boardsResponse.ok) {
+            const { boards } = await boardsResponse.json();
+            setBoards(boards);
+          }
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [router]);
+
+  const fetchBoardsForOrganization = useCallback(async (organizationId?: string) => {
+    try {
+      const boardsUrl = organizationId 
+        ? `/api/boards?organizationId=${organizationId}`
+        : "/api/boards";
+      const boardsResponse = await fetch(boardsUrl);
+      if (boardsResponse.ok) {
+        const { boards } = await boardsResponse.json();
+        setBoards(boards);
+      }
+    } catch (error) {
+      console.error("Error fetching boards:", error);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchInitialData();
+  }, [fetchInitialData]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -121,40 +187,6 @@ export default function Dashboard() {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [showUserDropdown]);
-
-  const fetchUserAndBoards = async () => {
-    try {
-      const userResponse = await fetch("/api/user");
-      if (userResponse.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUser(userData);
-        if (!userData.name) {
-          router.push("/setup/profile");
-          return;
-        }
-        if (!userData.organization) {
-          router.push("/setup/organization");
-          return;
-        }
-      }
-
-      const boardsResponse = await fetch("/api/boards");
-      if (boardsResponse.ok) {
-        const { boards } = await boardsResponse.json();
-        setBoards(boards);
-
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
     const {name, description} = values;
@@ -194,6 +226,7 @@ export default function Dashboard() {
           body: JSON.stringify({
             name,
             description,
+            organizationId: currentOrganization?.id,
           }),
         });
 
@@ -311,6 +344,18 @@ export default function Dashboard() {
     }
   }
 
+  const handleOrganizationChange = (organization: {id: string, name: string, role: 'ADMIN' | 'MEMBER'} | null) => {
+    if (organization === null) {
+      setCurrentOrganization(null);
+      setShowAllOrganizations(true);
+      fetchBoardsForOrganization(); // No organizationId = fetch all boards
+    } else {
+      setCurrentOrganization(organization);
+      setShowAllOrganizations(false);
+      fetchBoardsForOrganization(organization.id);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -331,17 +376,25 @@ export default function Dashboard() {
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
-            <Button
-              onClick={() => {
-                form.reset({ name: "", description: "" });
-                setIsAddBoardDialogOpen(true);
-                setEditingBoard(null); 
-              }}
-              className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Board</span>
-            </Button>
+            <OrganizationSwitcher
+              currentOrganization={currentOrganization}
+              organizations={organizations}
+              onOrganizationChange={handleOrganizationChange}
+              showAllOrganizations={showAllOrganizations}
+            />
+            {currentOrganization && (
+              <Button
+                onClick={() => {
+                  form.reset({ name: "", description: "" });
+                  setIsAddBoardDialogOpen(true);
+                  setEditingBoard(null); 
+                }}
+                className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
+              >
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Add Board</span>
+              </Button>
+            )}
             <div className="relative user-dropdown">
               <Button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
@@ -613,17 +666,22 @@ export default function Dashboard() {
               No boards yet
             </h3>
             <p className="text-muted-foreground dark:text-zinc-400 mb-4">
-              Get started by creating your first board
+              {currentOrganization 
+                ? "Get started by creating your first board"
+                : "Select an organization to create boards"
+              }
             </p>
-            <Button
-              onClick={() => {
-                setIsAddBoardDialogOpen(true);
-                form.reset({name: "", description: ""});
-              }}
-              className="dark:bg-blue-500 dark:hover:bg-blue-600"
-            >
-              Create your first board
-            </Button>
+            {currentOrganization && (
+              <Button
+                onClick={() => {
+                  setIsAddBoardDialogOpen(true);
+                  form.reset({name: "", description: ""});
+                }}
+                className="dark:bg-blue-500 dark:hover:bg-blue-600"
+              >
+                Create your first board
+              </Button>
+            )}
           </div>
         )}
       </div>
