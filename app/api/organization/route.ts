@@ -3,6 +3,69 @@ import { db } from "@/lib/db"
 import { NextRequest, NextResponse } from "next/server"
 import { createOrganizationWithInvites } from "@/lib/organization"
 
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth()
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
+
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
+    }
+
+    // Verify user has access to this organization
+    const userOrg = await db.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: organizationId
+        }
+      },
+      include: {
+        organization: {
+          include: {
+            members: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    })
+
+    if (!userOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
+    }
+
+    return NextResponse.json({
+      id: userOrg.organization.id,
+      name: userOrg.organization.name,
+      slackWebhookUrl: userOrg.organization.slackWebhookUrl,
+      members: userOrg.organization.members.map(member => ({
+        id: member.user.id,
+        name: member.user.name,
+        email: member.user.email,
+        isAdmin: member.role === 'ADMIN'
+      }))
+    })
+  } catch (error) {
+    console.error("Error fetching organization:", error)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth()
@@ -36,87 +99,41 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, slackWebhookUrl } = await request.json()
+    const { name, slackWebhookUrl, organizationId } = await request.json()
 
-    if (!name || typeof name !== 'string') {
-      return NextResponse.json({ error: "Organization name is required" }, { status: 400 })
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
     }
 
-    // Get user with organizations
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { 
-        organizations: {
-          include: { organization: true }
+    // Verify user has admin access to this organization
+    const userOrg = await db.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: organizationId
         }
       }
     })
 
-    if (!user?.organizations || user.organizations.length === 0) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+    if (!userOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
     }
 
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
-    
-    // Only admins can update organization name
+    // Only admins can update organization settings
     if (userOrg.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only admins can update organization settings" }, { status: 403 })
     }
 
-    // Update organization name and Slack webhook URL
-    await db.organization.update({
-      where: { id: userOrg.organization.id },
-      data: { 
-        name: name.trim(),
-        ...(slackWebhookUrl !== undefined && { slackWebhookUrl: slackWebhookUrl?.trim() || null })
+    // Update the organization
+    const updatedOrganization = await db.organization.update({
+      where: { id: organizationId },
+      data: {
+        name: name,
+        slackWebhookUrl: slackWebhookUrl
       }
     })
 
-    // Return updated user data
-    const updatedUser = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { 
-        organizations: {
-          include: {
-            organization: {
-              include: {
-                members: {
-                  include: {
-                    user: {
-                      select: {
-                        id: true,
-                        name: true,
-                        email: true
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    })
-
-    const updatedUserOrg = updatedUser!.organizations[0]
-    
-    return NextResponse.json({
-      id: updatedUser!.id,
-      name: updatedUser!.name,
-      email: updatedUser!.email,
-      organization: updatedUserOrg ? {
-        id: updatedUserOrg.organization.id,
-        name: updatedUserOrg.organization.name,
-        slackWebhookUrl: updatedUserOrg.organization.slackWebhookUrl,
-        members: updatedUserOrg.organization.members.map(member => ({
-          id: member.user.id,
-          name: member.user.name,
-          email: member.user.email,
-          isAdmin: member.role === 'ADMIN'
-        }))
-      } : null
-    })
+    return NextResponse.json(updatedOrganization)
   } catch (error) {
     console.error("Error updating organization:", error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

@@ -14,27 +14,26 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { isAdmin } = await request.json()
+    const { isAdmin, organizationId } = await request.json()
     const memberId = (await params).id
 
-    // Get current user with organizations
-    const currentUser = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { 
-        organizations: {
-          include: {
-            organization: true
-          }
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
+    }
+
+    // Verify current user has admin access to this organization
+    const currentUserOrg = await db.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: organizationId
         }
       }
     })
 
-    if (!currentUser?.organizations || currentUser.organizations.length === 0) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+    if (!currentUserOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
     }
-
-    // For now, use the first organization the user is a member of
-    const currentUserOrg = currentUser.organizations[0]
 
     // Only admins can change admin roles
     if (currentUserOrg.role !== 'ADMIN') {
@@ -46,7 +45,7 @@ export async function PUT(
       where: { 
         userId_organizationId: {
           userId: memberId,
-          organizationId: currentUserOrg.organization.id
+          organizationId: organizationId
         }
       },
       include: {
@@ -63,7 +62,7 @@ export async function PUT(
       where: { 
         userId_organizationId: {
           userId: memberId,
-          organizationId: currentUserOrg.organization.id
+          organizationId: organizationId
         }
       },
       data: { role: isAdmin ? 'ADMIN' : 'MEMBER' },
@@ -92,25 +91,26 @@ export async function DELETE(
     }
 
     const memberId = (await params).id
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
 
-    // Get current user with organizations
-    const currentUser = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { 
-        organizations: {
-          include: {
-            organization: true
-          }
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
+    }
+
+    // Verify current user has admin access to this organization
+    const currentUserOrg = await db.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: organizationId
         }
       }
     })
 
-    if (!currentUser?.organizations || currentUser.organizations.length === 0) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+    if (!currentUserOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
     }
-
-    // For now, use the first organization the user is a member of
-    const currentUserOrg = currentUser.organizations[0]
 
     // Only admins can remove members
     if (currentUserOrg.role !== 'ADMIN') {
@@ -122,7 +122,7 @@ export async function DELETE(
       where: { 
         userId_organizationId: {
           userId: memberId,
-          organizationId: currentUserOrg.organization.id
+          organizationId: organizationId
         }
       },
       include: {
@@ -135,7 +135,7 @@ export async function DELETE(
     }
 
     // Can't remove yourself
-    if (memberId === currentUser.id) {
+    if (memberId === session.user.id) {
       return NextResponse.json({ error: "Cannot remove yourself" }, { status: 400 })
     }
 
@@ -144,7 +144,7 @@ export async function DELETE(
       where: { 
         userId_organizationId: {
           userId: memberId,
-          organizationId: currentUserOrg.organization.id
+          organizationId: organizationId
         }
       }
     })

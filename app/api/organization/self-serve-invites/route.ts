@@ -9,7 +9,7 @@ function generateSecureToken(): string {
 }
 
 // Get all active self-serve invites for the organization
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth()
     
@@ -17,20 +17,31 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user with organization
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { organization: true }
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
+
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
+    }
+
+    // Verify user has access to this organization
+    const userOrg = await db.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: organizationId
+        }
+      }
     })
 
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+    if (!userOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
     }
 
     // Get all active self-serve invites for this organization
     const selfServeInvites = await db.organizationSelfServeInvite.findMany({
       where: { 
-        organizationId: user.organizationId,
+        organizationId: organizationId,
         isActive: true
       },
       include: {
@@ -60,31 +71,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { name, expiresAt, usageLimit } = await request.json()
+    const { name, expiresAt, usageLimit, organizationId } = await request.json()
 
     if (!name || typeof name !== 'string') {
       return NextResponse.json({ error: "Invite name is required" }, { status: 400 })
     }
 
-    // Get user with organization
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isAdmin: true,
-        organizationId: true,
-        organization: true
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
+    }
+
+    // Verify user has admin access to this organization
+    const userOrg = await db.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: organizationId
+        }
       }
     })
 
-    if (!user?.organizationId || !user.organization) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+    if (!userOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
     }
 
     // Only admins can create self-serve invites
-    if (!user.isAdmin) {
+    if (userOrg.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only admins can create self-serve invites" }, { status: 403 })
     }
 
@@ -115,7 +127,7 @@ export async function POST(request: NextRequest) {
       data: {
         token: generateSecureToken(),
         name: name.trim(),
-        organizationId: user.organizationId,
+        organizationId: organizationId,
         createdBy: session.user.id,
         expiresAt: expirationDate,
         usageLimit: validUsageLimit

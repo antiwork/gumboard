@@ -18,6 +18,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
+import OrganizationSwitcher from "@/components/organization-switcher";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -87,6 +88,9 @@ export default function OrganizationSettingsPage() {
     expiresAt: "",
     usageLimit: "",
   });
+  const [organizations, setOrganizations] = useState<Array<{id: string, name: string, role: 'ADMIN' | 'MEMBER'}>>([]);
+  const [currentOrganization, setCurrentOrganization] = useState<{id: string, name: string, role: 'ADMIN' | 'MEMBER'} | null>(null);
+  const [currentOrganizationMembers, setCurrentOrganizationMembers] = useState<Array<{id: string, name: string | null, email: string, isAdmin: boolean}>>([]);
   const [removeMemberDialog, setRemoveMemberDialog] = useState<{
     open: boolean;
     memberId: string;
@@ -117,12 +121,6 @@ export default function OrganizationSettingsPage() {
       if (response.ok) {
         const userData = await response.json();
         setUser(userData);
-        const orgNameValue = userData.organization?.name || "";
-        const slackWebhookValue = userData.organization?.slackWebhookUrl || "";
-        setOrgName(orgNameValue);
-        setOriginalOrgName(orgNameValue);
-        setSlackWebhookUrl(slackWebhookValue);
-        setOriginalSlackWebhookUrl(slackWebhookValue);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -131,15 +129,59 @@ export default function OrganizationSettingsPage() {
     }
   }, [router]);
 
+  const fetchOrganizations = useCallback(async () => {
+    try {
+      const response = await fetch("/api/user/organizations");
+      if (response.ok) {
+        const { organizations } = await response.json();
+        setOrganizations(organizations);
+        
+        if (organizations.length > 0) {
+          const firstOrg = organizations[0];
+          setCurrentOrganization(firstOrg);
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching organizations:", error);
+    }
+  }, []);
+
+  const fetchOrganizationData = useCallback(async (organizationId?: string) => {
+    if (!organizationId) return;
+    
+    try {
+      const response = await fetch(`/api/organization?organizationId=${organizationId}`);
+      if (response.ok) {
+        const orgData = await response.json();
+        setOrgName(orgData.name || "");
+        setOriginalOrgName(orgData.name || "");
+        setSlackWebhookUrl(orgData.slackWebhookUrl || "");
+        setOriginalSlackWebhookUrl(orgData.slackWebhookUrl || "");
+        setCurrentOrganizationMembers(orgData.members || []);
+      }
+    } catch (error) {
+      console.error("Error fetching organization data:", error);
+    }
+  }, []);
+
   useEffect(() => {
     fetchUserData();
-    fetchInvites();
-    fetchSelfServeInvites();
-  }, [fetchUserData]);
+    fetchOrganizations();
+  }, [fetchUserData, fetchOrganizations]);
+
+  useEffect(() => {
+    if (currentOrganization) {
+      fetchOrganizationData(currentOrganization.id);
+      fetchInvites();
+      fetchSelfServeInvites();
+    }
+  }, [currentOrganization, fetchOrganizationData]);
 
   const fetchInvites = async () => {
+    if (!currentOrganization) return;
+    
     try {
-      const response = await fetch("/api/organization/invites");
+      const response = await fetch(`/api/organization/invites?organizationId=${currentOrganization.id}`);
       if (response.ok) {
         const data = await response.json();
         setInvites(data.invites || []);
@@ -150,8 +192,10 @@ export default function OrganizationSettingsPage() {
   };
 
   const fetchSelfServeInvites = async () => {
+    if (!currentOrganization) return;
+    
     try {
-      const response = await fetch("/api/organization/self-serve-invites");
+      const response = await fetch(`/api/organization/self-serve-invites?organizationId=${currentOrganization.id}`);
       if (response.ok) {
         const data = await response.json();
         setSelfServeInvites(data.selfServeInvites || []);
@@ -161,7 +205,18 @@ export default function OrganizationSettingsPage() {
     }
   };
 
+  const handleOrganizationChange = (organization: {id: string, name: string, role: 'ADMIN' | 'MEMBER'} | null) => {
+    if (organization) {
+      setCurrentOrganization(organization);
+      fetchOrganizationData(organization.id);
+      fetchInvites();
+      fetchSelfServeInvites();
+    }
+  };
+
   const handleSaveOrganization = async () => {
+    if (!currentOrganization) return;
+    
     setSaving(true);
     try {
       const response = await fetch("/api/organization", {
@@ -172,6 +227,7 @@ export default function OrganizationSettingsPage() {
         body: JSON.stringify({
           name: orgName,
           slackWebhookUrl: slackWebhookUrl,
+          organizationId: currentOrganization.id,
         }),
       });
 
@@ -203,7 +259,7 @@ export default function OrganizationSettingsPage() {
 
   const handleInviteMember = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inviteEmail.trim()) return;
+    if (!inviteEmail.trim() || !currentOrganization) return;
 
     setInviting(true);
     try {
@@ -214,6 +270,7 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           email: inviteEmail,
+          organizationId: currentOrganization.id,
         }),
       });
 
@@ -249,13 +306,15 @@ export default function OrganizationSettingsPage() {
   };
 
   const confirmRemoveMember = async () => {
+    if (!currentOrganization) return;
+    
     try {
-      const response = await fetch(`/api/organization/members/${removeMemberDialog.memberId}`, {
+      const response = await fetch(`/api/organization/members/${removeMemberDialog.memberId}?organizationId=${currentOrganization.id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        fetchUserData();
+        fetchOrganizationData(currentOrganization.id);
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -275,8 +334,10 @@ export default function OrganizationSettingsPage() {
   };
 
   const handleCancelInvite = async (inviteId: string) => {
+    if (!currentOrganization) return;
+    
     try {
-      const response = await fetch(`/api/organization/invites/${inviteId}`, {
+      const response = await fetch(`/api/organization/invites/${inviteId}?organizationId=${currentOrganization.id}`, {
         method: "DELETE",
       });
 
@@ -292,6 +353,8 @@ export default function OrganizationSettingsPage() {
     memberId: string,
     currentAdminStatus: boolean
   ) => {
+    if (!currentOrganization) return;
+    
     try {
       const response = await fetch(`/api/organization/members/${memberId}`, {
         method: "PUT",
@@ -300,11 +363,12 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           isAdmin: !currentAdminStatus,
+          organizationId: currentOrganization.id,
         }),
       });
 
       if (response.ok) {
-        fetchUserData(); // Refresh the data to show updated admin status
+        fetchOrganizationData(currentOrganization.id);
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -325,7 +389,7 @@ export default function OrganizationSettingsPage() {
 
   const handleCreateSelfServeInvite = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSelfServeInvite.name.trim()) return;
+    if (!newSelfServeInvite.name.trim() || !currentOrganization) return;
 
     setCreating(true);
     try {
@@ -333,8 +397,10 @@ export default function OrganizationSettingsPage() {
         name: string;
         expiresAt?: string;
         usageLimit?: number;
+        organizationId: string;
       } = {
         name: newSelfServeInvite.name,
+        organizationId: currentOrganization.id,
       };
 
       if (newSelfServeInvite.expiresAt) {
@@ -389,9 +455,11 @@ export default function OrganizationSettingsPage() {
   };
 
   const confirmDeleteSelfServeInvite = async () => {
+    if (!currentOrganization) return;
+    
     try {
       const response = await fetch(
-        `/api/organization/self-serve-invites/${deleteInviteDialog.inviteToken}`,
+        `/api/organization/self-serve-invites/${deleteInviteDialog.inviteToken}?organizationId=${currentOrganization.id}`,
         {
           method: "DELETE",
         }
@@ -455,463 +523,493 @@ export default function OrganizationSettingsPage() {
 
   return (
     <div className="space-y-6 min-h-screen px-2 sm:px-0">
-      {/* Organization Info */}
-      <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Organization Settings
-            </h2>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Manage your organization and team members.
-            </p>
-          </div>
-
-          <div>
-            <Label
-              htmlFor="orgName"
-              className="text-zinc-800 dark:text-zinc-200"
-            >
-              Organization Name
-            </Label>
-            <Input
-              id="orgName"
-              type="text"
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              placeholder="Enter organization name"
-              className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              disabled={!user?.isAdmin}
-            />
-          </div>
-
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <Button
-              onClick={handleSaveOrganization}
-              disabled={saving || orgName === originalOrgName || !user?.isAdmin}
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can update organization settings"
-                  : undefined
-              }
-            >
-              {saving ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
+      {/* Organization Switcher */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+            Organization Settings
+          </h1>
+          <p className="text-zinc-600 dark:text-zinc-400 mt-1">
+            Manage your organization and team members.
+          </p>
         </div>
-      </Card>
+                 <OrganizationSwitcher
+           currentOrganization={currentOrganization}
+           organizations={organizations}
+           onOrganizationChange={handleOrganizationChange}
+           showAllOrganizations={false}
+         />
+      </div>
 
-      {/* Slack Integration */}
-      <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Slack Integration
-            </h3>
+      {!currentOrganization ? (
+        <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
+          <div className="text-center py-8">
             <p className="text-zinc-600 dark:text-zinc-400">
-              Configure Slack notifications for notes and todos.
+              Please select an organization to view and manage its settings.
             </p>
           </div>
-
-          <div>
-            <Label
-              htmlFor="slackWebhookUrl"
-              className="text-zinc-800 dark:text-zinc-200"
-            >
-              Slack Webhook URL
-            </Label>
-            <Input
-              id="slackWebhookUrl"
-              type="url"
-              value={slackWebhookUrl}
-              onChange={(e) => setSlackWebhookUrl(e.target.value)}
-              placeholder="https://hooks.slack.com/services/..."
-              className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              disabled={!user?.isAdmin}
-            />
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              Create a webhook URL in your Slack workspace to receive
-              notifications when notes and todos are created or completed.{" "}
-              <a
-                href="https://api.slack.com/apps"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-              >
-                Create Slack App
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </a>
-            </p>
-          </div>
-
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <Button
-              onClick={handleSaveOrganization}
-              disabled={
-                saving ||
-                slackWebhookUrl === originalSlackWebhookUrl ||
-                !user?.isAdmin
-              }
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can update organization settings"
-                  : undefined
-              }
-            >
-              {saving ? "Saving..." : "Save changes"}
-            </Button>
-          </div>
-        </div>
-      </Card>
-
-      {/* Team Members */}
-      <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Team Members
-            </h3>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              {user?.isAdmin
-                ? `Manage your organization's team members.`
-                : `View your organization's team members.`}
-            </p>
-          </div>
-
-          <div className="space-y-3">
-            {user?.organization?.members?.map((member: { id: string; name: string | null; email: string; isAdmin: boolean }) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-10 h-10 ${member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700"} rounded-full flex items-center justify-center`}
-                  >
-                    <span className="text-white font-medium">
-                      {member.name
-                        ? member.name.charAt(0).toUpperCase()
-                        : member.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {member.name || "Unnamed User"}
-                      </p>
-                      {member.isAdmin && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                          <ShieldCheck className="w-3 h-3 mr-1" />
-                          Admin
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      {member.email}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center space-x-2">
-                  {/* Only show admin toggle to current admins and not for yourself */}
-                  {user?.isAdmin && member.id !== user.id && (
-                    <Button
-                      onClick={() =>
-                        handleToggleAdmin(member.id, member.isAdmin)
-                      }
-                      variant="outline"
-                      size="sm"
-                      className={`${
-                        member.isAdmin
-                          ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                          : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                      }`}
-                      title={
-                        member.isAdmin ? "Remove admin role" : "Make admin"
-                      }
-                    >
-                      {member.isAdmin ? (
-                        <ShieldCheck className="w-4 h-4" />
-                      ) : (
-                        <Shield className="w-4 h-4" />
-                      )}
-                    </Button>
-                  )}
-                  {user?.isAdmin && member.id !== user.id && (
-                    <Button
-                      onClick={() => handleRemoveMember(member.id, member.name || member.email)}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
+        </Card>
+      ) : (
+        <>
+          {/* Organization Info */}
+          <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
+            <div className="space-y-6">
+              <div>
+                <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                  Organization Settings
+                </h2>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Manage your organization and team members.
+                </p>
               </div>
-            ))}
-          </div>
-        </div>
-      </Card>
 
-      {/* Invite Members */}
-      <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Invite Team Members
-            </h3>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Send invitations to new team members.
-            </p>
-          </div>
-
-          <form onSubmit={handleInviteMember} className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="Enter email address"
-                required
-                disabled={!user?.isAdmin}
-                className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={inviting || !user?.isAdmin}
-              className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can invite new team members"
-                  : undefined
-              }
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              {inviting ? "Inviting..." : "Send Invite"}
-            </Button>
-          </form>
-
-          {/* Pending Invites */}
-          {invites.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                Pending Invites
-              </h4>
-              {invites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
-                >
-                  <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {invite.email}
-                    </p>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Invited on{" "}
-                      {new Date(invite.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => handleCancelInvite(invite.id)}
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </Card>
-
-      {/* Self-Serve Invite Links */}
-      <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
-        <div className="space-y-6">
-          <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Self-Serve Invite Links
-            </h3>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Create shareable links that allow anyone to join your
-              organization.
-            </p>
-          </div>
-
-          {/* Create New Self-Serve Invite */}
-          <form
-            onSubmit={handleCreateSelfServeInvite}
-            className="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
-          >
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label
-                  htmlFor="inviteName"
-                  className="text-zinc-800 dark:text-zinc-200 mb-2"
+                  htmlFor="orgName"
+                  className="text-zinc-800 dark:text-zinc-200"
                 >
-                  Invite Name
+                  Organization Name
                 </Label>
                 <Input
-                  id="inviteName"
+                  id="orgName"
                   type="text"
-                  value={newSelfServeInvite.name}
-                  onChange={(e) =>
-                    setNewSelfServeInvite((prev) => ({
-                      ...prev,
-                      name: e.target.value,
-                    }))
-                  }
-                  placeholder="e.g., General Invite"
-                  required
-                  disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                  placeholder="Enter organization name"
+                  className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  disabled={currentOrganization?.role !== 'ADMIN'}
                 />
               </div>
-              <div>
-                <Label
-                  htmlFor="expiresAt"
-                  className="text-zinc-800 dark:text-zinc-200 mb-2"
-                >
-                  Expires (Optional)
-                </Label>
-                <Input
-                  id="expiresAt"
-                  type="date"
-                  value={newSelfServeInvite.expiresAt}
-                  onChange={(e) =>
-                    setNewSelfServeInvite((prev) => ({
-                      ...prev,
-                      expiresAt: e.target.value,
-                    }))
+
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <Button
+                  onClick={handleSaveOrganization}
+                  disabled={saving || orgName === originalOrgName || currentOrganization?.role !== 'ADMIN'}
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+                  title={
+                    currentOrganization?.role !== 'ADMIN'
+                      ? "Only admins can update organization settings"
+                      : undefined
                   }
-                  disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                />
-              </div>
-              <div>
-                <Label
-                  htmlFor="usageLimit"
-                  className="text-zinc-800 dark:text-zinc-200 mb-2"
                 >
-                  Usage Limit (Optional)
-                </Label>
-                <Input
-                  id="usageLimit"
-                  type="number"
-                  min="1"
-                  value={newSelfServeInvite.usageLimit}
-                  onChange={(e) =>
-                    setNewSelfServeInvite((prev) => ({
-                      ...prev,
-                      usageLimit: e.target.value,
-                    }))
-                  }
-                  placeholder="Unlimited"
-                  disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                />
+                  {saving ? "Saving..." : "Save Changes"}
+                </Button>
               </div>
             </div>
-            <Button
-              type="submit"
-              disabled={creating || !user?.isAdmin}
-              className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can create invite links"
-                  : undefined
-              }
-            >
-              <Link className="w-4 h-4 mr-2" />
-              {creating ? "Creating..." : "Create Invite Link"}
-            </Button>
-          </form>
+          </Card>
 
-          {/* Active Self-Serve Invites */}
-          {selfServeInvites.length > 0 && (
-            <div className="space-y-3">
-              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                Active Invite Links
-              </h4>
-              {selfServeInvites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className="p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700"
+          {/* Slack Integration */}
+          <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                  Slack Integration
+                </h3>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Configure Slack notifications for notes and todos.
+                </p>
+              </div>
+
+              <div>
+                <Label
+                  htmlFor="slackWebhookUrl"
+                  className="text-zinc-800 dark:text-zinc-200"
                 >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
-                          {invite.name}
-                        </h5>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                          Active
+                  Slack Webhook URL
+                </Label>
+                <Input
+                  id="slackWebhookUrl"
+                  type="url"
+                  value={slackWebhookUrl}
+                  onChange={(e) => setSlackWebhookUrl(e.target.value)}
+                  placeholder="https://hooks.slack.com/services/..."
+                  className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  disabled={currentOrganization?.role !== 'ADMIN'}
+                />
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  Create a webhook URL in your Slack workspace to receive
+                  notifications when notes and todos are created or completed.{" "}
+                  <a
+                    href="https://api.slack.com/apps"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+                  >
+                    Create Slack App
+                    <ExternalLink className="w-3 h-3 ml-1" />
+                  </a>
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <Button
+                  onClick={handleSaveOrganization}
+                  disabled={
+                    saving ||
+                    slackWebhookUrl === originalSlackWebhookUrl ||
+                    currentOrganization?.role !== 'ADMIN'
+                  }
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+                  title={
+                    currentOrganization?.role !== 'ADMIN'
+                      ? "Only admins can update organization settings"
+                      : undefined
+                  }
+                >
+                  {saving ? "Saving..." : "Save changes"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+
+          {/* Team Members */}
+          <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                  Team Members
+                </h3>
+                                 <p className="text-zinc-600 dark:text-zinc-400">
+                   {currentOrganization?.role === 'ADMIN'
+                     ? `Manage your organization's team members.`
+                     : `View your organization's team members.`}
+                 </p>
+              </div>
+
+                             <div className="space-y-3">
+                 {currentOrganizationMembers.map((member: { id: string; name: string | null; email: string; isAdmin: boolean }) => (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div
+                        className={`w-10 h-10 ${member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700"} rounded-full flex items-center justify-center`}
+                      >
+                        <span className="text-white font-medium">
+                          {member.name
+                            ? member.name.charAt(0).toUpperCase()
+                            : member.email.charAt(0).toUpperCase()}
                         </span>
                       </div>
-                      <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                        <div className="flex items-center space-x-4">
-                          <span className="flex items-center">
-                            <Users className="w-4 h-4 mr-1" />
-                            {invite.usageLimit
-                              ? `${invite.usageCount}/${invite.usageLimit} used`
-                              : `${invite.usageCount} joined`}
-                          </span>
-                          {invite.expiresAt && (
-                            <span className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
-                              Expires{" "}
-                              {new Date(invite.expiresAt).toLocaleDateString()}
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                            {member.name || "Unnamed User"}
+                          </p>
+                          {member.isAdmin && (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                              <ShieldCheck className="w-3 h-3 mr-1" />
+                              Admin
                             </span>
                           )}
                         </div>
-                        <p>
-                          Created by {invite.user.name || invite.user.email} on{" "}
-                          {new Date(invite.createdAt).toLocaleDateString()}
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          {member.email}
                         </p>
                       </div>
-                      <div className="mt-3 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
-                        <code className="text-sm text-zinc-700 dark:text-zinc-200 break-all">
-                          {typeof window !== "undefined"
-                            ? `${window.location.origin}/join/${invite.token}`
-                            : `/join/${invite.token}`}
-                        </code>
-                      </div>
                     </div>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <Button
-                        onClick={() => copyInviteLink(invite.token)}
-                        variant="outline"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-zinc-800"
-                        title="Copy invite link"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      {user?.isAdmin && (
+                                         <div className="flex items-center space-x-2">
+                       {/* Only show admin toggle to current admins and not for yourself */}
+                       {currentOrganization?.role === 'ADMIN' && member.id !== user?.id && (
                         <Button
                           onClick={() =>
-                            handleDeleteSelfServeInvite(invite.token, invite.name)
+                            handleToggleAdmin(member.id, member.isAdmin)
                           }
                           variant="outline"
                           size="sm"
+                          className={`${
+                            member.isAdmin
+                              ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                              : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                          }`}
+                          title={
+                            member.isAdmin ? "Remove admin role" : "Make admin"
+                          }
+                        >
+                          {member.isAdmin ? (
+                            <ShieldCheck className="w-4 h-4" />
+                          ) : (
+                            <Shield className="w-4 h-4" />
+                          )}
+                        </Button>
+                      )}
+                                             {currentOrganization?.role === 'ADMIN' && member.id !== user?.id && (
+                        <Button
+                          onClick={() => handleRemoveMember(member.id, member.name || member.email)}
+                          variant="outline"
+                          size="sm"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
-                          title="Delete invite link"
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       )}
                     </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
-          )}
-        </div>
-      </Card>
+          </Card>
+
+          {/* Invite Members */}
+          <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                  Invite Team Members
+                </h3>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Send invitations to new team members.
+                </p>
+              </div>
+
+              <form onSubmit={handleInviteMember} className="flex space-x-4">
+                <div className="flex-1">
+                  <Input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="Enter email address"
+                    required
+                    disabled={currentOrganization?.role !== 'ADMIN'}
+                    className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={inviting || currentOrganization?.role !== 'ADMIN'}
+                  className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
+                  title={
+                    currentOrganization?.role !== 'ADMIN'
+                      ? "Only admins can invite new team members"
+                      : undefined
+                  }
+                >
+                  <UserPlus className="w-4 h-4 mr-2" />
+                  {inviting ? "Inviting..." : "Send Invite"}
+                </Button>
+              </form>
+
+              {/* Pending Invites */}
+              {invites.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
+                    Pending Invites
+                  </h4>
+                  {invites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
+                    >
+                      <div>
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {invite.email}
+                        </p>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Invited on{" "}
+                          {new Date(invite.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleCancelInvite(invite.id)}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+
+          {/* Self-Serve Invite Links */}
+          <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+                  Self-Serve Invite Links
+                </h3>
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Create shareable links that allow anyone to join your
+                  organization.
+                </p>
+              </div>
+
+              {/* Create New Self-Serve Invite */}
+              <form
+                onSubmit={handleCreateSelfServeInvite}
+                className="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
+              >
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label
+                      htmlFor="inviteName"
+                      className="text-zinc-800 dark:text-zinc-200 mb-2"
+                    >
+                      Invite Name
+                    </Label>
+                    <Input
+                      id="inviteName"
+                      type="text"
+                      value={newSelfServeInvite.name}
+                      onChange={(e) =>
+                        setNewSelfServeInvite((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      placeholder="e.g., General Invite"
+                      required
+                      disabled={currentOrganization?.role !== 'ADMIN'}
+                      className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="expiresAt"
+                      className="text-zinc-800 dark:text-zinc-200 mb-2"
+                    >
+                      Expires (Optional)
+                    </Label>
+                    <Input
+                      id="expiresAt"
+                      type="date"
+                      value={newSelfServeInvite.expiresAt}
+                      onChange={(e) =>
+                        setNewSelfServeInvite((prev) => ({
+                          ...prev,
+                          expiresAt: e.target.value,
+                        }))
+                      }
+                      disabled={currentOrganization?.role !== 'ADMIN'}
+                      className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="usageLimit"
+                      className="text-zinc-800 dark:text-zinc-200 mb-2"
+                    >
+                      Usage Limit (Optional)
+                    </Label>
+                    <Input
+                      id="usageLimit"
+                      type="number"
+                      min="1"
+                      value={newSelfServeInvite.usageLimit}
+                      onChange={(e) =>
+                        setNewSelfServeInvite((prev) => ({
+                          ...prev,
+                          usageLimit: e.target.value,
+                        }))
+                      }
+                      placeholder="Unlimited"
+                      disabled={currentOrganization?.role !== 'ADMIN'}
+                      className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                    />
+                  </div>
+                </div>
+                <Button
+                  type="submit"
+                  disabled={creating || currentOrganization?.role !== 'ADMIN'}
+                  className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
+                  title={
+                    currentOrganization?.role !== 'ADMIN'
+                      ? "Only admins can create invite links"
+                      : undefined
+                  }
+                >
+                  <Link className="w-4 h-4 mr-2" />
+                  {creating ? "Creating..." : "Create Invite Link"}
+                </Button>
+              </form>
+
+              {/* Active Self-Serve Invites */}
+              {selfServeInvites.length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
+                    Active Invite Links
+                  </h4>
+                  {selfServeInvites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
+                              {invite.name}
+                            </h5>
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              Active
+                            </span>
+                          </div>
+                          <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center space-x-4">
+                              <span className="flex items-center">
+                                <Users className="w-4 h-4 mr-1" />
+                                {invite.usageLimit
+                                  ? `${invite.usageCount}/${invite.usageLimit} used`
+                                  : `${invite.usageCount} joined`}
+                              </span>
+                              {invite.expiresAt && (
+                                <span className="flex items-center">
+                                  <Calendar className="w-4 h-4 mr-1" />
+                                  Expires{" "}
+                                  {new Date(invite.expiresAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                            <p>
+                              Created by {invite.user.name || invite.user.email} on{" "}
+                              {new Date(invite.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="mt-3 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
+                            <code className="text-sm text-zinc-700 dark:text-zinc-200 break-all">
+                              {typeof window !== "undefined"
+                                ? `${window.location.origin}/join/${invite.token}`
+                                : `/join/${invite.token}`}
+                            </code>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            onClick={() => copyInviteLink(invite.token)}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-zinc-800"
+                            title="Copy invite link"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          {currentOrganization?.role === 'ADMIN' && (
+                            <Button
+                              onClick={() =>
+                                handleDeleteSelfServeInvite(invite.token, invite.name)
+                              }
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                              title="Delete invite link"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </Card>
+        </>
+      )}
 
       <AlertDialog open={removeMemberDialog.open} onOpenChange={(open) => setRemoveMemberDialog({ open, memberId: "", memberName: "" })}>
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">

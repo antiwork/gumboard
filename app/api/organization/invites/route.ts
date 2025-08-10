@@ -1,8 +1,8 @@
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth()
     
@@ -10,29 +10,31 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user with organization
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: { 
-        organizations: {
-          include: {
-            organization: true
-          }
+    const { searchParams } = new URL(request.url)
+    const organizationId = searchParams.get('organizationId')
+
+    if (!organizationId) {
+      return NextResponse.json({ error: "Organization ID is required" }, { status: 400 })
+    }
+
+    // Verify user has access to this organization
+    const userOrg = await db.userOrganization.findUnique({
+      where: {
+        userId_organizationId: {
+          userId: session.user.id,
+          organizationId: organizationId
         }
       }
     })
 
-    if (!user?.organizations || user.organizations.length === 0) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+    if (!userOrg) {
+      return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
     }
-
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
 
     // Get pending invites for this organization
     const invites = await db.organizationInvite.findMany({
       where: { 
-        organizationId: userOrg.organization.id,
+        organizationId: organizationId,
         status: 'PENDING'
       },
       orderBy: { createdAt: 'desc' }
