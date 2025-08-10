@@ -42,6 +42,7 @@ export interface Note {
     id: string;
     name: string;
   };
+  boardId: string;
   // Optional positioning properties for board layout
   x?: number;
   y?: number;

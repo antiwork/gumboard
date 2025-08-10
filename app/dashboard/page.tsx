@@ -343,7 +343,7 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Add Board</span>
             </Button>
             <div className="relative user-dropdown">
-              <button
+              <Button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center space-x-2 text-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 sm:px-3 py-2 dark:text-zinc-100"
               >
@@ -358,7 +358,7 @@ export default function Dashboard() {
                   {user?.name?.split(" ")[0] || "User"}
                 </span>
                 <ChevronDown className="w-4 h-4 ml-1 hidden sm:inline" />
-              </button>
+              </Button>
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50">
                   <div className="py-1">
@@ -375,13 +375,13 @@ export default function Dashboard() {
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </Link>
-                    <button
+                    <Button
                       onClick={handleSignOut}
                       className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -511,10 +511,9 @@ export default function Dashboard() {
               <Link href={`/boards/${board.id}`} key={board.id}>
                 <Card className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                   <CardHeader className="pb-3">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
+                      <div>
                         <div className="flex items-center justify-between mb-1">
-                          <CardTitle className="text-lg dark:text-zinc-100">
+                          <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
                             {board.name}
                           </CardTitle>
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -522,6 +521,40 @@ export default function Dashboard() {
                             {board._count.notes === 1 ? "note" : "notes"}
                           </span>
                         </div>
+                        {(user?.id === board.createdBy || user?.isAdmin) && (
+                        <div className="flex justify-end items-center space-x-1">
+                          <Button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleEditBoard(board);
+                            }}
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
+                            title={
+                              user?.id === board.createdBy
+                                ? "Edit board"
+                                : "Edit board (Admin)"
+                            }
+                          >
+                            <Edit3 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleDeleteBoard(board.id, board.name);
+                            }}
+                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
+                            title={
+                              user?.id === board.createdBy
+                                ? "Delete board"
+                                : "Delete board (Admin)"
+                            }
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                         {board.description && (
                           <CardDescription className="mt-1 dark:text-zinc-400">
                             {board.description}
@@ -541,7 +574,7 @@ export default function Dashboard() {
                           </div>
                           
                           {board.isPublic && (
-                            <button
+                            <Button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -561,45 +594,10 @@ export default function Dashboard() {
                                   <span>Copy link</span>
                                 </>
                               )}
-                            </button>
+                            </Button>
                           )}
                         </div>
-                      </div>
-                      {(user?.id === board.createdBy || user?.isAdmin) && (
-                        <div className="flex items-center space-x-1">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEditBoard(board);
-                            }}
-                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Edit board"
-                                : "Edit board (Admin)"
-                            }
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDeleteBoard(board.id, board.name);
-                            }}
-                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Delete board"
-                                : "Delete board (Admin)"
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                      </div>       
                   </CardHeader>
                 </Card>
               </Link>
