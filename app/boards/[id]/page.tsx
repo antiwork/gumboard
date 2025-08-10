@@ -1240,7 +1240,7 @@ export default function BoardPage({
               key={note.id}
               note={note as Note}
               currentUser={user as User}
-              boardId={boardId}
+              boardId={boardId || "all-notes"}
               addingChecklistItem={addingChecklistItem}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
