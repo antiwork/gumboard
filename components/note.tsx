@@ -525,7 +525,7 @@ export function Note({
                 className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
                 onClick={handleStartEdit}
               >
-                {note.content || "Click to add content..."}
+                {note.content || ""}
               </div>
             )}
           </div>
