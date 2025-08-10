@@ -508,9 +508,7 @@ export default function BoardPage({
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
   
-
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
     const authorsMap = new Map<
