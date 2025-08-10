@@ -204,8 +204,6 @@ test.describe('Note Management with Newlines', () => {
     await page.route('**/api/boards/*/notes/*', async (route) => {
       const url = route.request().url();
       const method = route.request().method();
-      console.log("🚀 ~ url:", url)
-      console.log("🚀 ~ method:", method)
       
       apiCallsMade.push({
         url,
