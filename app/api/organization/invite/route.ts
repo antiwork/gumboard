@@ -22,34 +22,39 @@ export async function POST(request: NextRequest) {
 
     const cleanEmail = email.trim().toLowerCase()
 
-    // Get user with organization
+    // Get user with organizations
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        isAdmin: true,
-        organizationId: true,
-        organization: true
+      include: { 
+        organizations: {
+          include: { organization: true }
+        }
       }
     })
 
-    if (!user?.organizationId || !user.organization) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
+    
     // Only admins can invite new members
-    if (!user.isAdmin) {
+    if (userOrg.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only admins can invite new members" }, { status: 403 })
     }
 
     // Check if user is already in the organization
     const existingUser = await db.user.findUnique({
-      where: { email: cleanEmail }
+      where: { email: cleanEmail },
+      include: {
+        organizations: {
+          where: { organizationId: userOrg.organization.id }
+        }
+      }
     })
 
-    if (existingUser && existingUser.organizationId === user.organizationId) {
+    if (existingUser && existingUser.organizations.length > 0) {
       return NextResponse.json({ error: "User is already a member of this organization" }, { status: 400 })
     }
 
@@ -58,7 +63,7 @@ export async function POST(request: NextRequest) {
       where: {
         email_organizationId: {
           email: cleanEmail,
-          organizationId: user.organizationId
+          organizationId: userOrg.organization.id
         }
       }
     })
@@ -72,7 +77,7 @@ export async function POST(request: NextRequest) {
       where: {
         email_organizationId: {
           email: cleanEmail,
-          organizationId: user.organizationId
+          organizationId: userOrg.organization.id
         }
       },
       update: {
@@ -81,7 +86,7 @@ export async function POST(request: NextRequest) {
       },
       create: {
         email: cleanEmail,
-        organizationId: user.organizationId,
+        organizationId: userOrg.organization.id,
         invitedBy: session.user.id,
         status: 'PENDING'
       }
@@ -92,10 +97,10 @@ export async function POST(request: NextRequest) {
       await resend.emails.send({
         from: process.env.EMAIL_FROM!,
         to: cleanEmail,
-        subject: `${session.user.name} invited you to join ${user.organization.name}`,
+        subject: `${session.user.name} invited you to join ${userOrg.organization.name}`,
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2>You're invited to join ${user.organization.name}!</h2>
+            <h2>You're invited to join ${userOrg.organization.name}!</h2>
             <p>${session.user.name} (${session.user.email}) has invited you to join their organization on Gumboard.</p>
             <p>Click the link below to accept the invitation:</p>
             <a href="${process.env.AUTH_URL}/invite/accept?token=${invite.id}" 

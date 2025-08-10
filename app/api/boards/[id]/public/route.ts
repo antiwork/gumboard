@@ -23,9 +23,12 @@ export async function PUT(
         organization: { 
           include: { 
             members: {
-              select: {
-                id: true,
-                isAdmin: true
+              include: {
+                user: {
+                  select: {
+                    id: true
+                  }
+                }
               }
             }
           } 
@@ -38,13 +41,13 @@ export async function PUT(
     }
 
     // Check if user is member of the organization
-    const currentUser = board.organization.members.find(member => member.id === session?.user?.id)
+    const currentUser = board.organization.members.find(member => member.user.id === session?.user?.id)
     
     if (!currentUser) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    if (board.createdBy !== session.user.id && !currentUser.isAdmin) {
+    if (board.createdBy !== session.user.id && currentUser.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only the board creator or admin can modify board settings" }, { status: 403 })
     }
 

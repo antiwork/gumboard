@@ -10,18 +10,25 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user with organization and members
+    // Get user with organizations
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       include: { 
-        organization: {
+        organizations: {
           include: {
-            members: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                isAdmin: true
+            organization: {
+              include: {
+                members: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        name: true,
+                        email: true
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -33,16 +40,23 @@ export async function GET() {
       return NextResponse.json({ error: "User not found" }, { status: 404 })
     }
 
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
+    
     return NextResponse.json({
       id: user.id,
       name: user.name,
       email: user.email,
-      isAdmin: user.isAdmin,
-      organization: user.organization ? {
-        id: user.organization.id,
-        name: user.organization.name,
-        slackWebhookUrl: user.organization.slackWebhookUrl,
-        members: user.organization.members
+      organization: userOrg ? {
+        id: userOrg.organization.id,
+        name: userOrg.organization.name,
+        slackWebhookUrl: userOrg.organization.slackWebhookUrl,
+        members: userOrg.organization.members.map(member => ({
+          id: member.user.id,
+          name: member.user.name,
+          email: member.user.email,
+          isAdmin: member.role === 'ADMIN'
+        }))
       } : null
     })
   } catch (error) {

@@ -10,19 +10,26 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user with organization
+    // Get user with organizations
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: { organization: true }
+        }
+      }
     })
 
-    if (!user?.organization) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
+    
     // Get all boards for the organization
     const boards = await db.board.findMany({
-      where: { organizationId: user.organization.id },
+      where: { organizationId: userOrg.organization.id },
       select: {
         id: true,
         name: true,
@@ -65,23 +72,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Board name is required" }, { status: 400 })
     }
 
-    // Get user with organization
+    // Get user with organizations
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: { organization: true }
+        }
+      }
     })
 
-    if (!user?.organization) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
+    
     // Create new board
     const board = await db.board.create({
       data: {
         name,
         description,
         isPublic: Boolean(isPublic || false),
-        organizationId: user.organization.id,
+        organizationId: userOrg.organization.id,
         createdBy: session.user.id
       },
       include: {
