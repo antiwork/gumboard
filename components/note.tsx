@@ -52,6 +52,7 @@ export interface Note {
 interface NoteProps {
   note: Note;
   currentUser?: User;
+  currentUserIsAdmin?: boolean;
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
@@ -69,6 +70,7 @@ interface NoteProps {
 export function Note({
   note,
   currentUser,
+  currentUserIsAdmin,
   onUpdate,
   onDelete,
   onArchive,
@@ -87,15 +89,17 @@ export function Note({
   const [editContent, setEditContent] = useState(note.content);
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
+  const isAdmin = currentUserIsAdmin !== undefined ? currentUserIsAdmin : currentUser?.isAdmin;
+  
   const [addingItem, setAddingItem] = useState(
     !readonly &&
     currentUser &&
-    (currentUser.id === note.user.id || currentUser.isAdmin) &&
+    (currentUser.id === note.user.id || isAdmin) &&
     (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
 
-  const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+  const canEdit = !readonly && (currentUser?.id === note.user.id || isAdmin);
 
   const handleStartEdit = () => {
     if (canEdit) {

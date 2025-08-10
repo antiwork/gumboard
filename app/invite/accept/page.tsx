@@ -31,10 +31,13 @@ async function acceptInvite(token: string) {
     throw new Error("This invitation has already been processed")
   }
 
-  // Update user to join the organization
-  await db.user.update({
-    where: { id: session.user.id },
-    data: { organizationId: invite.organizationId }
+  // Add user to the organization
+  await db.userOrganization.create({
+    data: {
+      userId: session.user.id!,
+      organizationId: invite.organizationId,
+      role: 'MEMBER'
+    }
   })
 
   // Mark invite as accepted

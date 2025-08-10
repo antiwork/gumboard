@@ -47,6 +47,7 @@ export async function GET() {
       id: user.id,
       name: user.name,
       email: user.email,
+      isAdmin: userOrg?.role === 'ADMIN',
       organization: userOrg ? {
         id: userOrg.organization.id,
         name: userOrg.organization.name,

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth()
     if (!session?.user?.id) {
@@ -11,19 +11,28 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: {
+            organization: true
+          }
+        }
+      }
     })
 
-    if (!user?.organizationId) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
+
+    // Get organization IDs the user has access to
+    const organizationIds = user.organizations.map(org => org.organization.id)
 
     const notes = await db.note.findMany({
       where: {
         deletedAt: null,
         done: true, // Only archived notes
         board: {
-          organizationId: user.organizationId
+          organizationId: { in: organizationIds }
         }
       },
       include: {

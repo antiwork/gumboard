@@ -58,10 +58,10 @@ export async function GET(
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
+    // Check if the user is a member of the board's organization
+    const userOrg = user.organizations.find(org => org.organization.id === board.organizationId)
     
-    if (board.organizationId !== userOrg.organization.id) {
+    if (!userOrg) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
@@ -100,9 +100,6 @@ export async function POST(
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
-
     const board = await db.board.findUnique({
       where: { id: boardId },
       select: {
@@ -117,7 +114,10 @@ export async function POST(
       return NextResponse.json({ error: "Board not found" }, { status: 404 })
     }
 
-    if (board.organizationId !== userOrg.organization.id) {
+    // Check if the user is a member of the board's organization
+    const userOrg = user.organizations.find(org => org.organization.id === board.organizationId)
+    
+    if (!userOrg) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 

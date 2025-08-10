@@ -12,22 +12,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get user with organization
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: {
+            organization: true
+          }
+        }
+      }
     })
 
-    if (!user?.organizationId) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
-    // Get all notes from all boards in the organization
+    const organizationIds = user.organizations.map(org => org.organization.id)
+
+    // Get all notes from all boards across all user's organizations
     const notes = await db.note.findMany({
       where: {
-        deletedAt: null, // Only include non-deleted notes
+        deletedAt: null,
         board: {
-          organizationId: user.organizationId
+          organizationId: { in: organizationIds }
         }
       },
       include: {
@@ -71,13 +78,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Board ID is required" }, { status: 400 })
     }
 
-    // Verify user has access to the specified board (same organization)
+    // Verify user has access to the specified board
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: {
+            organization: true
+          }
+        }
+      }
     })
 
-    if (!user?.organizationId) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
@@ -89,7 +102,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 })
     }
 
-    if (board.organizationId !== user.organizationId) {
+    // Check if user is a member of the board's organization
+    const userOrg = user.organizations.find(org => org.organization.id === board.organizationId)
+    
+    if (!userOrg) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 

@@ -66,9 +66,6 @@ export async function PUT(
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
-
     // Verify the note belongs to a board in the user's organization
     const note = await db.note.findUnique({
       where: { id: noteId },
@@ -93,7 +90,14 @@ export async function PUT(
       return NextResponse.json({ error: "Note not found" }, { status: 404 })
     }
 
-    if (note.board.organizationId !== userOrg.organization.id || note.boardId !== boardId) {
+    if (note.boardId !== boardId) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 })
+    }
+
+    // Check if the user is a member of the board's organization
+    const userOrg = user.organizations.find(org => org.organization.id === note.board.organizationId)
+    
+    if (!userOrg) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
@@ -228,9 +232,6 @@ export async function DELETE(
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
-    // For now, use the first organization the user is a member of
-    const userOrg = user.organizations[0]
-
     // Verify the note belongs to a board in the user's organization
     const note = await db.note.findUnique({
       where: { id: noteId },
@@ -246,7 +247,14 @@ export async function DELETE(
       return NextResponse.json({ error: "Note not found" }, { status: 404 })
     }
 
-    if (note.board.organizationId !== userOrg.organization.id || note.boardId !== boardId) {
+    if (note.boardId !== boardId) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 })
+    }
+
+    // Check if the user is a member of the board's organization
+    const userOrg = user.organizations.find(org => org.organization.id === note.board.organizationId)
+    
+    if (!userOrg) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
