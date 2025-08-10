@@ -1240,7 +1240,7 @@ export default function BoardPage({
                   <span className="text-sm font-medium text-white">
                     {user?.name
                       ? user.name.charAt(0).toUpperCase()
-                      : user?.email?.charAt(0).toUpperCase()}
+                      : user?.email?.charAt(0).toUpperCase() || "U"}
                   </span>
                 </div>
                 <span className="text-sm font-medium hidden md:inline">
