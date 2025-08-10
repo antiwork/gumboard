@@ -314,7 +314,7 @@ export default function Dashboard() {
               <span className="hidden sm:inline">Add Board</span>
             </Button>
             <div className="relative user-dropdown">
-              <button
+              <Button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center space-x-2 text-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 sm:px-3 py-2 dark:text-zinc-100"
               >
@@ -329,7 +329,7 @@ export default function Dashboard() {
                   {user?.name?.split(" ")[0] || "User"}
                 </span>
                 <ChevronDown className="w-4 h-4 ml-1 hidden sm:inline" />
-              </button>
+              </Button>
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50">
                   <div className="py-1">
@@ -346,13 +346,13 @@ export default function Dashboard() {
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </Link>
-                    <button
+                    <Button
                       onClick={handleSignOut}
                       className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -522,7 +522,7 @@ export default function Dashboard() {
                           </div>
                           
                           {board.isPublic && (
-                            <button
+                            <Button
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -542,13 +542,13 @@ export default function Dashboard() {
                                   <span>Copy link</span>
                                 </>
                               )}
-                            </button>
+                            </Button>
                           )}
                         </div>
                       </div>
                       {(user?.id === board.createdBy || user?.isAdmin) && (
                         <div className="flex items-center space-x-1">
-                          <button
+                          <Button
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -562,8 +562,8 @@ export default function Dashboard() {
                             }
                           >
                             <Edit3 className="w-4 h-4" />
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
@@ -577,7 +577,7 @@ export default function Dashboard() {
                             }
                           >
                             <Trash2 className="w-4 h-4" />
-                          </button>
+                          </Button>
                         </div>
                       )}
                     </div>

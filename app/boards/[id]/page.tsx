@@ -741,10 +741,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const newItem: ChecklistItem = {
         id: `item-${Date.now()}`,
@@ -849,10 +846,7 @@ export default function BoardPage({
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       // Store original content for potential rollback
       const originalContent = currentNote.content;
@@ -924,10 +918,7 @@ export default function BoardPage({
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === deleteNoteDialog.noteId);
-      const targetBoardId =
-        boardId === "all-notes" && currentNote?.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${deleteNoteDialog.noteId}`,
@@ -962,9 +953,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
       
-      const targetBoardId = boardId === "all-notes" && currentNote.board?.id 
-        ? currentNote.board.id 
-        : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const archivedNote = { ...currentNote, done: true };
       setNotes(notes.map((n) => (n.id === noteId ? archivedNote : n)));
@@ -1061,10 +1050,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote || !currentNote.checklistItems) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       // OPTIMISTIC UPDATE
       const updatedItems = currentNote.checklistItems.map((item) =>
@@ -1133,10 +1119,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote || !currentNote.checklistItems) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       // Store the item being deleted for potential rollback
       const deletedItem = currentNote.checklistItems.find((item) => item.id === itemId);
@@ -1207,10 +1190,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote || !currentNote.checklistItems) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const updatedItems = currentNote.checklistItems.map((item) =>
         item.id === itemId ? { ...item, content } : item
@@ -1252,10 +1232,7 @@ export default function BoardPage({
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote || !currentNote.checklistItems) return;
 
-      const targetBoardId =
-        boardId === "all-notes" && currentNote.board?.id
-          ? currentNote.board.id
-          : boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();
@@ -1334,7 +1311,7 @@ export default function BoardPage({
 
             {/* Board Selector Dropdown */}
             <div className="relative board-dropdown flex-1 sm:flex-none">
-              <button
+              <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
                 className="flex items-center justify-between border border-border dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer w-full sm:w-auto"
               >
@@ -1348,7 +1325,7 @@ export default function BoardPage({
                     showBoardDropdown ? "rotate-180" : ""
                   }`}
                 />
-              </button>
+              </Button>
 
               {showBoardDropdown && (
                 <div className="fixed sm:absolute left-0 mt-2 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
@@ -1410,7 +1387,7 @@ export default function BoardPage({
                     {allBoards.length > 0 && (
                       <div className="border-t border-border dark:border-zinc-800 my-1"></div>
                     )}
-                    <button
+                    <Button
                       onClick={() => {
                         setShowAddBoard(true);
                         setShowBoardDropdown(false);
@@ -1419,9 +1396,9 @@ export default function BoardPage({
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       <span className="font-medium">Create new board</span>
-                    </button>
+                    </Button>
                     {boardId !== "all-notes" && boardId !== "archive" && (
-                      <button
+                      <Button
                         onClick={() => {
                           setBoardSettings({ sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true });
                           setBoardSettingsDialog(true);
@@ -1431,7 +1408,7 @@ export default function BoardPage({
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         <span className="font-medium">Board settings</span>
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </div>
@@ -1477,16 +1454,16 @@ export default function BoardPage({
                 className="w-full sm:w-64 pl-10 pr-8 py-2 border border-border dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
               {searchTerm && (
-                <button
+                <Button
                   onClick={() => {
                     setSearchTerm("");
                     setDebouncedSearchTerm("");
                     updateURL("");
                   }}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
                 >
                   ×
-                </button>
+                </Button>
               )}
             </div>
 
@@ -1505,7 +1482,7 @@ export default function BoardPage({
 
             {/* User Dropdown */}
             <div className="relative user-dropdown">
-              <button
+              <Button
                 onClick={() => setShowUserDropdown(!showUserDropdown)}
                 className="flex items-center space-x-2 text-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-md px-2 py-1"
               >
@@ -1524,7 +1501,7 @@ export default function BoardPage({
                     showUserDropdown ? "rotate-180" : ""
                   }`}
                 />
-              </button>
+              </Button>
 
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 min-w-fit bg-white dark:bg-gray-800 rounded-md shadow-lg border border-border dark:border-gray-600 z-50">
@@ -1540,13 +1517,13 @@ export default function BoardPage({
                       <Settings className="w-4 h-4 mr-2" />
                       Settings
                     </Link>
-                    <button
+                    <Button
                       onClick={handleSignOut}
                       className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-gray-200 hover:bg-accent dark:hover:bg-gray-700"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign Out
-                    </button>
+                    </Button>
                   </div>
                 </div>
               )}
@@ -1641,7 +1618,7 @@ export default function BoardPage({
                   );
                 }}
                 variant="outline"
-                className="flex items-center space-x-2"
+                className="flex items-center space-x-2 cursor-pointer"
               >
                 <span>Clear All Filters</span>
               </Button>
@@ -1668,7 +1645,7 @@ export default function BoardPage({
                   handleAddNote();
                 }
               }}
-              className="flex items-center space-x-2"
+              className="flex items-center space-x-2 cursor-pointer"
             >
               <Pencil className="w-4 h-4" />
               <span>Add Your First Note</span>
