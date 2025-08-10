@@ -54,6 +54,7 @@ export default function BoardPage({
   const [boardId, setBoardId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
     endDate: Date | null;
@@ -499,6 +500,15 @@ export default function BoardPage({
     };
   }, []);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+      updateURL(searchTerm);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
     const authorsMap = new Map<
@@ -608,12 +618,12 @@ export default function BoardPage({
     () =>
       filterAndSortNotes(
         notes,
-        searchTerm,
+        debouncedSearchTerm,
         dateRange,
         selectedAuthor,
         user
       ),
-    [notes, searchTerm, dateRange, selectedAuthor, user]
+    [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
   const layoutNotes = useMemo(
     () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
@@ -1440,7 +1450,6 @@ export default function BoardPage({
                 value={searchTerm}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
-                  updateURL(e.target.value);
                 }}
                 className="w-full sm:w-64 pl-10 pr-8 py-2 border border-border dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
@@ -1448,6 +1457,7 @@ export default function BoardPage({
                 <Button
                   onClick={() => {
                     setSearchTerm("");
+                    setDebouncedSearchTerm("");
                     updateURL("");
                   }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
@@ -1598,6 +1608,7 @@ export default function BoardPage({
               <Button
                 onClick={() => {
                   setSearchTerm("");
+                  setDebouncedSearchTerm("");
                   setDateRange({ startDate: null, endDate: null });
                   setSelectedAuthor(null);
                   updateURL(
