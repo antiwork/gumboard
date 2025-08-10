@@ -12,7 +12,7 @@ export async function GET(
 
     const board = await db.board.findUnique({
       where: { id: boardId },
-      include: { organization: { include: { members: true } } }
+      include: { organization: { include: { members: { include: { user: true } } } } }
     })
 
     if (!board) {
@@ -37,7 +37,7 @@ export async function GET(
     }
 
     // Check if user is member of the organization
-    const isMember = board.organization.members.some(member => member.id === session?.user?.id)
+    const isMember = board.organization.members.some(member => member.user.id === session?.user?.id)
     
     if (!isMember) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
@@ -82,9 +82,12 @@ export async function PUT(
         organization: { 
           include: { 
             members: {
-              select: {
-                id: true,
-                isAdmin: true
+              include: {
+                user: {
+                  select: {
+                    id: true
+                  }
+                }
               }
             }
           } 
@@ -97,7 +100,7 @@ export async function PUT(
     }
 
     // Check if user is member of the organization
-    const currentUser = board.organization.members.find(member => member.id === session?.user?.id)
+    const currentUser = board.organization.members.find(member => member.user.id === session?.user?.id)
     
     if (!currentUser) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
@@ -105,7 +108,7 @@ export async function PUT(
 
     // For name/description updates, check if user can edit this board (board creator or admin)
     if ((name !== undefined || description !== undefined) && 
-        board.createdBy !== session.user.id && !currentUser.isAdmin) {
+        board.createdBy !== session.user.id && currentUser.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only the board creator or admin can edit this board" }, { status: 403 })
     }
 
@@ -160,11 +163,14 @@ export async function DELETE(
         organization: { 
           include: { 
             members: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                isAdmin: true
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true
+                  }
+                }
               }
             }
           } 
@@ -177,14 +183,14 @@ export async function DELETE(
     }
 
     // Check if user is member of the organization
-    const currentUser = board.organization.members.find(member => member.id === session?.user?.id)
+    const currentUser = board.organization.members.find(member => member.user.id === session?.user?.id)
     
     if (!currentUser) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
     // Check if user can delete this board (board creator or admin)
-    if (board.createdBy !== session.user.id && !currentUser.isAdmin) {
+    if (board.createdBy !== session.user.id && currentUser.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only the board creator or admin can delete this board" }, { status: 403 })
     }
 

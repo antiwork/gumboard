@@ -29,14 +29,12 @@ async function createOrganization(orgName: string, teamEmails: string[]) {
   const organization = await db.organization.create({
     data: {
       name: orgName.trim(),
-    },
-  });
-
-  await db.user.update({
-    where: { id: session.user.id },
-    data: {
-      organizationId: organization.id,
-      isAdmin: true,
+      members: {
+        create: {
+          userId: session.user.id,
+          role: "ADMIN",
+        },
+      },
     },
   });
 
@@ -92,10 +90,14 @@ export default async function OrganizationSetup() {
 
   const user = await db.user.findUnique({
     where: { id: session.user.id },
-    include: { organization: true },
+    include: { 
+      organizations: {
+        include: { organization: true }
+      }
+    },
   });
 
-  if (user?.organization) {
+  if (user?.organizations && user.organizations.length > 0) {
     redirect("/dashboard");
   }
 

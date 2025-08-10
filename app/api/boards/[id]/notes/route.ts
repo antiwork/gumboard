@@ -47,14 +47,21 @@ export async function GET(
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: { organization: true }
+        }
+      }
     })
 
-    if (!user?.organizationId) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
 
-    if (board.organizationId !== user.organizationId) {
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
+    
+    if (board.organizationId !== userOrg.organization.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
@@ -82,12 +89,19 @@ export async function POST(
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: { organization: true }
+        }
+      }
     })
 
-    if (!user?.organizationId) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
+
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
 
     const board = await db.board.findUnique({
       where: { id: boardId },
@@ -103,7 +117,7 @@ export async function POST(
       return NextResponse.json({ error: "Board not found" }, { status: 404 })
     }
 
-    if (board.organizationId !== user.organizationId) {
+    if (board.organizationId !== userOrg.organization.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
@@ -128,9 +142,9 @@ export async function POST(
       }
     })
 
-    if (user.organization?.slackWebhookUrl && hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)) {
+    if (userOrg.organization.slackWebhookUrl && hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)) {
       const slackMessage = formatNoteForSlack(note, board.name, user.name || user.email)
-      const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
+      const messageId = await sendSlackMessage(userOrg.organization.slackWebhookUrl, {
         text: slackMessage,
         username: 'Gumboard',
         icon_emoji: ':clipboard:'

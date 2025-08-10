@@ -48,19 +48,26 @@ export async function PUT(
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       include: { 
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            slackWebhookUrl: true
+        organizations: {
+          include: {
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                slackWebhookUrl: true
+              }
+            }
           }
         }
       }
     })
 
-    if (!user?.organizationId) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
+
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
 
     // Verify the note belongs to a board in the user's organization
     const note = await db.note.findUnique({
@@ -86,12 +93,12 @@ export async function PUT(
       return NextResponse.json({ error: "Note not found" }, { status: 404 })
     }
 
-    if (note.board.organizationId !== user.organizationId || note.boardId !== boardId) {
+    if (note.board.organizationId !== userOrg.organization.id || note.boardId !== boardId) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
     // Check if user is the author of the note or an admin
-    if (note.createdBy !== session.user.id && !user.isAdmin) {
+    if (note.createdBy !== session.user.id && userOrg.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only the note author or admin can edit this note" }, { status: 403 })
     }
 
@@ -121,7 +128,7 @@ export async function PUT(
     })
 
     // Send individual todo notifications if checklist items have changed
-    if (checklistItems !== undefined && user.organization?.slackWebhookUrl) {
+    if (checklistItems !== undefined && userOrg.organization.slackWebhookUrl) {
       const oldItems = (note.checklistItems as unknown as ChecklistItem[]) || []
       const newItems = (checklistItems as unknown as ChecklistItem[]) || []
       const { addedItems, completedItems } = detectChecklistChanges(oldItems, newItems)
@@ -133,7 +140,7 @@ export async function PUT(
       for (const addedItem of addedItems) {
         if (hasValidContent(addedItem.content) && shouldSendNotification(session.user.id, boardId, boardName, updatedNote.board.sendSlackUpdates)) {
           await sendTodoNotification(
-            user.organization.slackWebhookUrl,
+            userOrg.organization.slackWebhookUrl,
             addedItem.content,
             boardName,
             userName,
@@ -146,7 +153,7 @@ export async function PUT(
       for (const completedItem of completedItems) {
         if (shouldSendNotification(session.user.id, boardId, boardName, updatedNote.board.sendSlackUpdates)) {
           await sendTodoNotification(
-            user.organization.slackWebhookUrl,
+            userOrg.organization.slackWebhookUrl,
             completedItem.content,
             boardName,
             userName,
@@ -157,13 +164,13 @@ export async function PUT(
     }
 
     // Send Slack notification if content is being added to a previously empty note
-    if (content !== undefined && user.organization?.slackWebhookUrl && !note.slackMessageId) {
+    if (content !== undefined && userOrg.organization.slackWebhookUrl && !note.slackMessageId) {
       const wasEmpty = !hasValidContent(note.content)
       const hasContent = hasValidContent(content)
       
       if (wasEmpty && hasContent && shouldSendNotification(session.user.id, boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)) {
         const slackMessage = formatNoteForSlack(updatedNote, updatedNote.board.name, user.name || user.email || 'Unknown User')
-        const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
+        const messageId = await sendSlackMessage(userOrg.organization.slackWebhookUrl, {
           text: slackMessage,
           username: 'Gumboard',
           icon_emoji: ':clipboard:'
@@ -179,10 +186,10 @@ export async function PUT(
     }
 
     // Update existing Slack message when done status changes
-    if (done !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
+    if (done !== undefined && userOrg.organization.slackWebhookUrl && note.slackMessageId) {
       const userName = note.user?.name || note.user?.email || 'Unknown User'
       const boardName = note.board.name
-      await updateSlackMessage(user.organization.slackWebhookUrl, note.content, done, boardName, userName)
+      await updateSlackMessage(userOrg.organization.slackWebhookUrl, note.content, done, boardName, userName)
     }
 
     return NextResponse.json({ note: updatedNote })
@@ -208,12 +215,21 @@ export async function DELETE(
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      include: { 
+        organizations: {
+          include: {
+            organization: true
+          }
+        }
+      }
     })
 
-    if (!user?.organizationId) {
+    if (!user?.organizations || user.organizations.length === 0) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 })
     }
+
+    // For now, use the first organization the user is a member of
+    const userOrg = user.organizations[0]
 
     // Verify the note belongs to a board in the user's organization
     const note = await db.note.findUnique({
@@ -230,12 +246,12 @@ export async function DELETE(
       return NextResponse.json({ error: "Note not found" }, { status: 404 })
     }
 
-    if (note.board.organizationId !== user.organizationId || note.boardId !== boardId) {
+    if (note.board.organizationId !== userOrg.organization.id || note.boardId !== boardId) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
     // Check if user is the author of the note or an admin
-    if (note.createdBy !== session.user.id && !user.isAdmin) {
+    if (note.createdBy !== session.user.id && userOrg.role !== 'ADMIN') {
       return NextResponse.json({ error: "Only the note author or admin can delete this note" }, { status: 403 })
     }
 
