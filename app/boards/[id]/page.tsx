@@ -918,7 +918,7 @@ export default function BoardPage({
     try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === deleteNoteDialog.noteId);
-      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
+      const targetBoardId = currentNote?.board?.id ?? currentNote?.boardId;
 
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${deleteNoteDialog.noteId}`,
