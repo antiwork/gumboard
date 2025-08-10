@@ -1403,7 +1403,7 @@ export default function BoardPage({
                         setShowAddBoard(true);
                         setShowBoardDropdown(false);
                       }}
-                      className="flex items-center cursor-pointer w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
                     >
                       <Plus className="w-4 h-4 mr-2" />
                       <span className="font-medium">Create new board</span>
@@ -1415,7 +1415,7 @@ export default function BoardPage({
                           setBoardSettingsDialog(true);
                           setShowBoardDropdown(false);
                         }}
-                        className="flex items-center cursor-pointer w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                        className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         <span className="font-medium">Board settings</span>
