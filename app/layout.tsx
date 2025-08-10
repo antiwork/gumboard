@@ -17,6 +17,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Gumboard",
   description: "Keep on top of your team's to-dos",
+  icons: {
+    icon: "/logo/gumboard.svg",
+  },
 };
 
 export default function RootLayout({
