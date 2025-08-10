@@ -4,6 +4,7 @@ import * as React from "react"
 import { useState, useRef, useEffect } from "react"
 import { Filter, ChevronDown, User } from "lucide-react"
 import { clsx } from "clsx"
+import { Button } from "./button"
 
 const cn = (...classes: (string | undefined | null | false)[]) => {
   return clsx(classes.filter(Boolean))
@@ -69,7 +70,7 @@ function FilterPopover({
 
   return (
     <div className={cn("relative", className)} ref={dropdownRef}>
-      <button
+      <Button
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={cn(
@@ -91,7 +92,7 @@ function FilterPopover({
           "w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform",
           isOpen && "rotate-180"
         )} />
-      </button>
+      </Button>
 
       {isOpen && (
         <div className="fixed sm:absolute left-0 w-full sm:w-80 mt-2 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 p-4">
@@ -117,7 +118,7 @@ function FilterPopover({
                 Author
               </label>
               <div className="space-y-1 max-h-32 overflow-y-auto">
-                <button
+                <Button
                   onClick={() => onAuthorChange?.(null)}
                   className={cn(
                     "w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent dark:hover:bg-zinc-800 flex items-center space-x-3",
@@ -128,9 +129,9 @@ function FilterPopover({
                 >
                   <User className="w-4 h-4 text-muted-foreground dark:text-zinc-400" />
                   <span className="font-medium">All authors</span>
-                </button>
+                </Button>
                 {authors.map((author) => (
-                  <button
+                  <Button
                     key={author.id}
                     onClick={() => onAuthorChange?.(author.id)}
                     className={cn(
@@ -151,7 +152,7 @@ function FilterPopover({
                         {author.email}
                       </div>
                     </div>
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
