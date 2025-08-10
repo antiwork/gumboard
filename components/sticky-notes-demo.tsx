@@ -17,6 +17,7 @@ const initialNotes: Note[] = [
     done: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    boardId: "demo-board",
     user: {
       id: "demo-user",
       name: "Sahil",
@@ -35,6 +36,7 @@ const initialNotes: Note[] = [
     done: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    boardId: "demo-board",
     user: {
       id: "demo-user",
       name: "Michelle",
@@ -53,6 +55,7 @@ const initialNotes: Note[] = [
     done: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    boardId: "demo-board",
     user: {
       id: "demo-user",
       name: "Steve",
@@ -70,6 +73,7 @@ const initialNotes: Note[] = [
     done: false,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
+    boardId: "demo-board",
     user: {
       id: "demo-user",
       name: "Daniel",
@@ -396,6 +400,7 @@ export function StickyNotesDemo() {
       done: false,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      boardId: "demo-board",
       user: {
         id: "demo-user",
         name: randomAuthor.name,
