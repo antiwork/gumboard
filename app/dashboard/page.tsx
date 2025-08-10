@@ -1,5 +1,9 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import z from "zod";
+
 import {
   Card,
   CardDescription,
@@ -36,6 +40,15 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { User, Board } from "@/components/note";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -46,13 +59,16 @@ export type DashboardBoard = Board & {
   _count: { notes: number };
 };
 
+const formSchema = z.object({
+  name: z.string().min(1, "Board name is required"),
+  description: z.string().optional(),
+});
+
 export default function Dashboard() {
   const [boards, setBoards] = useState<DashboardBoard[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showAddBoard, setShowAddBoard] = useState(false);
-  const [newBoardName, setNewBoardName] = useState("");
-  const [newBoardDescription, setNewBoardDescription] = useState("");
+  const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
   const [editingBoard, setEditingBoard] = useState<Board | null>(null);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
@@ -67,6 +83,14 @@ export default function Dashboard() {
   }>({ open: false, title: "", description: "" });
   const [copiedBoardId, setCopiedBoardId] = useState<string | null>(null);
   const router = useRouter();
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: ""
+    }
+  })
 
   useEffect(() => {
     fetchUserAndBoards();
@@ -84,12 +108,6 @@ export default function Dashboard() {
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (showAddBoard) {
-          setShowAddBoard(false);
-          setNewBoardName("");
-          setNewBoardDescription("");
-          setEditingBoard(null);
-        }
         if (showUserDropdown) {
           setShowUserDropdown(false);
         }
@@ -102,7 +120,7 @@ export default function Dashboard() {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showUserDropdown, showAddBoard]);
+  }, [showUserDropdown]);
 
   const fetchUserAndBoards = async () => {
     try {
@@ -138,10 +156,8 @@ export default function Dashboard() {
     }
   };
 
-  const handleAddBoard = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newBoardName.trim()) return;
-
+  const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
+    const {name, description} = values;
     try {
       if (editingBoard) {
         const response = await fetch(`/api/boards/${editingBoard.id}`, {
@@ -150,18 +166,17 @@ export default function Dashboard() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: newBoardName,
-            description: newBoardDescription,
-          }),
-        });
+            name,
+            description,
+          })
+        })
 
         if (response.ok) {
           const { board } = await response.json();
           setBoards(boards.map((b) => (b.id === editingBoard.id ? board : b)));
-          setNewBoardName("");
-          setNewBoardDescription("");
+          form.reset();
+          setIsAddBoardDialogOpen(false);
           setEditingBoard(null);
-          setShowAddBoard(false);
         } else {
           const errorData = await response.json();
           setErrorDialog({
@@ -177,17 +192,16 @@ export default function Dashboard() {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            name: newBoardName,
-            description: newBoardDescription,
+            name,
+            description,
           }),
         });
 
         if (response.ok) {
           const { board } = await response.json();
           setBoards([board, ...boards]);
-          setNewBoardName("");
-          setNewBoardDescription("");
-          setShowAddBoard(false);
+          form.reset();
+          setIsAddBoardDialogOpen(false);
         } else {
           const errorData = await response.json();
           setErrorDialog({
@@ -198,20 +212,22 @@ export default function Dashboard() {
         }
       }
     } catch (error) {
-      console.error("Error with board:", error);
+      console.error("Error adding board:", error);
       setErrorDialog({
         open: true,
         title: editingBoard ? "Failed to update board" : "Failed to create board",
         description: editingBoard ? "Failed to update board" : "Failed to create board",
-      });
+      })
     }
   };
 
-  const handleEditBoard = (board: Board) => {
+  const handleEditBoard = (board: DashboardBoard) => {
     setEditingBoard(board);
-    setNewBoardName(board.name);
-    setNewBoardDescription(board.description || "");
-    setShowAddBoard(true);
+    form.reset({
+      name: board.name,
+      description: board.description || "",
+    });
+    setIsAddBoardDialogOpen(true);
   };
 
   const handleDeleteBoard = (boardId: string, boardName: string) => {
@@ -286,6 +302,15 @@ export default function Dashboard() {
     }
   };
 
+  const handleOpenChange = (open: boolean) => {
+    setIsAddBoardDialogOpen(open)
+    // Reset form and editing state when the dialog closes
+    if (!open) {
+      form.reset();
+      setEditingBoard(null);
+    }
+  }
+
   const handleSignOut = async () => {
     await signOut();
   };
@@ -307,7 +332,11 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Button
-              onClick={() => setShowAddBoard(true)}
+              onClick={() => {
+                form.reset({ name: "", description: "" });
+                setIsAddBoardDialogOpen(true);
+                setEditingBoard(null); 
+              }}
               className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               <Plus className="w-4 h-4" />
@@ -328,7 +357,7 @@ export default function Dashboard() {
                 <span className="text-sm font-medium hidden sm:inline">
                   {user?.name?.split(" ")[0] || "User"}
                 </span>
-                <ChevronDown className="w-4 h-4 ml-1 hidden sm:inline" />
+                <ChevronDown className={`w-4 h-4 ml-1 hidden sm:inline transition-all duration-200 ${showUserDropdown ? "rotate-180" : ""}`}  />
               </Button>
               {showUserDropdown && (
                 <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50">
@@ -373,77 +402,67 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-        {showAddBoard && (
-          <div
-            className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/40 dark:bg-black/70 backdrop-blur-sm"
-            onClick={() => {
-              setShowAddBoard(false);
-              setNewBoardName("");
-              setNewBoardDescription("");
-              setEditingBoard(null);
-            }}
-          >
-            <div
-              className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-border dark:border-zinc-800"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
+        
+        <Dialog open={isAddBoardDialogOpen} onOpenChange={handleOpenChange}>
+          <DialogContent className="bg-white dark:bg-zinc-950 border border-zinc-800 dark:border-zinc-800 sm:max-w-[425px] ">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
                 {editingBoard ? "Edit Board" : "Create New Board"}
-              </h3>
-              <form onSubmit={handleAddBoard}>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                      Board Name
-                    </label>
-                    <Input
-                      type="text"
-                      value={newBoardName}
-                      onChange={(e) => setNewBoardName(e.target.value)}
-                      placeholder="Enter board name"
-                      required
-                      autoFocus
-                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                      Description (Optional)
-                    </label>
-                    <Input
-                      type="text"
-                      value={newBoardDescription}
-                      onChange={(e) => setNewBoardDescription(e.target.value)}
-                      placeholder="Enter board description"
-                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end space-x-3 mt-6">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => {
-                      setShowAddBoard(false);
-                      setNewBoardName("");
-                      setNewBoardDescription("");
-                      setEditingBoard(null);
-                    }}
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
-                  >
+              </DialogTitle>
+              <DialogDescription>
+                {editingBoard
+                  ? "Update the board's name and description."
+                  : "Fill out the details to create a new board."}
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+              <form 
+                className="space-y-4"
+                onSubmit={form.handleSubmit(handleAddBoard)}>
+                  <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="text-sm font-medium text-zinc-800 dark:text-zinc-200 ">Board Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter board name"
+                          className="border border-zinc-200 dark:border-zinc-800"
+                          autoFocus
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-600" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter board description"
+                          className="border border-zinc-200 dark:border-zinc-800"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
                     {editingBoard ? "Update board" : "Create board"}
                   </Button>
-                </div>
+                </DialogFooter>
               </form>
-            </div>
-          </div>
-        )}
+            </Form>
+          </DialogContent>
+        </Dialog>
 
         {boards.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
@@ -597,7 +616,10 @@ export default function Dashboard() {
               Get started by creating your first board
             </p>
             <Button
-              onClick={() => setShowAddBoard(true)}
+              onClick={() => {
+                setIsAddBoardDialogOpen(true);
+                form.reset({name: "", description: ""});
+              }}
               className="dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               Create your first board

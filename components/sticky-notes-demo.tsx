@@ -5,7 +5,6 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Note as NoteComponent } from "@/components/note"
 import type { Note } from "@/components/note"
-import type { ChecklistItem } from "@/components/checklist-item"
 import { Plus } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 
@@ -319,75 +318,6 @@ export function StickyNotesDemo() {
     setNotes(notes.filter((note) => note.id !== noteId))
   }
 
-  const handleAddChecklistItem = (noteId: string, content: string) => {
-    const note = notes.find((n) => n.id === noteId)
-    if (!note) return
-
-    const newItem: ChecklistItem = {
-      id: `${Date.now()}`,
-      content,
-      checked: false,
-      order: (note.checklistItems || []).length,
-    }
-
-    const updatedNote = {
-      ...note,
-      checklistItems: [...(note.checklistItems || []), newItem],
-    }
-
-    handleUpdateNote(updatedNote)
-  }
-
-  const handleToggleChecklistItem = (noteId: string, itemId: string) => {
-    const note = notes.find((n) => n.id === noteId)
-    if (!note || !note.checklistItems) return
-
-    const updatedItems = note.checklistItems.map((item) =>
-      item.id === itemId ? { ...item, checked: !item.checked } : item
-    )
-
-    const allItemsChecked = updatedItems.every((item) => item.checked)
-
-    const updatedNote = {
-      ...note,
-      checklistItems: updatedItems,
-      done: allItemsChecked,
-    }
-
-    handleUpdateNote(updatedNote)
-  }
-
-  const handleEditChecklistItem = (noteId: string, itemId: string, content: string) => {
-    const note = notes.find((n) => n.id === noteId)
-    if (!note || !note.checklistItems) return
-
-    const updatedItems = note.checklistItems.map((item) =>
-      item.id === itemId ? { ...item, content } : item
-    )
-
-    const updatedNote = {
-      ...note,
-      checklistItems: updatedItems,
-    }
-
-    handleUpdateNote(updatedNote)
-  }
-
-  const handleDeleteChecklistItem = (noteId: string, itemId: string) => {
-    const note = notes.find((n) => n.id === noteId)
-    if (!note || !note.checklistItems) return
-
-    const updatedItems = note.checklistItems.filter((item) => item.id !== itemId)
-    const allItemsChecked = updatedItems.every((item) => item.checked)
-
-    const updatedNote = {
-      ...note,
-      checklistItems: updatedItems,
-      done: updatedItems.length > 0 ? allItemsChecked : false,
-    }
-
-    handleUpdateNote(updatedNote)
-  }
 
 
   const handleAddNote = () => {
@@ -436,10 +366,8 @@ export function StickyNotesDemo() {
                   currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
                   onUpdate={handleUpdateNote}
                   onDelete={handleDeleteNote}
-                  onAddChecklistItem={handleAddChecklistItem}
-                  onToggleChecklistItem={handleToggleChecklistItem}
-                  onEditChecklistItem={handleEditChecklistItem}
-                  onDeleteChecklistItem={handleDeleteChecklistItem}
+                  boardId="demo-board"
+                  addingChecklistItem={null}
                   className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                 />
               </motion.div>

@@ -119,12 +119,7 @@ test.describe('Note Management with Newlines', () => {
               content: '',
               color: '#fef3c7',
               done: false,
-              checklistItems: postData.checklistItems || [{
-                id: `item-${Date.now()}`,
-                content: '',
-                checked: false,
-                order: 0,
-              }],
+              checklistItems: postData.checklistItems || [],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               user: {
