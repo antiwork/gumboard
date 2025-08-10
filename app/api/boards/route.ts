@@ -100,6 +100,10 @@ export async function POST(request: NextRequest) {
     if (!userOrg) {
       return NextResponse.json({ error: "Access denied to this organization" }, { status: 403 })
     }
+
+    if (userOrg.role !== 'ADMIN') {
+      return NextResponse.json({ error: "Only admins can create boards" }, { status: 403 })
+    }
     
     // Create new board
     const board = await db.board.create({

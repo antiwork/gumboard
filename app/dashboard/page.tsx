@@ -440,36 +440,45 @@ export default function Dashboard() {
               className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-border dark:border-zinc-800"
               onClick={(e) => e.stopPropagation()}
             >
-              <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
-                {editingBoard ? "Edit Board" : "Create New Board"}
-              </h3>
+            <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
+                 {editingBoard ? "Edit Board" : "Create New Board"}
+            </h3>
+               {!editingBoard && currentOrganization && currentOrganization.role !== 'ADMIN' && (
+                 <div className="mb-4 p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-md">
+                   <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                     Only admins can create boards. You don&apos;t have enough permissions to create boards in this organization.
+                   </p>
+                 </div>
+               )}
               <form onSubmit={handleAddBoard}>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
                       Board Name
                     </label>
-                    <Input
-                      type="text"
-                      value={newBoardName}
-                      onChange={(e) => setNewBoardName(e.target.value)}
-                      placeholder="Enter board name"
-                      required
-                      autoFocus
-                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
-                    />
+                                         <Input
+                       type="text"
+                       value={newBoardName}
+                       onChange={(e) => setNewBoardName(e.target.value)}
+                       placeholder="Enter board name"
+                       required
+                       autoFocus
+                       disabled={!editingBoard && currentOrganization ? currentOrganization.role !== 'ADMIN' : false}
+                       className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
                       Description (Optional)
                     </label>
-                    <Input
-                      type="text"
-                      value={newBoardDescription}
-                      onChange={(e) => setNewBoardDescription(e.target.value)}
-                      placeholder="Enter board description"
-                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
-                    />
+                                         <Input
+                       type="text"
+                       value={newBoardDescription}
+                       onChange={(e) => setNewBoardDescription(e.target.value)}
+                       placeholder="Enter board description"
+                       disabled={!editingBoard && currentOrganization ? currentOrganization.role !== 'ADMIN' : false}
+                       className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                     />
                   </div>
                 </div>
                 <div className="flex justify-end space-x-3 mt-6">
@@ -488,10 +497,11 @@ export default function Dashboard() {
                   </Button>
                   <Button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
+                    disabled={!editingBoard && currentOrganization ? currentOrganization.role !== 'ADMIN' : false}
+                    className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {editingBoard ? "Update board" : "Create board"}
-                  </Button>
+                     {editingBoard ? "Update board" : "Create board"}
+                    </Button>
                 </div>
               </form>
             </div>
@@ -599,7 +609,7 @@ export default function Dashboard() {
                           )}
                         </div>
                       </div>
-                      {(user?.id === board.createdBy || user?.isAdmin) && (
+                      {currentOrganization?.role === 'ADMIN' && (
                         <div className="flex items-center space-x-1">
                           <button
                             onClick={(e) => {
@@ -608,11 +618,7 @@ export default function Dashboard() {
                               handleEditBoard(board);
                             }}
                             className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Edit board"
-                                : "Edit board (Admin)"
-                            }
+                            title="Edit board (Admin only)"
                           >
                             <Edit3 className="w-4 h-4" />
                           </button>
@@ -623,11 +629,7 @@ export default function Dashboard() {
                               handleDeleteBoard(board.id, board.name);
                             }}
                             className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Delete board"
-                                : "Delete board (Admin)"
-                            }
+                            title="Delete board (Admin only)"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>

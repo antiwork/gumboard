@@ -106,10 +106,9 @@ export async function PUT(
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    // For name/description updates, check if user can edit this board (board creator or admin)
-    if ((name !== undefined || description !== undefined) && 
-        board.createdBy !== session.user.id && currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: "Only the board creator or admin can edit this board" }, { status: 403 })
+    // For name/description updates, check if user can edit this board (only admin)
+    if ((name !== undefined || description !== undefined) && currentUser.role !== 'ADMIN') {
+      return NextResponse.json({ error: "Only admins can edit boards" }, { status: 403 })
     }
 
     const updateData: {
@@ -189,9 +188,9 @@ export async function DELETE(
       return NextResponse.json({ error: "Access denied" }, { status: 403 })
     }
 
-    // Check if user can delete this board (board creator or admin)
-    if (board.createdBy !== session.user.id && currentUser.role !== 'ADMIN') {
-      return NextResponse.json({ error: "Only the board creator or admin can delete this board" }, { status: 403 })
+    // Check if user can delete this board (only admin)
+    if (currentUser.role !== 'ADMIN') {
+      return NextResponse.json({ error: "Only admins can delete boards" }, { status: 403 })
     }
 
     // Delete the board
