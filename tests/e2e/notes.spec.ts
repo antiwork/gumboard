@@ -297,4 +297,28 @@ test.describe('Note Management with Newlines', () => {
     await expect(page.locator('.note-background')).toBeVisible();
   });
 
+  test('should autofocus new checklist item input when Add task is clicked', async ({ page }) => {
+    await page.goto('/boards/test-board');
+    
+    await page.click('button:has-text("Add Your First Note")');
+    await page.waitForTimeout(500);
+    
+    const initialInput = page.locator('input.bg-transparent').first();
+    await initialInput.fill('First item');
+    await initialInput.press('Enter');
+    await page.waitForTimeout(300);
+    
+    await page.click('button:has-text("Add task")');
+    
+    const newItemInput = page.locator('input[placeholder="Add new item..."]');
+    await expect(newItemInput).toBeVisible();
+    await expect(newItemInput).toBeFocused();
+    
+    await newItemInput.blur();
+    await page.waitForTimeout(100);
+    
+    await page.click('button:has-text("Add task")');
+    await expect(newItemInput).toBeFocused();
+  });
+
 });
