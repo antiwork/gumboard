@@ -334,6 +334,8 @@ export function Note({
           onSave={(content, comments) =>
             handleSaveItem(activeItem.id, content, comments)
           }
+          currentUser={currentUser}
+          readonly={!canEdit}
         />
       )}
     </div>

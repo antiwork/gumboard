@@ -9,6 +9,13 @@ import { Trash2, MessageSquare } from "lucide-react";
 export interface Comment {
   id: string;
   content: string;
+  createdAt?: string;
+  createdBy?: string;
+  user?: {
+    id: string;
+    name: string | null;
+    email: string;
+  };
 }
 
 export interface ChecklistItem {
