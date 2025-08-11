@@ -46,70 +46,76 @@ model Session {
 
 // Updated User model for NextAuth compatibility
 model User {
-  id             String       @id @default(cuid())
-  name           String?
-  email          String       @unique
-  emailVerified  DateTime?
-  image          String?
-  accounts       Account[]
-  sessions       Session[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organizationId String?
-  isAdmin        Boolean      @default(false) // Admin role for organization
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  invitedOrganizations OrganizationInvite[]
+  id                      String                        @id @default(cuid())
+  name                    String?
+  email                   String                        @unique
+  emailVerified           DateTime?
+  image                   String?
+  accounts                Account[]
+  sessions                Session[]
+  createdAt               DateTime                      @default(now())
+  updatedAt               DateTime                      @updatedAt
+  organizationId          String?
+  isAdmin                 Boolean                       @default(false) // Admin role for organization
+  organization            Organization?                 @relation(fields: [organizationId], references: [id])
+  invitedOrganizations    OrganizationInvite[]
   createdSelfServeInvites OrganizationSelfServeInvite[]
-  notes          Note[]
+  notes                   Note[]
 
   @@map("users")
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
-  slackWebhookUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  members   User[]
-  invites   OrganizationInvite[]
-  boards    Board[]
+  id               String                        @id @default(cuid())
+  name             String
+  slackWebhookUrl  String?
+  createdAt        DateTime                      @default(now())
+  updatedAt        DateTime                      @updatedAt
+  members          User[]
+  invites          OrganizationInvite[]
+  boards           Board[]
   selfServeInvites OrganizationSelfServeInvite[]
 
   @@map("organizations")
 }
 
 model Board {
-  id             String       @id @default(cuid())
-  name           String
-  description    String?
-  isPublic       Boolean      @default(false)
-  sendSlackUpdates Boolean    @default(true)
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdBy      String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  notes          Note[]
+  id               String       @id @default(cuid())
+  name             String
+  description      String?
+  isPublic         Boolean      @default(false)
+  sendSlackUpdates Boolean      @default(true)
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy        String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  notes            Note[]
 
+  // Performance indexes
+  @@index([organizationId, createdAt], name: "idx_board_org_created")
   @@map("boards")
 }
 
 model Note {
-  id        String @id @default(cuid())
-  content   String @db.Text
-  color     String @default("#fef3c7") // Default yellow color
-  done      Boolean @default(false) // Track completion status
+  id             String    @id @default(cuid())
+  content        String    @db.Text
+  color          String    @default("#fef3c7") // Default yellow color
+  done           Boolean   @default(false) // Track completion status
   checklistItems Json? // Store checklist items as JSON
   slackMessageId String?
-  boardId   String
-  board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  createdBy String
-  user      User   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime? // Soft delete timestamp
+  boardId        String
+  board          Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  createdBy      String
+  user           User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime? // Soft delete timestamp
 
+  // Performance indexes
+  @@index([boardId, deletedAt], name: "idx_note_board_deleted")
+  @@index([boardId, createdAt], name: "idx_note_board_created")
+  @@index([createdBy, deletedAt], name: "idx_note_user_deleted")
   @@map("notes")
 }
 
@@ -130,14 +136,14 @@ model OrganizationInvite {
 model OrganizationSelfServeInvite {
   id             String       @id @default(cuid())
   token          String?      @unique // Cryptographically secure token for the URL
-  name           String       // Name/description for the invite link
+  name           String // Name/description for the invite link
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy      String
   user           User         @relation(fields: [createdBy], references: [id])
   createdAt      DateTime     @default(now())
-  expiresAt      DateTime?    // Optional expiration date
-  usageLimit     Int?         // Optional usage limit
+  expiresAt      DateTime? // Optional expiration date
+  usageLimit     Int? // Optional usage limit
   usageCount     Int          @default(0) // Track how many times it's been used
   isActive       Boolean      @default(true)
 
