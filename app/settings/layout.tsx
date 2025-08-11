@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
-import { User as UserIcon, Building2, ArrowLeft, Settings, LogOut, ChevronDown } from "lucide-react"
+import { User as UserIcon, Building2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
 import { signOut } from "next-auth/react"
 import { FullPageLoader } from "@/components/ui/loader"
