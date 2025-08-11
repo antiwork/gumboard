@@ -71,7 +71,7 @@ export default function SettingsLayout({
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
-      <nav className="bg-card dark:bg-zinc-900 border-b border-border dark:border-zinc-800 shadow-sm">
+      <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
         <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-4 sm:space-x-6">
             <Link href="/dashboard" className="flex-shrink-0">
@@ -95,7 +95,7 @@ export default function SettingsLayout({
             </Button>
 
             {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50">
+              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-gray-200 dark:border-zinc-800 z-50">
                 <div className="py-1">
                   <div className="px-4 py-2 text-sm text-muted-foreground dark:text-zinc-400 border-b dark:border-zinc-800">
                     {user?.email}
@@ -122,7 +122,7 @@ export default function SettingsLayout({
         </div>
       </nav>
 
-      <div className="md:hidden bg-card dark:bg-zinc-900 border-b border-border dark:border-zinc-800 px-4 py-3">
+      <div className="md:hidden bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-4 py-3">
         <h2 className="text-lg font-semibold text-foreground dark:text-zinc-100">Settings</h2>
       </div>
 
