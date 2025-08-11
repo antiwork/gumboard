@@ -8,7 +8,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
-import { Trash2, Plus, Archive } from "lucide-react";
+import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
 
 // Core domain types
@@ -58,6 +58,7 @@ interface NoteProps {
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
+  onUnarchive?: (noteId: string) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -71,6 +72,7 @@ export function Note({
   onUpdate,
   onDelete,
   onArchive,
+  onUnarchive,
   readonly = false,
   showBoardName = false,
   className,
@@ -465,6 +467,22 @@ export function Note({
                 title="Archive note"
               >
                 <Archive className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+          {canEdit && onUnarchive && (
+            <div className="flex items-center">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUnarchive(note.id);
+                }}
+                className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
+                variant="ghost"
+                size="icon"
+                title="Unarchive note"
+              >
+                <ArchiveRestore className="w-3 h-3" />
               </Button>
             </div>
           )}

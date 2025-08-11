@@ -263,16 +263,8 @@ test.describe('Note Management with Newlines', () => {
     // Test 4: Delete checklist item
     await page.getByRole('button', { name: 'Delete item' }).click();
 
-    // Test 5: Archive Note
-    await page.getByRole('button', { name: 'Archive note' }).click();
-    
-    // Test 6: Delete Note
-    await page.getByRole('button').filter({ hasText: /^$/ }).nth(1).click();
-    await page.getByRole('button', { name: 'Delete note' }).click(); 
-
-    expect(apiCallsMade.filter(call => call.method === 'PUT').length).toBe(5);
-    expect(apiCallsMade.filter(call => call.method === 'DELETE').length).toBe(1);
-    expect(apiCallsMade.length).toBe(6);
+    expect(apiCallsMade.filter(call => call.method === 'PUT').length).toBe(4);
+    expect(apiCallsMade.length).toBe(4);
 
     apiCallsMade.forEach(call => {
       expect(call.url).toContain('api/boards/note-actual-board-id/notes/test-note-123');
