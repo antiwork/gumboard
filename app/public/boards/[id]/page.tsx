@@ -442,7 +442,6 @@ export default function PublicBoardPage({
     );
   }
 
-  // Configure board selector for public board (showing only the current board)
   const boardSelectorConfig: BoardSelectorProps = {
     currentBoardId: boardId || '',
     currentBoard: board,
