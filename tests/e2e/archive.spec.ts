@@ -171,7 +171,7 @@ test.describe('Archive Functionality', () => {
     await page.route('**/api/boards/test-board/notes/test-note-1', async (route) => {
       if (route.request().method() === 'PUT') {
         const putData = await route.request().postDataJSON();
-        if (putData.archivedAt === true) {
+        if (putData.archivedAt && typeof putData.archivedAt === 'string') {
           noteArchived = true;
           archivedNoteData = putData;
         }
@@ -210,7 +210,7 @@ test.describe('Archive Functionality', () => {
     await page.waitForTimeout(500);
     
     expect(noteArchived).toBe(true);
-    expect(archivedNoteData.archivedAt).toBe(true);
+    expect(archivedNoteData.archivedAt).toBeTruthy();
   });
 
   test('should not show archive button on Archive board', async ({ page }) => {
@@ -360,7 +360,7 @@ test.describe('Archive Functionality', () => {
     await page.route('**/api/boards/1/notes/note1', async (route) => {
       if (route.request().method() === 'PUT') {
         const putData = await route.request().postDataJSON();
-        if (putData.archivedAt === false) {
+        if (putData.archivedAt === null) {
           noteUnarchived = true;
           unarchivedNoteData = putData;
         }
@@ -402,7 +402,7 @@ test.describe('Archive Functionality', () => {
     await page.waitForTimeout(500);
     await expect(page.locator('text=Test note to unarchive')).not.toBeVisible();
     expect(noteUnarchived).toBe(true);
-    expect(unarchivedNoteData.archivedAt).toBe(false);
+    expect(unarchivedNoteData.archivedAt).toBe(null);
     await expect(page.locator('text=Test note to unarchive')).not.toBeVisible();
   });
 
@@ -422,6 +422,11 @@ test.describe('Archive Functionality', () => {
                 checklistItems: [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
+                boardId: 'test-board',
+                board: {
+                  id: 'test-board',
+                  name: 'Test Board',
+                },
                 user: {
                   id: 'test-user',
                   name: 'Test User',
@@ -435,7 +440,7 @@ test.describe('Archive Functionality', () => {
     });
 
     await page.route('**/api/boards/test-board/notes/workflow-note', async (route) => {
-      if (route.request().method() === 'PUT') {        
+      if (route.request().method() === 'PUT') {
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -448,6 +453,11 @@ test.describe('Archive Functionality', () => {
               checklistItems: [],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
+              boardId: 'test-board',
+              board: {
+                id: 'test-board',
+                name: 'Test Board',
+              },
               user: {
                 id: 'test-user',
                 name: 'Test User',
@@ -461,8 +471,9 @@ test.describe('Archive Functionality', () => {
 
     await page.goto('/boards/test-board');
     await expect(page.locator('text=Note for archive-unarchive workflow test')).toBeVisible();
-
-    const archiveButton = page.locator('[title="Archive note"]');
+    
+    const archiveButton = page.locator('[title="Archive note"]').first();
+    await expect(archiveButton).toBeVisible();
     await archiveButton.click();
     await page.waitForTimeout(500);
     await expect(page.locator('text=Note for archive-unarchive workflow test')).not.toBeVisible();
