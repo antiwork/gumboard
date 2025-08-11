@@ -6,16 +6,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
-  Pencil,
   Plus,
   ChevronDown,
   Settings,
-  LogOut,
   Search,
 } from "lucide-react";
 import Link from "next/link"
 import { BetaBadge } from "@/components/ui/beta-badge";
-import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
@@ -33,6 +30,7 @@ import {
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 
 export default function BoardPage({
   params,
@@ -47,7 +45,6 @@ export default function BoardPage({
   const [loading, setLoading] = useState(true);
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
@@ -437,7 +434,7 @@ export default function BoardPage({
   // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showBoardDropdown || showUserDropdown || showAddBoard) {
+      if (showBoardDropdown || showAddBoard) {
         const target = event.target as Element;
         if (
           !target.closest(".board-dropdown") &&
@@ -445,7 +442,6 @@ export default function BoardPage({
           !target.closest(".add-board-modal")
         ) {
           setShowBoardDropdown(false);
-          setShowUserDropdown(false);
           setShowAddBoard(false);
         }
       }
@@ -458,9 +454,6 @@ export default function BoardPage({
         }
         if (showBoardDropdown) {
           setShowBoardDropdown(false);
-        }
-        if (showUserDropdown) {
-          setShowUserDropdown(false);
         }
         if (showAddBoard) {
           setShowAddBoard(false);
@@ -476,7 +469,7 @@ export default function BoardPage({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showBoardDropdown, showUserDropdown, showAddBoard, addingChecklistItem]);
+  }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
   // Removed debounce cleanup effect; editing is scoped to Note
 
@@ -887,10 +880,6 @@ export default function BoardPage({
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
   const handleAddBoard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBoardName.trim()) return;
@@ -1158,56 +1147,13 @@ export default function BoardPage({
               }}
               className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
             >
-              <Pencil className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Note</span>
             </Button>
 
             {/* User Dropdown */}
-            <div className="relative user-dropdown">
-              <Button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center space-x-2 text-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-md px-2 py-1"
-              >
-                <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {user?.name
-                      ? user.name.charAt(0).toUpperCase()
-                      : user?.email?.charAt(0).toUpperCase() || "U"}
-                  </span>
-                </div>
-                <span className="text-sm font-medium hidden md:inline">
-                  {user?.name?.split(" ")[0] || "User"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-gray-400 transition-transform ${
-                    showUserDropdown ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
-
-              {showUserDropdown && (
-                <div className="absolute right-0 mt-2 min-w-fit bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-50">
-                  <div className="py-1">
-                    <div className="px-4 py-2 text-sm text-muted-foreground dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-                      {user?.email}
-                    </div>
-                    <Link
-                      href="/settings"
-                      className="flex items-center px-4 py-2 text-sm text-foreground dark:text-gray-200 hover:bg-accent dark:hover:bg-gray-700"
-                      onClick={() => setShowUserDropdown(false)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                    <Button
-                      onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-gray-200 hover:bg-accent dark:hover:bg-gray-700"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </div>
-              )}
+            <div className="mr-3">
+              <ProfileDropdown user={user} />
             </div>
           </div>
         </div>
@@ -1323,7 +1269,7 @@ export default function BoardPage({
               }}
               className="flex items-center space-x-2 cursor-pointer"
             >
-              <Pencil className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
               <span>Add Your First Note</span>
             </Button>
           </div>

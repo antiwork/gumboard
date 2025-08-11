@@ -390,7 +390,7 @@ test.describe('Note Management with Newlines', () => {
 
   test('should create a note in the all notes view', async ({ page }) => {
     await page.goto('/boards/all-notes');
-    await page.click('button:has(svg.lucide-pencil)');
+    await page.click('button:has(svg.lucide-plus)');
     await page.waitForTimeout(500);
     await expect(page.locator('.note-background')).toBeVisible();
   });
