@@ -1,7 +1,5 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Button } from "@/components/ui/button"
 import { usePathname } from "next/navigation"
 import { User as UserIcon, Building2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
@@ -15,7 +13,6 @@ export default function SettingsLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const pathname = usePathname()
   
 

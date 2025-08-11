@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, createContext, useContext, ReactNode } from 'react';
+import React, { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 
 export type UserWithOrganization = {
@@ -37,7 +37,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const response = await fetch('/api/user');
       
@@ -59,7 +59,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   const refreshUser = async () => {
     setLoading(true);
@@ -68,7 +68,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   return (
     <UserContext.Provider value={{ user, loading, error, refreshUser }}>
