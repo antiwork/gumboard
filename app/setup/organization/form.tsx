@@ -31,6 +31,10 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
     setTeamEmails(updated)
   }
 
+  const hasValidEmails = () => {
+    return teamEmails.filter(email => email.trim() && email.includes('@')).length > 0
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!orgName.trim()) return
@@ -104,8 +108,8 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
       </div>
       
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? "Creating..." : "Save & Send Invites"}
+        {isSubmitting ? "Creating..." : hasValidEmails() ? "Save & Send Invites" : "Save"}
       </Button>
     </form>
   )
-} 
+}  
