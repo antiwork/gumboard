@@ -16,7 +16,7 @@ import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
-
+import { AddNoteCard } from "@/components/add-note-card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,7 +27,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-// Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
@@ -63,11 +62,6 @@ export default function BoardPage({
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
     null
   );
-  // Per-item edit and animations are handled inside Note component now
-  const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
-    open: boolean;
-    noteId: string;
-  }>({ open: false, noteId: "" });
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
     title: string;
@@ -153,7 +147,6 @@ export default function BoardPage({
     setSelectedAuthor(urlAuthor);
   };
 
-  // Enhanced responsive grid configuration
   const getResponsiveConfig = () => {
     if (typeof window === "undefined")
       return {
@@ -161,53 +154,57 @@ export default function BoardPage({
         gridGap: 20,
         containerPadding: 20,
         notePadding: 16,
+        textScale: 1,
       };
 
     const width = window.innerWidth;
+    
+    const cardScale = 1;
 
     // Ultra-wide screens (1920px+)
     if (width >= 1920) {
       return {
-        noteWidth: 340,
+        noteWidth: Math.floor(340 * cardScale),
         gridGap: 24,
         containerPadding: 32,
-        notePadding: 18,
+        notePadding: Math.floor(18 * cardScale),
       };
     }
+    
     // Large desktop (1200px-1919px)
     else if (width >= 1200) {
       return {
-        noteWidth: 320,
+        noteWidth: Math.floor(320 * cardScale),
         gridGap: 20,
         containerPadding: 24,
-        notePadding: 16,
+        notePadding: Math.floor(16 * cardScale),
       };
     }
     // Medium desktop/laptop (768px-1199px)
     else if (width >= 768) {
       return {
-        noteWidth: 300,
+        noteWidth: Math.floor(300 * cardScale),
         gridGap: 16,
         containerPadding: 20,
-        notePadding: 16,
+        notePadding: Math.floor(16 * cardScale),
       };
     }
     // Small tablet (600px-767px)
     else if (width >= 600) {
       return {
-        noteWidth: 280,
+        noteWidth: Math.floor(280 * cardScale),
         gridGap: 16,
         containerPadding: 16,
-        notePadding: 14,
+        notePadding: Math.floor(14 * cardScale),
       };
     }
     // Mobile (less than 600px)
     else {
       return {
-        noteWidth: 260,
+        noteWidth: Math.floor(260 * cardScale),
         gridGap: 12,
         containerPadding: 12,
-        notePadding: 12,
+        notePadding: Math.floor(12 * cardScale),
       };
     }
   };
@@ -276,15 +273,13 @@ export default function BoardPage({
 
   // Helper function to calculate bin-packed layout for desktop
   const calculateGridLayout = () => {
-    if (typeof window === "undefined") return [];
+    if (typeof window === "undefined") return { notes: [], addNoteCard: null };
 
     const config = getResponsiveConfig();
     const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / noteWidthWithGap
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
+    
+    // Auto-calculate based on width
+    const actualColumnsCount = Math.max(1, Math.floor((containerWidth + config.gridGap) / (config.noteWidth + config.gridGap)));
 
     // Calculate the actual available width and adjust note width to fill better
     const availableWidthForNotes =
@@ -308,7 +303,7 @@ export default function BoardPage({
       config.containerPadding
     );
 
-    return filteredNotes.map((note) => {
+    const layoutNotes = filteredNotes.map((note) => {
       const noteHeight = calculateNoteHeight(
         note,
         adjustedNoteWidth,
@@ -341,19 +336,46 @@ export default function BoardPage({
         height: noteHeight,
       };
     });
+
+    // Add the "Add Note" card after all notes if we can add notes
+    let addNoteCard = null;
+    if (boardId !== "archive") {
+      const addNoteHeight = 200; // Fixed height for add note card
+      
+      // Find the column with the lowest bottom position for the add note card
+      let bestColumn = 0;
+      let minBottom = columnBottoms[0];
+
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+
+      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
+      const y = columnBottoms[bestColumn];
+      
+      addNoteCard = {
+        x,
+        y,
+        width: adjustedNoteWidth,
+        height: addNoteHeight,
+      };
+    }
+
+    return { notes: layoutNotes, addNoteCard };
   };
 
   // Helper function to calculate mobile layout (optimized single/double column)
   const calculateMobileLayout = () => {
-    if (typeof window === "undefined") return [];
+    if (typeof window === "undefined") return { notes: [], addNoteCard: null };
 
     const config = getResponsiveConfig();
     const containerWidth = window.innerWidth - config.containerPadding * 2;
     const minNoteWidth = config.noteWidth - 20; // Slightly smaller minimum for mobile
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
+    // Auto-calc for mobile
+    const actualColumnsCount = Math.max(1, Math.floor((containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)));
 
     // Calculate note width for mobile
     const availableWidthForNotes =
@@ -365,7 +387,7 @@ export default function BoardPage({
       config.containerPadding
     );
 
-    return filteredNotes.map((note) => {
+    const layoutNotes = filteredNotes.map((note) => {
       const noteHeight = calculateNoteHeight(
         note,
         noteWidth,
@@ -399,6 +421,35 @@ export default function BoardPage({
         height: noteHeight,
       };
     });
+
+    // Add the "Add Note" card after all notes if we can add notes
+    let addNoteCard = null;
+    if (boardId !== "archive") {
+      const addNoteHeight = 200; // Fixed height for add note card
+      
+      // Find the column with the lowest bottom position for the add note card
+      let bestColumn = 0;
+      let minBottom = columnBottoms[0];
+
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+
+      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
+      const y = columnBottoms[bestColumn];
+      
+      addNoteCard = {
+        x,
+        y,
+        width: noteWidth,
+        height: addNoteHeight,
+      };
+    }
+
+    return { notes: layoutNotes, addNoteCard };
   };
 
   useEffect(() => {
@@ -615,23 +666,35 @@ export default function BoardPage({
       ),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
-  const layoutNotes = useMemo(
+  const layout = useMemo(
     () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, calculateMobileLayout, calculateGridLayout]
+    [isMobile, filteredNotes, boardId]
   );
 
+  const layoutNotes = layout.notes;
+  const addNoteCardLayout = layout.addNoteCard;
+
   const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
+    if (layoutNotes.length === 0 && !addNoteCardLayout) {
       return "calc(100vh - 64px)";
     }
-    const maxBottom = Math.max(
-      ...layoutNotes.map((note) => note.y + note.height)
-    );
+    
+    const elements = [];
+    layoutNotes.forEach(note => elements.push(note.y + note.height));
+    if (addNoteCardLayout) {
+      elements.push(addNoteCardLayout.y + addNoteCardLayout.height);
+    }
+    
+    if (elements.length === 0) {
+      return "calc(100vh - 64px)";
+    }
+    
+    const maxBottom = Math.max(...elements);
     const minHeight =
       typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
     return `${calculatedHeight}px`;
-  }, [layoutNotes]);
+  }, [layoutNotes, addNoteCardLayout]);
 
   const fetchBoardData = async () => {
     try {
@@ -730,6 +793,8 @@ export default function BoardPage({
       setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
+
+
   const handleAddNote = async (targetBoardId?: string) => {
     // For all notes view, ensure a board is selected
     if (boardId === "all-notes" && !targetBoardId) {
@@ -771,28 +836,21 @@ export default function BoardPage({
     }
   };
 
-  const handleDeleteNote = (noteId: string) => {
-    setDeleteNoteDialog({
-      open: true,
-      noteId,
-    });
-  };
-
-  const confirmDeleteNote = async () => {
+  const handleDeleteNote = async (noteId: string) => {
     try {
       // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === deleteNoteDialog.noteId);
+      const currentNote = notes.find((n) => n.id === noteId);
       const targetBoardId = currentNote?.board?.id ?? currentNote?.boardId;
 
       const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${deleteNoteDialog.noteId}`,
+        `/api/boards/${targetBoardId}/notes/${noteId}`,
         {
           method: "DELETE",
         }
       );
 
       if (response.ok) {
-        setNotes(notes.filter((n) => n.id !== deleteNoteDialog.noteId));
+        setNotes(notes.filter((n) => n.id !== noteId));
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -1095,6 +1153,7 @@ export default function BoardPage({
                 className="min-w-fit"
               />
             </div>
+
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
@@ -1159,32 +1218,58 @@ export default function BoardPage({
           minHeight: "calc(100vh - 64px)", // Account for header height
         }}
       >
+
         {/* Notes */}
-        <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              addingChecklistItem={addingChecklistItem}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="note-background"
+        <div className="relative w-full h-full" style={{ paddingTop: filteredNotes.length > 0 ? '60px' : '0' }}>
+          {/* Add Note Card */}
+          {addNoteCardLayout && (
+            <AddNoteCard
+              onClick={() => {
+                if (boardId === "all-notes" && allBoards.length > 0) {
+                  handleAddNote(allBoards[0].id);
+                } else {
+                  handleAddNote();
+                }
+              }}
               style={{
                 position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor:
-                  resolvedTheme === "dark" ? "#18181B" : note.color,
+                left: addNoteCardLayout.x,
+                top: addNoteCardLayout.y,
+                width: addNoteCardLayout.width,
+                height: addNoteCardLayout.height,
               }}
             />
-          ))}
+          )}
+
+          {/* Notes */}
+          {layoutNotes.map((note) => {
+            const { notePadding } = getResponsiveConfig();
+            return (
+              <NoteCard
+                key={note.id}
+                note={note as Note}
+                currentUser={user as User}
+                addingChecklistItem={addingChecklistItem}
+                onUpdate={handleUpdateNoteFromComponent}
+                onDelete={handleDeleteNote}
+                onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                showBoardName={boardId === "all-notes" || boardId === "archive"}
+                className="note-background"
+                style={{
+                  position: "absolute",
+                  left: note.x,
+                  top: note.y,
+                  width: note.width,
+                  height: note.height,
+                  padding: `${notePadding}px`,
+                  // font size no longer scaled by grid controls
+                  backgroundColor:
+                    resolvedTheme === "dark" ? "#18181B" : note.color,
+                }}
+              />
+            );
+          })}
         </div>
 
         {/* Empty State */}
@@ -1335,33 +1420,7 @@ export default function BoardPage({
         </div>
       )}
 
-      <AlertDialog
-        open={deleteNoteDialog.open}
-        onOpenChange={(open) => setDeleteNoteDialog({ open, noteId: "" })}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              Delete note
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete this note? This action cannot be
-              undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteNote}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              Delete note
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+
 
       <AlertDialog
         open={errorDialog.open}
