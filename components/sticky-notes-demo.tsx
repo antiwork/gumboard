@@ -366,7 +366,6 @@ export function StickyNotesDemo() {
                   currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
                   onUpdate={handleUpdateNote}
                   onDelete={handleDeleteNote}
-                  boardId="demo-board"
                   addingChecklistItem={null}
                   className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                 />

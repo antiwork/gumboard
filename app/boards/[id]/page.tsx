@@ -728,62 +728,12 @@ export default function BoardPage({
 
   // Adapter: bridge component Note -> existing update handler
   const handleUpdateNoteFromComponent = async (updatedNote: Note) => {
-    try {
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === updatedNote.id);
       if (!currentNote) return;
 
-      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
-
       // OPTIMISTIC UPDATE: Update UI immediately
       setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
-
-      // Send to server in background
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${updatedNote.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            content: updatedNote.content,
-            checklistItems: updatedNote.checklistItems,
-          }),
-        }
-      );
-
-      if (response.ok) {
-        // Server succeeded, confirm with actual server response
-        const { note } = await response.json();
-        setNotes(notes.map((n) => (n.id === updatedNote.id ? note : n)));
-      } else {
-        // Server failed, revert to original note
-        console.error("Server error, reverting optimistic update");
-        setNotes(notes.map((n) => (n.id === updatedNote.id ? currentNote : n)));
-
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to update note",
-          description: errorData.error || "Failed to update note",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating note:", error);
-
-      // Revert optimistic update on network error
-      const currentNote = notes.find((n) => n.id === updatedNote.id);
-      if (currentNote) {
-        setNotes(notes.map((n) => (n.id === updatedNote.id ? currentNote : n)));
-      }
-
-      setErrorDialog({
-        open: true,
-        title: "Connection Error",
-        description: "Failed to save note. Please try again.",
-      });
-    }
   };
 
   const handleAddNote = async (targetBoardId?: string) => {
@@ -1241,7 +1191,6 @@ export default function BoardPage({
               key={note.id}
               note={note as Note}
               currentUser={user as User}
-              boardId={boardId || "all-notes"}
               addingChecklistItem={addingChecklistItem}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}

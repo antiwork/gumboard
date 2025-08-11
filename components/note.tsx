@@ -53,7 +53,6 @@ export interface Note {
 interface NoteProps {
   note: Note;
   currentUser?: User;
-  boardId: string;
   addingChecklistItem?: string | null;
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
@@ -67,7 +66,6 @@ interface NoteProps {
 export function Note({
   note,
   currentUser,
-  boardId,
   addingChecklistItem,
   onUpdate,
   onDelete,
@@ -103,8 +101,6 @@ export function Note({
     try {
       if (!note.checklistItems) return;
 
-      const targetBoardId = boardId === "all-notes" && note.board?.id ? note.board.id : boardId;
-
       const updatedItems = note.checklistItems.map((item) =>
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
@@ -125,7 +121,7 @@ export function Note({
 
       onUpdate?.(optimisticNote);
 
-      fetch(`/api/boards/${targetBoardId}/notes/${note.id}`, {
+      fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -156,8 +152,6 @@ export function Note({
     try {
       if (!note.checklistItems) return;
 
-      const targetBoardId = boardId === "all-notes" && note.board?.id ? note.board.id : boardId;
-
       const updatedItems = note.checklistItems.filter(
         (item) => item.id !== itemId
       );
@@ -170,7 +164,7 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${note.id}`,
+        `/api/boards/${note.boardId}/notes/${note.id}`,
         {
           method: "PUT",
           headers: {
@@ -199,14 +193,12 @@ export function Note({
     try {
       if (!note.checklistItems) return;
 
-      const targetBoardId = boardId === "all-notes" && note.board?.id ? note.board.id : boardId;
-
       const updatedItems = note.checklistItems.map((item) =>
         item.id === itemId ? { ...item, content } : item
       );
 
       const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${note.id}`,
+        `/api/boards/${note.boardId}/notes/${note.id}`,
         {
           method: "PUT",
           headers: {
@@ -235,8 +227,6 @@ export function Note({
     try {
       if (!note.checklistItems) return;
 
-      const targetBoardId = boardId === "all-notes" && note.board?.id ? note.board.id : boardId;
-
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();
 
@@ -261,7 +251,7 @@ export function Note({
       );
 
       const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${note.id}`,
+        `/api/boards/${note.boardId}/notes/${note.id}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -282,8 +272,6 @@ export function Note({
 
   const handleAddChecklistItem = async (content: string) => {
     try {
-      const targetBoardId = boardId === "all-notes" && note.board?.id ? note.board.id : boardId;
-
       const newItem = {
         id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         content,
@@ -304,7 +292,7 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${note.id}`,
+        `/api/boards/${note.boardId}/notes/${note.id}`,
         {
           method: "PUT",
           headers: {
