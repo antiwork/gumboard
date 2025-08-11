@@ -202,86 +202,21 @@ test.describe('Add Task Button', () => {
     await expect(addTaskButton).not.toBeVisible();
   });
 
-  test('should create new checklist item when "Add task" button is clicked', async ({ page }) => {
-    let noteUpdateCalled = false;
-    let updatedChecklistItems: any[] = [];
-
-    await page.route('**/api/boards/test-board/notes', async (route) => {
-      if (route.request().method() === 'GET') {
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            notes: [
-              {
-                id: 'checklist-note',
-                content: '',
-                color: '#fef3c7',
-                done: false,
-                x: 100,
-                y: 100,
-                width: 200,
-                height: 150,
-                checklistItems: [
-                  {
-                    id: 'item-1',
-                    content: 'Existing task',
-                    checked: false,
-                    order: 0
-                  }
-                ],
-                board: {
-                  id: 'test-board',
-                  name: 'Test Board',
-                },
-                boardId: 'test-board',
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                user: {
-                  id: 'test-user',
-                  name: 'Test User',
-                  email: 'test@example.com',
-                },
-              }
-            ],
-          }),
-        });
-      }
-    });
-
-    await page.route('**/api/boards/test-board/notes/checklist-note', async (route) => {
-      if (route.request().method() === 'PUT') {
-        noteUpdateCalled = true;
-        const requestBody = await route.request().postDataJSON();
-        updatedChecklistItems = requestBody.checklistItems;
-        await route.fulfill({
-          status: 200,
-          contentType: 'application/json',
-          body: JSON.stringify({
-            note: {
-              id: 'checklist-note',
-              content: '',
-              color: '#fef3c7',
-              done: false,
-              x: 100,
-              y: 100,
-              width: 200,
-              height: 150,
-              checklistItems: requestBody.checklistItems,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: 'test-user',
-                name: 'Test User',
-                email: 'test@example.com',
-              },
-            },
-          }),
-        });
-      }
-    });
-
+  test('should create new checklist item in draft when "Add task" button is clicked', async ({ page }) => {
     await page.goto('/boards/test-board');
+    
+    // Create a draft note first
+    await page.click('button:has-text("Add Your First Note")');
+    await page.waitForTimeout(500);
+    
+    // Verify it's a draft
+    await expect(page.locator('text=DRAFT').first()).toBeVisible();
+    
+    // Add first item
+    const initialInput = page.locator('input.bg-transparent');
+    await initialInput.fill('Existing task');
+    await initialInput.blur();
+    await page.waitForTimeout(300);
     
     await expect(page.locator('text=Existing task')).toBeVisible();
     
@@ -296,9 +231,10 @@ test.describe('Add Task Button', () => {
     await newItemInput.fill('New task from button');
     await newItemInput.press('Enter');
     
-    expect(noteUpdateCalled).toBe(true);
-    expect(updatedChecklistItems).toHaveLength(2);
-    expect(updatedChecklistItems[1].content).toBe('New task from button');
+    // Verify both items are visible in draft
+    await expect(page.locator('text=Existing task')).toBeVisible();
+    await expect(page.locator('text=New task from button')).toBeVisible();
+    await expect(page.locator('text=DRAFT').first()).toBeVisible();
   });
 
   test('should keep "Add task" button visible when already adding a checklist item (everpresent)', async ({ page }) => {

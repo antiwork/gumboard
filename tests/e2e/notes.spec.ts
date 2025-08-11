@@ -281,7 +281,7 @@ test.describe('Note Management with Newlines', () => {
     });
   });
 
-  test('should create a checklist note and verify database state', async ({ page }) => {
+  test('should create a draft note and publish it', async ({ page }) => {
     let noteCreated = false;
     let noteData: any = null;
 
@@ -303,15 +303,10 @@ test.describe('Note Management with Newlines', () => {
           body: JSON.stringify({
             note: {
               id: 'new-note-id',
-              content: '',
+              content: postData.content || '',
               color: '#fef3c7',
               done: false,
-              checklistItems: postData.checklistItems || [{
-                id: `item-${Date.now()}`,
-                content: '',
-                checked: false,
-                order: 0,
-              }],
+              checklistItems: postData.checklistItems || [],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               board: {
@@ -332,24 +327,28 @@ test.describe('Note Management with Newlines', () => {
 
     await page.goto('/boards/test-board');
     
-    await page.evaluate(() => {
-      const mockNoteData = { 
-        content: '',
-        checklistItems: [{
-          id: `item-${Date.now()}`,
-          content: '',
-          checked: false,
-          order: 0,
-        }]
-      };
-      fetch('/api/boards/test-board/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(mockNoteData)
-      });
-    });
+    // Create a draft note
+    await page.click('button:has-text("Add Your First Note")');
+    await page.waitForTimeout(500);
     
-    await page.waitForTimeout(100);
+    // Verify draft indicators
+    await expect(page.locator('text=DRAFT').first()).toBeVisible();
+    
+    // Add content to draft
+    const input = page.locator('input.bg-transparent');
+    await expect(input).toBeVisible();
+    await input.fill('Test checklist item');
+    await input.blur();
+    
+    await page.waitForTimeout(500);
+    
+    // Publish the draft
+    const publishButton = page.locator('button:has-text("Publish")');
+    await expect(publishButton).toBeVisible();
+    await publishButton.click();
+    
+    // Wait for API call
+    await page.waitForTimeout(500);
     
     expect(noteCreated).toBe(true);
     expect(noteData).not.toBeNull();
@@ -357,12 +356,15 @@ test.describe('Note Management with Newlines', () => {
     expect(Array.isArray(noteData!.checklistItems)).toBe(true);
   });
 
-  test('should handle checklist item editing', async ({ page }) => {
+  test('should handle checklist item editing in draft', async ({ page }) => {
     await page.goto('/boards/test-board');
     
     await page.click('button:has-text("Add Your First Note")');
     
     await page.waitForTimeout(500);
+    
+    // Verify it's a draft
+    await expect(page.locator('text=DRAFT').first()).toBeVisible();
     
     const input = page.locator('input.bg-transparent');
     await expect(input).toBeVisible();
@@ -374,12 +376,15 @@ test.describe('Note Management with Newlines', () => {
     await expect(page.locator('text=Test checklist item')).toBeVisible();
   });
 
-  test('should handle creating multiple checklist items', async ({ page }) => {
+  test('should handle creating multiple checklist items in draft', async ({ page }) => {
     await page.goto('/boards/test-board');
     
     await page.click('button:has-text("Add Your First Note")');
     
     await page.waitForTimeout(500);
+    
+    // Verify it's a draft
+    await expect(page.locator('text=DRAFT').first()).toBeVisible();
     
     const input = page.locator('input.bg-transparent');
     await expect(input).toBeVisible();
@@ -398,11 +403,12 @@ test.describe('Note Management with Newlines', () => {
     await expect(page.locator('button:has-text("Add Your First Note")')).toBeVisible();
   });
 
-  test('should create a note in the all notes view', async ({ page }) => {
+  test('should create a draft note in the all notes view', async ({ page }) => {
     await page.goto('/boards/all-notes');
     await page.click('button:has(svg.lucide-pencil)');
     await page.waitForTimeout(500);
     await expect(page.locator('.note-background')).toBeVisible();
+    await expect(page.locator('text=DRAFT').first()).toBeVisible();
   });
 
   test('should autofocus new checklist item input when Add task is clicked', async ({ page }) => {
@@ -427,6 +433,28 @@ test.describe('Note Management with Newlines', () => {
     
     await page.click('button:has-text("Add task")');
     await expect(newItemInput).toBeFocused();
+  });
+
+  test('should persist draft notes across page refreshes', async ({ page }) => {
+    await page.goto('/boards/test-board');
+    
+    // Create a draft note
+    await page.click('button:has-text("Add Your First Note")');
+    await page.waitForTimeout(500);
+    
+    // Add content to draft
+    const input = page.locator('input.bg-transparent');
+    await input.fill('Persistent draft item');
+    await input.blur();
+    await page.waitForTimeout(500);
+    
+    // Refresh the page
+    await page.reload();
+    await page.waitForTimeout(500);
+    
+    // Verify draft persisted
+    await expect(page.locator('text=DRAFT').first()).toBeVisible();
+    await expect(page.locator('text=Persistent draft item')).toBeVisible();
   });
 
 });
