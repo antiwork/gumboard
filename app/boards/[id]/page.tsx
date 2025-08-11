@@ -31,8 +31,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 // Use shared types from components
-import type { Note, Board, User } from "@/components/note";
+import type { Note, Board } from "@/components/note";
 import { useTheme } from "next-themes";
+import { useUser } from "@/lib/hooks";
 
 export default function BoardPage({
   params,
@@ -43,8 +44,9 @@ export default function BoardPage({
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  
+  const { user, loading: userLoading } = useUser();
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showUserDropdown, setShowUserDropdown] = useState(false);
@@ -535,7 +537,7 @@ export default function BoardPage({
     searchTerm: string,
     dateRange: { startDate: Date | null; endDate: Date | null },
     authorId: string | null,
-    currentUser: User | null
+    currentUser: { id: string; name?: string | null; email: string } | null
   ): Note[] => {
     let filteredNotes = notes;
 
@@ -642,17 +644,6 @@ export default function BoardPage({
 
   const fetchBoardData = async () => {
     try {
-      // Get user info first to check authentication
-      const userResponse = await fetch("/api/user");
-      if (userResponse.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUser(userData);
-      }
 
       // Fetch all boards for the dropdown
       const allBoardsResponse = await fetch("/api/boards");
@@ -945,7 +936,7 @@ export default function BoardPage({
     }
   };
 
-  if (loading) {
+  if (userLoading || loading) {
     return <FullPageLoader message="Loading board..." />;
   }
 
@@ -1219,7 +1210,7 @@ export default function BoardPage({
             <NoteCard
               key={note.id}
               note={note as Note}
-              currentUser={user as User}
+              currentUser={user || undefined}
               addingChecklistItem={addingChecklistItem}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}

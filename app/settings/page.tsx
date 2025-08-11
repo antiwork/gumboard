@@ -1,45 +1,27 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
-import type { User } from "@/components/note";
+import { useUser } from "@/lib/hooks";
 
 export default function ProfileSettingsPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileName, setProfileName] = useState("");
-  const router = useRouter();
+  
+  // Use the shared user data from context
+  const { user, loading, refreshUser } = useUser();
 
-  const fetchUserData = useCallback(async () => {
-    try {
-      const response = await fetch("/api/user");
-      if (response.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setProfileName(userData.name || "");
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
-
+  // Update profile name when user data changes
   useEffect(() => {
-    fetchUserData();
-  }, [fetchUserData]);
+    if (user) {
+      setProfileName(user.name || "");
+    }
+  }, [user]);
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -56,7 +38,7 @@ export default function ProfileSettingsPage() {
 
       if (response.ok) {
         const updatedUser = await response.json();
-        setUser(updatedUser);
+        await refreshUser();
         setProfileName((updatedUser.name || "").trim());
       }
     } catch (error) {

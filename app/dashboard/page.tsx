@@ -44,7 +44,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { User, Board } from "@/components/note";
+import type { Board } from "@/components/note";
+import { useUser } from "@/lib/hooks";
 import { 
   Dialog,
   DialogContent,
@@ -72,7 +73,6 @@ const formSchema = z.object({
 
 export default function Dashboard() {
   const [boards, setBoards] = useState<DashboardBoard[]>([]);
-  const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
   const [editingBoard, setEditingBoard] = useState<Board | null>(null);
@@ -88,6 +88,21 @@ export default function Dashboard() {
   }>({ open: false, title: "", description: "" });
   const [copiedBoardId, setCopiedBoardId] = useState<string | null>(null);
   const router = useRouter();
+  
+  const { user, loading: userLoading } = useUser();
+
+  useEffect(() => {
+    if (user && !userLoading) {
+      if (!user.name) {
+        router.push("/setup/profile");
+        return;
+      }
+      if (!user.organization) {
+        router.push("/setup/organization");
+        return;
+      }
+    }
+  }, [user, userLoading, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -98,38 +113,18 @@ export default function Dashboard() {
   })
 
   useEffect(() => {
-    fetchUserAndBoards();
+    fetchBoards();
   }, []);
 
-  const fetchUserAndBoards = async () => {
+  const fetchBoards = async () => {
     try {
-      const userResponse = await fetch("/api/user");
-      if (userResponse.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUser(userData);
-        if (!userData.name) {
-          router.push("/setup/profile");
-          return;
-        }
-        if (!userData.organization) {
-          router.push("/setup/organization");
-          return;
-        }
-      }
-
       const boardsResponse = await fetch("/api/boards");
       if (boardsResponse.ok) {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
-
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Error fetching boards:", error);
     } finally {
       setLoading(false);
     }
@@ -294,7 +289,7 @@ export default function Dashboard() {
     await signOut();
   };
 
-  if (loading) {
+  if (userLoading || loading) {
     return <FullPageLoader message="Loading dashboard..." />;
   }
 
