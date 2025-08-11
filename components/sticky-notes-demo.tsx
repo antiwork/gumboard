@@ -366,7 +366,7 @@ export function StickyNotesDemo() {
                   currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
                   onUpdate={handleUpdateNote}
                   onDelete={handleDeleteNote}
-                  addingChecklistItem={null}
+
                   className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                 />
               </motion.div>
