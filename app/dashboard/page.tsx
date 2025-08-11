@@ -511,9 +511,9 @@ export default function Dashboard() {
 
             {boards.map((board) => (
               <Link href={`/boards/${board.id}`} key={board.id}>
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
-                  <CardHeader className="pb-3">
-                      <div>
+                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
+                  <CardHeader className="pb-3 flex flex-col h-full">
+                      <div className="flex-1">
                         <div className="flex items-center justify-between mb-1">
                           <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
                             {board.name}
@@ -558,48 +558,48 @@ export default function Dashboard() {
                         </div>
                       )}
                         {board.description && (
-                          <CardDescription className="mt-1 dark:text-zinc-400">
+                          <CardDescription className="mt-1 dark:text-zinc-400 line-clamp-2 text-sm">
                             {board.description}
                           </CardDescription>
                         )}
+                      </div>
                         
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
-                            <Switch
-                              checked={board.isPublic}
-                              onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
-                              disabled={user?.id !== board.createdBy && !user?.isAdmin}
-                            />
-                            <span className="text-xs text-muted-foreground dark:text-zinc-400">
-                              {board.isPublic ? "Public" : "Private"}
-                            </span>
-                          </div>
-                          
-                          {board.isPublic && (
-                            <Button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleCopyPublicUrl(board.id);
-                              }}
-                              className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                              title="Copy public link"
-                            >
-                              {copiedBoardId === board.id ? (
-                                <>
-                                  <span>✓</span>
-                                  <span>Copied!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  <span>Copy link</span>
-                                </>
-                              )}
-                            </Button>
-                          )}
+                      <div className="mt-3 flex items-center justify-between">
+                        <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
+                          <Switch
+                            checked={board.isPublic}
+                            onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
+                            disabled={user?.id !== board.createdBy && !user?.isAdmin}
+                          />
+                          <span className="text-xs text-muted-foreground dark:text-zinc-400">
+                            {board.isPublic ? "Public" : "Private"}
+                          </span>
                         </div>
-                      </div>       
+                        
+                        {board.isPublic && (
+                          <Button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              handleCopyPublicUrl(board.id);
+                            }}
+                            className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                            title="Copy public link"
+                          >
+                            {copiedBoardId === board.id ? (
+                              <>
+                                <span>✓</span>
+                                <span>Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy link</span>
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                   </CardHeader>
                 </Card>
               </Link>
