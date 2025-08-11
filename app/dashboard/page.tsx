@@ -444,7 +444,7 @@ export default function Dashboard() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description (Optional)</FormLabel>
+                      <FormLabel className="text-sm font-medium text-zinc-800 dark:text-zinc-200">Description (Optional)</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Enter board description"
