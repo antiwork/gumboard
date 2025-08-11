@@ -180,7 +180,7 @@ function DateRangePicker({
               <Button
                 size="sm"
                 onClick={handleApply}
-                className="bg-blue-600 dark:bg-zinc-800 hover:bg-blue-700 dark:hover:bg-zinc-700"
+                className="bg-blue-600 text-white dark:bg-zinc-800 hover:bg-blue-700 dark:hover:bg-zinc-700"
               >
                 Apply
               </Button>
