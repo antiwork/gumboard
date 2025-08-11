@@ -47,6 +47,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import { BoardCard } from "@/components/ui/board-card";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -437,98 +438,16 @@ export default function Dashboard() {
             </Link>
 
             {boards.map((board) => (
-              <Link href={`/boards/${board.id}`} key={board.id}>
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
-                  <CardHeader className="flex flex-col h-full">
-                      <div className="w-full">
-                        <div className="flex items-center justify-between mb-1">
-                          <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
-                            {board.name}
-                          </CardTitle>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            {board._count.notes}{" "}
-                            {board._count.notes === 1 ? "note" : "notes"}
-                          </span>
-                        </div>
-                        {(user?.id === board.createdBy || user?.isAdmin) && (
-                        <div className="flex justify-end items-center space-x-1">
-                          <Button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleEditBoard(board);
-                            }}
-                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Edit board"
-                                : "Edit board (Admin)"
-                            }
-                          >
-                            <Edit3 className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleDeleteBoard(board.id, board.name);
-                            }}
-                            className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
-                            title={
-                              user?.id === board.createdBy
-                                ? "Delete board"
-                                : "Delete board (Admin)"
-                            }
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      )}
-                        {board.description && (
-                          <CardDescription className="mt-1 dark:text-zinc-400 line-clamp-2 text-sm">
-                            {board.description}
-                          </CardDescription>
-                        )}
-                      </div>
-                      <div className="mt-3 w-full flex items-center justify-between">
-                        <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
-                          <Switch
-                            checked={board.isPublic}
-                            onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
-                            disabled={user?.id !== board.createdBy && !user?.isAdmin}
-                          />
-                          <span className="text-xs text-muted-foreground dark:text-zinc-400">
-                            {board.isPublic ? "Public" : "Private"}
-                          </span>
-                        </div>
-                        
-                        {board.isPublic && (
-                          <Button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              handleCopyPublicUrl(board.id);
-                            }}
-                            className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                            title="Copy public link"
-                          >
-                            {copiedBoardId === board.id ? (
-                              <>
-                                <span>✓</span>
-                                <span>Copied!</span>
-                              </>
-                            ) : (
-                              <>
-                                <Copy className="w-3 h-3" />
-                                <span>Copy link</span>
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                  </CardHeader>
-                </Card>
-              </Link>
+              <BoardCard
+                key={board.id}
+                board={board}
+                user={user}
+                onEdit={handleEditBoard}
+                onDelete={handleDeleteBoard}
+                onTogglePublic={handleTogglePublic}
+                onCopyPublicUrl={handleCopyPublicUrl}
+                copiedBoardId={copiedBoardId}
+              />
             ))}
           </div>
         )}
