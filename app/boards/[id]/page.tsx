@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
-  Pencil,
   Plus,
   ChevronDown,
   Settings,
@@ -1149,7 +1148,8 @@ export default function BoardPage({
               }}
               className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
             >
-              <Pencil className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Note</span>
             </Button>
 
             {/* User Dropdown */}
@@ -1313,7 +1313,7 @@ export default function BoardPage({
               }}
               className="flex items-center space-x-2 cursor-pointer"
             >
-              <Pencil className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
               <span>Add Your First Note</span>
             </Button>
           </div>
