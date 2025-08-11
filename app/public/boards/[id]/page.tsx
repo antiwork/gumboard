@@ -4,7 +4,8 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import Link from "next/link";
+import Link from "next/link"
+import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import type { Note, Board } from "@/components/note";
@@ -448,8 +449,9 @@ export default function PublicBoardPage({
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
             <Link href="/" className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4">
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
                 Gumboard
+                <BetaBadge />
               </h1>
             </Link>
             

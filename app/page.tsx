@@ -11,6 +11,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import Image from "next/image";
+import { BetaBadge } from "@/components/ui/beta-badge";
 
 export default async function HomePage() {
   const session = await auth();
@@ -29,6 +30,7 @@ export default async function HomePage() {
                 <div className="flex items-center gap-3">
                   <Image src="/logo/gumboard.svg" alt="Gumboard" width={50} height={50} />
                   <span className="text-4xl font-bold">Gumboard</span>
+                  <BetaBadge />
                 </div>
                 <div className="space-y-2">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none">
