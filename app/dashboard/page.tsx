@@ -293,7 +293,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-950">
-      <Navbar user={user} onAddBoard={handleAddBoardClick} addBoard={true} />
+      <Navbar user={user} onAddBoard={handleAddBoardClick} showAddBoard={true} />
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {boards.length > 0 && (
           <div className="mb-6 sm:mb-8">

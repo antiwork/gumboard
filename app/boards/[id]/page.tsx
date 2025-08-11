@@ -33,6 +33,7 @@ import {
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
+import { Navbar } from "@/components/navbar";
 
 export default function BoardPage({
   params,
@@ -959,250 +960,34 @@ export default function BoardPage({
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:space-x-3 w-full sm:w-auto">
-            {/* Company Name */}
-            <Link
-              href="/dashboard"
-              className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4"
-            >
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                Gumboard
-                <BetaBadge />
-              </h1>
-            </Link>
-
-            {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown flex-1 sm:flex-none">
-              <Button
-                onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center justify-between border border-gray-200 dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer w-full sm:w-auto"
-              >
-                <div>
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
-                    {boardId === "all-notes"
-                      ? "All notes"
-                      : boardId === "archive"
-                        ? "Archive"
-                        : board?.name}
-                  </div>
-                </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform ${
-                    showBoardDropdown ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
-
-              {showBoardDropdown && (
-                <div className="fixed sm:absolute left-0 mt-2 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-gray-200 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
-                  <div className="py-1">
-                    {/* All Notes Option */}
-                    <Link
-                      href="/boards/all-notes"
-                      className={`block px-4 py-2 text-sm hover:bg-accent dark:hover:bg-zinc-800 ${
-                        boardId === "all-notes"
-                          ? "bg-blue-50 dark:bg-zinc-900/70 text-blue-700 dark:text-blue-300"
-                          : "text-foreground dark:text-zinc-100"
-                      }`}
-                      onClick={() => setShowBoardDropdown(false)}
-                    >
-                      <div className="font-medium">All notes</div>
-                      <div className="text-xs text-muted-foreground dark:text-zinc-400 mt-1">
-                        Notes from all boards
-                      </div>
-                    </Link>
-
-                    {/* Archive Option */}
-                    <Link
-                      href="/boards/archive"
-                      className={`block px-4 py-2 text-sm hover:bg-accent dark:hover:bg-zinc-800 ${
-                        boardId === "archive"
-                          ? "bg-blue-50 dark:bg-zinc-900/70 text-blue-700 dark:text-blue-300"
-                          : "text-foreground dark:text-zinc-100"
-                      }`}
-                      onClick={() => setShowBoardDropdown(false)}
-                    >
-                      <div className="font-medium">Archive</div>
-                      <div className="text-xs text-muted-foreground dark:text-zinc-400 mt-1">
-                        Archived notes from all boards
-                      </div>
-                    </Link>
-
-                    {allBoards.length > 0 && (
-                      <div className="border-t border-gray-200 dark:border-zinc-800 my-1"></div>
-                    )}
-                    {allBoards.map((b) => (
-                      <Link
-                        key={b.id}
-                        href={`/boards/${b.id}`}
-                        className={`block px-4 py-2 text-sm hover:bg-accent dark:hover:bg-zinc-800 ${
-                          b.id === boardId
-                            ? "bg-blue-50 dark:bg-zinc-900/70 text-blue-700 dark:text-blue-300"
-                            : "text-foreground dark:text-zinc-100"
-                        }`}
-                        onClick={() => setShowBoardDropdown(false)}
-                      >
-                        <div className="font-medium">{b.name}</div>
-                        {b.description && (
-                          <div className="text-xs text-muted-foreground dark:text-zinc-400 mt-1">
-                            {b.description}
-                          </div>
-                        )}
-                      </Link>
-                    ))}
-                    {allBoards.length > 0 && (
-                      <div className="border-t border-gray-200 dark:border-zinc-800 my-1"></div>
-                    )}
-                    <Button
-                      onClick={() => {
-                        setShowAddBoard(true);
-                        setShowBoardDropdown(false);
-                      }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                    >
-                      <Plus className="w-4 h-4 mr-2" />
-                      <span className="font-medium">Create new board</span>
-                    </Button>
-                    {boardId !== "all-notes" && boardId !== "archive" && (
-                      <Button
-                        onClick={() => {
-                          setBoardSettings({
-                            sendSlackUpdates:
-                              (board as { sendSlackUpdates?: boolean })
-                                ?.sendSlackUpdates ?? true,
-                          });
-                          setBoardSettingsDialog(true);
-                          setShowBoardDropdown(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                      >
-                        <Settings className="w-4 h-4 mr-2" />
-                        <span className="font-medium">Board settings</span>
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Filter Popover */}
-            <div className="relative board-dropdown flex-1 sm:flex-none">
-              <FilterPopover
-                startDate={dateRange.startDate}
-                endDate={dateRange.endDate}
-                onDateRangeChange={(startDate, endDate) => {
-                  const newDateRange = { startDate, endDate };
-                  setDateRange(newDateRange);
-                  updateURL(undefined, newDateRange);
-                }}
-                selectedAuthor={selectedAuthor}
-                authors={uniqueAuthors}
-                onAuthorChange={(authorId) => {
-                  setSelectedAuthor(authorId);
-                  updateURL(undefined, undefined, authorId);
-                }}
-                className="min-w-fit"
-              />
-            </div>
-          </div>
-
-          {/* Right side - Search, Add Note and User dropdown */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
-            {/* Search Box */}
-            <div className="relative flex-1 sm:flex-none min-w-[150px]">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
-              </div>
-              <input
-                aria-label="Search notes"
-                type="text"
-                placeholder="Search notes..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
-                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-gray-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
-              />
-              {searchTerm && (
-                <Button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setDebouncedSearchTerm("");
-                    updateURL("");
-                  }}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
-                >
-                  ×
-                </Button>
-              )}
-            </div>
-
-            <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else {
-                  handleAddNote();
-                }
-              }}
-              className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
-            >
-              <Pencil className="w-4 h-4" />
-            </Button>
-
-            {/* User Dropdown */}
-            <div className="relative user-dropdown">
-              <Button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center space-x-2 text-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-md px-2 py-1"
-              >
-                <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {user?.name
-                      ? user.name.charAt(0).toUpperCase()
-                      : user?.email?.charAt(0).toUpperCase() || "U"}
-                  </span>
-                </div>
-                <span className="text-sm font-medium hidden md:inline">
-                  {user?.name?.split(" ")[0] || "User"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-gray-400 transition-transform ${
-                    showUserDropdown ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
-
-              {showUserDropdown && (
-                <div className="absolute right-0 mt-2 min-w-fit bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-50">
-                  <div className="py-1">
-                    <div className="px-4 py-2 text-sm text-muted-foreground dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
-                      {user?.email}
-                    </div>
-                    <Link
-                      href="/settings"
-                      className="flex items-center px-4 py-2 text-sm text-foreground dark:text-gray-200 hover:bg-accent dark:hover:bg-gray-700"
-                      onClick={() => setShowUserDropdown(false)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                    <Button
-                      onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-gray-200 hover:bg-accent dark:hover:bg-gray-700"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
+      <Navbar 
+        user={user}
+        showAddBoard={false}
+        showFilterPopover={true}
+        showSearchBar={true}
+        showBoardSelector={true}
+        showAddNote={true}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        setDebouncedSearchTerm={setDebouncedSearchTerm}
+        updateURL={updateURL}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
+        selectedAuthor={selectedAuthor}
+        setSelectedAuthor={setSelectedAuthor}
+        uniqueAuthors={uniqueAuthors}
+        board={board}
+        boardId={boardId}
+        allBoards={allBoards}
+        showBoardDropdown={showBoardDropdown}
+        setShowBoardDropdown={setShowBoardDropdown}
+        showAddBoardModal={showAddBoard}
+        setShowAddBoardModal={setShowAddBoard}
+        boardSettings={boardSettings}
+        setBoardSettings={setBoardSettings}
+        setBoardSettingsDialog={setBoardSettingsDialog}
+        onAddNote={handleAddNote}
+      />
 
       {/* Board Area */}
       <div
