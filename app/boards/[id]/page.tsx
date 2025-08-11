@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,12 +61,11 @@ export default function BoardPage({
     startDate: null,
     endDate: null,
   });
-
-  const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
     null
   );
+  const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
   // Per-item edit and animations are handled inside Note component now
   const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
     open: boolean;
@@ -231,13 +230,12 @@ export default function BoardPage({
     const minContentHeight = 60; // Minimum content area
 
     if (note.checklistItems?.length) {
-
       const measuredHeight = measuredHeights[note.id];
       if (measuredHeight) {
-        return headerHeight + paddingHeight + measuredHeight + 40;
+        return headerHeight + paddingHeight + measuredHeight + 40; // +40 for add button
       }
+      // Fallback estimation while waiting for measurement
       return headerHeight + paddingHeight + (note.checklistItems.length * 40) + 40;
-
     } else {
       // Original logic for regular notes
       const lines = note.content.split("\n");
@@ -272,13 +270,10 @@ export default function BoardPage({
   };
 
   const handleHeightMeasured = useCallback((noteId: string, height: number) => {
-    setMeasuredHeights(prev => {
-      // Only update if height changed significantly (prevents micro-updates)
-      if (Math.abs((prev[noteId] || 0) - height) > 10) {
-        return { ...prev, [noteId]: height };
-      }
-      return prev;
-    });
+    setMeasuredHeights(prev => ({
+      ...prev,
+      [noteId]: height
+    }));
   }, []);
 
   // Helper function to calculate bin-packed layout for desktop
@@ -1199,12 +1194,8 @@ export default function BoardPage({
               addingChecklistItem={addingChecklistItem}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
+              onHeightMeasured={handleHeightMeasured}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onAddChecklistItem={handleAddChecklistItemFromComponent}
-              onToggleChecklistItem={handleToggleChecklistItem}
-              onEditChecklistItem={handleEditChecklistItem}
-              onDeleteChecklistItem={handleDeleteChecklistItem}
-              onSplitChecklistItem={handleSplitChecklistItem}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
               style={{
@@ -1213,8 +1204,6 @@ export default function BoardPage({
                 top: note.y,
                 width: note.width,
                 height: note.height,
-                wordWrap: "break-word",
-                whiteSpace: "normal",
                 padding: `${getResponsiveConfig().notePadding}px`,
                 backgroundColor:
                   resolvedTheme === "dark" ? "#18181B" : note.color,
