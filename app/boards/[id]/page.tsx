@@ -825,8 +825,7 @@ export default function BoardPage({
 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
-      const archivedNote = { ...currentNote, done: true };
-      setNotes(notes.map((n) => (n.id === noteId ? archivedNote : n)));
+      setNotes(notes.filter((n) => n.id !== noteId));
 
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
@@ -839,7 +838,7 @@ export default function BoardPage({
 
       if (!response.ok) {
         // Revert on error
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        setNotes([...notes, currentNote]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
@@ -848,6 +847,34 @@ export default function BoardPage({
       }
     } catch (error) {
       console.error("Error archiving note:", error);
+    }
+  };
+  const handleUnarchiveNote = async (noteId: string) => {
+    try {
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
+      
+      const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
+      if (!targetBoardId) return;
+
+      setNotes(notes.filter((n) => n.id !== noteId));
+
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: false }),
+      });
+
+      if (!response.ok) {
+        setNotes([...notes, currentNote]);
+        setErrorDialog({
+          open: true,
+          title: "Unarchive Failed",
+          description: "Failed to unarchive note. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error unarchiving note:", error);
     }
   };
 
@@ -1197,6 +1224,7 @@ export default function BoardPage({
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
               style={{

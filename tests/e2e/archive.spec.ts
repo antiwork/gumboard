@@ -283,4 +283,189 @@ test.describe('Archive Functionality', () => {
     
     await expect(page.locator('text=Archive')).toBeVisible();
   });
+
+  test('should show unarchive button instead of archive button on Archive board', async ({ page }) => {
+    await page.route('**/api/boards/archive/notes', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          notes: [
+            {
+              id: 'note1',
+              content: 'This is an archived note',
+              color: '#fef3c7',
+              done: true,
+              checklistItems: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              user: {
+                id: '1',
+                name: 'user1',
+                email: 'user1@gmail.com',
+              },
+              board: {
+                id: '1',
+                name: 'board1',
+              },
+            },
+          ],
+        }),
+      });
+    });
+
+    await page.goto('/boards/archive');
+    await expect(page.locator('text=This is an archived note')).toBeVisible();
+    
+    const unarchiveButton = page.locator('[title="Unarchive note"]');
+    await expect(unarchiveButton).toBeVisible();
+    
+    const archiveButton = page.locator('[title="Archive note"]');
+    await expect(archiveButton).not.toBeVisible();
+  });
+
+  test('should unarchive a note and remove it from archive view', async ({ page }) => {
+    let noteUnarchived = false;
+    let unarchivedNoteData: any = null;
+
+    await page.route('**/api/boards/archive/notes', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          notes: [
+            {
+              id: 'note1',
+              content: 'Test note to unarchive',
+              color: '#fef3c7',
+              done: true,
+              checklistItems: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              user: {
+                id: '1',
+                name: 'user1',
+                email: 'user1@gmail.com',
+              },
+              board: {
+                id: '1',
+                name: 'board1',
+              },
+            },
+          ],
+        }),
+      });
+    });
+
+    await page.route('**/api/boards/1/notes/note1', async (route) => {
+      if (route.request().method() === 'PUT') {
+        const putData = await route.request().postDataJSON();
+        if (putData.done === false) {
+          noteUnarchived = true;
+          unarchivedNoteData = putData;
+        }
+        
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            note: {
+              id: 'note1',
+              content: 'Test note to unarchive',
+              color: '#fef3c7',
+              done: false,
+              checklistItems: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              user: {
+                id: '1',
+                name: 'user1',
+                email: 'user1@gmail.com',
+              },
+              board: {
+                id: '1',
+                name: 'board1',
+              },
+            },
+          }),
+        });
+      }
+    });
+
+    await page.goto('/boards/archive');
+    await expect(page.locator('text=Test note to unarchive')).toBeVisible();
+    
+    const unarchiveButton = page.locator('[title="Unarchive note"]');
+    await expect(unarchiveButton).toBeVisible();
+    await unarchiveButton.click();
+    
+    await page.waitForTimeout(500);
+    await expect(page.locator('text=Test note to unarchive')).not.toBeVisible();
+    expect(noteUnarchived).toBe(true);
+    expect(unarchivedNoteData.done).toBe(false);
+    await expect(page.locator('text=Test note to unarchive')).not.toBeVisible();
+  });
+
+  test('should complete full archive-unarchive workflow', async ({ page }) => {
+    await page.route('**/api/boards/test-board/notes', async (route) => {
+      if (route.request().method() === 'GET') {
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            notes: [
+              {
+                id: 'workflow-note',
+                content: 'Note for archive-unarchive workflow test',
+                color: '#fef3c7',
+                done: false,
+                checklistItems: [],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                user: {
+                  id: 'test-user',
+                  name: 'Test User',
+                  email: 'test@example.com',
+                },
+              },
+            ],
+          }),
+        });
+      }
+    });
+
+    await page.route('**/api/boards/test-board/notes/workflow-note', async (route) => {
+      if (route.request().method() === 'PUT') {        
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            note: {
+              id: 'workflow-note',
+              content: 'Note for archive-unarchive workflow test',
+              color: '#fef3c7',
+              done: true,
+              checklistItems: [],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              user: {
+                id: 'test-user',
+                name: 'Test User',
+                email: 'test@example.com',
+              },
+            },
+          }),
+        });
+      }
+    });
+
+    await page.goto('/boards/test-board');
+    await expect(page.locator('text=Note for archive-unarchive workflow test')).toBeVisible();
+
+    const archiveButton = page.locator('[title="Archive note"]');
+    await archiveButton.click();
+    await page.waitForTimeout(500);
+    await expect(page.locator('text=Note for archive-unarchive workflow test')).not.toBeVisible();
+
+  });
 });
