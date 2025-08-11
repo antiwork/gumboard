@@ -14,15 +14,11 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button"
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
   Plus,
   Trash2,
-  Settings,
-  LogOut,
-  ChevronDown,
   Grid3x3,
   Copy,
   Edit3,
@@ -50,6 +46,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -71,7 +68,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
   const [editingBoard, setEditingBoard] = useState<Board | null>(null);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
     open: boolean;
     boardId: string;
@@ -96,32 +92,6 @@ export default function Dashboard() {
   useEffect(() => {
     fetchUserAndBoards();
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showUserDropdown) {
-        const target = event.target as Element;
-        if (!target.closest(".user-dropdown")) {
-          setShowUserDropdown(false);
-        }
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (showUserDropdown) {
-          setShowUserDropdown(false);
-        }
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [showUserDropdown]);
 
   const fetchUserAndBoards = async () => {
     try {
@@ -312,9 +282,7 @@ export default function Dashboard() {
     }
   }
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
+  
 
   if (loading) {
     return <FullPageLoader message="Loading dashboard..." />;
@@ -344,50 +312,9 @@ export default function Dashboard() {
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Board</span>
             </Button>
-            <div className="relative user-dropdown">
-              <Button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center space-x-2 text-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 sm:px-3 py-2 dark:text-zinc-100"
-              >
-                <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {user?.name
-                      ? user.name.charAt(0).toUpperCase()
-                      : user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <span className="text-sm font-medium hidden sm:inline">
-                  {user?.name?.split(" ")[0] || "User"}
-                </span>
-                <ChevronDown className={`w-4 h-4 ml-1 hidden sm:inline transition-all duration-200 ${showUserDropdown ? "rotate-180" : ""}`}  />
-              </Button>
-              {showUserDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-gray-200 dark:border-zinc-800 z-50">
-                  <div className="py-1">
-                    <div className="px-4 py-2 text-sm text-muted-foreground dark:text-zinc-400 border-b dark:border-zinc-800 break-all overflow-hidden">
-                      <span className="block truncate" title={user?.email}>
-                        {user?.email}
-                      </span>
-                    </div>
-                    <Link
-                      href="/settings"
-                      className="flex items-center px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                      onClick={() => setShowUserDropdown(false)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                    <Button
-                      onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+              
+
+            <ProfileDropdown user={user} />
           </div>
         </div>
       </nav>
@@ -512,8 +439,8 @@ export default function Dashboard() {
             {boards.map((board) => (
               <Link href={`/boards/${board.id}`} key={board.id}>
                 <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
-                  <CardHeader className="pb-3 flex flex-col h-full">
-                      <div className="flex-1">
+                  <CardHeader className="flex flex-col h-full">
+                      <div className="w-full">
                         <div className="flex items-center justify-between mb-1">
                           <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
                             {board.name}
@@ -563,8 +490,7 @@ export default function Dashboard() {
                           </CardDescription>
                         )}
                       </div>
-                        
-                      <div className="mt-3 flex items-center justify-between">
+                      <div className="mt-3 w-full flex items-center justify-between">
                         <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
                           <Switch
                             checked={board.isPublic}
