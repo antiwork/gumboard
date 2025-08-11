@@ -7,13 +7,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
   Plus,
-  ChevronDown,
-  Settings,
   Search,
 } from "lucide-react";
-import Link from "next/link";
 import { FullPageLoader } from "@/components/ui/loader";
-import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
 
 import {

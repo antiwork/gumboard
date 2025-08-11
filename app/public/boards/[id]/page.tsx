@@ -3,10 +3,8 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
 import Link from "next/link"
 import { FullPageLoader } from "@/components/ui/loader";
-import { FilterPopover } from "@/components/ui/filter-popover";
 import { NavigationBar } from "@/components/navigation-bar";
 import type { Note, Board } from "@/components/note";
 import type { BoardSelectorProps, SearchProps, FilterProps } from "@/components/navigation-bar";
