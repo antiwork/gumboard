@@ -414,7 +414,7 @@ export function Note({
         ...style,
       }}
     >
-      <div className="flex items-start justify-between mb-4 flex-shrink-0">
+      <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
             <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
@@ -568,7 +568,6 @@ export function Note({
           {canEdit && (
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => {
                 if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
                   newItemInputRef.current.focus();
@@ -576,7 +575,7 @@ export function Note({
                   setAddingItem(true);
                 }
               }}
-              className="mt-2 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+              className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add task
