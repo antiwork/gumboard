@@ -11,7 +11,9 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true }
+      select: { 
+        organizationId: true 
+      }
     })
 
     if (!user?.organizationId) {
@@ -26,7 +28,16 @@ export async function GET() {
           organizationId: user.organizationId
         }
       },
-      include: {
+      select: {
+        id: true,
+        content: true,
+        color: true,
+        boardId: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        done: true,
+        checklistItems: true,
         user: {
           select: {
             id: true,
