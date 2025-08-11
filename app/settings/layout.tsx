@@ -4,10 +4,9 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { User as UserIcon, Building2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { BetaBadge } from "@/components/ui/beta-badge"
 import { FullPageLoader } from "@/components/ui/loader"
 import type { User } from "@/components/note"
-import { ProfileDropdown } from "@/components/profile-dropdown"
+import { NavigationBar } from "@/components/navigation-bar"
 
 export default function SettingsLayout({
   children,
@@ -51,16 +50,11 @@ export default function SettingsLayout({
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
-      <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center space-x-4 sm:space-x-6">
-            <Link href="/dashboard" className="flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">Gumboard <BetaBadge /></h1>
-            </Link>
-          </div>
-          <ProfileDropdown user={user} />
-        </div>
-      </nav>
+      <NavigationBar
+        variant="settings"
+        user={user}
+        logoHref="/dashboard"
+      />
 
       <div className="md:hidden bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-4 py-3">
         <h2 className="text-lg font-semibold text-foreground dark:text-zinc-100">Settings</h2>

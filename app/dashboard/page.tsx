@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button"
-import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -46,9 +45,9 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { ProfileDropdown } from "@/components/profile-dropdown";
+import { NavigationBar } from "@/components/navigation-bar";
+import { createDashboardNavConfig } from "@/components/navigation-configs";
 
-// Dashboard-specific extended types
 export type DashboardBoard = Board & {
   createdBy: string;
   createdAt: string;
@@ -288,36 +287,20 @@ export default function Dashboard() {
     return <FullPageLoader message="Loading dashboard..." />;
   }
 
+  const navigationActionButtons = createDashboardNavConfig(() => {
+    form.reset({ name: "", description: "" });
+    setIsAddBoardDialogOpen(true);
+    setEditingBoard(null);
+  });
+
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-950">
-      <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center">
-            <div className="flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                Gumboard
-                <BetaBadge />
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center space-x-2 sm:space-x-4">
-            <Button
-              onClick={() => {
-                form.reset({ name: "", description: "" });
-                setIsAddBoardDialogOpen(true);
-                setEditingBoard(null); 
-              }}
-              className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
-            >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Board</span>
-            </Button>
-              
-
-            <ProfileDropdown user={user} />
-          </div>
-        </div>
-      </nav>
+      <NavigationBar
+        variant="dashboard"
+        user={user}
+        logoHref="/dashboard"
+        actionButtons={navigationActionButtons}
+      />
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {boards.length > 0 && (
           <div className="mb-6 sm:mb-8">
