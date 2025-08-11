@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import {
-  Pencil,
+  Plus,
   Search,
 } from "lucide-react";
-import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { Note as NoteCard } from "@/components/note";
 
@@ -41,7 +40,6 @@ export default function BoardPage({
   const [loading, setLoading] = useState(true);
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
@@ -422,7 +420,7 @@ export default function BoardPage({
   // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showBoardDropdown || showUserDropdown || showAddBoard) {
+      if (showBoardDropdown || showAddBoard) {
         const target = event.target as Element;
         if (
           !target.closest(".board-dropdown") &&
@@ -430,7 +428,6 @@ export default function BoardPage({
           !target.closest(".add-board-modal")
         ) {
           setShowBoardDropdown(false);
-          setShowUserDropdown(false);
           setShowAddBoard(false);
         }
       }
@@ -443,9 +440,6 @@ export default function BoardPage({
         }
         if (showBoardDropdown) {
           setShowBoardDropdown(false);
-        }
-        if (showUserDropdown) {
-          setShowUserDropdown(false);
         }
         if (showAddBoard) {
           setShowAddBoard(false);
@@ -461,7 +455,7 @@ export default function BoardPage({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showBoardDropdown, showUserDropdown, showAddBoard, addingChecklistItem]);
+  }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
   // Removed debounce cleanup effect; editing is scoped to Note
 
@@ -872,10 +866,6 @@ export default function BoardPage({
     }
   };
 
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
   const handleAddBoard = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBoardName.trim()) return;
@@ -1091,7 +1081,7 @@ export default function BoardPage({
               }}
               className="flex items-center space-x-2 cursor-pointer"
             >
-              <Pencil className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
               <span>Add Your First Note</span>
             </Button>
           </div>

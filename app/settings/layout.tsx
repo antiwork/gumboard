@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
 import { User as UserIcon, Building2, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { signOut } from "next-auth/react"
 import { FullPageLoader } from "@/components/ui/loader"
 import type { User } from "@/components/note"
 import { Navbar } from "@/components/navbar"
@@ -16,7 +15,6 @@ export default function SettingsLayout({
 }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
-  const [showUserDropdown, setShowUserDropdown] = useState(false)
   const router = useRouter()
   const pathname = usePathname()
 
@@ -43,24 +41,6 @@ export default function SettingsLayout({
     fetchUserData()
   }, [fetchUserData])
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showUserDropdown) {
-        const target = event.target as Element
-        if (!target.closest('.user-dropdown')) {
-          setShowUserDropdown(false)
-        }
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showUserDropdown])
-
-  const handleSignOut = async () => {
-    await signOut()
-  }
-
   if (loading) {
     return <FullPageLoader message="Loading settings..." />
   }
@@ -71,7 +51,6 @@ export default function SettingsLayout({
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
       <Navbar user={user} showAddBoard={false} />
-
       <div className="md:hidden bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-4 py-3">
         <h2 className="text-lg font-semibold text-foreground dark:text-zinc-100">Settings</h2>
       </div>
