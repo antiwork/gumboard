@@ -26,7 +26,6 @@ export async function GET(request: NextRequest) {
     const notes = await db.note.findMany({
       where: {
         deletedAt: null, // Only include non-deleted notes
-        done: false,
         board: {
           organizationId: user.organizationId
         }
@@ -44,7 +43,8 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true
           }
-        }
+        },
+        checklistItems: { orderBy: { order: 'asc' } }
       },
       orderBy: {
         createdAt: 'desc'
@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { content, color, boardId } = await request.json()
-
+    
     if (!boardId) {
       return NextResponse.json({ error: "Board ID is required" }, { status: 400 })
     }
@@ -116,7 +116,8 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true
           }
-        }
+        },
+        checklistItems: { orderBy: { order: 'asc' } }
       }
     })
 

@@ -18,8 +18,7 @@ export async function GET(
       include: { 
         notes: {
           where: {
-            deletedAt: null, // Only include non-deleted notes
-            done: false
+            deletedAt: null // Only include non-deleted notes
           },
           include: {
             user: {
@@ -28,7 +27,8 @@ export async function GET(
                 name: true,
                 email: true
               }
-            }
+            },
+            checklistItems: { orderBy: { order: 'asc' } }
           }
         }
       }
@@ -77,7 +77,7 @@ export async function POST(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { content, color, checklistItems } = await request.json()
+    const { content, color } = await request.json()
     const boardId = (await params).id
 
     // Verify user has access to this board (same organization)
@@ -116,7 +116,6 @@ export async function POST(
         color: randomColor,
         boardId,
         createdBy: session.user.id,
-        ...(checklistItems !== undefined && { checklistItems }),
       },
       include: {
         user: {
@@ -125,7 +124,8 @@ export async function POST(
             name: true,
             email: true
           }
-        }
+        },
+        checklistItems: { orderBy: { order: 'asc' } }
       }
     })
 
