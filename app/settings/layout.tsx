@@ -70,7 +70,7 @@ export default function SettingsLayout({
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
-      <Navbar user={user} addBoard={false} />
+      <Navbar user={user} showAddBoard={false} />
 
       <div className="md:hidden bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-4 py-3">
         <h2 className="text-lg font-semibold text-foreground dark:text-zinc-100">Settings</h2>
