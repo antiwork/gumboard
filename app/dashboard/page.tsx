@@ -411,7 +411,7 @@ export default function Dashboard() {
               <DialogTitle className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
                 {editingBoard ? "Edit Board" : "Create New Board"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-muted-foreground dark:text-zinc-400">
                 {editingBoard
                   ? "Update the board's name and description."
                   : "Fill out the details to create a new board."}
@@ -430,7 +430,7 @@ export default function Dashboard() {
                       <FormControl>
                         <Input
                           placeholder="Enter board name"
-                          className="border border-zinc-200 dark:border-zinc-800"
+                          className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
                           autoFocus
                           {...field}
                         />
@@ -448,7 +448,7 @@ export default function Dashboard() {
                       <FormControl>
                         <Input
                           placeholder="Enter board description"
-                          className="border border-zinc-200 dark:border-zinc-800"
+                          className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
                           {...field}
                         />
                       </FormControl>
