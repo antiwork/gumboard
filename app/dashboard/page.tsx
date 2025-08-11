@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Navbar } from "@/components/navbar";
-import { ProfileDropdown } from "@/components/profile-dropdown";
+import { AddBoardButton } from "@/components/board-actions";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -294,7 +294,12 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-950">
-      <Navbar user={user} onAddBoard={handleAddBoardClick} showAddBoard={true} />
+      <Navbar 
+        user={user} 
+        userActions={
+          <AddBoardButton onAddBoard={handleAddBoardClick} />
+        }
+      />
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {boards.length > 0 && (
           <div className="mb-6 sm:mb-8">

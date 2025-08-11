@@ -26,6 +26,12 @@ import {
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
 import { Navbar } from "@/components/navbar";
+import { 
+  BoardSelector, 
+  SearchBar, 
+  Filter, 
+  AddNoteButton 
+} from "@/components/board-actions";
 
 export default function BoardPage({
   params,
@@ -945,31 +951,43 @@ export default function BoardPage({
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
       <Navbar 
         user={user}
-        showAddBoard={false}
-        showFilterPopover={true}
-        showSearchBar={true}
-        showBoardSelector={true}
-        showAddNote={true}
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        setDebouncedSearchTerm={setDebouncedSearchTerm}
-        updateURL={updateURL}
-        dateRange={dateRange}
-        setDateRange={setDateRange}
-        selectedAuthor={selectedAuthor}
-        setSelectedAuthor={setSelectedAuthor}
-        uniqueAuthors={uniqueAuthors}
-        board={board}
-        boardId={boardId}
-        allBoards={allBoards}
-        showBoardDropdown={showBoardDropdown}
-        setShowBoardDropdown={setShowBoardDropdown}
-        showAddBoardModal={showAddBoard}
-        setShowAddBoardModal={setShowAddBoard}
-        boardSettings={boardSettings}
-        setBoardSettings={setBoardSettings}
-        setBoardSettingsDialog={setBoardSettingsDialog}
-        onAddNote={handleAddNote}
+        boardActions={
+          <>
+            <BoardSelector
+              board={board}
+              boardId={boardId}
+              allBoards={allBoards}
+              showBoardDropdown={showBoardDropdown}
+              setShowBoardDropdown={setShowBoardDropdown}
+              setShowAddBoard={setShowAddBoard}
+              setBoardSettings={setBoardSettings}
+              setBoardSettingsDialog={setBoardSettingsDialog}
+            />
+            <Filter
+              dateRange={dateRange}
+              setDateRange={setDateRange}
+              selectedAuthor={selectedAuthor}
+              setSelectedAuthor={setSelectedAuthor}
+              uniqueAuthors={uniqueAuthors}
+              updateURL={updateURL}
+            />
+          </>
+        }
+        userActions={
+          <>
+            <SearchBar
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              setDebouncedSearchTerm={setDebouncedSearchTerm}
+              updateURL={updateURL}
+            />
+            <AddNoteButton
+              onAddNote={handleAddNote}
+              boardId={boardId}
+              allBoards={allBoards}
+            />
+          </>
+        }
       />
 
       {/* Board Area */}
