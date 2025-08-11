@@ -71,7 +71,8 @@ interface SelfServeInvite {
 export default function OrganizationSettingsPage() {
   const [user, setUser] = useState<UserWithOrganization | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingOrgName, setSavingOrgName] = useState(false);
+  const [savingSlackWebhook, setSavingSlackWebhook] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
@@ -161,8 +162,9 @@ export default function OrganizationSettingsPage() {
     }
   };
 
-  const handleSaveOrganization = async () => {
-    setSaving(true);
+  const handleSaveOrganization = async (field: 'orgName' | 'slackWebhook') => {
+    field === 'orgName'&& setSavingOrgName(true);
+    field === 'slackWebhook'&& setSavingSlackWebhook(true);
     try {
       const response = await fetch("/api/organization", {
         method: "PUT",
@@ -197,7 +199,8 @@ export default function OrganizationSettingsPage() {
         description: "Failed to update organization",
       });
     } finally {
-      setSaving(false);
+      field === 'orgName'&& setSavingOrgName(false);
+      field === 'slackWebhook'&& setSavingSlackWebhook(false);
     }
   };
 
@@ -487,8 +490,8 @@ export default function OrganizationSettingsPage() {
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
-              onClick={handleSaveOrganization}
-              disabled={saving || orgName === originalOrgName || !user?.isAdmin}
+              onClick={() => handleSaveOrganization('orgName')}
+              disabled={savingOrgName || orgName === originalOrgName || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={
                 !user?.isAdmin
@@ -496,7 +499,7 @@ export default function OrganizationSettingsPage() {
                   : undefined
               }
             >
-              {saving ? "Saving..." : "Save Changes"}
+              {savingOrgName ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </div>
@@ -547,9 +550,9 @@ export default function OrganizationSettingsPage() {
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
-              onClick={handleSaveOrganization}
+              onClick={() => handleSaveOrganization('slackWebhook')}
               disabled={
-                saving ||
+                savingSlackWebhook ||
                 slackWebhookUrl === originalSlackWebhookUrl ||
                 !user?.isAdmin
               }
@@ -560,7 +563,7 @@ export default function OrganizationSettingsPage() {
                   : undefined
               }
             >
-              {saving ? "Saving..." : "Save changes"}
+              {savingSlackWebhook ? "Saving..." : "Save changes"}
             </Button>
           </div>
         </div>
