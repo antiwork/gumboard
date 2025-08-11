@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -428,9 +429,12 @@ export function Note({
             </span>
             <div className="flex flex-col">
               {showBoardName && note.board && (
-                <span className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20">
+                <Link 
+                  href={`/boards/${note.board.id}`}
+                  className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
+                >
                   {note.board.name}
-                </span>
+                </Link>
               )}
             </div>
           </div>
