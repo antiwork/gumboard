@@ -376,43 +376,6 @@ export default function Dashboard() {
       if (response.ok) {
         await response.json();
         // Refresh organizations list
-        const organizationsResponse = await fetch("/api/user/organizations");
-        if (organizationsResponse.ok) {
-          const { organizations } = await organizationsResponse.json();
-          setOrganizations(organizations);
-        }
-        setShowAddOrganization(false);
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to create organization",
-          description: errorData.error || "Failed to create organization",
-        });
-      }
-    } catch (error) {
-      console.error("Error creating organization:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to create organization",
-        description: "Failed to create organization",
-      });
-    }
-  };
-
-  const handleCreateOrganization = async (organizationData: { name: string; description?: string }) => {
-    try {
-      const response = await fetch("/api/organization", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(organizationData),
-      });
-
-      if (response.ok) {
-        const { organization } = await response.json();
-        // Refresh organizations list
         fetchInitialData();
         setShowAddOrganization(false);
       } else {
