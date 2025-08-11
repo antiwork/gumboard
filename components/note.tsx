@@ -15,6 +15,7 @@ import { useTheme } from "next-themes";
 export interface User {
   id: string;
   name: string | null;
+  image?: string | null;
   email: string;
   isAdmin?: boolean;
 }
