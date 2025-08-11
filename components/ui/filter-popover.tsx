@@ -74,7 +74,7 @@ function FilterPopover({
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
         className={cn(
-          "flex items-center space-x-2 px-3 py-2 text-sm border border-border dark:border-zinc-800 rounded-md bg-card dark:bg-zinc-900 hover:bg-accent dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent transition-colors",
+          "flex items-center space-x-2 px-3 py-2 text-sm border border-gray-200 dark:border-zinc-800 rounded-md bg-card dark:bg-zinc-900 hover:bg-accent dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent transition-colors",
           disabled && "opacity-50 cursor-not-allowed",
           isOpen && "ring-2 ring-blue-500 dark:ring-zinc-600 border-transparent"
         )}
@@ -95,7 +95,7 @@ function FilterPopover({
       </Button>
 
       {isOpen && (
-        <div className="fixed sm:absolute left-0 w-full sm:w-80 mt-2 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 p-4">
+        <div className="fixed sm:absolute left-0 w-full sm:w-80 mt-2 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-gray-200 dark:border-zinc-800 z-50 p-4">
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-medium text-foreground dark:text-zinc-100">Filters</h3>
