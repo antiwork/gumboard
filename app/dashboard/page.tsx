@@ -426,7 +426,7 @@ export default function Dashboard() {
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-zinc-800 dark:text-zinc-200 ">Board Name</FormLabel>
+                      <FormLabel>Board Name</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Enter board name"
