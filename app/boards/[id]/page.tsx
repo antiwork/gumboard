@@ -537,8 +537,10 @@ export default function BoardPage({
       const search = searchTerm.toLowerCase();
       filteredNotes = filteredNotes.filter((note) => {
         const authorName = (note.user.name || note.user.email).toLowerCase();
-        const noteContent = note.content.toLowerCase();
-        return authorName.includes(search) || noteContent.includes(search);
+        const checklistMatch = note.checklistItems.some((item) =>
+          item.content.toLowerCase().includes(search)
+        );
+        return authorName.includes(search) || checklistMatch;
       });
     }
 
