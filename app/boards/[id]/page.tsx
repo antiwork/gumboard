@@ -31,7 +31,14 @@ import {
 } from "@/components/ui/alert-dialog";
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
+import type { ChecklistItem } from "@/components/checklist-item";
 import { useTheme } from "next-themes";
+
+
+interface DraftNote extends Note {
+  isDraft: true;
+  tempChecklistItems: ChecklistItem[];
+}
 
 export default function BoardPage({
   params,
@@ -40,6 +47,7 @@ export default function BoardPage({
 }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const [draftNotes, setDraftNotes] = useState<DraftNote[]>([]);
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [user, setUser] = useState<User | null>(null);
@@ -241,8 +249,9 @@ export default function BoardPage({
         (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
         addingItemHeight;
       const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
+      const publishButtonHeight = note.id.startsWith('draft_') ? 60 : 0;
 
-      return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
+      return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight + publishButtonHeight + 40;
     } else {
       // Original logic for regular notes
       const lines = note.content.split("\n");
@@ -269,9 +278,10 @@ export default function BoardPage({
       // Calculate based on actual text content with wrapping
       const lineHeight = 28; // Line height for readability (leading-7)
       const contentHeight = totalLines * lineHeight;
+      const publishButtonHeight = note.id.startsWith('draft_') ? 60 : 0;
 
       return (
-        headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight)
+        headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight) + publishButtonHeight + 40
       );
     }
   };
@@ -310,9 +320,11 @@ export default function BoardPage({
       config.containerPadding
     );
 
-    return filteredNotes.map((note) => {
+    const allNotesToLayout = [...filteredNotes, ...draftNotes];
+    
+    return allNotesToLayout.map((note) => {
       const noteHeight = calculateNoteHeight(
-        note,
+        note as Note,
         adjustedNoteWidth,
         config.notePadding
       );
@@ -367,9 +379,11 @@ export default function BoardPage({
       config.containerPadding
     );
 
-    return filteredNotes.map((note) => {
+    const allNotesToLayout = [...filteredNotes, ...draftNotes];
+    
+    return allNotesToLayout.map((note) => {
       const noteHeight = calculateNoteHeight(
-        note,
+        note as Note,
         noteWidth,
         config.notePadding
       );
@@ -416,6 +430,36 @@ export default function BoardPage({
     initializeFiltersFromURL();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Load draft notes from localStorage
+  useEffect(() => {
+    if (boardId && boardId !== "all-notes" && boardId !== "archive") {
+      try {
+        const savedDrafts = localStorage.getItem(`gumboard-drafts-${boardId}`);
+        if (savedDrafts) {
+          const drafts: DraftNote[] = JSON.parse(savedDrafts);
+          setDraftNotes(drafts);
+        }
+      } catch (error) {
+        console.warn("Failed to load draft notes:", error);
+      }
+    }
+  }, [boardId]);
+
+  // Save draft notes to localStorage whenever drafts change
+  useEffect(() => {
+    if (boardId && boardId !== "all-notes" && boardId !== "archive") {
+      try {
+        if (draftNotes.length > 0) {
+          localStorage.setItem(`gumboard-drafts-${boardId}`, JSON.stringify(draftNotes));
+        } else {
+          localStorage.removeItem(`gumboard-drafts-${boardId}`);
+        }
+      } catch (error) {
+        console.warn("Failed to save draft notes:", error);
+      }
+    }
+  }, [draftNotes, boardId]);
 
   useEffect(() => {
     if (boardId) {
@@ -728,6 +772,20 @@ export default function BoardPage({
 
   // Adapter: bridge component Note -> existing update handler
   const handleUpdateNoteFromComponent = async (updatedNote: Note) => {
+      // Check if it's a draft note
+      if (updatedNote.id.startsWith('draft_')) {
+        const draftNote = draftNotes.find((n) => n.id === updatedNote.id);
+        if (draftNote) {
+          const updatedDraft: DraftNote = {
+            ...draftNote,
+            content: updatedNote.content,
+            tempChecklistItems: updatedNote.checklistItems || [],
+          };
+          setDraftNotes(draftNotes.map((n) => (n.id === updatedNote.id ? updatedDraft : n)));
+          return;
+        }
+      }
+
       // Find the note to get its board ID for all notes view
       const currentNote = notes.find((n) => n.id === updatedNote.id);
       if (!currentNote) return;
@@ -736,7 +794,57 @@ export default function BoardPage({
       setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
-  const handleAddNote = async (targetBoardId?: string) => {
+  // Handle publishing a draft note
+  const handlePublishDraft = async (draftNote: DraftNote) => {
+    try {
+      const isAllNotesView = boardId === "all-notes";
+      const targetBoardId = draftNote.boardId;
+
+      const response = await fetch(
+        `/api/boards/${isAllNotesView ? "all-notes" : targetBoardId}/notes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            content: draftNote.content,
+            checklistItems: draftNote.tempChecklistItems,
+            color: draftNote.color,
+            ...(isAllNotesView && { boardId: targetBoardId }),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const { note } = await response.json();
+
+        setDraftNotes(draftNotes.filter((n) => n.id !== draftNote.id));
+        setNotes([...notes, note]);
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to publish note",
+          description: errorData.error || "Failed to publish note",
+        });
+      }
+    } catch (error) {
+      console.error("Error publishing draft:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to publish note",
+        description: "Failed to publish note",
+      });
+    }
+  };
+
+  // Handle deleting a draft note
+  const handleDeleteDraft = (draftId: string) => {
+    setDraftNotes(draftNotes.filter((n) => n.id !== draftId));
+  };
+
+  const handleAddNote = async (targetBoardId?: string, isDraft: boolean = true) => {
     // For all notes view, ensure a board is selected
     if (boardId === "all-notes" && !targetBoardId) {
       setErrorDialog({
@@ -747,9 +855,31 @@ export default function BoardPage({
       return;
     }
 
+    const actualTargetBoardId = boardId === "all-notes" ? targetBoardId : boardId;
+
+    if (isDraft) {
+
+      const draftNote: DraftNote = {
+        id: `draft_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        content: "",
+        color: "#fef3c7",
+        done: false,
+        isDraft: true,
+        tempChecklistItems: [],
+        checklistItems: [],
+        user: user!,
+        boardId: actualTargetBoardId!,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      setDraftNotes([...draftNotes, draftNote]);
+      setAddingChecklistItem(draftNote.id);
+      return;
+    }
+
+    
     try {
-      const actualTargetBoardId =
-        boardId === "all-notes" ? targetBoardId : boardId;
       const isAllNotesView = boardId === "all-notes";
 
       const response = await fetch(
@@ -1113,9 +1243,9 @@ export default function BoardPage({
             <Button
               onClick={() => {
                 if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
+                  handleAddNote(allBoards[0].id, true);
                 } else {
-                  handleAddNote();
+                  handleAddNote(undefined, true);
                 }
               }}
               className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
@@ -1186,33 +1316,43 @@ export default function BoardPage({
       >
         {/* Notes */}
         <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              addingChecklistItem={addingChecklistItem}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="note-background"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor:
-                  resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
-          ))}
+          {layoutNotes.map((note) => {
+            const isDraft = note.id.startsWith('draft_');
+            const draftNote = isDraft ? draftNotes.find(d => d.id === note.id) : null;
+            
+            return (
+              <div key={note.id} className="relative">
+                <NoteCard
+                  note={isDraft ? {
+                    ...note,
+                    checklistItems: draftNote?.tempChecklistItems || []
+                  } as Note : note as Note}
+                  currentUser={user as User}
+                  addingChecklistItem={addingChecklistItem}
+                  onUpdate={handleUpdateNoteFromComponent}
+                  onDelete={isDraft ? handleDeleteDraft : handleDeleteNote}
+                  onArchive={boardId !== "archive" && !isDraft ? handleArchiveNote : undefined}
+                  onPublish={isDraft ? () => handlePublishDraft(draftNote!) : undefined}
+                  showBoardName={boardId === "all-notes" || boardId === "archive"}
+                  className={`note-background ${isDraft ? 'draft-note' : ''}`}
+                  style={{
+                    position: "absolute",
+                    left: note.x,
+                    top: note.y,
+                    width: note.width,
+                    minHeight: note.height,
+                    padding: `${getResponsiveConfig().notePadding}px`,
+                    backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                  }}
+                />
+              </div>
+            );
+          })}
         </div>
 
         {/* Empty State */}
         {filteredNotes.length === 0 &&
+          draftNotes.length === 0 &&
           notes.length > 0 &&
           (searchTerm ||
             dateRange.startDate ||
@@ -1260,7 +1400,7 @@ export default function BoardPage({
             </div>
           )}
 
-        {notes.length === 0 && (
+        {notes.length === 0 && draftNotes.length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
             <div className="text-xl mb-2">No notes yet</div>
             <div className="text-sm mb-4">
@@ -1269,7 +1409,7 @@ export default function BoardPage({
             <Button
               onClick={() => {
                 if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
+                  handleAddNote(allBoards[0].id, true);
                 } else if (boardId === "archive") {
                   setErrorDialog({
                     open: true,
@@ -1278,7 +1418,7 @@ export default function BoardPage({
                       "You cannot add notes directly to the archive. Notes are archived from other boards.",
                   });
                 } else {
-                  handleAddNote();
+                  handleAddNote(undefined, true);
                 }
               }}
               className="flex items-center space-x-2 cursor-pointer"

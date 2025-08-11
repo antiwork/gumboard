@@ -57,6 +57,7 @@ interface NoteProps {
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
+  onPublish?: (note: Note) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -70,6 +71,7 @@ export function Note({
   onUpdate,
   onDelete,
   onArchive,
+  onPublish,
   readonly = false,
   showBoardName = false,
   className,
@@ -90,6 +92,7 @@ export function Note({
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+  const isDraft = note.id.startsWith('draft_');
 
   useEffect(() => {
     if (addingChecklistItem === note.id && canEdit) {
@@ -120,6 +123,9 @@ export function Note({
       };
 
       onUpdate?.(optimisticNote);
+
+
+      if (isDraft) return;
 
       fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
         method: "PUT",
@@ -163,6 +169,9 @@ export function Note({
 
       onUpdate?.(optimisticNote);
 
+
+      if (isDraft) return;
+
       const response = await fetch(
         `/api/boards/${note.boardId}/notes/${note.id}`,
         {
@@ -196,6 +205,16 @@ export function Note({
       const updatedItems = note.checklistItems.map((item) =>
         item.id === itemId ? { ...item, content } : item
       );
+
+      const optimisticNote = {
+        ...note,
+        checklistItems: updatedItems,
+      };
+
+      onUpdate?.(optimisticNote);
+
+
+      if (isDraft) return;
 
       const response = await fetch(
         `/api/boards/${note.boardId}/notes/${note.id}`,
@@ -250,6 +269,16 @@ export function Note({
         (a, b) => a.order - b.order
       );
 
+      const optimisticNote = {
+        ...note,
+        checklistItems: allItems,
+      };
+
+      onUpdate?.(optimisticNote);
+
+
+      if (isDraft) return;
+
       const response = await fetch(
         `/api/boards/${note.boardId}/notes/${note.id}`,
         {
@@ -290,6 +319,9 @@ export function Note({
       };
 
       onUpdate?.(optimisticNote);
+
+
+      if (isDraft) return;
 
       const response = await fetch(
         `/api/boards/${note.boardId}/notes/${note.id}`,
@@ -409,6 +441,11 @@ export function Note({
                   {note.board.name}
                 </span>
               )}
+              {isDraft && (
+                <span className="text-xs text-orange-600 dark:text-orange-400 opacity-80 font-medium">
+                  DRAFT
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -469,7 +506,7 @@ export function Note({
         </div>
       ) : (
         <div className="flex flex-col">
-          <div className="overflow-y-auto space-y-1">
+          <div className="space-y-1">
             {/* Checklist Items */}
             {note.checklistItems?.map((item) => (
               <ChecklistItemComponent
@@ -535,6 +572,20 @@ export function Note({
               <Plus className="mr-2 h-4 w-4" />
               Add task
             </Button>
+          )}
+
+
+          {isDraft && canEdit && onPublish && (
+            <div className="mt-2 flex justify-end pb-2">
+              <Button
+                onClick={() => onPublish(note)}
+                disabled={!note.content.trim() && (!note.checklistItems || note.checklistItems.length === 0)}
+                size="sm"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-xs px-3 py-1 rounded-md shadow-sm"
+              >
+                Publish
+              </Button>
+            </div>
           )}
         </div>
       )}
