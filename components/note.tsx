@@ -2,13 +2,14 @@
 
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
-import { Trash2, Plus, Archive } from "lucide-react";
+import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
 
 // Core domain types
@@ -59,6 +60,7 @@ interface NoteProps {
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
+  onUnarchive?: (noteId: string) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -72,6 +74,7 @@ export function Note({
   onUpdate,
   onDelete,
   onArchive,
+  onUnarchive,
   readonly = false,
   showBoardName = false,
   className,
@@ -412,7 +415,7 @@ export function Note({
         ...style,
       }}
     >
-      <div className="flex items-start justify-between mb-4 flex-shrink-0">
+      <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
             <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
@@ -429,9 +432,12 @@ export function Note({
             </span>
             <div className="flex flex-col">
               {showBoardName && note.board && (
-                <span className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20">
+                <Link 
+                  href={`/boards/${note.board.id}`}
+                  className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
+                >
                   {note.board.name}
-                </span>
+                </Link>
               )}
             </div>
           </div>
@@ -466,6 +472,22 @@ export function Note({
                 title="Archive note"
               >
                 <Archive className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+          {canEdit && onUnarchive && (
+            <div className="flex items-center">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUnarchive(note.id);
+                }}
+                className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
+                variant="ghost"
+                size="icon"
+                title="Unarchive note"
+              >
+                <ArchiveRestore className="w-3 h-3" />
               </Button>
             </div>
           )}
@@ -547,7 +569,6 @@ export function Note({
           {canEdit && (
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => {
                 if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
                   newItemInputRef.current.focus();
@@ -555,7 +576,7 @@ export function Note({
                   setAddingItem(true);
                 }
               }}
-              className="mt-2 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+              className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add task

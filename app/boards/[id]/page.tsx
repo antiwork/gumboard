@@ -825,8 +825,7 @@ export default function BoardPage({
 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
-      const archivedNote = { ...currentNote, done: true };
-      setNotes(notes.map((n) => (n.id === noteId ? archivedNote : n)));
+      setNotes(notes.filter((n) => n.id !== noteId));
 
       const response = await fetch(
         `/api/boards/${targetBoardId}/notes/${noteId}`,
@@ -839,7 +838,7 @@ export default function BoardPage({
 
       if (!response.ok) {
         // Revert on error
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        setNotes([...notes, currentNote]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
@@ -848,6 +847,34 @@ export default function BoardPage({
       }
     } catch (error) {
       console.error("Error archiving note:", error);
+    }
+  };
+  const handleUnarchiveNote = async (noteId: string) => {
+    try {
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
+      
+      const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
+      if (!targetBoardId) return;
+
+      setNotes(notes.filter((n) => n.id !== noteId));
+
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: false }),
+      });
+
+      if (!response.ok) {
+        setNotes([...notes, currentNote]);
+        setErrorDialog({
+          open: true,
+          title: "Unarchive Failed",
+          description: "Failed to unarchive note. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error unarchiving note:", error);
     }
   };
 
@@ -932,7 +959,7 @@ export default function BoardPage({
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <div className="bg-card dark:bg-zinc-900 border-b border-border dark:border-zinc-800 shadow-sm">
+      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:space-x-3 w-full sm:w-auto">
             {/* Company Name */}
@@ -950,7 +977,7 @@ export default function BoardPage({
             <div className="relative board-dropdown flex-1 sm:flex-none">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center justify-between border border-border dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer w-full sm:w-auto"
+                className="flex items-center justify-between border border-gray-200 dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer w-full sm:w-auto"
               >
                 <div>
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
@@ -969,7 +996,7 @@ export default function BoardPage({
               </Button>
 
               {showBoardDropdown && (
-                <div className="fixed sm:absolute left-0 mt-2 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
+                <div className="fixed sm:absolute left-0 mt-2 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-gray-200 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
                   <div className="py-1">
                     {/* All Notes Option */}
                     <Link
@@ -1004,7 +1031,7 @@ export default function BoardPage({
                     </Link>
 
                     {allBoards.length > 0 && (
-                      <div className="border-t border-border dark:border-zinc-800 my-1"></div>
+                      <div className="border-t border-gray-200 dark:border-zinc-800 my-1"></div>
                     )}
                     {allBoards.map((b) => (
                       <Link
@@ -1026,7 +1053,7 @@ export default function BoardPage({
                       </Link>
                     ))}
                     {allBoards.length > 0 && (
-                      <div className="border-t border-border dark:border-zinc-800 my-1"></div>
+                      <div className="border-t border-gray-200 dark:border-zinc-800 my-1"></div>
                     )}
                     <Button
                       onClick={() => {
@@ -1096,7 +1123,7 @@ export default function BoardPage({
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                 }}
-                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-border dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-gray-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
               {searchTerm && (
                 <Button
@@ -1149,9 +1176,9 @@ export default function BoardPage({
               </Button>
 
               {showUserDropdown && (
-                <div className="absolute right-0 mt-2 min-w-fit bg-white dark:bg-gray-800 rounded-md shadow-lg border border-border dark:border-gray-600 z-50">
+                <div className="absolute right-0 mt-2 min-w-fit bg-white dark:bg-gray-800 rounded-md shadow-lg border border-gray-200 dark:border-gray-600 z-50">
                   <div className="py-1">
-                    <div className="px-4 py-2 text-sm text-muted-foreground dark:text-gray-400 border-b border-border dark:border-gray-600">
+                    <div className="px-4 py-2 text-sm text-muted-foreground dark:text-gray-400 border-b border-gray-200 dark:border-gray-600">
                       {user?.email}
                     </div>
                     <Link
@@ -1197,6 +1224,7 @@ export default function BoardPage({
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
               style={{
@@ -1302,7 +1330,7 @@ export default function BoardPage({
           }}
         >
           <div
-            className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-border dark:border-zinc-800"
+            className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-gray-200 dark:border-zinc-800"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
@@ -1320,7 +1348,7 @@ export default function BoardPage({
                     onChange={(e) => setNewBoardName(e.target.value)}
                     placeholder="Enter board name"
                     required
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
+                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
                   />
                 </div>
                 <div>
@@ -1332,7 +1360,7 @@ export default function BoardPage({
                     value={newBoardDescription}
                     onChange={(e) => setNewBoardDescription(e.target.value)}
                     placeholder="Enter board description"
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
+                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
                   />
                 </div>
               </div>
@@ -1345,7 +1373,7 @@ export default function BoardPage({
                     setNewBoardName("");
                     setNewBoardDescription("");
                   }}
-                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
                   Cancel
                 </Button>
@@ -1365,7 +1393,7 @@ export default function BoardPage({
         open={deleteNoteDialog.open}
         onOpenChange={(open) => setDeleteNoteDialog({ open, noteId: "" })}
       >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Delete note
@@ -1376,7 +1404,7 @@ export default function BoardPage({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1395,7 +1423,7 @@ export default function BoardPage({
           setErrorDialog({ open, title: "", description: "" })
         }
       >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               {errorDialog.title}
@@ -1421,7 +1449,7 @@ export default function BoardPage({
         open={boardSettingsDialog}
         onOpenChange={setBoardSettingsDialog}
       >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Board settings

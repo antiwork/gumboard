@@ -445,7 +445,7 @@ export default function PublicBoardPage({
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <div className="bg-card dark:bg-zinc-900 border-b border-border dark:border-zinc-800 shadow-sm">
+      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center space-x-3">
             <Link href="/" className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4">
@@ -492,7 +492,7 @@ export default function PublicBoardPage({
                 placeholder="Search notes..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 border border-border dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                className="w-64 pl-10 pr-4 py-2 border border-gray-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
             </div>
 

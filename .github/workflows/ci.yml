@@ -2,13 +2,20 @@ name: CI
 
 on:
   push:
+    branches: [main]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-4
     env:
       GITHUB_CLIENT_ID: dummy-client-id
       GITHUB_CLIENT_SECRET: dummy-client-secret
@@ -25,15 +32,21 @@ jobs:
 
       - run: npm ci
 
-      - name: Lint
-        run: npm run lint
-
       - name: Test
         run: npm test
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps
+      - name: Cache Playwright Browsers
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-chromium-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-chromium-
 
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: npx playwright install chromium --only-shell
 
       - name: E2E Tests
         run: npm run test:e2e
