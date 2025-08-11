@@ -6,7 +6,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
+import {
+  ChecklistItem as ChecklistItemComponent,
+  ChecklistItem,
+} from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -84,14 +87,15 @@ export function Note({
   const [editingItemContent, setEditingItemContent] = useState("");
   const [addingItem, setAddingItem] = useState(
     !readonly &&
-    currentUser &&
-    (currentUser.id === note.user.id || currentUser.isAdmin) &&
-    (!note.checklistItems || note.checklistItems.length === 0)
+      currentUser &&
+      (currentUser.id === note.user.id || currentUser.isAdmin) &&
+      (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
-  const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+  const canEdit =
+    !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
   useEffect(() => {
     if (addingChecklistItem === note.id && canEdit) {
@@ -158,12 +162,12 @@ export function Note({
       const updatedItems = note.checklistItems.filter(
         (item) => item.id !== itemId
       );
-      
+
       const optimisticNote = {
         ...note,
         checklistItems: updatedItems,
       };
-  
+
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
@@ -376,7 +380,11 @@ export function Note({
     handleStopEditItem();
   };
 
-  const handleSplitItem = (itemId: string, content: string, cursorPosition: number) => {
+  const handleSplitItem = (
+    itemId: string,
+    content: string,
+    cursorPosition: number
+  ) => {
     handleSplitChecklistItem(itemId, content, cursorPosition);
     handleStopEditItem();
   };
@@ -389,11 +397,12 @@ export function Note({
     }
   };
 
+  const handleSubmitNewItem = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleAddItem();
+  };
+
   const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddItem();
-    }
     if (e.key === "Escape") {
       setAddingItem(false);
       setNewItemContent("");
@@ -407,7 +416,7 @@ export function Note({
         className
       )}
       style={{
-        backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
+        backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
         ...style,
       }}
     >
@@ -504,7 +513,9 @@ export function Note({
                 onDelete={handleDeleteItem}
                 onSplit={handleSplitItem}
                 isEditing={editingItem === item.id}
-                editContent={editingItem === item.id ? editingItemContent : undefined}
+                editContent={
+                  editingItem === item.id ? editingItemContent : undefined
+                }
                 onEditContentChange={setEditingItemContent}
                 onStartEdit={handleStartEditItem}
                 onStopEdit={handleStopEditItem}
@@ -515,31 +526,55 @@ export function Note({
 
             {/* Add New Item Input */}
             {addingItem && canEdit && (
-              <div className="flex items-center gap-3">
-                <Checkbox disabled className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600" />
+              <form
+                onSubmit={handleSubmitNewItem}
+                className="flex items-center gap-3"
+              >
+                <Checkbox
+                  disabled
+                  className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                />
                 <Input
                   ref={newItemInputRef}
                   type="text"
                   value={newItemContent}
                   onChange={(e) => setNewItemContent(e.target.value)}
-                  className="h-auto flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
                   placeholder="Add new item..."
-                  onBlur={handleAddItem}
                   onKeyDown={handleKeyDownNewItem}
+                  onBlur={handleAddItem}
                   autoFocus
                 />
-              </div>
+                <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <Button
+                    type="button"
+                    aria-label={`Delete New Item`}
+                    onMouseDown={() => {
+                      // onMouseDown fires before onBlur, so the delete action happens before the blur handler can interfere
+
+                      setAddingItem(false);
+                      setNewItemContent("");
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </form>
             )}
 
             {/* Content as text if no checklist items */}
-            {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
-              <div
-                className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
-                onClick={handleStartEdit}
-              >
-                {note.content || ""}
-              </div>
-            )}
+            {(!note.checklistItems || note.checklistItems.length === 0) &&
+              !isEditing && (
+                <div
+                  className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
+                  onClick={handleStartEdit}
+                >
+                  {note.content || ""}
+                </div>
+              )}
           </div>
 
           {/* Add Item Button */}
@@ -548,7 +583,11 @@ export function Note({
               variant="ghost"
               size="sm"
               onClick={() => {
-                if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                if (
+                  addingItem &&
+                  newItemInputRef.current &&
+                  newItemContent.length === 0
+                ) {
                   newItemInputRef.current.focus();
                 } else {
                   setAddingItem(true);
