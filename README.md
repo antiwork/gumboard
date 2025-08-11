@@ -79,8 +79,7 @@ To enable login with Google, follow these steps:
    ```
    http://localhost:3000/api/auth/callback/google
    ```
-   _(Replace with your production URL if deploying)_
-
+   *(Replace with your production URL if deploying)*
 ---
 
 ### 2. Add Environment Variables
