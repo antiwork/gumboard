@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
+import { BetaBadge } from "@/components/ui/beta-badge";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -155,8 +156,9 @@ function SignInContent() {
           <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
             <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
-          <CardTitle className="text-xl sm:text-2xl font-bold dark:text-zinc-100">
+          <CardTitle className="text-xl sm:text-2xl font-bold dark:text-zinc-100 flex items-center gap-2">
             Welcome to Gumboard
+            <BetaBadge />
           </CardTitle>
           <CardDescription className="dark:text-zinc-400">
             {searchParams.get("email")

@@ -57,6 +57,7 @@ export default function ProfileSettingsPage() {
       if (response.ok) {
         const updatedUser = await response.json();
         setUser(updatedUser);
+        setProfileName((updatedUser.name || "").trim());
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -116,7 +117,11 @@ export default function ProfileSettingsPage() {
         <div className="pt-4 border-t border-border dark:border-zinc-800">
           <Button
             onClick={handleSaveProfile}
-            disabled={saving || profileName === user?.name}
+            disabled={
+              saving ||
+              profileName.trim().length === 0 ||
+              profileName.trim() === (user?.name || "").trim()
+            }
             className="bg-black hover:bg-zinc-900 text-white dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
             {saving ? "Saving..." : "Save Changes"}

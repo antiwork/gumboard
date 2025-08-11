@@ -52,6 +52,7 @@ export interface Note {
 
 interface NoteProps {
   note: Note;
+  syncDB?: boolean;
   currentUser?: User;
   addingChecklistItem?: string | null;
   onUpdate?: (note: Note) => void;
@@ -73,6 +74,7 @@ export function Note({
   readonly = false,
   showBoardName = false,
   className,
+  syncDB = true,
   style,
 }: NoteProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -121,28 +123,30 @@ export function Note({
 
       onUpdate?.(optimisticNote);
 
-      fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          checklistItems: sortedItems,
-        }),
-      })
-        .then(async (response) => {
-          if (!response.ok) {
-            console.error("Server error, reverting optimistic update");
-            onUpdate?.(note);
-          } else {
-            const { note: updatedNote } = await response.json();
-            onUpdate?.(updatedNote);
-          }
+      if (syncDB) {
+        fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: sortedItems,
+          }),
         })
-        .catch((error) => {
-          console.error("Error toggling checklist item:", error);
-          onUpdate?.(note);
-        });
+          .then(async (response) => {
+            if (!response.ok) {
+              console.error("Server error, reverting optimistic update");
+              onUpdate?.(note);
+            } else {
+              const { note: updatedNote } = await response.json();
+              onUpdate?.(updatedNote);
+            }
+          })
+          .catch((error) => {
+            console.error("Error toggling checklist item:", error);
+            onUpdate?.(note);
+          });
+      }
     } catch (error) {
       console.error("Error toggling checklist item:", error);
     }
@@ -151,41 +155,41 @@ export function Note({
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
-
       const updatedItems = note.checklistItems.filter(
         (item) => item.id !== itemId
       );
-
+      
       const optimisticNote = {
         ...note,
         checklistItems: updatedItems,
       };
-
+  
       onUpdate?.(optimisticNote);
 
-      const response = await fetch(
-        `/api/boards/${note.boardId}/notes/${note.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-          }),
-        }
-      );
+      if (syncDB) {
+        const response = await fetch(
+          `/api/boards/${note.boardId}/notes/${note.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              checklistItems: updatedItems,
+            }),
+          }
+        );
 
-      if (response.ok) {
-        const { note: updatedNote } = await response.json();
-        onUpdate?.(updatedNote);
-      } else {
-        console.error("Server error, reverting optimistic update");
-        onUpdate?.(note);
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        } else {
+          console.error("Server error, reverting optimistic update");
+          onUpdate?.(note);
+        }
       }
     } catch (error) {
       console.error("Error deleting checklist item:", error);
-      onUpdate?.(note);
     }
   };
 
@@ -197,22 +201,31 @@ export function Note({
         item.id === itemId ? { ...item, content } : item
       );
 
-      const response = await fetch(
-        `/api/boards/${note.boardId}/notes/${note.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-          }),
-        }
-      );
+      const optimisticNote = {
+        ...note,
+        checklistItems: updatedItems,
+      };
 
-      if (response.ok) {
-        const { note: updatedNote } = await response.json();
-        onUpdate?.(updatedNote);
+      onUpdate?.(optimisticNote);
+
+      if (syncDB) {
+        const response = await fetch(
+          `/api/boards/${note.boardId}/notes/${note.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              checklistItems: updatedItems,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        }
       }
     } catch (error) {
       console.error("Error editing checklist item:", error);
@@ -250,20 +263,29 @@ export function Note({
         (a, b) => a.order - b.order
       );
 
-      const response = await fetch(
-        `/api/boards/${note.boardId}/notes/${note.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            checklistItems: allItems,
-          }),
-        }
-      );
+      const optimisticNote = {
+        ...note,
+        checklistItems: allItems,
+      };
 
-      if (response.ok) {
-        const { note: updatedNote } = await response.json();
-        onUpdate?.(updatedNote);
+      onUpdate?.(optimisticNote);
+
+      if (syncDB) {
+        const response = await fetch(
+          `/api/boards/${note.boardId}/notes/${note.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              checklistItems: allItems,
+            }),
+          }
+        );
+
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        }
       }
     } catch (error) {
       console.error("Error splitting checklist item:", error);
@@ -291,28 +313,29 @@ export function Note({
 
       onUpdate?.(optimisticNote);
 
-      const response = await fetch(
-        `/api/boards/${note.boardId}/notes/${note.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: [...(note.checklistItems || []), newItem],
-          }),
-        }
-      );
+      if (syncDB) {
+        const response = await fetch(
+          `/api/boards/${note.boardId}/notes/${note.id}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              checklistItems: [...(note.checklistItems || []), newItem],
+            }),
+          }
+        );
 
-      if (response.ok) {
-        const { note: updatedNote } = await response.json();
-        onUpdate?.(updatedNote);
-      } else {
-        onUpdate?.(note);
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
+        }
       }
     } catch (error) {
       console.error("Error adding checklist item:", error);
-      onUpdate?.(note);
     }
   };
 
@@ -416,6 +439,7 @@ export function Note({
           {canEdit && (
             <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <Button
+                aria-label={`Delete Note ${note.id}`}
                 onClick={(e) => {
                   e.stopPropagation();
                   onDelete?.(note.id);

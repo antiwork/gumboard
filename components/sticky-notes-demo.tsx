@@ -362,12 +362,13 @@ export function StickyNotesDemo() {
             {notes.map((note) => (
               <motion.div key={note.id} className="mb-4 break-inside-avoid" variants={itemVariants} exit="exit" layout>
                 <NoteComponent
+                  addingChecklistItem={null}
+                  className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                   note={note}
                   currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
                   onUpdate={handleUpdateNote}
                   onDelete={handleDeleteNote}
-                  addingChecklistItem={null}
-                  className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
+                  syncDB={false}
                 />
               </motion.div>
             ))}
