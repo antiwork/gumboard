@@ -322,7 +322,7 @@ export default function Dashboard() {
         )}
 
         <Dialog open={isAddBoardDialogOpen} onOpenChange={handleOpenChange}>
-          <DialogContent className="bg-white dark:bg-zinc-950 border border-zinc-800 dark:border-zinc-800 sm:max-w-[425px] ">
+          <DialogContent className="bg-white dark:bg-zinc-950  sm:max-w-[425px] ">
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
                 {editingBoard ? "Edit Board" : "Create New Board"}
@@ -432,7 +432,7 @@ export default function Dashboard() {
                         <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
                           {board.name}
                         </CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
                           {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
                         </span>
                       </div>

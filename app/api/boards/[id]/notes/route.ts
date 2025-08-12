@@ -17,13 +17,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const board = await db.board.findUnique({
       where: { id: boardId },
-      include: {
+      select: {
+        id: true,
+        isPublic: true,
+        organizationId: true,
         notes: {
           where: {
             deletedAt: null, // Only include non-deleted notes
-            done: false,
+            archivedAt: null,
           },
-          include: {
+          select: {
+            id: true,
+            content: true,
+            color: true,
+            boardId: true,
+            createdBy: true,
+            createdAt: true,
+            updatedAt: true,
+            archivedAt: true,
             user: {
               select: {
                 id: true,
@@ -31,7 +42,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 email: true,
               },
             },
+            checklistItems: { orderBy: { order: "asc" } },
           },
+          orderBy: { createdAt: "desc" },
         },
       },
     });
@@ -50,7 +63,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true },
+      select: {
+        organizationId: true,
+      },
     });
 
     if (!user?.organizationId) {
@@ -76,13 +91,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, checklistItems } = await request.json();
+    const { content, color } = await request.json();
     const boardId = (await params).id;
 
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true },
+      select: {
+        organizationId: true,
+        organization: {
+          select: {
+            slackWebhookUrl: true,
+          },
+        },
+        name: true,
+        email: true,
+      },
     });
 
     if (!user?.organizationId) {
@@ -115,7 +139,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         color: randomColor,
         boardId,
         createdBy: session.user.id,
-        ...(checklistItems !== undefined && { checklistItems }),
       },
       include: {
         user: {
@@ -125,6 +148,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             email: true,
           },
         },
+        checklistItems: { orderBy: { order: "asc" } },
       },
     });
 

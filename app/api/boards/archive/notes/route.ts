@@ -11,7 +11,9 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true },
+      select: {
+        organizationId: true,
+      },
     });
 
     if (!user?.organizationId) {
@@ -21,12 +23,21 @@ export async function GET() {
     const notes = await db.note.findMany({
       where: {
         deletedAt: null,
-        done: true, // Only archived notes
+        archivedAt: { not: null },
         board: {
           organizationId: user.organizationId,
         },
       },
-      include: {
+      select: {
+        id: true,
+        content: true,
+        color: true,
+        boardId: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        archivedAt: true,
+        checklistItems: true,
         user: {
           select: {
             id: true,

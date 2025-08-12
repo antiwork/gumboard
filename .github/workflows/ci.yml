@@ -21,6 +21,9 @@ jobs:
       GITHUB_CLIENT_SECRET: dummy-client-secret
       AUTH_SECRET: sample-auth-secret
       AUTH_URL: http://localhost:3000
+      DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy_db
+      EMAIL_FROM: noreply@example.com
+      AUTH_RESEND_KEY: dummy-resend-key
 
     steps:
       - uses: actions/checkout@v4
