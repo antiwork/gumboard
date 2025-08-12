@@ -4,26 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import {
-  Plus,
-  Trash2,
-  Grid3x3,
-  Copy,
-  Edit3,
-  Archive,
-} from "lucide-react";
+import { Plus, Trash2, Grid3x3, Copy, Edit3, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
 import {
@@ -37,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { User, Board } from "@/components/note";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -45,7 +33,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { BoardCard } from "@/components/ui/board-card";
 
@@ -86,9 +81,9 @@ export default function Dashboard() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      description: ""
-    }
-  })
+      description: "",
+    },
+  });
 
   useEffect(() => {
     fetchUserAndBoards();
@@ -119,7 +114,6 @@ export default function Dashboard() {
       if (boardsResponse.ok) {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
-
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -129,7 +123,7 @@ export default function Dashboard() {
   };
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
-    const {name, description} = values;
+    const { name, description } = values;
     try {
       if (editingBoard) {
         const response = await fetch(`/api/boards/${editingBoard.id}`, {
@@ -140,8 +134,8 @@ export default function Dashboard() {
           body: JSON.stringify({
             name,
             description,
-          })
-        })
+          }),
+        });
 
         if (response.ok) {
           const { board } = await response.json();
@@ -189,7 +183,7 @@ export default function Dashboard() {
         open: true,
         title: editingBoard ? "Failed to update board" : "Failed to create board",
         description: editingBoard ? "Failed to update board" : "Failed to create board",
-      })
+      });
     }
   };
 
@@ -247,9 +241,7 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        setBoards(boards.map((board) => 
-          board.id === boardId ? { ...board, isPublic } : board
-        ));
+        setBoards(boards.map((board) => (board.id === boardId ? { ...board, isPublic } : board)));
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -275,15 +267,13 @@ export default function Dashboard() {
   };
 
   const handleOpenChange = (open: boolean) => {
-    setIsAddBoardDialogOpen(open)
+    setIsAddBoardDialogOpen(open);
     // Reset form and editing state when the dialog closes
     if (!open) {
       form.reset();
       setEditingBoard(null);
     }
-  }
-
-  
+  };
 
   if (loading) {
     return <FullPageLoader message="Loading dashboard..." />;
@@ -306,14 +296,13 @@ export default function Dashboard() {
               onClick={() => {
                 form.reset({ name: "", description: "" });
                 setIsAddBoardDialogOpen(true);
-                setEditingBoard(null); 
+                setEditingBoard(null);
               }}
               className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Board</span>
             </Button>
-              
 
             <ProfileDropdown user={user} />
           </div>
@@ -332,7 +321,7 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-        
+
         <Dialog open={isAddBoardDialogOpen} onOpenChange={handleOpenChange}>
           <DialogContent className="bg-white dark:bg-zinc-950 border border-zinc-800 dark:border-zinc-800 sm:max-w-[425px] ">
             <DialogHeader>
@@ -346,10 +335,8 @@ export default function Dashboard() {
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form 
-                className="space-y-4"
-                onSubmit={form.handleSubmit(handleAddBoard)}>
-                  <FormField
+              <form className="space-y-4" onSubmit={form.handleSubmit(handleAddBoard)}>
+                <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
@@ -465,7 +452,7 @@ export default function Dashboard() {
             <Button
               onClick={() => {
                 setIsAddBoardDialogOpen(true);
-                form.reset({name: "", description: ""});
+                form.reset({ name: "", description: "" });
               }}
               className="dark:bg-blue-500 dark:hover:bg-blue-600"
             >
@@ -475,14 +462,18 @@ export default function Dashboard() {
         )}
       </div>
 
-      <AlertDialog open={deleteConfirmDialog.open} onOpenChange={(open) => setDeleteConfirmDialog({ open, boardId: "", boardName: "" })}>
+      <AlertDialog
+        open={deleteConfirmDialog.open}
+        onOpenChange={(open) => setDeleteConfirmDialog({ open, boardId: "", boardName: "" })}
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Delete board
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete &quot;{deleteConfirmDialog.boardName}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{deleteConfirmDialog.boardName}&quot;? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -499,7 +490,10 @@ export default function Dashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
+      <AlertDialog
+        open={errorDialog.open}
+        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">

@@ -1,7 +1,7 @@
-import * as React from "react"
-import * as SwitchPrimitive from "@radix-ui/react-switch"
+import * as React from "react";
+import * as SwitchPrimitive from "@radix-ui/react-switch";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
 const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitive.Root>,
@@ -15,11 +15,9 @@ const Switch = React.forwardRef<
     {...props}
     ref={ref}
   >
-    <SwitchPrimitive.Thumb
-      className="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0.5 dark:bg-gray-100"
-    />
+    <SwitchPrimitive.Thumb className="pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-transform duration-200 ease-in-out data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0.5 dark:bg-gray-100" />
   </SwitchPrimitive.Root>
-))
-Switch.displayName = SwitchPrimitive.Root.displayName
+));
+Switch.displayName = SwitchPrimitive.Root.displayName;
 
-export { Switch }
+export { Switch };
