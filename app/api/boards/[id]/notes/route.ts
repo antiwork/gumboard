@@ -39,14 +39,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
+                email: true,
+              },
             },
-            checklistItems: { orderBy: { order: 'asc' } }
+            checklistItems: { orderBy: { order: "asc" } },
           },
           orderBy: { createdAt: "desc" },
-        }
-      }
+        },
+      },
     });
 
     if (!board) {
@@ -91,8 +91,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color } = await request.json()
-    const boardId = (await params).id
+    const { content, color } = await request.json();
+    const boardId = (await params).id;
 
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
@@ -145,12 +145,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           select: {
             id: true,
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
-        checklistItems: { orderBy: { order: 'asc' } }
-      }
-    })
+        checklistItems: { orderBy: { order: "asc" } },
+      },
+    });
 
     if (
       user.organization?.slackWebhookUrl &&

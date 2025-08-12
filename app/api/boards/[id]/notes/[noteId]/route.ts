@@ -1,8 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
-import { db } from "@/lib/db"
-import { updateSlackMessage, formatNoteForSlack, sendSlackMessage, sendTodoNotification, hasValidContent, shouldSendNotification,
-} from "@/lib/slack"
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
+import {
+  updateSlackMessage,
+  formatNoteForSlack,
+  sendSlackMessage,
+  sendTodoNotification,
+  hasValidContent,
+  shouldSendNotification,
+} from "@/lib/slack";
 
 // Update a note
 export async function PUT(
@@ -43,10 +49,10 @@ export async function PUT(
         user: { select: { id: true, name: true, email: true } },
         checklistItems: { orderBy: { order: "asc" } },
       },
-    })
+    });
 
     if (!note || note.deletedAt) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 })
+      return NextResponse.json({ error: "Note not found" }, { status: 404 });
     }
 
     if (note.board.organizationId !== user.organizationId || note.boardId !== boardId) {
@@ -62,11 +68,11 @@ export async function PUT(
 
     let sanitizedChecklistItems:
       | Array<{ id: string; content: string; checked: boolean; order: number }>
-      | undefined
+      | undefined;
 
     if (checklistItems !== undefined) {
       if (!Array.isArray(checklistItems)) {
-        return NextResponse.json({ error: "checklistItems must be an array" }, { status: 400 })
+        return NextResponse.json({ error: "checklistItems must be an array" }, { status: 400 });
       }
 
       for (const item of checklistItems) {
@@ -82,54 +88,57 @@ export async function PUT(
                 "Each checklist item must have id (string), content (string), checked (boolean), order (number)",
             },
             { status: 400 }
-          )
+          );
         }
       }
 
-      const ids = checklistItems.map((i: { id: string }) => i.id)
-      const uniqueIds = new Set(ids)
+      const ids = checklistItems.map((i: { id: string }) => i.id);
+      const uniqueIds = new Set(ids);
       if (ids.length !== uniqueIds.size) {
-        return NextResponse.json({ error: "Duplicate checklist item IDs found" }, { status: 400 })
+        return NextResponse.json({ error: "Duplicate checklist item IDs found" }, { status: 400 });
       }
 
       sanitizedChecklistItems = [...checklistItems]
         .sort((a, b) => a.order - b.order)
-        .map((item, i) => ({ ...item, order: i }))
+        .map((item, i) => ({ ...item, order: i }));
     }
 
     let checklistChanges:
       | {
-          created: Array<{ id: string; content: string; checked: boolean; order: number }>
+          created: Array<{ id: string; content: string; checked: boolean; order: number }>;
           updated: Array<{
-            id: string
-            content: string
-            checked: boolean
-            order: number
-            previous: { content: string; checked: boolean; order: number }
-          }>
-          deleted: Array<{ id: string; content: string; checked: boolean; order: number }>
+            id: string;
+            content: string;
+            checked: boolean;
+            order: number;
+            previous: { content: string; checked: boolean; order: number };
+          }>;
+          deleted: Array<{ id: string; content: string; checked: boolean; order: number }>;
         }
-      | undefined
+      | undefined;
 
     const updatedNote = await db.$transaction(async (tx) => {
       if (sanitizedChecklistItems !== undefined) {
         const existing = await tx.checklistItem.findMany({
           where: { noteId },
           orderBy: { order: "asc" },
-        })
+        });
 
-        const existingMap = new Map(existing.map((i) => [i.id, i]))
-        const incomingMap = new Map(sanitizedChecklistItems.map((i) => [i.id, i]))
+        const existingMap = new Map(existing.map((i) => [i.id, i]));
+        const incomingMap = new Map(sanitizedChecklistItems.map((i) => [i.id, i]));
 
-        const toCreate = sanitizedChecklistItems.filter((i) => !existingMap.has(i.id))
+        const toCreate = sanitizedChecklistItems.filter((i) => !existingMap.has(i.id));
         const toUpdate = sanitizedChecklistItems.filter((i) => {
-          const prev = existingMap.get(i.id)
-          return prev && (prev.content !== i.content || prev.checked !== i.checked || prev.order !== i.order)
-        })
-        const toDelete = existing.filter((i) => !incomingMap.has(i.id))
+          const prev = existingMap.get(i.id);
+          return (
+            prev &&
+            (prev.content !== i.content || prev.checked !== i.checked || prev.order !== i.order)
+          );
+        });
+        const toDelete = existing.filter((i) => !incomingMap.has(i.id));
 
         if (toDelete.length) {
-          await tx.checklistItem.deleteMany({ where: { id: { in: toDelete.map((i) => i.id) } } })
+          await tx.checklistItem.deleteMany({ where: { id: { in: toDelete.map((i) => i.id) } } });
         }
         if (toCreate.length) {
           await tx.checklistItem.createMany({
@@ -140,13 +149,13 @@ export async function PUT(
               order: i.order,
               noteId,
             })),
-          })
+          });
         }
         for (const i of toUpdate) {
           await tx.checklistItem.update({
             where: { id: i.id },
             data: { content: i.content, checked: i.checked, order: i.order },
-          })
+          });
         }
 
         checklistChanges = {
@@ -160,7 +169,7 @@ export async function PUT(
             },
           })),
           deleted: toDelete,
-        }
+        };
       }
 
       return tx.note.update({
@@ -175,24 +184,33 @@ export async function PUT(
           board: { select: { name: true, sendSlackUpdates: true } },
           checklistItems: { orderBy: { order: "asc" } },
         },
-      })
-    })
+      });
+    });
 
     if (content !== undefined && user.organization?.slackWebhookUrl && !note.slackMessageId) {
-      const wasEmpty = !hasValidContent(note.content)
-      const hasContentNow = hasValidContent(content)
+      const wasEmpty = !hasValidContent(note.content);
+      const hasContent = hasValidContent(content);
 
       if (
         wasEmpty &&
-        hasContentNow &&
-        shouldSendNotification(session.user.id, boardId, updatedNote.board.name, updatedNote.board.sendSlackUpdates)
+        hasContent &&
+        shouldSendNotification(
+          session.user.id,
+          boardId,
+          updatedNote.board.name,
+          updatedNote.board.sendSlackUpdates
+        )
       ) {
-        const slackMessage = formatNoteForSlack(updatedNote, updatedNote.board.name, user.name || user.email || "Unknown User")
+        const slackMessage = formatNoteForSlack(
+          updatedNote,
+          updatedNote.board.name,
+          user.name || user.email || "Unknown User"
+        );
         const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
           text: slackMessage,
-          username: 'Gumboard',
-          icon_emoji: ':clipboard:',
-        })
+          username: "Gumboard",
+          icon_emoji: ":clipboard:",
+        });
 
         if (messageId) {
           await db.note.update({
@@ -204,20 +222,31 @@ export async function PUT(
     }
 
     if (archivedAt !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
-      const userName = note.user?.name || note.user?.email || 'Unknown User'
-      const boardName = note.board.name
-      const isArchived = archivedAt !== null
-      await updateSlackMessage(user.organization.slackWebhookUrl, note.content, isArchived, boardName, userName)
+      const userName = note.user?.name || note.user?.email || "Unknown User";
+      const boardName = note.board.name;
+      const isArchived = archivedAt !== null;
+      await updateSlackMessage(
+        user.organization.slackWebhookUrl,
+        note.content,
+        isArchived,
+        boardName,
+        userName
+      );
     }
 
     if (user.organization?.slackWebhookUrl && checklistChanges) {
-      const boardName = updatedNote.board.name
-      const userName = user.name || user.email || "Unknown User"
+      const boardName = updatedNote.board.name;
+      const userName = user.name || user.email || "Unknown User";
 
       for (const item of checklistChanges.created) {
         if (
           hasValidContent(item.content) &&
-          shouldSendNotification(session.user.id, boardId, boardName, updatedNote.board.sendSlackUpdates)
+          shouldSendNotification(
+            session.user.id,
+            boardId,
+            boardName,
+            updatedNote.board.sendSlackUpdates
+          )
         ) {
           await sendTodoNotification(
             user.organization.slackWebhookUrl,
@@ -225,7 +254,7 @@ export async function PUT(
             boardName,
             userName,
             "added"
-          )
+          );
         }
       }
 
@@ -233,7 +262,12 @@ export async function PUT(
         if (
           !u.previous.checked &&
           u.checked &&
-          shouldSendNotification(session.user.id, boardId, boardName, updatedNote.board.sendSlackUpdates)
+          shouldSendNotification(
+            session.user.id,
+            boardId,
+            boardName,
+            updatedNote.board.sendSlackUpdates
+          )
         ) {
           await sendTodoNotification(
             user.organization.slackWebhookUrl,
@@ -241,17 +275,16 @@ export async function PUT(
             boardName,
             userName,
             "completed"
-          )
+          );
         }
       }
     }
 
-    return NextResponse.json({ note: updatedNote })
+    return NextResponse.json({ note: updatedNote });
   } catch (error) {
     console.error("Error updating note:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-
 }
 
 // Delete a note (soft delete)
@@ -317,4 +350,4 @@ export async function DELETE(
     console.error("Error deleting note:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-}                                                                                                                                
+}
