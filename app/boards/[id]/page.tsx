@@ -53,10 +53,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
   // Per-item edit and animations are handled inside Note component now
-  const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
-    open: boolean;
-    noteId: string;
-  }>({ open: false, noteId: "" });
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
     title: string;
@@ -697,28 +693,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  const handleDeleteNote = (noteId: string) => {
-    setDeleteNoteDialog({
-      open: true,
-      noteId,
-    });
-  };
-
-  const confirmDeleteNote = async () => {
+  const handleDeleteNote = async (noteId: string) => {
     try {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === deleteNoteDialog.noteId);
+      const currentNote = notes.find((n) => n.id === noteId);
       const targetBoardId = currentNote?.board?.id ?? currentNote?.boardId;
 
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${deleteNoteDialog.noteId}`,
-        {
-          method: "DELETE",
-        }
-      );
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+        method: "DELETE",
+      });
 
       if (response.ok) {
-        setNotes(notes.filter((n) => n.id !== deleteNoteDialog.noteId));
+        setNotes(notes.filter((n) => n.id !== noteId));
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -736,6 +721,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       });
     }
   };
+
+  // Delete confirmation UI lives in Note component; deletion is executed above
 
   const handleArchiveNote = async (noteId: string) => {
     try {
@@ -1239,32 +1226,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-      <AlertDialog
-        open={deleteNoteDialog.open}
-        onOpenChange={(open) => setDeleteNoteDialog({ open, noteId: "" })}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              Delete note
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete this note? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteNote}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              Delete note
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Big delete dialog removed in favor of small per-note popover */}
 
       <AlertDialog
         open={errorDialog.open}
