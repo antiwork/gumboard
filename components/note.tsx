@@ -119,32 +119,32 @@ const computePopoverBorderColor = (backgroundColor: string, isDark: boolean) => 
 const getBorderColor = (backgroundColor: string, isDark: boolean) => {
   if (isDark) {
     // static classes only for dark mode
-    return "border-zinc-600 hover:border-zinc-500";
+    return "border-zinc-600";
   }
 
-  const colorToBorder: Record<string, { base: string; hover: string }> = {
-    "#fef3c7": { base: "border-yellow-300", hover: "hover:border-yellow-600" },
-    "#fed7d7": { base: "border-red-300", hover: "hover:border-red-600" },
-    "#d1fae5": { base: "border-green-300", hover: "hover:border-green-600" },
-    "#dbeafe": { base: "border-blue-300", hover: "hover:border-blue-600" },
-    "#e0e7ff": { base: "border-indigo-300", hover: "hover:border-indigo-600" },
-    "#f3e8ff": { base: "border-purple-300", hover: "hover:border-purple-600" },
-    "#fce7f3": { base: "border-pink-300", hover: "hover:border-pink-600" },
-    "#f0fdfa": { base: "border-teal-300", hover: "hover:border-teal-600" },
-    "#fef7ff": { base: "border-fuchsia-300", hover: "hover:border-fuchsia-600" },
-    "#fff7ed": { base: "border-orange-300", hover: "hover:border-orange-600" },
-    "#ffffff": { base: "border-gray-300", hover: "hover:border-gray-600" },
-    "#f8fafc": { base: "border-slate-300", hover: "hover:border-slate-600" },
+  const colorToBorder: Record<string, { base: string; }> = {
+    "#fef3c7": { base: "border-yellow-300" },
+    "#fed7d7": { base: "border-red-300" },
+    "#d1fae5": { base: "border-green-300" },
+    "#dbeafe": { base: "border-blue-300" },
+    "#e0e7ff": { base: "border-indigo-300" },
+    "#f3e8ff": { base: "border-purple-300" },
+    "#fce7f3": { base: "border-pink-300" },
+    "#f0fdfa": { base: "border-teal-300" },
+    "#fef7ff": { base: "border-fuchsia-300" },
+    "#fff7ed": { base: "border-orange-300" },
+    "#ffffff": { base: "border-gray-300" },
+    "#f8fafc": { base: "border-slate-300" },
   };
 
   const lower = backgroundColor.toLowerCase();
   const mapped = colorToBorder[lower];
   if (mapped) {
-    return `${mapped.base} ${mapped.hover}`;
+    return `${mapped.base}`;
   }
 
   // static fallbacks
-  return "border-gray-300 hover:border-gray-500";
+  return "border-gray-300";
 };
 
 // Core domain types
@@ -574,7 +574,7 @@ export function Note({
   return (
     <div
       className={cn(
-        "rounded-lg shadow-md hover:shadow-lg select-none group transition-all duration-200 flex flex-col border box-border",
+        "rounded-lg shadow-md select-none group transition-all duration-200 flex flex-col border box-border",
         className,
         borderColorClass
       )}
