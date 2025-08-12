@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Mail, ArrowLeft } from "lucide-react";
 import Link from "next/link";
@@ -27,8 +21,8 @@ export default function VerifyRequest() {
         <CardContent className="space-y-4">
           <div className="text-center">
             <p className="text-sm text-muted-foreground dark:text-zinc-400">
-              Click the link in the email to sign in to your account. The link
-              will expire in 24 hours.
+              Click the link in the email to sign in to your account. The link will expire in 24
+              hours.
             </p>
           </div>
           <div className="pt-4">
