@@ -1,9 +1,10 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.AUTH_RESEND_KEY);
+const resend = new Resend(env.AUTH_RESEND_KEY);
 
 export async function POST(request: NextRequest) {
   try {
@@ -92,7 +93,7 @@ export async function POST(request: NextRequest) {
     // Send invite email
     try {
       await resend.emails.send({
-        from: process.env.EMAIL_FROM!,
+        from: env.EMAIL_FROM,
         to: cleanEmail,
         subject: `${session.user.name} invited you to join ${user.organization.name}`,
         html: `
@@ -100,7 +101,7 @@ export async function POST(request: NextRequest) {
             <h2>You're invited to join ${user.organization.name}!</h2>
             <p>${session.user.name} (${session.user.email}) has invited you to join their organization on Gumboard.</p>
             <p>Click the link below to accept the invitation:</p>
-            <a href="${process.env.AUTH_URL}/invite/accept?token=${invite.id}" 
+            <a href="${env.AUTH_URL}/invite/accept?token=${invite.id}" 
                style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
               Accept Invitation
             </a>
