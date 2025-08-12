@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Plus, ChevronDown, Settings, Search } from "lucide-react";
+import { Plus, ChevronDown, Settings, Search, Trash2, CheckSquare } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -66,6 +66,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [boardSettings, setBoardSettings] = useState({
     sendSlackUpdates: true,
   });
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(new Set());
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -629,6 +631,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (notesResponse && notesResponse.ok) {
         const { notes } = await notesResponse.json();
         setNotes(notes);
+        setSelectedNoteIds(new Set());
+        setSelectionMode(false);
       }
 
       if (boardId && boardId !== "all-notes") {
@@ -789,6 +793,73 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       }
     } catch (error) {
       console.error("Error unarchiving note:", error);
+    }
+  };
+
+  const toggleSelectionMode = (enabled?: boolean) => {
+    const prev = enabled ?? !selectionMode;
+    setSelectionMode(prev);
+    if (!prev) setSelectedNoteIds(new Set());
+  };
+
+  const handleToggleSelectNote = (noteId: string, selected: boolean) => {
+    setSelectedNoteIds((prev) => {
+      const next = new Set(prev);
+      selected ? next.add(noteId) : next.delete(noteId);
+      return next;
+    });
+  };
+
+  const confirmBulkDelete = async () => {
+    try {
+      const selectedIdsArray = Array.from(selectedNoteIds);
+      if (selectedIdsArray.length === 0) return;
+
+      const boardIdToNoteIds = new Map();
+      for (const note of notes) {
+        if (!selectedNoteIds.has(note.id)) continue;
+        const list = boardIdToNoteIds.get(note.boardId) ?? [];
+        list.push(note.id);
+        boardIdToNoteIds.set(note.boardId, list);
+      }
+
+      const requests: Promise<Response>[] = [];
+      for (const [bid, ids] of boardIdToNoteIds.entries()) {
+        requests.push(
+          fetch(`/api/boards/${bid}/notes/bulk-delete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ noteIds: ids }),
+          })
+        );
+      }
+
+      const responses = await Promise.all(requests);
+      const allDeletedIds: string[] = [];
+      for (const res of responses) {
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data.deletedIds)) {
+            allDeletedIds.push(...data.deletedIds);
+          }
+        } else {
+          const err = await res.json().catch(() => ({}));
+          console.error("Bulk delete failed:", err);
+        }
+      }
+
+      if (allDeletedIds.length > 0) {
+        setNotes((prev) => prev.filter((n) => !allDeletedIds.includes(n.id)));
+        setSelectedNoteIds(new Set());
+        setSelectionMode(false);
+      }
+    } catch (error) {
+      console.error("Error bulk deleting notes:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete",
+        description: "An error occurred deleting selected notes.",
+      });
     }
   };
 
@@ -1010,6 +1081,41 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 className="min-w-fit"
               />
             </div>
+            {!selectionMode ? (
+              <Button
+                onClick={() => toggleSelectionMode(true)}
+                variant="outline"
+                className="flex text-red-600 hover:text-red-700 items-center gap-2 text-sm"
+                disabled={notes.length === 0}
+              >
+                <CheckSquare className="w-4 h-4" />
+                Group delete
+              </Button>
+            ) : (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground dark:text-zinc-400">
+                  {selectedNoteIds.size} selected
+                </span>
+                <Button
+                  onClick={async () => {
+                    await confirmBulkDelete();
+                  }}
+                  variant="outline"
+                  className="border text-red-600 hover:text-red-700"
+                  disabled={selectedNoteIds.size === 0}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Delete
+                </Button>
+                <Button
+                  onClick={() => toggleSelectionMode(false)}
+                  variant="ghost"
+                  className="text-sm border text-muted-foreground dark:text-zinc-300"
+                >
+                  Cancel
+                </Button>
+              </div>
+            )}
+
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
@@ -1087,6 +1193,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
               onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
+              selectionMode={selectionMode}
+              selected={selectedNoteIds.has(note.id)}
+              onToggleSelect={handleToggleSelectNote}
               className="note-background"
               style={{
                 position: "absolute",

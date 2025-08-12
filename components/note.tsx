@@ -69,6 +69,9 @@ interface NoteProps {
   showBoardName?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  selectionMode?: boolean;
+  selected?: boolean;
+  onToggleSelect?: (noteId: string, selected: boolean) => void;
 }
 
 export function Note({
@@ -84,6 +87,9 @@ export function Note({
   className,
   syncDB = true,
   style,
+  selectionMode = false,
+  selected = false,
+  onToggleSelect,
 }: NoteProps) {
   const [isEditing, setIsEditing] = useState(false);
   const { resolvedTheme } = useTheme();
@@ -473,7 +479,7 @@ export function Note({
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          {canEdit && (
+          {canEdit && !selectionMode && (
             <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <Button
                 aria-label={`Delete Note ${note.id}`}
@@ -489,7 +495,7 @@ export function Note({
               </Button>
             </div>
           )}
-          {canEdit && onArchive && (
+          {canEdit && onArchive && !selectionMode && (
             <div className="flex items-center">
               <Button
                 onClick={(e) => {
@@ -505,7 +511,7 @@ export function Note({
               </Button>
             </div>
           )}
-          {canEdit && onUnarchive && (
+          {canEdit && onUnarchive && !selectionMode && (
             <div className="flex items-center">
               <Button
                 onClick={(e) => {
@@ -520,6 +526,13 @@ export function Note({
                 <ArchiveRestore className="w-3 h-3" />
               </Button>
             </div>
+          )}
+          {selectionMode && (
+            <Checkbox
+              className="border-slate-500 bg-white/50 dark:bg-zinc-300 dark:border-zinc-600"
+              checked={!!selected}
+              onCheckedChange={(checked) => onToggleSelect?.(note.id, !!checked)}
+            />
           )}
         </div>
       </div>
@@ -626,7 +639,7 @@ export function Note({
           </div>
 
           {/* Add Item Button */}
-          {canEdit && (
+          {canEdit && !selectionMode && (
             <Button
               variant="ghost"
               onClick={() => {
