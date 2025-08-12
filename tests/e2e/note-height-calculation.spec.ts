@@ -17,8 +17,11 @@ test.describe("Note Height Calculation", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: "test-user", email: "test@example.com", name: "Test User",
-          isAdmin: true, organization: { id: "test-org", name: "Test Organization" },
+          id: "test-user",
+          email: "test@example.com",
+          name: "Test User",
+          isAdmin: true,
+          organization: { id: "test-org", name: "Test Organization" },
         }),
       });
     });
@@ -35,46 +38,51 @@ test.describe("Note Height Calculation", () => {
   });
 
   test("should auto-resize checklist items with long content", async ({ page }) => {
-    const longContent = "This is a very long checklist item that should wrap to multiple lines and cause the textarea to auto-resize to accommodate the full content without cutting off any text";
-    
+    const longContent =
+      "This is a very long checklist item that should wrap to multiple lines and cause the textarea to auto-resize to accommodate the full content without cutting off any text";
+
     await page.route("**/api/boards/test-board/notes", async (route) => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            notes: [{
-              id: "test-note",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              checklistItems: [
-                { id: "item-1", content: longContent, checked: false, order: 0 },
-                { id: "item-2", content: "Short item", checked: false, order: 1 },
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: { id: "test-user", name: "Test User", email: "test@example.com" },
-            }],
+            notes: [
+              {
+                id: "test-note",
+                content: "",
+                color: "#fef3c7",
+                archivedAt: null,
+                checklistItems: [
+                  { id: "item-1", content: longContent, checked: false, order: 0 },
+                  { id: "item-2", content: "Short item", checked: false, order: 1 },
+                ],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                user: { id: "test-user", name: "Test User", email: "test@example.com" },
+              },
+            ],
           }),
         });
       }
     });
 
     await page.goto("/boards/test-board");
-    
+
     await expect(page.locator(`text=${longContent}`)).toBeVisible();
-    
+
     await expect(page.locator('button:has-text("Add Note")')).toBeVisible();
-    
+
     await page.locator(`text=${longContent}`).click();
     const textarea = page.locator('textarea[value*="This is a very long"]');
     await expect(textarea).toBeVisible();
-    
+
     await textarea.fill(longContent + " with even more content added to make it longer");
-    const initialHeight = await textarea.evaluate(el => el.scrollHeight);
-    await textarea.fill(longContent + " with even more content added to make it longer and longer and longer");
-    const newHeight = await textarea.evaluate(el => el.scrollHeight);
+    const initialHeight = await textarea.evaluate((el) => el.scrollHeight);
+    await textarea.fill(
+      longContent + " with even more content added to make it longer and longer and longer"
+    );
+    const newHeight = await textarea.evaluate((el) => el.scrollHeight);
     expect(newHeight).toBeGreaterThan(initialHeight);
   });
 
@@ -92,110 +100,113 @@ test.describe("Note Height Calculation", () => {
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            notes: [{
-              id: "test-note",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              checklistItems: items,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: { id: "test-user", name: "Test User", email: "test@example.com" },
-            }],
+            notes: [
+              {
+                id: "test-note",
+                content: "",
+                color: "#fef3c7",
+                archivedAt: null,
+                checklistItems: items,
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                user: { id: "test-user", name: "Test User", email: "test@example.com" },
+              },
+            ],
           }),
         });
       }
     });
 
     await page.goto("/boards/test-board");
-    
+
     for (const item of items) {
       await expect(page.locator(`text=${item.content}`)).toBeVisible();
     }
-    
+
     const addNoteButton = page.locator('button:has-text("Add Note")');
     await expect(addNoteButton).toBeVisible();
-    
+
     await addNoteButton.click();
     await expect(page.locator(".note-background")).toBeVisible();
   });
 
   test("should handle responsive behavior with different screen sizes", async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    
-    const longContent = "This is a very long checklist item that should wrap differently on mobile screens and still maintain proper height calculation";
-    
+
+    const longContent =
+      "This is a very long checklist item that should wrap differently on mobile screens and still maintain proper height calculation";
+
     await page.route("**/api/boards/test-board/notes", async (route) => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            notes: [{
-              id: "test-note",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              checklistItems: [
-                { id: "item-1", content: longContent, checked: false, order: 0 },
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: { id: "test-user", name: "Test User", email: "test@example.com" },
-            }],
+            notes: [
+              {
+                id: "test-note",
+                content: "",
+                color: "#fef3c7",
+                archivedAt: null,
+                checklistItems: [{ id: "item-1", content: longContent, checked: false, order: 0 }],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                user: { id: "test-user", name: "Test User", email: "test@example.com" },
+              },
+            ],
           }),
         });
       }
     });
 
     await page.goto("/boards/test-board");
-    
+
     await expect(page.locator(`text=${longContent}`)).toBeVisible();
     await expect(page.locator('button:has-text("Add Note")')).toBeVisible();
-    
+
     await page.setViewportSize({ width: 1920, height: 1080 });
     await page.reload();
-    
+
     await expect(page.locator(`text=${longContent}`)).toBeVisible();
     await expect(page.locator('button:has-text("Add Note")')).toBeVisible();
   });
 
   test("should allow multi-line editing with Shift+Enter", async ({ page }) => {
     const shortContent = "Short item";
-    
+
     await page.route("**/api/boards/test-board/notes", async (route) => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            notes: [{
-              id: "test-note",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              checklistItems: [
-                { id: "item-1", content: shortContent, checked: false, order: 0 },
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: { id: "test-user", name: "Test User", email: "test@example.com" },
-            }],
+            notes: [
+              {
+                id: "test-note",
+                content: "",
+                color: "#fef3c7",
+                archivedAt: null,
+                checklistItems: [{ id: "item-1", content: shortContent, checked: false, order: 0 }],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                user: { id: "test-user", name: "Test User", email: "test@example.com" },
+              },
+            ],
           }),
         });
       }
     });
 
     await page.goto("/boards/test-board");
-    
+
     await page.locator(`text=${shortContent}`).click();
     const textarea = page.locator('textarea[value*="Short item"]');
     await expect(textarea).toBeVisible();
-    
+
     await textarea.fill("Line 1");
     await textarea.press("Shift+Enter");
     await textarea.type("Line 2");
-    
+
     const value = await textarea.inputValue();
     expect(value).toContain("Line 1\nLine 2");
   });

@@ -595,11 +595,11 @@ export function Note({
                     onBlur={handleAddItem}
                     autoFocus
                     rows={1}
-                    style={{ height: 'auto' }}
+                    style={{ height: "auto" }}
                     onInput={(e) => {
                       const target = e.target as HTMLTextAreaElement;
-                      target.style.height = 'auto';
-                      target.style.height = target.scrollHeight + 'px';
+                      target.style.height = "auto";
+                      target.style.height = target.scrollHeight + "px";
                     }}
                   />
                   <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">

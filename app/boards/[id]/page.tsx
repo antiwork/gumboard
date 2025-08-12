@@ -193,7 +193,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-
   // Helper function to calculate note height based on content
   const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
@@ -211,11 +210,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const checklistItemsCount = note.checklistItems.length;
       const addingItemHeight = addingChecklistItem === note.id ? 32 : 0;
       const addTaskButtonHeight = 36;
-      
-      const checklistHeight = checklistItemsCount * baseItemHeight + 
-        (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) + 
+
+      const checklistHeight =
+        checklistItemsCount * baseItemHeight +
+        (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
         addingItemHeight;
-      
+
       const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
 
       return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;

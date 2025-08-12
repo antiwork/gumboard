@@ -98,11 +98,11 @@ export function ChecklistItem({
           onKeyDown={handleKeyDown}
           autoFocus
           rows={1}
-          style={{ height: 'auto' }}
+          style={{ height: "auto" }}
           onInput={(e) => {
             const target = e.target as HTMLTextAreaElement;
-            target.style.height = 'auto';
-            target.style.height = target.scrollHeight + 'px';
+            target.style.height = "auto";
+            target.style.height = target.scrollHeight + "px";
           }}
         />
       ) : (
