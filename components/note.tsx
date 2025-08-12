@@ -544,7 +544,7 @@ export function Note({
             </div>
           </div>
         </div>
-        <div className="flex items-center space-x-1.5">
+        <div className="flex items-center space-x-[2px]">
           <Popover open={showInfoPopover} onOpenChange={setShowInfoPopover}>
             <PopoverTrigger asChild>
               <Button
