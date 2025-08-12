@@ -66,14 +66,11 @@ test.describe("Home Page", () => {
     await expect(page.getByText("Brand new task item")).toBeVisible();
 
     // Test 4: Edit existing checklist item content
-    let editInput = page.locator('textarea').filter({ hasText: "Gumboard release by Friday" });
-    if (!(await editInput.isVisible())) {
-      await page.getByText("Gumboard release by Friday").click();
-      editInput = page.locator('textarea').filter({ hasText: "Gumboard release by Friday" });
-    }
+    await page.getByText("Gumboard release by Friday").click();
+    const editInput = page.locator('textarea').filter({ hasText: "Gumboard release by Friday" });
     await expect(editInput).toBeVisible();
     await editInput.fill("Updated Gumboard release deadline");
-    await editInput.press("Enter");
+    await editInput.blur(); // Use blur instead of Enter to save the edit
     await expect(page.getByText("Updated Gumboard release deadline")).toBeVisible();
 
     // Test 5: Delete a checklist item
