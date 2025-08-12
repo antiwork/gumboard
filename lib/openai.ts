@@ -72,57 +72,16 @@ export class OpenAIAgent {
     }
   }
 
-  async generateTodoList(
-    input: string,
-    existingTasks?: AgentTask[]
-  ): Promise<AgentTask[]> {
-    if (!this.client) {
-      throw new Error("OpenAI API key not configured");
-    }
-
-    try {
-      const systemPrompt = `You are a task management assistant. 
-      Extract and organize tasks from the user's input.
-      Each task should have:
-      - id: unique identifier
-      - content: clear, actionable description
-      - status: pending (for new tasks)
-      - priority: low, medium, or high based on context
-      
-      Return tasks as a JSON array.`;
-
-      const userPrompt = `${
-        existingTasks?.length
-          ? `Existing tasks: ${JSON.stringify(existingTasks)}\n\n`
-          : ""
-      }
-      User input: ${input}
-      
-      Extract tasks and return as JSON array.`;
-
-      const response = await this.client.chat.completions.create({
-        model: "gpt-4o-mini",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        temperature: 0.5,
-        response_format: { type: "json_object" },
-      });
-
-      const result = JSON.parse(response.choices[0].message.content || "{}");
-      return result.tasks || [];
-    } catch {
-      throw new Error("Failed to generate todo list");
-    }
-  }
 }
 
-let agentInstance: OpenAIAgent | null = null;
+const agentInstances = new Map<string, OpenAIAgent>();
 
 export function getOpenAIAgent(apiKey?: string): OpenAIAgent {
-  if (!agentInstance || (apiKey && !agentInstance.isConfigured())) {
-    agentInstance = new OpenAIAgent(apiKey);
+  const key = apiKey || 'default';
+  
+  if (!agentInstances.has(key)) {
+    agentInstances.set(key, new OpenAIAgent(apiKey));
   }
-  return agentInstance;
+  
+  return agentInstances.get(key)!;
 }
