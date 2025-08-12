@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        checklistItems: { orderBy: { order: "asc" } },
       },
       orderBy: {
         createdAt: "desc",
@@ -117,6 +118,7 @@ export async function POST(request: NextRequest) {
             name: true,
           },
         },
+        checklistItems: { orderBy: { order: "asc" } },
       },
     });
 
