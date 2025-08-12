@@ -34,20 +34,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             createdBy: true,
             createdAt: true,
             updatedAt: true,
-            done: true,
-            checklistItems: true,
+            checklistItems: {
+              orderBy: [{ checked: "asc" }, { order: "asc" }],
+            },
             user: {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
-            }
+                email: true,
+              },
+            },
           },
-          orderBy: { createdAt: 'desc' }
-        }
-      }
-    })
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
 
     if (!board) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
@@ -63,10 +64,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { 
-        organizationId: true 
-      }
-    })
+      select: {
+        organizationId: true,
+      },
+    });
 
     if (!user?.organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 });
@@ -97,17 +98,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { 
+      select: {
         organizationId: true,
         organization: {
           select: {
-            slackWebhookUrl: true
-          }
+            slackWebhookUrl: true,
+          },
         },
         name: true,
-        email: true
-      }
-    })
+        email: true,
+      },
+    });
 
     if (!user?.organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 });
@@ -139,7 +140,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         color: randomColor,
         boardId,
         createdBy: session.user.id,
-        ...(checklistItems !== undefined && { checklistItems }),
+        ...(checklistItems &&
+          checklistItems.length > 0 && {
+            checklistItems: {
+              create: checklistItems.map(
+                (item: { content: string; checked?: boolean; order?: number }, index: number) => ({
+                  content: item.content,
+                  checked: item.checked || false,
+                  order: item.order ?? index,
+                })
+              ),
+            },
+          }),
       },
       include: {
         user: {
@@ -148,6 +160,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             name: true,
             email: true,
           },
+        },
+        checklistItems: {
+          orderBy: [{ checked: "asc" }, { order: "asc" }],
         },
       },
     });

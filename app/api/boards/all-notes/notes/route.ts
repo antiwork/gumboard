@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
+        checklistItems: {
+          orderBy: [{ checked: "asc" }, { order: "asc" }],
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -66,7 +69,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, boardId } = await request.json();
+    const { content, color, boardId, checklistItems } = await request.json();
 
     if (!boardId) {
       return NextResponse.json({ error: "Board ID is required" }, { status: 400 });
@@ -102,6 +105,18 @@ export async function POST(request: NextRequest) {
         color: randomColor,
         boardId,
         createdBy: session.user.id,
+        ...(checklistItems &&
+          checklistItems.length > 0 && {
+            checklistItems: {
+              create: checklistItems.map(
+                (item: { content: string; checked?: boolean; order?: number }, index: number) => ({
+                  content: item.content,
+                  checked: item.checked || false,
+                  order: item.order ?? index,
+                })
+              ),
+            },
+          }),
       },
       include: {
         user: {
@@ -116,6 +131,9 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
           },
+        },
+        checklistItems: {
+          orderBy: [{ checked: "asc" }, { order: "asc" }],
         },
       },
     });

@@ -81,6 +81,9 @@ export async function PUT(
             email: true,
           },
         },
+        checklistItems: {
+          orderBy: [{ checked: "asc" }, { order: "asc" }],
+        },
       },
     });
 
@@ -105,13 +108,34 @@ export async function PUT(
       );
     }
 
+    // Handle checklist items update
+    if (checklistItems !== undefined) {
+      // Delete existing checklist items
+      await db.checklistItem.deleteMany({
+        where: { noteId: noteId },
+      });
+
+      // Create new checklist items if provided
+      if (checklistItems && checklistItems.length > 0) {
+        await db.checklistItem.createMany({
+          data: checklistItems.map(
+            (item: { content: string; checked: boolean; order: number }, index: number) => ({
+              content: item.content,
+              checked: item.checked,
+              order: item.order ?? index,
+              noteId: noteId,
+            })
+          ),
+        });
+      }
+    }
+
     const updatedNote = await db.note.update({
       where: { id: noteId },
       data: {
         ...(content !== undefined && { content }),
         ...(color !== undefined && { color }),
         ...(archivedAt !== undefined && { archivedAt: archivedAt ? new Date(archivedAt) : null }),
-        ...(checklistItems !== undefined && { checklistItems }),
       },
       include: {
         user: {
@@ -127,13 +151,16 @@ export async function PUT(
             sendSlackUpdates: true,
           },
         },
+        checklistItems: {
+          orderBy: [{ checked: "asc" }, { order: "asc" }],
+        },
       },
     });
 
     // Send individual todo notifications if checklist items have changed
     if (checklistItems !== undefined && user.organization?.slackWebhookUrl) {
-      const oldItems = (note.checklistItems as unknown as ChecklistItem[]) || [];
-      const newItems = (checklistItems as unknown as ChecklistItem[]) || [];
+      const oldItems = note.checklistItems || [];
+      const newItems = checklistItems || [];
       const { addedItems, completedItems } = detectChecklistChanges(oldItems, newItems);
 
       const userName = user.name || user.email || "Unknown User";

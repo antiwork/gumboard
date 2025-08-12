@@ -100,25 +100,40 @@ model Board {
 }
 
 model Note {
-  id             String    @id @default(cuid())
-  content        String    @db.Text
-  color          String    @default("#fef3c7") // Default yellow color
+  id             String          @id @default(cuid())
+  content        String          @db.Text
+  color          String          @default("#fef3c7") // Default yellow color
   archivedAt     DateTime? // Track archived status
-  checklistItems Json? // Store checklist items as JSON
   slackMessageId String?
   boardId        String
-  board          Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  board          Board           @relation(fields: [boardId], references: [id], onDelete: Cascade)
   createdBy      String
-  user           User      @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  user           User            @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   deletedAt      DateTime? // Soft delete timestamp
+  checklistItems ChecklistItem[] // Reference to checklist items
 
   // Performance indexes
   @@index([boardId, deletedAt], name: "idx_note_board_deleted")
   @@index([boardId, createdAt], name: "idx_note_board_created")
   @@index([createdBy, deletedAt], name: "idx_note_user_deleted")
   @@map("notes")
+}
+
+model ChecklistItem {
+  id        String   @id @default(cuid())
+  content   String   @db.Text
+  checked   Boolean  @default(false)
+  order     Int      @default(0)
+  noteId    String
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([noteId, order], name: "idx_checklist_note_order")
+  @@index([noteId, checked], name: "idx_checklist_note_checked")
+  @@map("checklist_items")
 }
 
 model OrganizationInvite {
