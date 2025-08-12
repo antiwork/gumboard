@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             createdBy: true,
             createdAt: true,
             updatedAt: true,
-            done: true,
+            archivedAt: true,
             checklistItems: true,
             user: {
               select: {
