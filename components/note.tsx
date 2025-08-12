@@ -14,6 +14,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
+import { AITaskGenerator } from "@/components/ai-task-generator";
 
 // Core domain types
 export interface User {
@@ -22,6 +23,11 @@ export interface User {
   image?: string | null;
   email: string;
   isAdmin?: boolean;
+  organization?: {
+    id: string;
+    name: string;
+    openaiApiKey?: string | null;
+  } | null;
 }
 
 export interface Board {
@@ -494,8 +500,8 @@ export function Note({
           />
         </div>
       ) : (
-        <div className="flex flex-col">
-          <div className="overflow-y-auto space-y-1">
+        <div className="flex flex-col flex-1">
+          <div className="space-y-1">
             {/* Checklist Items */}
             {note.checklistItems?.map((item) => (
               <ChecklistItemComponent
@@ -547,22 +553,60 @@ export function Note({
             )}
           </div>
 
-          {/* Add Item Button */}
+          {/* Add Item Button with AI Task Generator */}
           {canEdit && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
-                  newItemInputRef.current.focus();
-                } else {
-                  setAddingItem(true);
-                }
-              }}
-              className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add task
-            </Button>
+            <div className="mt-3 flex items-center justify-between">
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                    newItemInputRef.current.focus();
+                  } else {
+                    setAddingItem(true);
+                  }
+                }}
+                className="flex-1 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add task
+              </Button>
+              <AITaskGenerator
+                noteContent={note.content}
+                boardId={note.boardId}
+                existingTasks={note.checklistItems || []}
+                hasOpenAIKey={!!currentUser?.organization?.openaiApiKey}
+                onAddTasks={(tasks) => {
+                  const updatedItems = [
+                    ...(note.checklistItems || []),
+                    ...tasks.map((task, index) => ({
+                      ...task,
+                      order: (note.checklistItems?.length || 0) + index + 1,
+                    })),
+                  ];
+                  const optimisticNote = {
+                    ...note,
+                    checklistItems: updatedItems,
+                  };
+                  onUpdate?.(optimisticNote);
+                  
+                  if (syncDB) {
+                    fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ checklistItems: updatedItems }),
+                    }).then(async (response) => {
+                      if (response.ok) {
+                        const { note: updatedNote } = await response.json();
+                        onUpdate?.(updatedNote);
+                      }
+                    }).catch(() => {
+                      // Handle network error silently
+                    });
+                  }
+                }}
+                disabled={readonly}
+              />
+            </div>
           )}
         </div>
       )}

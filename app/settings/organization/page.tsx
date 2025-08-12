@@ -37,6 +37,7 @@ export type UserWithOrganization = User & {
     id: string;
     name: string;
     slackWebhookUrl?: string | null;
+    openaiApiKey?: string | null;
     members: {
       id: string;
       name: string | null;
@@ -76,6 +77,8 @@ export default function OrganizationSettingsPage() {
   const [originalOrgName, setOriginalOrgName] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
+  const [openaiApiKey, setOpenaiApiKey] = useState("");
+  const [originalOpenaiApiKey, setOriginalOpenaiApiKey] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -117,10 +120,13 @@ export default function OrganizationSettingsPage() {
         setUser(userData);
         const orgNameValue = userData.organization?.name || "";
         const slackWebhookValue = userData.organization?.slackWebhookUrl || "";
+        const openaiApiKeyValue = userData.organization?.openaiApiKey || "";
         setOrgName(orgNameValue);
         setOriginalOrgName(orgNameValue);
         setSlackWebhookUrl(slackWebhookValue);
         setOriginalSlackWebhookUrl(slackWebhookValue);
+        setOpenaiApiKey(openaiApiKeyValue);
+        setOriginalOpenaiApiKey(openaiApiKeyValue);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -170,6 +176,7 @@ export default function OrganizationSettingsPage() {
         body: JSON.stringify({
           name: orgName,
           slackWebhookUrl: slackWebhookUrl,
+          openaiApiKey: openaiApiKey,
         }),
       });
 
@@ -179,6 +186,7 @@ export default function OrganizationSettingsPage() {
         // Update the original values to reflect the saved state
         setOriginalOrgName(orgName);
         setOriginalSlackWebhookUrl(slackWebhookUrl);
+        setOriginalOpenaiApiKey(openaiApiKey);
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -534,6 +542,58 @@ export default function OrganizationSettingsPage() {
             <Button
               onClick={handleSaveOrganization}
               disabled={saving || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
+              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
+            >
+              {saving ? "Saving..." : "Save changes"}
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* OpenAI Integration */}
+      <Card className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
+              AI Task Assistant
+            </h3>
+            <p className="text-zinc-600 dark:text-zinc-400">
+              Configure OpenAI integration for intelligent task generation within your notes.
+            </p>
+          </div>
+
+          <div>
+            <Label htmlFor="openaiApiKey" className="text-zinc-800 dark:text-zinc-200">
+              OpenAI API Key
+            </Label>
+            <Input
+              id="openaiApiKey"
+              type="password"
+              value={openaiApiKey}
+              onChange={(e) => setOpenaiApiKey(e.target.value)}
+              placeholder="sk-..."
+              className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              disabled={!user?.isAdmin}
+            />
+            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              Enter your OpenAI API key to enable AI-powered task generation directly within your notes.{" "}
+              <a
+                href="https://platform.openai.com/api-keys"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+              >
+                Get API Key
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </a>
+            </p>
+          </div>
+
+          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <Button
+              onClick={handleSaveOrganization}
+              disabled={saving || openaiApiKey === originalOpenaiApiKey || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >

@@ -71,6 +71,7 @@ model Organization {
   id               String                        @id @default(cuid())
   name             String
   slackWebhookUrl  String?
+  openaiApiKey     String?
   createdAt        DateTime                      @default(now())
   updatedAt        DateTime                      @updatedAt
   members          User[]
