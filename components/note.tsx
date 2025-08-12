@@ -577,10 +577,10 @@ export function Note({
 
               {/* Add New Item Input */}
               {addingItem && canEdit && (
-                <form onSubmit={handleSubmitNewItem} className="flex items-center gap-3">
+                <form onSubmit={handleSubmitNewItem} className="flex items-start gap-3">
                   <Checkbox
                     disabled
-                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-0.5 flex-shrink-0"
                   />
                   <Input
                     ref={newItemInputRef}

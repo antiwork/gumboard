@@ -486,15 +486,15 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
                     {note.checklistItems
                       .sort((a, b) => a.order - b.order)
                       .map((item) => (
-                        <div key={item.id} className="flex items-center space-x-2">
+                        <div key={item.id} className="flex items-start space-x-2">
                           <input
                             type="checkbox"
                             checked={item.checked}
                             disabled
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
+                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50 mt-0.5 flex-shrink-0"
                           />
                           <span
-                            className={`text-sm flex-1 ${
+                            className={`text-sm leading-5 flex-1 word-wrap break-words whitespace-pre-wrap overflow-wrap min-h-[20px] ${
                               item.checked
                                 ? "line-through text-gray-500 dark:text-gray-400"
                                 : "text-gray-900 dark:text-gray-100"

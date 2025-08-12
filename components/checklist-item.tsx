@@ -73,7 +73,7 @@ export function ChecklistItem({
   return (
     <div
       className={cn(
-        "flex items-center group/item rounded gap-3 transition-all duration-200",
+        "flex items-start group/item rounded gap-3 transition-all duration-200",
         className
       )}
       // To avoid flaky test locators
@@ -83,7 +83,7 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-0.5 flex-shrink-0"
         disabled={readonly}
       />
 
@@ -93,7 +93,7 @@ export function ChecklistItem({
           value={editContent ?? item.content}
           onChange={(e) => onEditContentChange?.(e.target.value)}
           className={cn(
-            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 word-wrap break-words whitespace-pre-wrap overflow-wrap",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
           onBlur={handleBlur}
@@ -103,7 +103,7 @@ export function ChecklistItem({
       ) : (
         <span
           className={cn(
-            "flex-1 text-sm leading-6 cursor-pointer select-none",
+            "flex-1 text-sm leading-5 cursor-pointer select-none word-wrap break-words whitespace-pre-wrap overflow-wrap min-h-[20px]",
             item.checked
               ? "line-through text-gray-500 dark:text-gray-400"
               : "text-gray-900 dark:text-gray-100",
