@@ -282,7 +282,6 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background dark:bg-zinc-950">
       <AppHeader 
         user={user} 
-        variant="dashboard"
         rightContent={
           <Button
             onClick={() => {

@@ -869,7 +869,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
       <AppHeader 
         user={user} 
-        variant="board"
         leftContent={
           <>
             <div className="relative board-dropdown flex-1 sm:flex-none">

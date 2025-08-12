@@ -389,7 +389,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
       <AppHeader 
         user={null} 
-        variant="public"
         leftContent={
           <>
             <div className="flex items-center space-x-2">

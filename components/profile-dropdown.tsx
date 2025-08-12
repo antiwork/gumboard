@@ -14,7 +14,8 @@ export function ProfileDropdown({ user }: Props) {
   const handleSignOut = async () => {
     await signOut();
   };
-  return (
+
+  return user ? (
     <Popover>
       <PopoverTrigger asChild>
         <Avatar className="w-9 h-9 cursor-pointer">
@@ -58,5 +59,12 @@ export function ProfileDropdown({ user }: Props) {
         </div>
       </PopoverContent>
     </Popover>
+  ) : (
+    <Link
+      href="/auth/signin"
+      className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+    >
+      Sign In
+    </Link>
   );
 }
