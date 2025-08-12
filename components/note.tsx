@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
@@ -97,7 +96,7 @@ export function Note({
       (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
-  const newItemInputRef = useRef<HTMLInputElement>(null);
+  const newItemInputRef = useRef<HTMLTextAreaElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -424,7 +423,7 @@ export function Note({
     }
   };
 
-  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
       e.preventDefault();
       handleAddItem();
@@ -581,16 +580,22 @@ export function Note({
                     disabled
                     className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                   />
-                  <Input
+                  <textarea
                     ref={newItemInputRef}
-                    type="text"
                     value={newItemContent}
                     onChange={(e) => setNewItemContent(e.target.value)}
-                    className="h-auto flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none overflow-hidden"
                     placeholder="Add new item..."
                     onBlur={handleAddItem}
                     onKeyDown={handleKeyDownNewItem}
                     autoFocus
+                    rows={1}
+                    style={{ height: 'auto' }}
+                    onInput={(e) => {
+                      const target = e.target as HTMLTextAreaElement;
+                      target.style.height = 'auto';
+                      target.style.height = target.scrollHeight + 'px';
+                    }}
                   />
                 </div>
               )}

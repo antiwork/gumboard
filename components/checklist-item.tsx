@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
@@ -45,10 +44,10 @@ export function ChecklistItem({
   showDeleteButton = true,
   className,
 }: ChecklistItemProps) {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      const target = e.target as HTMLInputElement;
+      const target = e.target as HTMLTextAreaElement;
       const cursorPosition = target.selectionStart || 0;
       if (onSplit && editContent !== undefined) {
         onSplit(item.id, editContent, cursorPosition);
@@ -88,17 +87,23 @@ export function ChecklistItem({
       />
 
       {isEditing && !readonly ? (
-        <Input
-          type="text"
+        <textarea
           value={editContent ?? item.content}
           onChange={(e) => onEditContentChange?.(e.target.value)}
           className={cn(
-            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none overflow-hidden",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           autoFocus
+          rows={1}
+          style={{ height: 'auto' }}
+          onInput={(e) => {
+            const target = e.target as HTMLTextAreaElement;
+            target.style.height = 'auto';
+            target.style.height = target.scrollHeight + 'px';
+          }}
         />
       ) : (
         <span
