@@ -60,10 +60,7 @@ export function ProfileDropdown({ user }: Props) {
       </PopoverContent>
     </Popover>
   ) : (
-    <Link
-      href="/auth/signin"
-      className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
-    >
+    <Link href="/auth/signin" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
       Sign In
     </Link>
   );

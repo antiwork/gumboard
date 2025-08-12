@@ -279,8 +279,8 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-950">
-      <Header 
-        user={user} 
+      <Header
+        user={user}
         rightContent={
           <Button
             onClick={() => {
