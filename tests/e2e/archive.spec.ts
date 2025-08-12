@@ -141,10 +141,10 @@ test.describe("Archive Functionality", () => {
     const org = await prisma.organization.upsert({
       where: { id: testOrgId },
       update: {},
-      create: { 
-        id: testOrgId, 
-        name: "Test Organization" 
-      }
+      create: {
+        id: testOrgId,
+        name: "Test Organization",
+      },
     });
 
     const user = await prisma.user.upsert({
@@ -154,8 +154,8 @@ test.describe("Archive Functionality", () => {
         id: testUserId,
         email: testEmail,
         name: "Test User",
-        organizationId: testOrgId
-      }
+        organizationId: testOrgId,
+      },
     });
 
     const board = await prisma.board.upsert({
@@ -165,8 +165,8 @@ test.describe("Archive Functionality", () => {
         id: testBoardId,
         name: "Test Board",
         createdBy: testUserId,
-        organizationId: testOrgId
-      }
+        organizationId: testOrgId,
+      },
     });
 
     const note = await prisma.note.upsert({
@@ -176,8 +176,8 @@ test.describe("Archive Functionality", () => {
         id: testNoteId,
         content: "Test note to archive",
         boardId: testBoardId,
-        createdBy: testUserId
-      }
+        createdBy: testUserId,
+      },
     });
 
     await page.route(`**/api/boards/${testBoardId}/notes`, async (route) => {
@@ -218,11 +218,11 @@ test.describe("Archive Functionality", () => {
         if (putData.archivedAt && typeof putData.archivedAt === "string") {
           noteArchived = true;
           archivedNoteData = putData;
-          
+
           // Update database state
           await prisma.note.update({
             where: { id: testNoteId },
-            data: { archivedAt: new Date() }
+            data: { archivedAt: new Date() },
           });
         }
 
@@ -282,7 +282,7 @@ test.describe("Archive Functionality", () => {
     expect(isArchived).toBe(true);
 
     const archivedNotes = await dbHelpers.getArchivedNotes(prisma);
-    expect(archivedNotes.some(note => note.id === testNoteId)).toBe(true);
+    expect(archivedNotes.some((note) => note.id === testNoteId)).toBe(true);
 
     // Cleanup specific test data
     await prisma.note.deleteMany({ where: { id: testNoteId } });

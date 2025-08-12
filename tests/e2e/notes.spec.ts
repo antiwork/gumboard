@@ -323,7 +323,7 @@ test.describe("Note Management", () => {
       await prisma.organization.upsert({
         where: { id: testOrgId },
         update: {},
-        create: { id: testOrgId, name: "Test Organization" }
+        create: { id: testOrgId, name: "Test Organization" },
       });
 
       await prisma.user.upsert({
@@ -333,8 +333,8 @@ test.describe("Note Management", () => {
           id: testUserId,
           email: testEmail,
           name: "Test User",
-          organizationId: testOrgId
-        }
+          organizationId: testOrgId,
+        },
       });
 
       await prisma.board.upsert({
@@ -344,8 +344,8 @@ test.describe("Note Management", () => {
           id: testBoardId,
           name: "Test Board",
           createdBy: testUserId,
-          organizationId: testOrgId
-        }
+          organizationId: testOrgId,
+        },
       });
 
       await page.route(`**/api/boards/${testBoardId}/notes`, async (route) => {
@@ -369,8 +369,8 @@ test.describe("Note Management", () => {
                 content: "",
                 checklistItems: postData.checklistItems || [],
                 boardId: testBoardId,
-                createdBy: testUserId
-              }
+                createdBy: testUserId,
+              },
             });
           }
 

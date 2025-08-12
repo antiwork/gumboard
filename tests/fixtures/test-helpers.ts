@@ -8,9 +8,9 @@ interface TestFixtures {
 export const test = base.extend<TestFixtures>({
   prisma: async ({}, use: (r: PrismaClient) => Promise<void>) => {
     const prisma = new PrismaClient();
-    
+
     await use(prisma);
-    
+
     await prisma.$disconnect();
   },
 });
@@ -24,7 +24,7 @@ export const generateTestIds = () => {
     testUserId: `test-user-${timestamp}-${random}`,
     testBoardId: `test-board-${timestamp}-${random}`,
     testNoteId: `test-note-${timestamp}-${random}`,
-    testEmail: `test-${timestamp}-${random}@example.com`
+    testEmail: `test-${timestamp}-${random}@example.com`,
   };
 };
 
@@ -38,17 +38,17 @@ export const dbHelpers = {
   },
 
   async verifyBoardExists(prisma: PrismaClient, boardId: string) {
-    const board = await prisma.board.findUnique({ 
+    const board = await prisma.board.findUnique({
       where: { id: boardId },
-      include: { _count: { select: { notes: true } } }
+      include: { _count: { select: { notes: true } } },
     });
     return board;
   },
 
   async verifyNoteExists(prisma: PrismaClient, noteId: string) {
-    const note = await prisma.note.findUnique({ 
+    const note = await prisma.note.findUnique({
       where: { id: noteId },
-      include: { user: true, board: true }
+      include: { user: true, board: true },
     });
     return note;
   },
@@ -63,10 +63,14 @@ export const dbHelpers = {
     return note && note.archivedAt === null;
   },
 
-  async verifyBoardSettings(prisma: PrismaClient, boardId: string, expectedSettings: { sendSlackUpdates?: boolean }) {
+  async verifyBoardSettings(
+    prisma: PrismaClient,
+    boardId: string,
+    expectedSettings: { sendSlackUpdates?: boolean }
+  ) {
     const board = await prisma.board.findUnique({ where: { id: boardId } });
     if (!board) return false;
-    
+
     if (expectedSettings.sendSlackUpdates !== undefined) {
       return board.sendSlackUpdates === expectedSettings.sendSlackUpdates;
     }
@@ -75,28 +79,28 @@ export const dbHelpers = {
 
   async verifyAccountLinked(prisma: PrismaClient, userId: string, provider: string) {
     const account = await prisma.account.findFirst({
-      where: { userId, provider }
+      where: { userId, provider },
     });
     return account !== null;
   },
 
   async getNoteCount(prisma: PrismaClient, boardId: string, archived: boolean = false) {
     return await prisma.note.count({
-      where: { 
+      where: {
         boardId,
         archivedAt: archived ? { not: null } : null,
-        deletedAt: null
-      }
+        deletedAt: null,
+      },
     });
   },
 
   async getArchivedNotes(prisma: PrismaClient) {
     return await prisma.note.findMany({
-      where: { 
+      where: {
         archivedAt: { not: null },
-        deletedAt: null
+        deletedAt: null,
       },
-      include: { user: true, board: true }
+      include: { user: true, board: true },
     });
   },
 
@@ -104,56 +108,53 @@ export const dbHelpers = {
     // Clean up test data in reverse dependency order with error handling
     try {
       // Delete verification tokens
-      await prisma.verificationToken.deleteMany({ 
-        where: { identifier: { contains: testPrefix } } 
+      await prisma.verificationToken.deleteMany({
+        where: { identifier: { contains: testPrefix } },
       });
-      
+
       // Delete notes (depends on boards and users)
-      await prisma.note.deleteMany({ 
-        where: { 
+      await prisma.note.deleteMany({
+        where: {
           OR: [
             { id: { startsWith: testPrefix } },
             { board: { id: { startsWith: testPrefix } } },
-            { user: { id: { startsWith: testPrefix } } }
-          ]
-        }
+            { user: { id: { startsWith: testPrefix } } },
+          ],
+        },
       });
-      
+
       // Delete boards (depends on users and organizations)
-      await prisma.board.deleteMany({ 
-        where: { 
+      await prisma.board.deleteMany({
+        where: {
           OR: [
             { id: { startsWith: testPrefix } },
             { createdBy: { startsWith: testPrefix } },
-            { organizationId: { startsWith: testPrefix } }
-          ]
-        }
+            { organizationId: { startsWith: testPrefix } },
+          ],
+        },
       });
-      
+
       // Delete accounts and sessions (depends on users)
-      await prisma.account.deleteMany({ 
-        where: { userId: { startsWith: testPrefix } } 
+      await prisma.account.deleteMany({
+        where: { userId: { startsWith: testPrefix } },
       });
-      await prisma.session.deleteMany({ 
-        where: { userId: { startsWith: testPrefix } } 
+      await prisma.session.deleteMany({
+        where: { userId: { startsWith: testPrefix } },
       });
-      
+
       // Delete users (depends on organizations)
-      await prisma.user.deleteMany({ 
-        where: { 
-          OR: [
-            { id: { startsWith: testPrefix } },
-            { email: { contains: testPrefix } }
-          ]
-        }
+      await prisma.user.deleteMany({
+        where: {
+          OR: [{ id: { startsWith: testPrefix } }, { email: { contains: testPrefix } }],
+        },
       });
-      
+
       // Delete organizations (no dependencies)
-      await prisma.organization.deleteMany({ 
-        where: { id: { startsWith: testPrefix } } 
+      await prisma.organization.deleteMany({
+        where: { id: { startsWith: testPrefix } },
       });
     } catch (error) {
-      console.warn('Cleanup error (non-critical):', error);
+      console.warn("Cleanup error (non-critical):", error);
     }
-  }
+  },
 };

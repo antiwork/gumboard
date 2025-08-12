@@ -1,7 +1,10 @@
 import { test, expect, dbHelpers, generateTestIds } from "../fixtures/test-helpers";
 
 test.describe("Authentication Flow", () => {
-  test("should complete email authentication flow and verify database state", async ({ page, prisma }) => {
+  test("should complete email authentication flow and verify database state", async ({
+    page,
+    prisma,
+  }) => {
     let emailSent = false;
     let authData: { email: string } | null = null;
     const { testEmail } = generateTestIds();
@@ -16,8 +19,8 @@ test.describe("Authentication Flow", () => {
         data: {
           identifier: testEmail,
           token: `test-token-${Date.now()}`,
-          expires: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
-        }
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours from now
+        },
       });
 
       await route.fulfill({
@@ -46,7 +49,7 @@ test.describe("Authentication Flow", () => {
 
     // Verify database state - check if verification token was created
     const verificationToken = await prisma.verificationToken.findFirst({
-      where: { identifier: testEmail }
+      where: { identifier: testEmail },
     });
     expect(verificationToken).toBeTruthy();
     expect(verificationToken?.expires).toBeInstanceOf(Date);

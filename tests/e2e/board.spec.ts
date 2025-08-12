@@ -72,8 +72,8 @@ test.describe("Board Management", () => {
       update: {},
       create: {
         id: testOrgId,
-        name: "Test Organization"
-      }
+        name: "Test Organization",
+      },
     });
 
     await prisma.user.upsert({
@@ -84,8 +84,8 @@ test.describe("Board Management", () => {
         email: testEmail,
         name: "Test User",
         organizationId: testOrgId,
-        isAdmin: true
-      }
+        isAdmin: true,
+      },
     });
 
     await page.route("**/api/boards", async (route) => {
@@ -107,7 +107,7 @@ test.describe("Board Management", () => {
             description: boardData!.description,
             createdBy: testUserId,
             organizationId: testOrgId,
-          }
+          },
         });
 
         await route.fulfill({

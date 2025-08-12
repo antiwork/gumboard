@@ -98,7 +98,10 @@ test.describe("Board Settings", () => {
     await expect(checkbox).toBeChecked();
   });
 
-  test("should toggle Slack updates setting and verify database state", async ({ page, prisma }) => {
+  test("should toggle Slack updates setting and verify database state", async ({
+    page,
+    prisma,
+  }) => {
     let boardUpdateCalled = false;
     let updatedSettings: any = null;
     const { testBoardId, testUserId, testOrgId, testEmail } = generateTestIds();
@@ -107,11 +110,11 @@ test.describe("Board Settings", () => {
     await prisma.organization.upsert({
       where: { id: testOrgId },
       update: {},
-      create: { 
-        id: testOrgId, 
+      create: {
+        id: testOrgId,
         name: "Test Organization",
-        slackWebhookUrl: "https://hooks.slack.com/test-webhook"
-      }
+        slackWebhookUrl: "https://hooks.slack.com/test-webhook",
+      },
     });
 
     await prisma.user.upsert({
@@ -122,8 +125,8 @@ test.describe("Board Settings", () => {
         email: testEmail,
         name: "Test User",
         organizationId: testOrgId,
-        isAdmin: true
-      }
+        isAdmin: true,
+      },
     });
 
     await prisma.board.upsert({
@@ -135,8 +138,8 @@ test.describe("Board Settings", () => {
         description: "A test board",
         sendSlackUpdates: true,
         createdBy: testUserId,
-        organizationId: testOrgId
-      }
+        organizationId: testOrgId,
+      },
     });
 
     await page.route(`**/api/boards/${testBoardId}`, async (route) => {
@@ -162,7 +165,7 @@ test.describe("Board Settings", () => {
         if (existingBoard) {
           await prisma.board.update({
             where: { id: testBoardId },
-            data: { sendSlackUpdates: updatedSettings.sendSlackUpdates }
+            data: { sendSlackUpdates: updatedSettings.sendSlackUpdates },
           });
         }
 
@@ -202,7 +205,7 @@ test.describe("Board Settings", () => {
 
     // Verify database state
     const settingsVerified = await dbHelpers.verifyBoardSettings(prisma, testBoardId, {
-      sendSlackUpdates: false
+      sendSlackUpdates: false,
     });
     expect(settingsVerified).toBe(true);
 
