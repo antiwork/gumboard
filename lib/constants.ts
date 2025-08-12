@@ -27,9 +27,10 @@ const NEUTRAL_BORDER = {
   "#f8fafc": "border-slate-300",
 } as const;
 
-const NOTE_BORDER_BASE = Object.fromEntries(
-  NOTE_COLORS.map((c, i) => [c, BORDER[i]])
-) as Record<NoteColor, (typeof BORDER)[number]>;
+const NOTE_BORDER_BASE = Object.fromEntries(NOTE_COLORS.map((c, i) => [c, BORDER[i]])) as Record<
+  NoteColor,
+  (typeof BORDER)[number]
+>;
 
 export const NOTE_BORDER_BY_HEX = {
   ...NOTE_BORDER_BASE,
@@ -41,4 +42,4 @@ type AnyHex = keyof typeof NOTE_BORDER_BY_HEX;
 export const getNoteColors = (color: string, isDark: boolean) =>
   isDark
     ? "border-zinc-600"
-    : NOTE_BORDER_BY_HEX[(color?.toLowerCase?.() ?? "") as AnyHex] ?? "border-gray-300";
+    : (NOTE_BORDER_BY_HEX[(color?.toLowerCase?.() ?? "") as AnyHex] ?? "border-gray-300");

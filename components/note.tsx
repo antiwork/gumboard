@@ -438,14 +438,14 @@ export function Note({
   };
 
   return (
-<div
-  className={cn(
-    "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border box-border",
-    getNoteColors(note.color, resolvedTheme === "dark"),
-    className
-  )}
-  style={{ backgroundColor: note.color, ...style }}
->
+    <div
+      className={cn(
+        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border box-border",
+        getNoteColors(note.color, resolvedTheme === "dark"),
+        className
+      )}
+      style={{ backgroundColor: note.color, ...style }}
+    >
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
