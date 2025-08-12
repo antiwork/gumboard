@@ -290,13 +290,14 @@ test.describe("Add Task Button", () => {
     const addTaskButton = page.locator('button:has-text("Add task")');
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
+    await page.waitForTimeout(100); // Wait for addingItem state to update
 
-    const newItemInput = page.locator('input[placeholder="Add new item..."]');
+    const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
     await expect(newItemInput).toBeVisible();
     await expect(newItemInput).toBeFocused();
 
     await newItemInput.fill("New task from button");
-    await newItemInput.press("Enter");
+    await newItemInput.press("Control+Enter");
 
     expect(noteUpdateCalled).toBe(true);
     expect(updatedChecklistItems).toHaveLength(2);
@@ -351,8 +352,9 @@ test.describe("Add Task Button", () => {
     const addTaskButton = page.locator('button:has-text("Add task")');
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
+    await page.waitForTimeout(100); // Wait for addingItem state to update
 
-    const newItemInput = page.locator('input[placeholder="Add new item..."]');
+    const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
     await expect(newItemInput).toBeVisible();
     await expect(addTaskButton).toBeVisible();
   });
@@ -439,7 +441,7 @@ test.describe("Add Task Button", () => {
 
     await page.waitForTimeout(500);
 
-    const newItemInput = page.locator('input[placeholder="Add new item..."]');
+    const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
     await expect(newItemInput).not.toBeVisible();
     expect(noteUpdateCalled).toBe(false);
   });
