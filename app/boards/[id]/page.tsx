@@ -5,17 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Pencil,
-  Plus,
-  ChevronDown,
-  Settings,
-  LogOut,
-  Search,
-} from "lucide-react";
-import Link from "next/link"
+import { Plus, ChevronDown, Settings, Search } from "lucide-react";
+import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
-import { signOut } from "next-auth/react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
@@ -33,12 +25,9 @@ import {
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 
-export default function BoardPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
@@ -47,7 +36,6 @@ export default function BoardPage({
   const [loading, setLoading] = useState(true);
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
@@ -63,9 +51,7 @@ export default function BoardPage({
     endDate: null,
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
-    null
-  );
+  const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
   // Per-item edit and animations are handled inside Note component now
   const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
     open: boolean;
@@ -92,10 +78,8 @@ export default function BoardPage({
   ) => {
     const params = new URLSearchParams();
 
-    const currentSearchTerm =
-      newSearchTerm !== undefined ? newSearchTerm : searchTerm;
-    const currentDateRange =
-      newDateRange !== undefined ? newDateRange : dateRange;
+    const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
+    const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
     const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
 
     if (currentSearchTerm) {
@@ -103,17 +87,11 @@ export default function BoardPage({
     }
 
     if (currentDateRange.startDate) {
-      params.set(
-        "startDate",
-        currentDateRange.startDate.toISOString().split("T")[0]
-      );
+      params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
     }
 
     if (currentDateRange.endDate) {
-      params.set(
-        "endDate",
-        currentDateRange.endDate.toISOString().split("T")[0]
-      );
+      params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
     }
 
     if (currentAuthor) {
@@ -216,11 +194,7 @@ export default function BoardPage({
   };
 
   // Helper function to calculate note height based on content
-  const calculateNoteHeight = (
-    note: Note,
-    noteWidth?: number,
-    notePadding?: number
-  ) => {
+  const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
     const actualNotePadding = notePadding || config.notePadding;
     const actualNoteWidth = noteWidth || config.noteWidth;
@@ -271,9 +245,7 @@ export default function BoardPage({
       const lineHeight = 28; // Line height for readability (leading-7)
       const contentHeight = totalLines * lineHeight;
 
-      return (
-        headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight)
-      );
+      return headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight);
     }
   };
 
@@ -284,39 +256,25 @@ export default function BoardPage({
     const config = getResponsiveConfig();
     const containerWidth = window.innerWidth - config.containerPadding * 2;
     const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / noteWidthWithGap
-    );
+    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
     const actualColumnsCount = Math.max(1, columnsCount);
 
     // Calculate the actual available width and adjust note width to fill better
-    const availableWidthForNotes =
-      containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(
-      availableWidthForNotes / actualColumnsCount
-    );
+    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
     // Ensure notes don't get too narrow or too wide based on screen size
     const minWidth = config.noteWidth - 40;
     const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(
-      minWidth,
-      Math.min(maxWidth, calculatedNoteWidth)
-    );
+    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
 
     // Use full width with minimal left offset
     const offsetX = config.containerPadding;
 
     // Bin-packing algorithm: track the bottom Y position of each column
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
-      config.containerPadding
-    );
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
     return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(
-        note,
-        adjustedNoteWidth,
-        config.notePadding
-      );
+      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
 
       // Find the column with the lowest bottom position
       let bestColumn = 0;
@@ -359,21 +317,14 @@ export default function BoardPage({
     const actualColumnsCount = Math.max(1, columnsCount);
 
     // Calculate note width for mobile
-    const availableWidthForNotes =
-      containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
     const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
 
     // Bin-packing for mobile with fewer columns
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
-      config.containerPadding
-    );
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
     return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(
-        note,
-        noteWidth,
-        config.notePadding
-      );
+      const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
 
       // Find the column with the lowest bottom position
       let bestColumn = 0;
@@ -387,8 +338,7 @@ export default function BoardPage({
       }
 
       // Place the note in the best column
-      const x =
-        config.containerPadding + bestColumn * (noteWidth + config.gridGap);
+      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
       const y = columnBottoms[bestColumn];
 
       // Update the column bottom position
@@ -428,7 +378,7 @@ export default function BoardPage({
   // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showBoardDropdown || showUserDropdown || showAddBoard) {
+      if (showBoardDropdown || showAddBoard) {
         const target = event.target as Element;
         if (
           !target.closest(".board-dropdown") &&
@@ -436,7 +386,6 @@ export default function BoardPage({
           !target.closest(".add-board-modal")
         ) {
           setShowBoardDropdown(false);
-          setShowUserDropdown(false);
           setShowAddBoard(false);
         }
       }
@@ -449,9 +398,6 @@ export default function BoardPage({
         }
         if (showBoardDropdown) {
           setShowBoardDropdown(false);
-        }
-        if (showUserDropdown) {
-          setShowUserDropdown(false);
         }
         if (showAddBoard) {
           setShowAddBoard(false);
@@ -467,7 +413,7 @@ export default function BoardPage({
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showBoardDropdown, showUserDropdown, showAddBoard, addingChecklistItem]);
+  }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
   // Removed debounce cleanup effect; editing is scoped to Note
 
@@ -509,10 +455,7 @@ export default function BoardPage({
 
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<
-      string,
-      { id: string; name: string; email: string }
-    >();
+    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
 
     notes.forEach((note) => {
       if (!authorsMap.has(note.user.id)) {
@@ -524,9 +467,7 @@ export default function BoardPage({
       }
     });
 
-    return Array.from(authorsMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   };
 
   // Filter notes based on search term, date range, and author
@@ -561,20 +502,11 @@ export default function BoardPage({
         const startOfDay = (date: Date) =>
           new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const endOfDay = (date: Date) =>
-          new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate(),
-            23,
-            59,
-            59,
-            999
-          );
+          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 
         if (dateRange.startDate && dateRange.endDate) {
           return (
-            noteDate >= startOfDay(dateRange.startDate) &&
-            noteDate <= endOfDay(dateRange.endDate)
+            noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate)
           );
         } else if (dateRange.startDate) {
           return noteDate >= startOfDay(dateRange.startDate);
@@ -612,14 +544,7 @@ export default function BoardPage({
 
   // Get filtered and sorted notes for display
   const filteredNotes = useMemo(
-    () =>
-      filterAndSortNotes(
-        notes,
-        debouncedSearchTerm,
-        dateRange,
-        selectedAuthor,
-        user
-      ),
+    () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
   const layoutNotes = useMemo(
@@ -631,11 +556,8 @@ export default function BoardPage({
     if (layoutNotes.length === 0) {
       return "calc(100vh - 64px)";
     }
-    const maxBottom = Math.max(
-      ...layoutNotes.map((note) => note.y + note.height)
-    );
-    const minHeight =
-      typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
+    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
+    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
     return `${calculatedHeight}px`;
   }, [layoutNotes]);
@@ -699,9 +621,7 @@ export default function BoardPage({
           const { board } = await boardResponse.json();
           setBoard(board);
           setBoardSettings({
-            sendSlackUpdates:
-              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ??
-              true,
+            sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
           });
         }
 
@@ -729,12 +649,12 @@ export default function BoardPage({
 
   // Adapter: bridge component Note -> existing update handler
   const handleUpdateNoteFromComponent = async (updatedNote: Note) => {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === updatedNote.id);
-      if (!currentNote) return;
+    // Find the note to get its board ID for all notes view
+    const currentNote = notes.find((n) => n.id === updatedNote.id);
+    if (!currentNote) return;
 
-      // OPTIMISTIC UPDATE: Update UI immediately
-      setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
+    // OPTIMISTIC UPDATE: Update UI immediately
+    setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
   const handleAddNote = async (targetBoardId?: string) => {
@@ -749,8 +669,7 @@ export default function BoardPage({
     }
 
     try {
-      const actualTargetBoardId =
-        boardId === "all-notes" ? targetBoardId : boardId;
+      const actualTargetBoardId = boardId === "all-notes" ? targetBoardId : boardId;
       const isAllNotesView = boardId === "all-notes";
 
       const response = await fetch(
@@ -825,21 +744,17 @@ export default function BoardPage({
 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
-      const archivedNote = { ...currentNote, done: true };
-      setNotes(notes.map((n) => (n.id === noteId ? archivedNote : n)));
+      setNotes(notes.filter((n) => n.id !== noteId));
 
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ done: true }),
-        }
-      );
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: true }),
+      });
 
       if (!response.ok) {
         // Revert on error
-        setNotes(notes.map((n) => (n.id === noteId ? currentNote : n)));
+        setNotes([...notes, currentNote]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
@@ -850,9 +765,33 @@ export default function BoardPage({
       console.error("Error archiving note:", error);
     }
   };
+  const handleUnarchiveNote = async (noteId: string) => {
+    try {
+      const currentNote = notes.find((n) => n.id === noteId);
+      if (!currentNote) return;
 
-  const handleSignOut = async () => {
-    await signOut();
+      const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
+      if (!targetBoardId) return;
+
+      setNotes(notes.filter((n) => n.id !== noteId));
+
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ done: false }),
+      });
+
+      if (!response.ok) {
+        setNotes([...notes, currentNote]);
+        setErrorDialog({
+          open: true,
+          title: "Unarchive Failed",
+          description: "Failed to unarchive note. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error unarchiving note:", error);
+    }
   };
 
   const handleAddBoard = async (e: React.FormEvent) => {
@@ -897,9 +836,7 @@ export default function BoardPage({
     }
   };
 
-  const handleUpdateBoardSettings = async (settings: {
-    sendSlackUpdates: boolean;
-  }) => {
+  const handleUpdateBoardSettings = async (settings: { sendSlackUpdates: boolean }) => {
     try {
       const response = await fetch(`/api/boards/${boardId}`, {
         method: "PUT",
@@ -932,14 +869,11 @@ export default function BoardPage({
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <div className="bg-card dark:bg-zinc-900 border-b border-border dark:border-zinc-800 shadow-sm">
+      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:space-x-3 w-full sm:w-auto">
             {/* Company Name */}
-            <Link
-              href="/dashboard"
-              className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4"
-            >
+            <Link href="/dashboard" className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4">
               <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
                 Gumboard
                 <BetaBadge />
@@ -950,7 +884,7 @@ export default function BoardPage({
             <div className="relative board-dropdown flex-1 sm:flex-none">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center justify-between border border-border dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer w-full sm:w-auto"
+                className="flex items-center justify-between border border-gray-200 dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer w-full sm:w-auto"
               >
                 <div>
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
@@ -969,7 +903,7 @@ export default function BoardPage({
               </Button>
 
               {showBoardDropdown && (
-                <div className="fixed sm:absolute left-0 mt-2 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
+                <div className="fixed sm:absolute left-0 mt-2 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-gray-200 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
                   <div className="py-1">
                     {/* All Notes Option */}
                     <Link
@@ -1004,7 +938,7 @@ export default function BoardPage({
                     </Link>
 
                     {allBoards.length > 0 && (
-                      <div className="border-t border-border dark:border-zinc-800 my-1"></div>
+                      <div className="border-t border-gray-200 dark:border-zinc-800 my-1"></div>
                     )}
                     {allBoards.map((b) => (
                       <Link
@@ -1026,7 +960,7 @@ export default function BoardPage({
                       </Link>
                     ))}
                     {allBoards.length > 0 && (
-                      <div className="border-t border-border dark:border-zinc-800 my-1"></div>
+                      <div className="border-t border-gray-200 dark:border-zinc-800 my-1"></div>
                     )}
                     <Button
                       onClick={() => {
@@ -1043,8 +977,7 @@ export default function BoardPage({
                         onClick={() => {
                           setBoardSettings({
                             sendSlackUpdates:
-                              (board as { sendSlackUpdates?: boolean })
-                                ?.sendSlackUpdates ?? true,
+                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
                           });
                           setBoardSettingsDialog(true);
                           setShowBoardDropdown(false);
@@ -1096,7 +1029,7 @@ export default function BoardPage({
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                 }}
-                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-border dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-gray-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
               {searchTerm && (
                 <Button
@@ -1122,56 +1055,13 @@ export default function BoardPage({
               }}
               className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
             >
-              <Pencil className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
+              <span className="hidden sm:inline">Add Note</span>
             </Button>
 
             {/* User Dropdown */}
-            <div className="relative user-dropdown">
-              <Button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center space-x-2 text-foreground dark:text-gray-200 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 dark:focus:ring-offset-gray-800 rounded-md px-2 py-1"
-              >
-                <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {user?.name
-                      ? user.name.charAt(0).toUpperCase()
-                      : user?.email?.charAt(0).toUpperCase() || "U"}
-                  </span>
-                </div>
-                <span className="text-sm font-medium hidden md:inline">
-                  {user?.name?.split(" ")[0] || "User"}
-                </span>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-gray-400 transition-transform ${
-                    showUserDropdown ? "rotate-180" : ""
-                  }`}
-                />
-              </Button>
-
-              {showUserDropdown && (
-                <div className="absolute right-0 mt-2 min-w-fit bg-white dark:bg-gray-800 rounded-md shadow-lg border border-border dark:border-gray-600 z-50">
-                  <div className="py-1">
-                    <div className="px-4 py-2 text-sm text-muted-foreground dark:text-gray-400 border-b border-border dark:border-gray-600">
-                      {user?.email}
-                    </div>
-                    <Link
-                      href="/settings"
-                      className="flex items-center px-4 py-2 text-sm text-foreground dark:text-gray-200 hover:bg-accent dark:hover:bg-gray-700"
-                      onClick={() => setShowUserDropdown(false)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                    <Button
-                      onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-gray-200 hover:bg-accent dark:hover:bg-gray-700"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </div>
-              )}
+            <div className="mr-3">
+              <ProfileDropdown user={user} />
             </div>
           </div>
         </div>
@@ -1197,6 +1087,7 @@ export default function BoardPage({
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
               style={{
@@ -1206,8 +1097,7 @@ export default function BoardPage({
                 width: note.width,
                 height: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor:
-                  resolvedTheme === "dark" ? "#18181B" : note.color,
+                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
               }}
             />
           ))}
@@ -1216,10 +1106,7 @@ export default function BoardPage({
         {/* Empty State */}
         {filteredNotes.length === 0 &&
           notes.length > 0 &&
-          (searchTerm ||
-            dateRange.startDate ||
-            dateRange.endDate ||
-            selectedAuthor) && (
+          (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-gray-500 dark:text-gray-400">
               <Search className="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500" />
               <div className="text-xl mb-2">No notes found</div>
@@ -1228,21 +1115,14 @@ export default function BoardPage({
                 {searchTerm && <div>Search: &quot;{searchTerm}&quot;</div>}
                 {selectedAuthor && (
                   <div>
-                    Author:{" "}
-                    {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name ||
-                      "Unknown"}
+                    Author: {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name || "Unknown"}
                   </div>
                 )}
                 {(dateRange.startDate || dateRange.endDate) && (
                   <div>
                     Date range:{" "}
-                    {dateRange.startDate
-                      ? dateRange.startDate.toLocaleDateString()
-                      : "..."}{" "}
-                    -{" "}
-                    {dateRange.endDate
-                      ? dateRange.endDate.toLocaleDateString()
-                      : "..."}
+                    {dateRange.startDate ? dateRange.startDate.toLocaleDateString() : "..."} -{" "}
+                    {dateRange.endDate ? dateRange.endDate.toLocaleDateString() : "..."}
                   </div>
                 )}
               </div>
@@ -1265,9 +1145,7 @@ export default function BoardPage({
         {notes.length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
             <div className="text-xl mb-2">No notes yet</div>
-            <div className="text-sm mb-4">
-              Click &ldquo;Add Note&rdquo; to get started
-            </div>
+            <div className="text-sm mb-4">Click &ldquo;Add Note&rdquo; to get started</div>
             <Button
               onClick={() => {
                 if (boardId === "all-notes" && allBoards.length > 0) {
@@ -1285,7 +1163,7 @@ export default function BoardPage({
               }}
               className="flex items-center space-x-2 cursor-pointer"
             >
-              <Pencil className="w-4 h-4" />
+              <Plus className="w-4 h-4" />
               <span>Add Your First Note</span>
             </Button>
           </div>
@@ -1302,7 +1180,7 @@ export default function BoardPage({
           }}
         >
           <div
-            className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-border dark:border-zinc-800"
+            className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-gray-200 dark:border-zinc-800"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
@@ -1320,7 +1198,7 @@ export default function BoardPage({
                     onChange={(e) => setNewBoardName(e.target.value)}
                     placeholder="Enter board name"
                     required
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
+                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
                   />
                 </div>
                 <div>
@@ -1332,7 +1210,7 @@ export default function BoardPage({
                     value={newBoardDescription}
                     onChange={(e) => setNewBoardDescription(e.target.value)}
                     placeholder="Enter board description"
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700"
+                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
                   />
                 </div>
               </div>
@@ -1345,7 +1223,7 @@ export default function BoardPage({
                     setNewBoardName("");
                     setNewBoardDescription("");
                   }}
-                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
                   Cancel
                 </Button>
@@ -1365,18 +1243,17 @@ export default function BoardPage({
         open={deleteNoteDialog.open}
         onOpenChange={(open) => setDeleteNoteDialog({ open, noteId: "" })}
       >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Delete note
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete this note? This action cannot be
-              undone.
+              Are you sure you want to delete this note? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -1391,11 +1268,9 @@ export default function BoardPage({
 
       <AlertDialog
         open={errorDialog.open}
-        onOpenChange={(open) =>
-          setErrorDialog({ open, title: "", description: "" })
-        }
+        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
       >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               {errorDialog.title}
@@ -1406,9 +1281,7 @@ export default function BoardPage({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
-              onClick={() =>
-                setErrorDialog({ open: false, title: "", description: "" })
-              }
+              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
               className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               OK
@@ -1417,11 +1290,8 @@ export default function BoardPage({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={boardSettingsDialog}
-        onOpenChange={setBoardSettingsDialog}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+      <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Board settings
@@ -1448,16 +1318,13 @@ export default function BoardPage({
               </label>
             </div>
             <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-              When enabled, note updates will be sent to your
-              organization&apos;s Slack channel
+              When enabled, note updates will be sent to your organization&apos;s Slack channel
             </p>
           </div>
 
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => handleUpdateBoardSettings(boardSettings)}
-            >
+            <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>
               Save settings
             </AlertDialogAction>
           </AlertDialogFooter>

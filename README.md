@@ -18,16 +18,19 @@ npm install
 ### Database Setup
 
 1. Create your environment variables file:
+
 ```bash
-cp env.example .env.local
+cp env.example .env
 ```
 
 2. Start the PostgreSQL database using Docker:
+
 ```bash
 npm run docker:up
 ```
 
 3. Push the database schema:
+
 ```bash
 npm run db:push
 ```
@@ -77,7 +80,6 @@ To enable login with Google, follow these steps:
    http://localhost:3000/api/auth/callback/google
    ```
    *(Replace with your production URL if deploying)*
-
 ---
 
 ### 2. Add Environment Variables

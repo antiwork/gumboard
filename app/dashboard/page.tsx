@@ -4,30 +4,14 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-import {
-  Card,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import {
-  Plus,
-  Trash2,
-  Settings,
-  LogOut,
-  ChevronDown,
-  Grid3x3,
-  Copy,
-  Edit3,
-  Archive,
-} from "lucide-react";
+import { Plus, Trash2, Grid3x3, Copy, Edit3, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
 import {
@@ -41,7 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { User, Board } from "@/components/note";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -49,7 +33,15 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -71,7 +63,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
   const [editingBoard, setEditingBoard] = useState<Board | null>(null);
-  const [showUserDropdown, setShowUserDropdown] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
     open: boolean;
     boardId: string;
@@ -89,39 +80,13 @@ export default function Dashboard() {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
-      description: ""
-    }
-  })
+      description: "",
+    },
+  });
 
   useEffect(() => {
     fetchUserAndBoards();
   }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showUserDropdown) {
-        const target = event.target as Element;
-        if (!target.closest(".user-dropdown")) {
-          setShowUserDropdown(false);
-        }
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (showUserDropdown) {
-          setShowUserDropdown(false);
-        }
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [showUserDropdown]);
 
   const fetchUserAndBoards = async () => {
     try {
@@ -148,7 +113,6 @@ export default function Dashboard() {
       if (boardsResponse.ok) {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
-
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -158,7 +122,7 @@ export default function Dashboard() {
   };
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
-    const {name, description} = values;
+    const { name, description } = values;
     try {
       if (editingBoard) {
         const response = await fetch(`/api/boards/${editingBoard.id}`, {
@@ -169,8 +133,8 @@ export default function Dashboard() {
           body: JSON.stringify({
             name,
             description,
-          })
-        })
+          }),
+        });
 
         if (response.ok) {
           const { board } = await response.json();
@@ -218,7 +182,7 @@ export default function Dashboard() {
         open: true,
         title: editingBoard ? "Failed to update board" : "Failed to create board",
         description: editingBoard ? "Failed to update board" : "Failed to create board",
-      })
+      });
     }
   };
 
@@ -276,9 +240,7 @@ export default function Dashboard() {
       });
 
       if (response.ok) {
-        setBoards(boards.map((board) => 
-          board.id === boardId ? { ...board, isPublic } : board
-        ));
+        setBoards(boards.map((board) => (board.id === boardId ? { ...board, isPublic } : board)));
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -304,16 +266,12 @@ export default function Dashboard() {
   };
 
   const handleOpenChange = (open: boolean) => {
-    setIsAddBoardDialogOpen(open)
+    setIsAddBoardDialogOpen(open);
     // Reset form and editing state when the dialog closes
     if (!open) {
       form.reset();
       setEditingBoard(null);
     }
-  }
-
-  const handleSignOut = async () => {
-    await signOut();
   };
 
   if (loading) {
@@ -322,7 +280,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-950">
-      <nav className="bg-card dark:bg-zinc-900 border-b border-border dark:border-zinc-800 shadow-sm">
+      <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
         <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -337,57 +295,15 @@ export default function Dashboard() {
               onClick={() => {
                 form.reset({ name: "", description: "" });
                 setIsAddBoardDialogOpen(true);
-                setEditingBoard(null); 
+                setEditingBoard(null);
               }}
               className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Board</span>
             </Button>
-            <div className="relative user-dropdown">
-              <Button
-                onClick={() => setShowUserDropdown(!showUserDropdown)}
-                className="flex items-center space-x-2 text-foreground hover:text-foreground focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded-md px-2 sm:px-3 py-2 dark:text-zinc-100"
-              >
-                <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center">
-                  <span className="text-sm font-medium text-white">
-                    {user?.name
-                      ? user.name.charAt(0).toUpperCase()
-                      : user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
-                <span className="text-sm font-medium hidden sm:inline">
-                  {user?.name?.split(" ")[0] || "User"}
-                </span>
-                <ChevronDown className={`w-4 h-4 ml-1 hidden sm:inline transition-all duration-200 ${showUserDropdown ? "rotate-180" : ""}`}  />
-              </Button>
-              {showUserDropdown && (
-                <div className="absolute right-0 mt-2 w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-border dark:border-zinc-800 z-50">
-                  <div className="py-1">
-                    <div className="px-4 py-2 text-sm text-muted-foreground dark:text-zinc-400 border-b dark:border-zinc-800 break-all overflow-hidden">
-                      <span className="block truncate" title={user?.email}>
-                        {user?.email}
-                      </span>
-                    </div>
-                    <Link
-                      href="/settings"
-                      className="flex items-center px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                      onClick={() => setShowUserDropdown(false)}
-                    >
-                      <Settings className="w-4 h-4 mr-2" />
-                      Settings
-                    </Link>
-                    <Button
-                      onClick={handleSignOut}
-                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                    >
-                      <LogOut className="w-4 h-4 mr-2" />
-                      Sign Out
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
+
+            <ProfileDropdown user={user} />
           </div>
         </div>
       </nav>
@@ -404,33 +320,31 @@ export default function Dashboard() {
             </div>
           </div>
         )}
-        
+
         <Dialog open={isAddBoardDialogOpen} onOpenChange={handleOpenChange}>
           <DialogContent className="bg-white dark:bg-zinc-950 border border-zinc-800 dark:border-zinc-800 sm:max-w-[425px] ">
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
                 {editingBoard ? "Edit Board" : "Create New Board"}
               </DialogTitle>
-              <DialogDescription>
+              <DialogDescription className="text-muted-foreground dark:text-zinc-400">
                 {editingBoard
                   ? "Update the board's name and description."
                   : "Fill out the details to create a new board."}
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
-              <form 
-                className="space-y-4"
-                onSubmit={form.handleSubmit(handleAddBoard)}>
-                  <FormField
+              <form className="space-y-4" onSubmit={form.handleSubmit(handleAddBoard)}>
+                <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="text-sm font-medium text-zinc-800 dark:text-zinc-200 ">Board Name</FormLabel>
+                      <FormLabel>Board Name</FormLabel>
                       <FormControl>
                         <Input
                           placeholder="Enter board name"
-                          className="border border-zinc-200 dark:border-zinc-800"
+                          className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
                           autoFocus
                           {...field}
                         />
@@ -448,7 +362,7 @@ export default function Dashboard() {
                       <FormControl>
                         <Input
                           placeholder="Enter board description"
-                          className="border border-zinc-200 dark:border-zinc-800"
+                          className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
                           {...field}
                         />
                       </FormControl>
@@ -511,19 +425,18 @@ export default function Dashboard() {
 
             {boards.map((board) => (
               <Link href={`/boards/${board.id}`} key={board.id}>
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer dark:bg-zinc-900 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
-                  <CardHeader className="pb-3">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
-                            {board.name}
-                          </CardTitle>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                            {board._count.notes}{" "}
-                            {board._count.notes === 1 ? "note" : "notes"}
-                          </span>
-                        </div>
-                        {(user?.id === board.createdBy || user?.isAdmin) && (
+                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
+                  <CardHeader className="flex flex-col h-full">
+                    <div className="w-full">
+                      <div className="flex items-center justify-between mb-1">
+                        <CardTitle className="text-lg  w-3/4 dark:text-zinc-100">
+                          {board.name}
+                        </CardTitle>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                        </span>
+                      </div>
+                      {(user?.id === board.createdBy || user?.isAdmin) && (
                         <div className="flex justify-end items-center space-x-1">
                           <Button
                             onClick={(e) => {
@@ -533,9 +446,7 @@ export default function Dashboard() {
                             }}
                             className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-blue-500 dark:hover:text-blue-400 p-1 rounded transition-opacity"
                             title={
-                              user?.id === board.createdBy
-                                ? "Edit board"
-                                : "Edit board (Admin)"
+                              user?.id === board.createdBy ? "Edit board" : "Edit board (Admin)"
                             }
                           >
                             <Edit3 className="w-4 h-4" />
@@ -548,58 +459,58 @@ export default function Dashboard() {
                             }}
                             className="md:opacity-0 md:group-hover:opacity-100 text-muted-foreground dark:text-zinc-400 hover:text-red-500 dark:hover:text-red-400 p-1 rounded transition-opacity"
                             title={
-                              user?.id === board.createdBy
-                                ? "Delete board"
-                                : "Delete board (Admin)"
+                              user?.id === board.createdBy ? "Delete board" : "Delete board (Admin)"
                             }
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </div>
                       )}
-                        {board.description && (
-                          <CardDescription className="mt-1 dark:text-zinc-400">
-                            {board.description}
-                          </CardDescription>
-                        )}
-                        
-                        <div className="mt-3 flex items-center justify-between">
-                          <div className="flex items-center space-x-2" onClick={(e) => e.preventDefault()}>
-                            <Switch
-                              checked={board.isPublic}
-                              onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
-                              disabled={user?.id !== board.createdBy && !user?.isAdmin}
-                            />
-                            <span className="text-xs text-muted-foreground dark:text-zinc-400">
-                              {board.isPublic ? "Public" : "Private"}
-                            </span>
-                          </div>
-                          
-                          {board.isPublic && (
-                            <Button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                handleCopyPublicUrl(board.id);
-                              }}
-                              className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                              title="Copy public link"
-                            >
-                              {copiedBoardId === board.id ? (
-                                <>
-                                  <span>✓</span>
-                                  <span>Copied!</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy className="w-3 h-3" />
-                                  <span>Copy link</span>
-                                </>
-                              )}
-                            </Button>
+                      {board.description && (
+                        <CardDescription className="mt-1 dark:text-zinc-400 line-clamp-2 text-sm">
+                          {board.description}
+                        </CardDescription>
+                      )}
+                    </div>
+                    <div className="mt-3 w-full flex items-center justify-between">
+                      <div
+                        className="flex items-center space-x-2"
+                        onClick={(e) => e.preventDefault()}
+                      >
+                        <Switch
+                          checked={board.isPublic}
+                          onCheckedChange={(checked) => handleTogglePublic(board.id, checked)}
+                          disabled={user?.id !== board.createdBy && !user?.isAdmin}
+                        />
+                        <span className="text-xs text-muted-foreground dark:text-zinc-400">
+                          {board.isPublic ? "Public" : "Private"}
+                        </span>
+                      </div>
+
+                      {board.isPublic && (
+                        <Button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleCopyPublicUrl(board.id);
+                          }}
+                          className="flex items-center space-x-1 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
+                          title="Copy public link"
+                        >
+                          {copiedBoardId === board.id ? (
+                            <>
+                              <span>✓</span>
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3 h-3" />
+                              <span>Copy link</span>
+                            </>
                           )}
-                        </div>
-                      </div>       
+                        </Button>
+                      )}
+                    </div>
                   </CardHeader>
                 </Card>
               </Link>
@@ -620,7 +531,7 @@ export default function Dashboard() {
             <Button
               onClick={() => {
                 setIsAddBoardDialogOpen(true);
-                form.reset({name: "", description: ""});
+                form.reset({ name: "", description: "" });
               }}
               className="dark:bg-blue-500 dark:hover:bg-blue-600"
             >
@@ -630,18 +541,22 @@ export default function Dashboard() {
         )}
       </div>
 
-      <AlertDialog open={deleteConfirmDialog.open} onOpenChange={(open) => setDeleteConfirmDialog({ open, boardId: "", boardName: "" })}>
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+      <AlertDialog
+        open={deleteConfirmDialog.open}
+        onOpenChange={(open) => setDeleteConfirmDialog({ open, boardId: "", boardName: "" })}
+      >
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Delete board
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete &quot;{deleteConfirmDialog.boardName}&quot;? This action cannot be undone.
+              Are you sure you want to delete &quot;{deleteConfirmDialog.boardName}&quot;? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-border dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -654,8 +569,11 @@ export default function Dashboard() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-border dark:border-zinc-800">
+      <AlertDialog
+        open={errorDialog.open}
+        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
+      >
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               {errorDialog.title}

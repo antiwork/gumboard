@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useState, useEffect, useRef } from "react";
+import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -11,13 +12,14 @@ import {
   ChecklistItem,
 } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
-import { Trash2, Plus, Archive } from "lucide-react";
+import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
 
 // Core domain types
 export interface User {
   id: string;
   name: string | null;
+  image?: string | null;
   email: string;
   isAdmin?: boolean;
 }
@@ -61,6 +63,7 @@ interface NoteProps {
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
+  onUnarchive?: (noteId: string) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -74,6 +77,7 @@ export function Note({
   onUpdate,
   onDelete,
   onArchive,
+  onUnarchive,
   readonly = false,
   showBoardName = false,
   className,
@@ -94,8 +98,7 @@ export function Note({
   const [newItemContent, setNewItemContent] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
-  const canEdit =
-    !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+  const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
   useEffect(() => {
     if (addingChecklistItem === note.id && canEdit) {
@@ -112,12 +115,8 @@ export function Note({
       );
 
       const sortedItems = [
-        ...updatedItems
-          .filter((item) => !item.checked)
-          .sort((a, b) => a.order - b.order),
-        ...updatedItems
-          .filter((item) => item.checked)
-          .sort((a, b) => a.order - b.order),
+        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
+        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
       ];
 
       const optimisticNote = {
@@ -159,9 +158,7 @@ export function Note({
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
-      const updatedItems = note.checklistItems.filter(
-        (item) => item.id !== itemId
-      );
+      const updatedItems = note.checklistItems.filter((item) => item.id !== itemId);
 
       const optimisticNote = {
         ...note,
@@ -171,18 +168,15 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: updatedItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: updatedItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -213,18 +207,15 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: updatedItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: updatedItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -251,9 +242,7 @@ export function Note({
         item.id === itemId ? { ...item, content: firstHalf } : item
       );
 
-      const currentItem = note.checklistItems.find(
-        (item) => item.id === itemId
-      );
+      const currentItem = note.checklistItems.find((item) => item.id === itemId);
       const currentOrder = currentItem?.order || 0;
 
       const newItem = {
@@ -263,9 +252,7 @@ export function Note({
         order: currentOrder + 0.5,
       };
 
-      const allItems = [...updatedItems, newItem].sort(
-        (a, b) => a.order - b.order
-      );
+      const allItems = [...updatedItems, newItem].sort((a, b) => a.order - b.order);
 
       const optimisticNote = {
         ...note,
@@ -275,16 +262,13 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              checklistItems: allItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            checklistItems: allItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -318,18 +302,15 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: [...(note.checklistItems || []), newItem],
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: [...(note.checklistItems || []), newItem],
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -380,11 +361,7 @@ export function Note({
     handleStopEditItem();
   };
 
-  const handleSplitItem = (
-    itemId: string,
-    content: string,
-    cursorPosition: number
-  ) => {
+  const handleSplitItem = (itemId: string, content: string, cursorPosition: number) => {
     handleSplitChecklistItem(itemId, content, cursorPosition);
     handleStopEditItem();
   };
@@ -420,7 +397,7 @@ export function Note({
         ...style,
       }}
     >
-      <div className="flex items-start justify-between mb-4 flex-shrink-0">
+      <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
             <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
@@ -431,15 +408,16 @@ export function Note({
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate max-w-20">
-              {note.user.name
-                ? note.user.name.split(" ")[0]
-                : note.user.email.split("@")[0]}
+              {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
               {showBoardName && note.board && (
-                <span className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20">
+                <Link
+                  href={`/boards/${note.board.id}`}
+                  className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
+                >
                   {note.board.name}
-                </span>
+                </Link>
               )}
             </div>
           </div>
@@ -474,6 +452,22 @@ export function Note({
                 title="Archive note"
               >
                 <Archive className="w-3 h-3" />
+              </Button>
+            </div>
+          )}
+          {canEdit && onUnarchive && (
+            <div className="flex items-center">
+              <Button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onUnarchive(note.id);
+                }}
+                className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
+                variant="ghost"
+                size="icon"
+                title="Unarchive note"
+              >
+                <ArchiveRestore className="w-3 h-3" />
               </Button>
             </div>
           )}
@@ -513,9 +507,7 @@ export function Note({
                 onDelete={handleDeleteItem}
                 onSplit={handleSplitItem}
                 isEditing={editingItem === item.id}
-                editContent={
-                  editingItem === item.id ? editingItemContent : undefined
-                }
+                editContent={editingItem === item.id ? editingItemContent : undefined}
                 onEditContentChange={setEditingItemContent}
                 onStartEdit={handleStartEditItem}
                 onStopEdit={handleStopEditItem}
@@ -526,10 +518,7 @@ export function Note({
 
             {/* Add New Item Input */}
             {addingItem && canEdit && (
-              <form
-                onSubmit={handleSubmitNewItem}
-                className="flex items-center gap-3"
-              >
+              <form onSubmit={handleSubmitNewItem} className="flex items-center gap-3">
                 <Checkbox
                   disabled
                   className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
@@ -566,34 +555,28 @@ export function Note({
             )}
 
             {/* Content as text if no checklist items */}
-            {(!note.checklistItems || note.checklistItems.length === 0) &&
-              !isEditing && (
-                <div
-                  className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
-                  onClick={handleStartEdit}
-                >
-                  {note.content || ""}
-                </div>
-              )}
+            {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
+              <div
+                className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
+                onClick={handleStartEdit}
+              >
+                {note.content || ""}
+              </div>
+            )}
           </div>
 
           {/* Add Item Button */}
           {canEdit && (
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => {
-                if (
-                  addingItem &&
-                  newItemInputRef.current &&
-                  newItemContent.length === 0
-                ) {
+                if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
                   newItemInputRef.current.focus();
                 } else {
                   setAddingItem(true);
                 }
               }}
-              className="mt-2 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+              className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
             >
               <Plus className="mr-2 h-4 w-4" />
               Add task

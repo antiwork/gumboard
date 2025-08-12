@@ -1,12 +1,14 @@
 name: Lint PR
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
   lint-and-build:
-    runs-on: ubuntu-latest
+    runs-on: ubicloud-standard-2
 
     steps:
       - uses: actions/checkout@v4

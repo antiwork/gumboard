@@ -75,7 +75,7 @@ export default function ProfileSettingsPage() {
   }
 
   return (
-    <Card className="p-6 bg-white dark:bg-black border border-border dark:border-zinc-800">
+    <Card className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
       <div className="space-y-6">
         <div>
           <h2 className="text-xl font-semibold text-foreground dark:text-zinc-100 mb-2">
@@ -88,7 +88,9 @@ export default function ProfileSettingsPage() {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name" className="text-foreground dark:text-zinc-200">Full Name</Label>
+            <Label htmlFor="name" className="text-foreground dark:text-zinc-200">
+              Full Name
+            </Label>
             <Input
               id="name"
               type="text"
@@ -100,7 +102,9 @@ export default function ProfileSettingsPage() {
           </div>
 
           <div>
-            <Label htmlFor="email" className="text-foreground dark:text-zinc-200">Email Address</Label>
+            <Label htmlFor="email" className="text-foreground dark:text-zinc-200">
+              Email Address
+            </Label>
             <div className="relative mt-1">
               <Input
                 id="email"
@@ -114,7 +118,7 @@ export default function ProfileSettingsPage() {
           </div>
         </div>
 
-        <div className="pt-4 border-t border-border dark:border-zinc-800">
+        <div className="pt-4 border-t border-gray-200 dark:border-zinc-800">
           <Button
             onClick={handleSaveProfile}
             disabled={
