@@ -7,6 +7,7 @@ import { StickyNotesDemo } from "@/components/sticky-notes-demo";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import Image from "next/image";
 import { BetaBadge } from "@/components/ui/beta-badge";
+import { Header } from "@/components/header";
 
 export default async function HomePage() {
   const session = await auth();
@@ -17,6 +18,7 @@ export default async function HomePage() {
 
   return (
     <div className="flex min-h-[100dvh] flex-col bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100">
+      <Header user={null} />
       <main className="flex-1">
         <section className="w-full py-12 md:py-15">
           <div className="container mx-auto px-4 md:px-6">

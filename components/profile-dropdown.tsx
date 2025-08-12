@@ -1,7 +1,7 @@
 import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { LogOut, Settings } from "lucide-react";
-
+import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "./note";
@@ -61,7 +61,9 @@ export function ProfileDropdown({ user }: Props) {
     </Popover>
   ) : (
     <Link href="/auth/signin" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
-      Sign In
+      <Button className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600">
+        Sign In
+      </Button>
     </Link>
   );
 }
