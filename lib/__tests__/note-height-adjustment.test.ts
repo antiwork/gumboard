@@ -1,6 +1,5 @@
 import type { Note as NoteType, User, Board } from "../../components/note";
 
-// Mock data for testing
 const mockUser: User = {
   id: "user-1",
   name: "Test User",
@@ -28,15 +27,11 @@ const mockNote: NoteType = {
 
 describe("Note Height Adjustment Tests", () => {
   describe("Basic Height Adjustment Functionality", () => {
-    // Test 1: Verifies that short content doesn't trigger unnecessary height adjustments
-    // This ensures the UI remains clean and compact for simple notes
     it("should handle short content without height adjustment", () => {
       expect(mockNote.content.length).toBeLessThan(50);
       expect(mockNote.checklistItems).toHaveLength(0);
     });
 
-    // Test 2: Verifies that long content triggers height adjustment
-    // This is the core functionality - notes should expand to fit their content
     it("should handle long content that requires height adjustment", () => {
       const longContentNote: NoteType = {
         ...mockNote,
@@ -48,8 +43,6 @@ describe("Note Height Adjustment Tests", () => {
       expect(longContentNote.content).toContain("multiple sentences");
     });
 
-    // Test 3: Verifies that multi-line content with explicit line breaks is handled correctly
-    // This tests the specific case where users manually add line breaks, which should be preserved
     it("should handle multi-line content with explicit line breaks", () => {
       const multiLineNote: NoteType = {
         ...mockNote,
@@ -63,8 +56,6 @@ describe("Note Height Adjustment Tests", () => {
   });
 
   describe("Checklist Item Height Adjustment", () => {
-    // Test 4: Verifies that notes with checklist items adjust height appropriately
-    // This tests the combined height calculation of note content + checklist items
     it("should handle notes with checklist items", () => {
       const noteWithChecklistItems: NoteType = {
         ...mockNote,
@@ -90,8 +81,6 @@ describe("Note Height Adjustment Tests", () => {
       expect(noteWithChecklistItems.checklistItems![1].content.length).toBeGreaterThan(50);
     });
 
-    // Test 5: Verifies that checklist items with varying content lengths are handled correctly
-    // This tests the edge case where some items are very short and others are very long
     it("should handle checklist items with varying content lengths", () => {
       const mixedChecklistNote: NoteType = {
         ...mockNote,
@@ -130,8 +119,6 @@ describe("Note Height Adjustment Tests", () => {
   });
 
   describe("Edge Cases and Boundary Conditions", () => {
-    // Test 6: Verifies that empty content is handled gracefully
-    // This prevents UI issues when notes have no content
     it("should handle empty content", () => {
       const emptyNote: NoteType = {
         ...mockNote,
@@ -142,8 +129,6 @@ describe("Note Height Adjustment Tests", () => {
       expect(emptyNote.content.length).toBe(0);
     });
 
-    // Test 7: Verifies that content with only whitespace is handled correctly
-    // This tests the edge case where users might accidentally add only spaces/tabs
     it("should handle content with only whitespace", () => {
       const whitespaceNote: NoteType = {
         ...mockNote,
@@ -155,8 +140,6 @@ describe("Note Height Adjustment Tests", () => {
       expect(whitespaceNote.content.trim()).toBe("");
     });
 
-    // Test 8: Verifies that extremely long content doesn't break the system
-    // This tests the upper boundary of what the height adjustment system can handle
     it("should handle extremely long content", () => {
       const extremelyLongNote: NoteType = {
         ...mockNote,
@@ -171,8 +154,6 @@ describe("Note Height Adjustment Tests", () => {
   });
 
   describe("Auto-Resize Functionality", () => {
-    // Test 9: Verifies that the auto-resize functionality is properly implemented
-    // This is the core test that ensures the height adjustment system works
     it("should verify auto-resize function exists and works correctly", () => {
       const autoResizeNote: NoteType = {
         ...mockNote,
@@ -185,8 +166,6 @@ describe("Note Height Adjustment Tests", () => {
       expect(autoResizeNote.content.length).toBeGreaterThan(150);
     });
 
-    // Test 10: Verifies that dynamic content changes trigger height adjustments
-    // This tests the real-world scenario where users edit notes and content length changes
     it("should handle dynamic content changes that require height adjustment", () => {
       const dynamicNote: NoteType = {
         ...mockNote,
@@ -207,7 +186,6 @@ describe("Note Height Adjustment Tests", () => {
   });
 });
 
-// Export mock data for use in other tests
 export const mockNoteData = {
   mockNote,
 };
