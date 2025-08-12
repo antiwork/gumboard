@@ -40,7 +40,7 @@ describe("ChecklistItem Type Tests", () => {
 
   it("should handle long text content properly", () => {
     expect(longTextItem.id).toBe("test-item-2");
-    expect(longTextItem.content).toContain("extremely long task description");
+    expect(longTextItem.content).toContain("comprehensive user onboarding flow");
     expect(longTextItem.content.length).toBeGreaterThan(100);
     expect(longTextItem.checked).toBe(false);
     expect(longTextItem.order).toBe(1);
