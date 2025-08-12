@@ -303,7 +303,7 @@ test.describe("Note Management", () => {
 
       await page.click('button:has-text("Add task")');
 
-      const newItemInput = page.locator('input[placeholder="Add new item..."]');
+      const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
       await expect(newItemInput).toBeVisible();
       await expect(newItemInput).toBeFocused();
 
