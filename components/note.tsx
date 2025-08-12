@@ -259,7 +259,7 @@ export function Note({
           },
           body: JSON.stringify({
             checklistItems: newItems,
-            done: allItemsChecked,
+            archivedAt: allItemsChecked ? new Date().toISOString() : null,
           }),
         });
 

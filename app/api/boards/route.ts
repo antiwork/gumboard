@@ -12,13 +12,13 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { 
-        organizationId: true 
-      }
-    })
+      select: {
+        organizationId: true,
+      },
+    });
 
     if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+      return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
     // Get all boards for the organization
@@ -68,13 +68,13 @@ export async function POST(request: NextRequest) {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { 
-        organizationId: true 
-      }
-    })
+      select: {
+        organizationId: true,
+      },
+    });
 
     if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 })
+      return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
     // Create new board
