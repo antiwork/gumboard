@@ -15,7 +15,6 @@ import {
   Copy,
   Calendar,
   Users,
-  ExternalLink,
 } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
@@ -36,7 +35,6 @@ export type UserWithOrganization = User & {
   organization: {
     id: string;
     name: string;
-    slackWebhookUrl?: string | null;
     slackApiToken?: string | null;
     slackChannelId?: string | null;
     members: {
@@ -76,8 +74,7 @@ export default function OrganizationSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
-  const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
-  const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
+
   const [slackApiToken, setSlackApiToken] = useState("");
   const [originalSlackApiToken, setOriginalSlackApiToken] = useState("");
   const [slackChannelId, setSlackChannelId] = useState("");
@@ -122,13 +119,10 @@ export default function OrganizationSettingsPage() {
         const userData = await response.json();
         setUser(userData);
         const orgNameValue = userData.organization?.name || "";
-        const slackWebhookValue = userData.organization?.slackWebhookUrl || "";
         const slackApiTokenValue = userData.organization?.slackApiToken || "";
         const slackChannelIdValue = userData.organization?.slackChannelId || "";
         setOrgName(orgNameValue);
         setOriginalOrgName(orgNameValue);
-        setSlackWebhookUrl(slackWebhookValue);
-        setOriginalSlackWebhookUrl(slackWebhookValue);
         setSlackApiToken(slackApiTokenValue);
         setOriginalSlackApiToken(slackApiTokenValue);
         setSlackChannelId(slackChannelIdValue);
@@ -181,7 +175,6 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           name: orgName,
-          slackWebhookUrl: slackWebhookUrl,
           slackApiToken: slackApiToken,
           slackChannelId: slackChannelId,
         }),
@@ -192,7 +185,6 @@ export default function OrganizationSettingsPage() {
         setUser(updatedUser);
         // Update the original values to reflect the saved state
         setOriginalOrgName(orgName);
-        setOriginalSlackWebhookUrl(slackWebhookUrl);
         setOriginalSlackApiToken(slackApiToken);
         setOriginalSlackChannelId(slackChannelId);
       } else {
@@ -496,7 +488,7 @@ export default function OrganizationSettingsPage() {
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
               onClick={handleSaveOrganization}
-              disabled={saving || (orgName === originalOrgName && slackWebhookUrl === originalSlackWebhookUrl && slackApiToken === originalSlackApiToken && slackChannelId === originalSlackChannelId) || !user?.isAdmin}
+              disabled={saving || (orgName === originalOrgName && slackApiToken === originalSlackApiToken && slackChannelId === originalSlackChannelId) || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
@@ -565,48 +557,12 @@ export default function OrganizationSettingsPage() {
             </div>
           </div>
 
-          <div className="space-y-4 p-4 bg-amber-50 dark:bg-amber-950/20 rounded-lg border border-amber-200 dark:border-amber-800">
-            <div>
-              <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                Webhook Integration (Legacy)
-              </h4>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Fallback option if bot token is not configured.
-              </p>
-            </div>
 
-            <div>
-              <Label htmlFor="slackWebhookUrl" className="text-zinc-800 dark:text-zinc-200">
-                Slack Webhook URL
-              </Label>
-              <Input
-                id="slackWebhookUrl"
-                type="url"
-                value={slackWebhookUrl}
-                onChange={(e) => setSlackWebhookUrl(e.target.value)}
-                placeholder="https://hooks.slack.com/services/..."
-                className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                disabled={!user?.isAdmin}
-              />
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                Webhook URL from your Slack app. Limited functionality compared to bot token.{" "}
-                <a
-                  href="https://api.slack.com/apps"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                >
-                  Create Slack App
-                  <ExternalLink className="w-3 h-3 ml-1" />
-                </a>
-              </p>
-            </div>
-          </div>
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
               onClick={handleSaveOrganization}
-              disabled={saving || (slackWebhookUrl === originalSlackWebhookUrl && slackApiToken === originalSlackApiToken && slackChannelId === originalSlackChannelId) || !user?.isAdmin}
+              disabled={saving || (slackApiToken === originalSlackApiToken && slackChannelId === originalSlackChannelId) || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >

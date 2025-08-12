@@ -1,9 +1,3 @@
-interface SlackMessage {
-  text: string;
-  username?: string;
-  icon_emoji?: string;
-}
-
 interface SlackApiMessagePayload {
   channel: string;
   text: string;
@@ -100,59 +94,6 @@ export function shouldSendNotification(
   notificationDebounce.set(key, now);
   console.log(`[Slack] Allowing notification for ${key}`);
   return true;
-}
-
-export async function sendSlackMessage(
-  webhookUrl: string,
-  message: SlackMessage
-): Promise<string | null> {
-  try {
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(message),
-    });
-
-    if (!response.ok) {
-      console.error("Failed to send Slack message:", response.statusText);
-      return null;
-    }
-
-    return Date.now().toString();
-  } catch (error) {
-    console.error("Error sending Slack message:", error);
-    return null;
-  }
-}
-
-export async function updateSlackMessage(
-  webhookUrl: string,
-  originalText: string,
-  completed: boolean,
-  boardName: string,
-  userName: string
-): Promise<void> {
-  try {
-    const updatedText = completed
-      ? `:white_check_mark: ${originalText} by ${userName} in ${boardName}`
-      : `:heavy_plus_sign: ${originalText} by ${userName} in ${boardName}`;
-
-    await fetch(webhookUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        text: updatedText,
-        username: "Gumboard",
-        icon_emoji: ":clipboard:",
-      }),
-    });
-  } catch (error) {
-    console.error("Error updating Slack message:", error);
-  }
 }
 
 export function formatNoteForSlack(
@@ -326,7 +267,7 @@ export async function notifySlackForNoteChanges(
     for (const item of itemChanges.updated) {
       const checkedToggle = item.previous.checked !== item.checked;
       
-      if (checkedToggle && shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
+      if (checkedToggle) {
         const action = item.checked ? "completed" : "reopened";
         const messageText = formatTodoForSlack(item.content, boardName, userName, action);
         
@@ -355,19 +296,4 @@ export async function notifySlackForNoteChanges(
   }
 
   return result;
-}
-
-export async function sendTodoNotification(
-  webhookUrl: string,
-  todoContent: string,
-  boardName: string,
-  userName: string,
-  action: "added" | "completed"
-): Promise<string | null> {
-  const message = formatTodoForSlack(todoContent, boardName, userName, action);
-  return await sendSlackMessage(webhookUrl, {
-    text: message,
-    username: "Gumboard",
-    icon_emoji: ":clipboard:",
-  });
 }

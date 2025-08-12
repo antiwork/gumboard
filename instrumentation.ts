@@ -12,9 +12,6 @@ export function register() {
       fetch: {
         // Don't trace internal Next.js calls
         ignoreUrls: [/_next\/static/, /_next\/image/, /favicon\.ico/],
-
-        propagateContextUrls: [/hooks\.slack\.com/],
-        resourceNameTemplate: "webhook {http.method} {http.host}",
       },
     },
 

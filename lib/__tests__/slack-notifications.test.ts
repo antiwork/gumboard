@@ -303,6 +303,8 @@ describe("Slack Web API Functions", () => {
     });
 
     it("should post on unchecked toggle (reopened)", async () => {
+      await new Promise(resolve => setTimeout(resolve, 50));
+      
       const mockTs = `reopened${Date.now()}`;
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -312,10 +314,10 @@ describe("Slack Web API Functions", () => {
       const result = await notifySlackForNoteChanges({
         orgToken: "xoxb-token",
         orgChannelId: "C1234567890",
-        boardId: `board_${Date.now()}`,
+        boardId: `board_reopen_${Date.now()}`,
         boardName: testBoardName,
         sendSlackUpdates: true,
-        userId: `user_${Date.now()}`,
+        userId: `user_reopen_${Date.now()}`,
         userName: "John Doe",
         prevContent: "Note content",
         nextContent: "Note content",
@@ -346,7 +348,7 @@ describe("Slack Web API Functions", () => {
         json: async () => ({ ok: true }),
       } as Response);
 
-      const result = await notifySlackForNoteChanges({
+      await notifySlackForNoteChanges({
         orgToken: "xoxb-token",
         orgChannelId: "C1234567890",
         boardId: `board_${Date.now()}`,
@@ -378,7 +380,7 @@ describe("Slack Web API Functions", () => {
     });
 
     it("should not post for reorder-only changes", async () => {
-      const result = await notifySlackForNoteChanges({
+      await notifySlackForNoteChanges({
         orgToken: "xoxb-token",
         orgChannelId: "C1234567890",
         boardId: `board_${Date.now()}`,
@@ -407,7 +409,7 @@ describe("Slack Web API Functions", () => {
     });
 
     it("should not post for text-only changes without checked toggle", async () => {
-      const result = await notifySlackForNoteChanges({
+      await notifySlackForNoteChanges({
         orgToken: "xoxb-token",
         orgChannelId: "C1234567890",
         boardId: `board_${Date.now()}`,

@@ -29,7 +29,6 @@ test.describe("Board Settings", () => {
           organization: {
             id: "test-org",
             name: "Test Organization",
-            slackWebhookUrl: "https://hooks.slack.com/test-webhook",
             slackApiToken: "xoxb-test-token",
             slackChannelId: "C1234567890",
             members: [],
@@ -223,16 +222,6 @@ test.describe("Board Settings", () => {
           ok: true,
           ts: "1234.5678",
         }),
-      });
-    });
-
-    // Also mock webhook for fallback compatibility
-    await page.route("https://hooks.slack.com/test-webhook", async (route) => {
-      slackNotificationSent = true;
-      await route.fulfill({
-        status: 200,
-        contentType: "text/plain",
-        body: "ok",
       });
     });
 

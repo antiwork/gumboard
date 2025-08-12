@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
-  sendSlackMessage,
   sendSlackApiMessage,
   formatNoteForSlack,
   hasValidContent,
@@ -102,7 +101,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         organizationId: true,
         organization: {
           select: {
-            slackWebhookUrl: true,
             slackApiToken: true,
             slackChannelId: true,
           },
@@ -164,25 +162,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const slackMessage = formatNoteForSlack(note, board.name, user.name || user.email);
       const messageId = await sendSlackApiMessage(user.organization.slackApiToken, {
         channel: user.organization.slackChannelId,
-        text: slackMessage,
-        username: "Gumboard",
-        icon_emoji: ":clipboard:",
-      });
-
-      if (messageId) {
-        await db.note.update({
-          where: { id: note.id },
-          data: { slackMessageId: messageId },
-        });
-      }
-    }
-    else if (
-      user.organization?.slackWebhookUrl &&
-      hasValidContent(content) &&
-      shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)
-    ) {
-      const slackMessage = formatNoteForSlack(note, board.name, user.name || user.email);
-      const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
         text: slackMessage,
         username: "Gumboard",
         icon_emoji: ":clipboard:",
