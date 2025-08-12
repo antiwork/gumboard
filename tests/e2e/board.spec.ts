@@ -6,12 +6,10 @@ test.describe("Board Management", () => {
   let testOrg: TestOrganization;
 
   test.beforeEach(async ({ page, dbApi }) => {
-    // Create test data
     testUser = await dbApi.createTestUser();
     testOrg = await dbApi.createTestOrganization();
     await dbApi.connectUserToOrganization(testUser.id, testOrg.id);
 
-    // Setup all mocks
     await dbApi.setupAllMocks(page, testUser, testOrg);
   });
 
@@ -20,10 +18,8 @@ test.describe("Board Management", () => {
   });
 
   test("should verify database state when board is created", async ({ page, prisma, dbApi }) => {
-    // Arrange: Get initial state
     const initialBoardCount = await dbUtils.getBoardCount(prisma);
 
-    // Act: Create board using DatabaseAPI
     await dbApi.createBoard({
       name: "Test Board",
       description: "Test board description",
@@ -31,7 +27,6 @@ test.describe("Board Management", () => {
       organizationId: testOrg.id,
     });
 
-    // Assert: Verify database state changed
     const finalBoardCount = await dbUtils.getBoardCount(prisma);
     expect(finalBoardCount).toBe(initialBoardCount + 1);
 
@@ -41,7 +36,6 @@ test.describe("Board Management", () => {
     expect(boardInDb?.createdBy).toBe(testUser.id);
     expect(boardInDb?.organizationId).toBe(testOrg.id);
 
-    // Verify UI shows the board
     await page.goto("/dashboard");
     await page.reload();
     

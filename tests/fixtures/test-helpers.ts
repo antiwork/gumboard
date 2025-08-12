@@ -23,9 +23,7 @@ export const test = base.extend<TestFixtures>({
 
 export { expect };
 
-// Database state verification utilities
 export const dbUtils = {
-  // Check if a board exists in the database by name
   async verifyBoardExists(prisma: PrismaClient, boardName: string) {
     const board = await prisma.board.findFirst({
       where: { name: boardName },
@@ -35,7 +33,6 @@ export const dbUtils = {
     return board;
   },
 
-  // Get count of boards in database
   async getBoardCount(prisma: PrismaClient) {
     const count = await prisma.board.count();
     return count;
