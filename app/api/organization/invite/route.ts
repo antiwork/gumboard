@@ -4,7 +4,6 @@ import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 
-
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
 export async function POST(request: NextRequest) {
