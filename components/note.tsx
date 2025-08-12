@@ -99,19 +99,17 @@ export function Note({
   const [newItemContent, setNewItemContent] = useState("");
   const newItemInputRef = useRef<HTMLTextAreaElement>(null);
 
-
   const autoResizeNewItem = React.useCallback(() => {
     if (newItemInputRef.current) {
-      newItemInputRef.current.style.height = 'auto';
+      newItemInputRef.current.style.height = "auto";
       newItemInputRef.current.style.height = `${newItemInputRef.current.scrollHeight}px`;
     }
   }, []);
 
-
   const noteTextareaRef = React.useRef<HTMLTextAreaElement>(null);
   const autoResizeNote = React.useCallback(() => {
     if (noteTextareaRef.current) {
-      noteTextareaRef.current.style.height = 'auto';
+      noteTextareaRef.current.style.height = "auto";
       noteTextareaRef.current.style.height = `${noteTextareaRef.current.scrollHeight}px`;
     }
   }, []);
@@ -460,7 +458,6 @@ export function Note({
 
   const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-
       e.preventDefault();
       handleAddItem();
     }
@@ -569,10 +566,10 @@ export function Note({
             onInput={autoResizeNote}
             className="w-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200 min-h-20"
             style={{
-              wordWrap: 'break-word',
-              overflowWrap: 'break-word',
-              wordBreak: 'break-word',
-              whiteSpace: 'pre-wrap'
+              wordWrap: "break-word",
+              overflowWrap: "break-word",
+              wordBreak: "break-word",
+              whiteSpace: "pre-wrap",
             }}
             placeholder="Enter note content..."
             onBlur={handleStopEdit}
@@ -635,10 +632,10 @@ export function Note({
                     onInput={autoResizeNewItem}
                     className="h-auto shadow-none flex-1 min-w-0 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none overflow-hidden min-h-6"
                     style={{
-                      wordWrap: 'break-word',
-                      overflowWrap: 'break-word',
-                      wordBreak: 'break-word',
-                      whiteSpace: 'pre-wrap'
+                      wordWrap: "break-word",
+                      overflowWrap: "break-word",
+                      wordBreak: "break-word",
+                      whiteSpace: "pre-wrap",
                     }}
                     placeholder="Add new item..."
                     onKeyDown={handleKeyDownNewItem}
