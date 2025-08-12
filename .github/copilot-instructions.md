@@ -1,0 +1,5 @@
+# Copilot Instructions for Gumboard
+
+Please follow the contributing guidelines at https://github.com/antiwork/.github/blob/main/CONTRIBUTING.md
+
+This includes pull request standards, coding style guidelines, and issue reporting procedures specific to the antiwork organization.
