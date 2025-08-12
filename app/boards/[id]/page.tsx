@@ -5,10 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Plus,
-  Search,
-} from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { FullPageLoader } from "@/components/ui/loader";
 import { Note as NoteCard } from "@/components/note";
 
@@ -33,11 +30,7 @@ import {
   AddNoteButton 
 } from "@/components/board-actions";
 
-export default function BoardPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
@@ -61,9 +54,7 @@ export default function BoardPage({
     endDate: null,
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(
-    null
-  );
+  const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
   // Per-item edit and animations are handled inside Note component now
   const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
     open: boolean;
@@ -90,10 +81,8 @@ export default function BoardPage({
   ) => {
     const params = new URLSearchParams();
 
-    const currentSearchTerm =
-      newSearchTerm !== undefined ? newSearchTerm : searchTerm;
-    const currentDateRange =
-      newDateRange !== undefined ? newDateRange : dateRange;
+    const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
+    const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
     const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
 
     if (currentSearchTerm) {
@@ -101,17 +90,11 @@ export default function BoardPage({
     }
 
     if (currentDateRange.startDate) {
-      params.set(
-        "startDate",
-        currentDateRange.startDate.toISOString().split("T")[0]
-      );
+      params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
     }
 
     if (currentDateRange.endDate) {
-      params.set(
-        "endDate",
-        currentDateRange.endDate.toISOString().split("T")[0]
-      );
+      params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
     }
 
     if (currentAuthor) {
@@ -214,11 +197,7 @@ export default function BoardPage({
   };
 
   // Helper function to calculate note height based on content
-  const calculateNoteHeight = (
-    note: Note,
-    noteWidth?: number,
-    notePadding?: number
-  ) => {
+  const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
     const actualNotePadding = notePadding || config.notePadding;
     const actualNoteWidth = noteWidth || config.noteWidth;
@@ -269,9 +248,7 @@ export default function BoardPage({
       const lineHeight = 28; // Line height for readability (leading-7)
       const contentHeight = totalLines * lineHeight;
 
-      return (
-        headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight)
-      );
+      return headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight);
     }
   };
 
@@ -282,39 +259,25 @@ export default function BoardPage({
     const config = getResponsiveConfig();
     const containerWidth = window.innerWidth - config.containerPadding * 2;
     const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / noteWidthWithGap
-    );
+    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
     const actualColumnsCount = Math.max(1, columnsCount);
 
     // Calculate the actual available width and adjust note width to fill better
-    const availableWidthForNotes =
-      containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(
-      availableWidthForNotes / actualColumnsCount
-    );
+    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
     // Ensure notes don't get too narrow or too wide based on screen size
     const minWidth = config.noteWidth - 40;
     const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(
-      minWidth,
-      Math.min(maxWidth, calculatedNoteWidth)
-    );
+    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
 
     // Use full width with minimal left offset
     const offsetX = config.containerPadding;
 
     // Bin-packing algorithm: track the bottom Y position of each column
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
-      config.containerPadding
-    );
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
     return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(
-        note,
-        adjustedNoteWidth,
-        config.notePadding
-      );
+      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
 
       // Find the column with the lowest bottom position
       let bestColumn = 0;
@@ -357,21 +320,14 @@ export default function BoardPage({
     const actualColumnsCount = Math.max(1, columnsCount);
 
     // Calculate note width for mobile
-    const availableWidthForNotes =
-      containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
     const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
 
     // Bin-packing for mobile with fewer columns
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
-      config.containerPadding
-    );
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
     return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(
-        note,
-        noteWidth,
-        config.notePadding
-      );
+      const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
 
       // Find the column with the lowest bottom position
       let bestColumn = 0;
@@ -385,8 +341,7 @@ export default function BoardPage({
       }
 
       // Place the note in the best column
-      const x =
-        config.containerPadding + bestColumn * (noteWidth + config.gridGap);
+      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
       const y = columnBottoms[bestColumn];
 
       // Update the column bottom position
@@ -503,10 +458,7 @@ export default function BoardPage({
 
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<
-      string,
-      { id: string; name: string; email: string }
-    >();
+    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
 
     notes.forEach((note) => {
       if (!authorsMap.has(note.user.id)) {
@@ -518,9 +470,7 @@ export default function BoardPage({
       }
     });
 
-    return Array.from(authorsMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   };
 
   // Filter notes based on search term, date range, and author
@@ -555,20 +505,11 @@ export default function BoardPage({
         const startOfDay = (date: Date) =>
           new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const endOfDay = (date: Date) =>
-          new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate(),
-            23,
-            59,
-            59,
-            999
-          );
+          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 
         if (dateRange.startDate && dateRange.endDate) {
           return (
-            noteDate >= startOfDay(dateRange.startDate) &&
-            noteDate <= endOfDay(dateRange.endDate)
+            noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate)
           );
         } else if (dateRange.startDate) {
           return noteDate >= startOfDay(dateRange.startDate);
@@ -606,14 +547,7 @@ export default function BoardPage({
 
   // Get filtered and sorted notes for display
   const filteredNotes = useMemo(
-    () =>
-      filterAndSortNotes(
-        notes,
-        debouncedSearchTerm,
-        dateRange,
-        selectedAuthor,
-        user
-      ),
+    () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
   const layoutNotes = useMemo(
@@ -625,11 +559,8 @@ export default function BoardPage({
     if (layoutNotes.length === 0) {
       return "calc(100vh - 64px)";
     }
-    const maxBottom = Math.max(
-      ...layoutNotes.map((note) => note.y + note.height)
-    );
-    const minHeight =
-      typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
+    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
+    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
     return `${calculatedHeight}px`;
   }, [layoutNotes]);
@@ -649,62 +580,58 @@ export default function BoardPage({
       }
 
       // Fetch all boards for the dropdown
-      const allBoardsResponse = await fetch("/api/boards");
-      if (allBoardsResponse.ok) {
-        const { boards } = await allBoardsResponse.json();
-        setAllBoards(boards);
-      }
+      let allBoardsResponse: Response;
+      let notesResponse: Response | undefined;
+      let boardResponse: Response | undefined;
 
       if (boardId === "all-notes") {
         // For all notes view, create a virtual board object and fetch all notes
+        [allBoardsResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/all-notes/notes`),
+        ]);
+
         setBoard({
           id: "all-notes",
           name: "All notes",
           description: "Notes from all boards",
         });
-
-        // Fetch notes from all boards
-        const notesResponse = await fetch(`/api/boards/all-notes/notes`);
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json();
-          setNotes(notes);
-        }
       } else if (boardId === "archive") {
+        [allBoardsResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/archive/notes`),
+        ]);
+
+        // Set virtual board immediately
         setBoard({
           id: "archive",
           name: "Archive",
           description: "Archived notes from all boards",
         });
-
-        // Fetch archived notes from all boards
-        const notesResponse = await fetch(`/api/boards/archive/notes`);
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json();
-          setNotes(notes);
-        }
       } else {
-        // Fetch current board info
-        const boardResponse = await fetch(`/api/boards/${boardId}`);
-        if (boardResponse.status === 401) {
-          router.push("/auth/signin");
-          return;
-        }
-        if (boardResponse.ok) {
-          const { board } = await boardResponse.json();
-          setBoard(board);
-          setBoardSettings({
-            sendSlackUpdates:
-              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ??
-              true,
-          });
-        }
+        [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/${boardId}`),
+          fetch(`/api/boards/${boardId}/notes`),
+        ]);
+      }
 
-        // Fetch notes for specific board
-        const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json();
-          setNotes(notes);
-        }
+      if (allBoardsResponse.ok) {
+        const { boards } = await allBoardsResponse.json();
+        setAllBoards(boards);
+      }
+
+      if (boardResponse && boardResponse.ok) {
+        const { board } = await boardResponse.json();
+        setBoard(board);
+        setBoardSettings({
+          sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+        });
+      }
+
+      if (notesResponse && notesResponse.ok) {
+        const { notes } = await notesResponse.json();
+        setNotes(notes);
       }
 
       if (boardId && boardId !== "all-notes") {
@@ -723,12 +650,12 @@ export default function BoardPage({
 
   // Adapter: bridge component Note -> existing update handler
   const handleUpdateNoteFromComponent = async (updatedNote: Note) => {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === updatedNote.id);
-      if (!currentNote) return;
+    // Find the note to get its board ID for all notes view
+    const currentNote = notes.find((n) => n.id === updatedNote.id);
+    if (!currentNote) return;
 
-      // OPTIMISTIC UPDATE: Update UI immediately
-      setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
+    // OPTIMISTIC UPDATE: Update UI immediately
+    setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
   const handleAddNote = async (targetBoardId?: string) => {
@@ -743,8 +670,7 @@ export default function BoardPage({
     }
 
     try {
-      const actualTargetBoardId =
-        boardId === "all-notes" ? targetBoardId : boardId;
+      const actualTargetBoardId = boardId === "all-notes" ? targetBoardId : boardId;
       const isAllNotesView = boardId === "all-notes";
 
       const response = await fetch(
@@ -821,14 +747,11 @@ export default function BoardPage({
 
       setNotes(notes.filter((n) => n.id !== noteId));
 
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${noteId}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ done: true }),
-        }
-      );
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+      });
 
       if (!response.ok) {
         // Revert on error
@@ -847,7 +770,7 @@ export default function BoardPage({
     try {
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
-      
+
       const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
       if (!targetBoardId) return;
 
@@ -856,7 +779,7 @@ export default function BoardPage({
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: false }),
+        body: JSON.stringify({ archivedAt: null }),
       });
 
       if (!response.ok) {
@@ -914,9 +837,7 @@ export default function BoardPage({
     }
   };
 
-  const handleUpdateBoardSettings = async (settings: {
-    sendSlackUpdates: boolean;
-  }) => {
+  const handleUpdateBoardSettings = async (settings: { sendSlackUpdates: boolean }) => {
     try {
       const response = await fetch(`/api/boards/${boardId}`, {
         method: "PUT",
@@ -1020,8 +941,7 @@ export default function BoardPage({
                 width: note.width,
                 height: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor:
-                  resolvedTheme === "dark" ? "#18181B" : note.color,
+                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
               }}
             />
           ))}
@@ -1030,10 +950,7 @@ export default function BoardPage({
         {/* Empty State */}
         {filteredNotes.length === 0 &&
           notes.length > 0 &&
-          (searchTerm ||
-            dateRange.startDate ||
-            dateRange.endDate ||
-            selectedAuthor) && (
+          (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
             <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-gray-500 dark:text-gray-400">
               <Search className="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500" />
               <div className="text-xl mb-2">No notes found</div>
@@ -1042,21 +959,14 @@ export default function BoardPage({
                 {searchTerm && <div>Search: &quot;{searchTerm}&quot;</div>}
                 {selectedAuthor && (
                   <div>
-                    Author:{" "}
-                    {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name ||
-                      "Unknown"}
+                    Author: {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name || "Unknown"}
                   </div>
                 )}
                 {(dateRange.startDate || dateRange.endDate) && (
                   <div>
                     Date range:{" "}
-                    {dateRange.startDate
-                      ? dateRange.startDate.toLocaleDateString()
-                      : "..."}{" "}
-                    -{" "}
-                    {dateRange.endDate
-                      ? dateRange.endDate.toLocaleDateString()
-                      : "..."}
+                    {dateRange.startDate ? dateRange.startDate.toLocaleDateString() : "..."} -{" "}
+                    {dateRange.endDate ? dateRange.endDate.toLocaleDateString() : "..."}
                   </div>
                 )}
               </div>
@@ -1079,9 +989,7 @@ export default function BoardPage({
         {notes.length === 0 && (
           <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
             <div className="text-xl mb-2">No notes yet</div>
-            <div className="text-sm mb-4">
-              Click &ldquo;Add Note&rdquo; to get started
-            </div>
+            <div className="text-sm mb-4">Click &ldquo;Add Note&rdquo; to get started</div>
             <Button
               onClick={() => {
                 if (boardId === "all-notes" && allBoards.length > 0) {
@@ -1185,8 +1093,7 @@ export default function BoardPage({
               Delete note
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete this note? This action cannot be
-              undone.
+              Are you sure you want to delete this note? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -1205,9 +1112,7 @@ export default function BoardPage({
 
       <AlertDialog
         open={errorDialog.open}
-        onOpenChange={(open) =>
-          setErrorDialog({ open, title: "", description: "" })
-        }
+        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
       >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
@@ -1220,9 +1125,7 @@ export default function BoardPage({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
-              onClick={() =>
-                setErrorDialog({ open: false, title: "", description: "" })
-              }
+              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
               className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               OK
@@ -1231,10 +1134,7 @@ export default function BoardPage({
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog
-        open={boardSettingsDialog}
-        onOpenChange={setBoardSettingsDialog}
-      >
+      <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
@@ -1262,16 +1162,13 @@ export default function BoardPage({
               </label>
             </div>
             <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-              When enabled, note updates will be sent to your
-              organization&apos;s Slack channel
+              When enabled, note updates will be sent to your organization&apos;s Slack channel
             </p>
           </div>
 
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => handleUpdateBoardSettings(boardSettings)}
-            >
+            <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>
               Save settings
             </AlertDialogAction>
           </AlertDialogFooter>

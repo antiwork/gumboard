@@ -2,11 +2,7 @@ import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { LogOut, Settings } from "lucide-react";
 
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { User } from "@/components/note";
 

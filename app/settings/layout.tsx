@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { useState, useEffect, useCallback } from "react"
 import { useRouter, usePathname } from "next/navigation"
@@ -8,49 +8,45 @@ import { FullPageLoader } from "@/components/ui/loader"
 import type { User } from "@/components/note"
 import { Navbar } from "@/components/navbar"
 
-export default function SettingsLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
-  const pathname = usePathname()
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const fetchUserData = useCallback(async () => {
     try {
-      const response = await fetch("/api/user")
+      const response = await fetch("/api/user");
       if (response.status === 401) {
-        router.push("/auth/signin")
-        return
+        router.push("/auth/signin");
+        return;
       }
 
       if (response.ok) {
-        const userData = await response.json()
-        setUser(userData)
+        const userData = await response.json();
+        setUser(userData);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error)
+      console.error("Error fetching user data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [router])
+  }, [router]);
 
   useEffect(() => {
-    fetchUserData()
-  }, [fetchUserData])
+    fetchUserData();
+  }, [fetchUserData]);
 
   if (loading) {
-    return <FullPageLoader message="Loading settings..." />
+    return <FullPageLoader message="Loading settings..." />;
   }
 
-  const isProfileActive = pathname === '/settings'
-  const isOrganizationActive = pathname === '/settings/organization'
+  const isProfileActive = pathname === "/settings";
+  const isOrganizationActive = pathname === "/settings/organization";
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
-      <Navbar user={user} showAddBoard={false} />
+      <Navbar user={user} />
       <div className="md:hidden bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-4 py-3">
         <h2 className="text-lg font-semibold text-foreground dark:text-zinc-100">Settings</h2>
       </div>
@@ -92,11 +88,9 @@ export default function SettingsLayout({
               </Link>
             </nav>
           </div>
-          <div className="flex-1">
-            {children}
-          </div>
+          <div className="flex-1">{children}</div>
         </div>
       </div>
     </div>
-  )
+  );
 }
