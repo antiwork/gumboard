@@ -876,8 +876,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <Header 
-        user={user} 
+      <Header
+        user={user}
         leftContent={
           <>
             <div className="relative board-dropdown flex-1 sm:flex-none">
