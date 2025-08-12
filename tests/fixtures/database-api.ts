@@ -126,10 +126,9 @@ export class DatabaseAPI {
 
   async setupBoardsMock(page: Page, testOrg: TestOrganization): Promise<void> {
     await page.route("**/api/boards", async (route) => {
-      
       if (route.request().method() === "GET") {
         const boards = await this.getBoardsForOrganization(testOrg.id);
-        
+
         await route.fulfill({
           status: 200,
           contentType: "application/json",
@@ -138,7 +137,7 @@ export class DatabaseAPI {
       } else if (route.request().method() === "POST") {
         const response = await route.fetch();
         const responseText = await response.text();
-        
+
         await route.fulfill({
           status: response.status(),
           body: responseText,

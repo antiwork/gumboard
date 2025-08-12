@@ -38,7 +38,7 @@ test.describe("Board Management", () => {
 
     await page.goto("/dashboard");
     await page.reload();
-    
+
     await expect(page.locator('[data-slot="card-title"]:has-text("Test Board")')).toBeVisible();
   });
 
