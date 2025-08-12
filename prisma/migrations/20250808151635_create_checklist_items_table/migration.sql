@@ -33,7 +33,7 @@ BEGIN
         COALESCE(itm->>'id', gen_random_uuid()::TEXT),
         COALESCE(itm->>'content',''),
         COALESCE((itm->>'checked')::BOOLEAN, FALSE),
-        COALESCE((itm->>'order')::INTEGER, idx),
+        COALESCE(ROUND((itm->>'order')::NUMERIC)::INTEGER, idx),
         r.id,
         CURRENT_TIMESTAMP,
         CURRENT_TIMESTAMP
