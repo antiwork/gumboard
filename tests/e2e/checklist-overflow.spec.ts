@@ -242,17 +242,18 @@ test.describe("Checklist Item Overflow Behavior", () => {
     const textareaField = note.locator("[data-testid='item-1'] textarea");
     await expect(textareaField).toBeVisible();
 
-    await expect(textareaField).toHaveCSS('white-space', 'pre-wrap');
-    await expect(textareaField).toHaveCSS('word-wrap', 'break-word');
-    await expect(textareaField).toHaveCSS('overflow-wrap', 'break-word');
+    await expect(textareaField).toHaveCSS("white-space", "pre-wrap");
+    await expect(textareaField).toHaveCSS("word-wrap", "break-word");
+    await expect(textareaField).toHaveCSS("overflow-wrap", "break-word");
 
-    const additionalText = " Here is some additional content to test how the textarea handles very long text that should wrap properly within the note boundaries.";
-    await textareaField.press('End');
+    const additionalText =
+      " Here is some additional content to test how the textarea handles very long text that should wrap properly within the note boundaries.";
+    await textareaField.press("End");
     await textareaField.type(additionalText);
 
     const textareaBox = await textareaField.boundingBox();
     const noteBox = await note.boundingBox();
-    
+
     if (textareaBox && noteBox) {
       expect(textareaBox.width).toBeLessThanOrEqual(noteBox.width - 40);
       expect(textareaBox.height).toBeGreaterThan(50);
@@ -263,9 +264,9 @@ test.describe("Checklist Item Overflow Behavior", () => {
     await textareaField.fill(newContent);
     
     const textareaValue = await textareaField.inputValue();
-    expect(textareaValue).toContain('\n');
+    expect(textareaValue).toContain("\n");
 
-    await textareaField.press('Escape');
+    await textareaField.press("Escape");
     await expect(textareaField).toHaveCount(0);
     
     await expect(checklistItemSpan).toContainText("This is an extremely long task description");
@@ -294,7 +295,6 @@ test.describe("Checklist Item Overflow Behavior", () => {
       await expect(item).toHaveClass(/whitespace-pre-wrap/);
     }
 
-  
     await expect(mediumItem).toHaveClass(/line-through/);
 
     await expect(longItem).toContainText("extremely long task description");
@@ -328,16 +328,16 @@ test.describe("Checklist Item Overflow Behavior", () => {
     const newItemContent = "This is a newly added checklist item with substantial content to test text wrapping when adding items. It should wrap properly within the note boundaries.";
     await inputTextarea.fill(newItemContent);
 
-    await expect(inputTextarea).toHaveCSS('white-space', 'pre-wrap');
-    await expect(inputTextarea).toHaveCSS('word-wrap', 'break-word');
+    await expect(inputTextarea).toHaveCSS("white-space", "pre-wrap");
+    await expect(inputTextarea).toHaveCSS("word-wrap", "break-word");
 
-    await inputTextarea.press('Enter');
-    await inputTextarea.type('Second line of new item');
+    await inputTextarea.press("Enter");
+    await inputTextarea.type("Second line of new item");
 
     const textareaValue = await inputTextarea.inputValue();
-    expect(textareaValue).toContain('\n');
+    expect(textareaValue).toContain("\n");
 
-    await inputTextarea.press('Control+Enter');
+    await inputTextarea.press("Control+Enter");
 
     await expect(inputTextarea).toHaveCount(0);
 
