@@ -7,7 +7,10 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
+import {
+  ChecklistItem as ChecklistItemComponent,
+  ChecklistItem,
+} from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -88,9 +91,9 @@ export function Note({
   const [editingItemContent, setEditingItemContent] = useState("");
   const [addingItem, setAddingItem] = useState(
     !readonly &&
-    currentUser &&
-    (currentUser.id === note.user.id || currentUser.isAdmin) &&
-    (!note.checklistItems || note.checklistItems.length === 0)
+      currentUser &&
+      (currentUser.id === note.user.id || currentUser.isAdmin) &&
+      (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
@@ -112,12 +115,8 @@ export function Note({
       );
 
       const sortedItems = [
-        ...updatedItems
-          .filter((item) => !item.checked)
-          .sort((a, b) => a.order - b.order),
-        ...updatedItems
-          .filter((item) => item.checked)
-          .sort((a, b) => a.order - b.order),
+        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
+        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
       ];
 
       const optimisticNote = {
@@ -159,30 +158,25 @@ export function Note({
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
-      const updatedItems = note.checklistItems.filter(
-        (item) => item.id !== itemId
-      );
-      
+      const updatedItems = note.checklistItems.filter((item) => item.id !== itemId);
+
       const optimisticNote = {
         ...note,
         checklistItems: updatedItems,
       };
-  
+
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: updatedItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: updatedItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -213,18 +207,15 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: updatedItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: updatedItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -251,9 +242,7 @@ export function Note({
         item.id === itemId ? { ...item, content: firstHalf } : item
       );
 
-      const currentItem = note.checklistItems.find(
-        (item) => item.id === itemId
-      );
+      const currentItem = note.checklistItems.find((item) => item.id === itemId);
       const currentOrder = currentItem?.order || 0;
 
       const newItem = {
@@ -263,9 +252,7 @@ export function Note({
         order: currentOrder + 0.5,
       };
 
-      const allItems = [...updatedItems, newItem].sort(
-        (a, b) => a.order - b.order
-      );
+      const allItems = [...updatedItems, newItem].sort((a, b) => a.order - b.order);
 
       const optimisticNote = {
         ...note,
@@ -275,16 +262,13 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              checklistItems: allItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            checklistItems: allItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -318,18 +302,15 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: [...(note.checklistItems || []), newItem],
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: [...(note.checklistItems || []), newItem],
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -411,7 +392,7 @@ export function Note({
         className
       )}
       style={{
-        backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
+        backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
         ...style,
       }}
     >
@@ -426,13 +407,11 @@ export function Note({
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate max-w-20">
-              {note.user.name
-                ? note.user.name.split(" ")[0]
-                : note.user.email.split("@")[0]}
+              {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
               {showBoardName && note.board && (
-                <Link 
+                <Link
                   href={`/boards/${note.board.id}`}
                   className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
                 >
@@ -539,7 +518,10 @@ export function Note({
             {/* Add New Item Input */}
             {addingItem && canEdit && (
               <div className="flex items-center gap-3">
-                <Checkbox disabled className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600" />
+                <Checkbox
+                  disabled
+                  className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                />
                 <Input
                   ref={newItemInputRef}
                   type="text"

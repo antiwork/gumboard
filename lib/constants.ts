@@ -7,6 +7,6 @@ export const NOTE_COLORS = [
   "#e0e7ff", // indigo
   "#f3e8ff", // purple
   "#fef4e6", // orange
-] as const
+] as const;
 
-export type NoteColor = typeof NOTE_COLORS[number]
+export type NoteColor = (typeof NOTE_COLORS)[number];
