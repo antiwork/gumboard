@@ -11,6 +11,7 @@ import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
 } from "@/components/checklist-item";
+import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -182,7 +183,6 @@ export function Note({
           const { note: updatedNote } = await response.json();
           onUpdate?.(updatedNote);
         } else {
-          console.error("Server error, reverting optimistic update");
           onUpdate?.(note);
         }
       }
@@ -220,10 +220,58 @@ export function Note({
         if (response.ok) {
           const { note: updatedNote } = await response.json();
           onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
         }
       }
     } catch (error) {
       console.error("Error editing checklist item:", error);
+    }
+  };
+
+  const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItem[]) => {
+    try {
+      if (!note.checklistItems) return;
+      const allItemsChecked = newItems.every((item) => item.checked);
+      // Disallow unchecked items to be after checked items
+      const firstCheckedIndex = newItems.findIndex((element) => element.checked);
+      const lastUncheckedIndex = newItems.map((element) => element.checked).lastIndexOf(false);
+      if (
+        firstCheckedIndex !== -1 &&
+        lastUncheckedIndex !== -1 &&
+        lastUncheckedIndex > firstCheckedIndex
+      ) {
+        return;
+      }
+
+      const optimisticNote = {
+        ...note,
+        checklistItems: newItems.map((items, index) => ({ ...items, order: index })),
+      };
+
+      onUpdate?.(optimisticNote);
+
+      if (syncDB) {
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: newItems,
+            done: allItemsChecked,
+          }),
+        });
+
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to reorder checklist item:", error);
     }
   };
 
@@ -273,6 +321,8 @@ export function Note({
         if (response.ok) {
           const { note: updatedNote } = await response.json();
           onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
         }
       }
     } catch (error) {
@@ -286,7 +336,7 @@ export function Note({
         id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         content,
         checked: false,
-        order: (note.checklistItems?.length || 0) + 1,
+        order: note.checklistItems?.length ?? 0,
       };
 
       const allItemsChecked = [...(note.checklistItems || []), newItem].every(
@@ -497,54 +547,64 @@ export function Note({
         <div className="flex flex-col">
           <div className="overflow-y-auto space-y-1">
             {/* Checklist Items */}
-            {note.checklistItems?.map((item) => (
-              <ChecklistItemComponent
-                key={item.id}
-                item={item}
-                onToggle={handleToggleChecklistItem}
-                onEdit={handleEditItem}
-                onDelete={handleDeleteItem}
-                onSplit={handleSplitItem}
-                isEditing={editingItem === item.id}
-                editContent={editingItem === item.id ? editingItemContent : undefined}
-                onEditContentChange={setEditingItemContent}
-                onStartEdit={handleStartEditItem}
-                onStopEdit={handleStopEditItem}
-                readonly={readonly}
-                showDeleteButton={canEdit}
-              />
-            ))}
+            <DraggableRoot
+              items={note.checklistItems ?? []}
+              onItemsChange={(newItems) => {
+                handleReorderChecklistItems(note.id, newItems);
+              }}
+            >
+              <DraggableContainer className="space-y-1">
+                {note.checklistItems?.map((item) => (
+                  <DraggableItem key={item.id} id={item.id}>
+                    <ChecklistItemComponent
+                      item={item}
+                      onToggle={handleToggleChecklistItem}
+                      onEdit={handleEditItem}
+                      onDelete={handleDeleteItem}
+                      onSplit={handleSplitItem}
+                      isEditing={editingItem === item.id}
+                      editContent={editingItem === item.id ? editingItemContent : undefined}
+                      onEditContentChange={setEditingItemContent}
+                      onStartEdit={handleStartEditItem}
+                      onStopEdit={handleStopEditItem}
+                      readonly={readonly}
+                      showDeleteButton={canEdit}
+                    />
+                  </DraggableItem>
+                ))}
+              </DraggableContainer>
 
-            {/* Add New Item Input */}
-            {addingItem && canEdit && (
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  disabled
-                  className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
-                />
-                <Input
-                  ref={newItemInputRef}
-                  type="text"
-                  value={newItemContent}
-                  onChange={(e) => setNewItemContent(e.target.value)}
-                  className="h-auto flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  placeholder="Add new item..."
-                  onBlur={handleAddItem}
-                  onKeyDown={handleKeyDownNewItem}
-                  autoFocus
-                />
-              </div>
-            )}
+              {/* Add New Item Input */}
+              {addingItem && canEdit && (
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    disabled
+                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                  />
+                  <Input
+                    ref={newItemInputRef}
+                    type="text"
+                    value={newItemContent}
+                    onChange={(e) => setNewItemContent(e.target.value)}
+                    className="h-auto flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    placeholder="Add new item..."
+                    onBlur={handleAddItem}
+                    onKeyDown={handleKeyDownNewItem}
+                    autoFocus
+                  />
+                </div>
+              )}
 
-            {/* Content as text if no checklist items */}
-            {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
-              <div
-                className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
-                onClick={handleStartEdit}
-              >
-                {note.content || ""}
-              </div>
-            )}
+              {/* Content as text if no checklist items */}
+              {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
+                <div
+                  className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
+                  onClick={handleStartEdit}
+                >
+                  {note.content || ""}
+                </div>
+              )}
+            </DraggableRoot>
           </div>
 
           {/* Add Item Button */}
