@@ -35,7 +35,7 @@ export interface Note {
   id: string;
   content: string;
   color: string;
-  done: boolean;
+  archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
   checklistItems?: ChecklistItem[];
@@ -346,7 +346,7 @@ export function Note({
       const optimisticNote = {
         ...note,
         checklistItems: [...(note.checklistItems || []), newItem],
-        done: allItemsChecked,
+        archivedAt: allItemsChecked ? new Date().toISOString() : null,
       };
 
       onUpdate?.(optimisticNote);
