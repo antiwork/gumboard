@@ -47,10 +47,9 @@ export function ChecklistItem({
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
 
-
   const autoResize = React.useCallback(() => {
     if (textareaRef.current) {
-      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
   }, []);
@@ -61,7 +60,7 @@ export function ChecklistItem({
     }
   }, [isEditing, editContent, autoResize]);
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
       const target = e.target as HTMLTextAreaElement;
       const cursorPosition = target.selectionStart || 0;
@@ -114,12 +113,12 @@ export function ChecklistItem({
             "min-h-6 h-auto flex-1 min-w-0 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none overflow-hidden whitespace-pre-wrap",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
-          style={{ 
-            wordWrap: 'break-word', 
-            overflowWrap: 'break-word',
-            wordBreak: 'break-word',
-            whiteSpace: 'pre-wrap',
-            maxWidth: '100%'
+          style={{
+            wordWrap: "break-word",
+            overflowWrap: "break-word",
+            wordBreak: "break-word",
+            whiteSpace: "pre-wrap",
+            maxWidth: "100%",
           }}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
