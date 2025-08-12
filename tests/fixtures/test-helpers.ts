@@ -1,5 +1,5 @@
-import { test as base, expect } from '@playwright/test';
-import { PrismaClient } from '@prisma/client';
+import { test as base, expect } from "@playwright/test";
+import { PrismaClient } from "@prisma/client";
 
 interface TestFixtures {
   prisma: PrismaClient;

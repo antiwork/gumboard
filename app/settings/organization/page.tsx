@@ -79,9 +79,7 @@ export default function OrganizationSettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
-  const [selfServeInvites, setSelfServeInvites] = useState<SelfServeInvite[]>(
-    []
-  );
+  const [selfServeInvites, setSelfServeInvites] = useState<SelfServeInvite[]>([]);
   const [newSelfServeInvite, setNewSelfServeInvite] = useState({
     name: "",
     expiresAt: "",
@@ -288,10 +286,7 @@ export default function OrganizationSettingsPage() {
     }
   };
 
-  const handleToggleAdmin = async (
-    memberId: string,
-    currentAdminStatus: boolean
-  ) => {
+  const handleToggleAdmin = async (memberId: string, currentAdminStatus: boolean) => {
     try {
       const response = await fetch(`/api/organization/members/${memberId}`, {
         method: "PUT",
@@ -468,10 +463,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div>
-            <Label
-              htmlFor="orgName"
-              className="text-zinc-800 dark:text-zinc-200"
-            >
+            <Label htmlFor="orgName" className="text-zinc-800 dark:text-zinc-200">
               Organization Name
             </Label>
             <Input
@@ -490,11 +482,7 @@ export default function OrganizationSettingsPage() {
               onClick={handleSaveOrganization}
               disabled={saving || orgName === originalOrgName || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can update organization settings"
-                  : undefined
-              }
+              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
               {saving ? "Saving..." : "Save Changes"}
             </Button>
@@ -515,10 +503,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div>
-            <Label
-              htmlFor="slackWebhookUrl"
-              className="text-zinc-800 dark:text-zinc-200"
-            >
+            <Label htmlFor="slackWebhookUrl" className="text-zinc-800 dark:text-zinc-200">
               Slack Webhook URL
             </Label>
             <Input
@@ -531,8 +516,8 @@ export default function OrganizationSettingsPage() {
               disabled={!user?.isAdmin}
             />
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              Create a webhook URL in your Slack workspace to receive
-              notifications when notes and todos are created or completed.{" "}
+              Create a webhook URL in your Slack workspace to receive notifications when notes and
+              todos are created or completed.{" "}
               <a
                 href="https://api.slack.com/apps"
                 target="_blank"
@@ -548,17 +533,9 @@ export default function OrganizationSettingsPage() {
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
               onClick={handleSaveOrganization}
-              disabled={
-                saving ||
-                slackWebhookUrl === originalSlackWebhookUrl ||
-                !user?.isAdmin
-              }
+              disabled={saving || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can update organization settings"
-                  : undefined
-              }
+              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
               {saving ? "Saving..." : "Save changes"}
             </Button>
@@ -581,76 +558,72 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="space-y-3">
-            {user?.organization?.members?.map((member: { id: string; name: string | null; email: string; isAdmin: boolean }) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
-              >
-                <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-10 h-10 ${member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700"} rounded-full flex items-center justify-center`}
-                  >
-                    <span className="text-white font-medium">
-                      {member.name
-                        ? member.name.charAt(0).toUpperCase()
-                        : member.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {member.name || "Unnamed User"}
-                      </p>
-                      {member.isAdmin && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                          <ShieldCheck className="w-3 h-3 mr-1" />
-                          Admin
-                        </span>
-                      )}
+            {user?.organization?.members?.map(
+              (member: { id: string; name: string | null; email: string; isAdmin: boolean }) => (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
+                >
+                  <div className="flex items-center space-x-3">
+                    <div
+                      className={`w-10 h-10 ${member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700"} rounded-full flex items-center justify-center`}
+                    >
+                      <span className="text-white font-medium">
+                        {member.name
+                          ? member.name.charAt(0).toUpperCase()
+                          : member.email.charAt(0).toUpperCase()}
+                      </span>
                     </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      {member.email}
-                    </p>
+                    <div>
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {member.name || "Unnamed User"}
+                        </p>
+                        {member.isAdmin && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                            <ShieldCheck className="w-3 h-3 mr-1" />
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {/* Only show admin toggle to current admins and not for yourself */}
+                    {user?.isAdmin && member.id !== user.id && (
+                      <Button
+                        onClick={() => handleToggleAdmin(member.id, member.isAdmin)}
+                        variant="outline"
+                        size="sm"
+                        className={`${
+                          member.isAdmin
+                            ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                            : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                        }`}
+                        title={member.isAdmin ? "Remove admin role" : "Make admin"}
+                      >
+                        {member.isAdmin ? (
+                          <ShieldCheck className="w-4 h-4" />
+                        ) : (
+                          <Shield className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
+                    {user?.isAdmin && member.id !== user.id && (
+                      <Button
+                        onClick={() => handleRemoveMember(member.id, member.name || member.email)}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {/* Only show admin toggle to current admins and not for yourself */}
-                  {user?.isAdmin && member.id !== user.id && (
-                    <Button
-                      onClick={() =>
-                        handleToggleAdmin(member.id, member.isAdmin)
-                      }
-                      variant="outline"
-                      size="sm"
-                      className={`${
-                        member.isAdmin
-                          ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                          : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                      }`}
-                      title={
-                        member.isAdmin ? "Remove admin role" : "Make admin"
-                      }
-                    >
-                      {member.isAdmin ? (
-                        <ShieldCheck className="w-4 h-4" />
-                      ) : (
-                        <Shield className="w-4 h-4" />
-                      )}
-                    </Button>
-                  )}
-                  {user?.isAdmin && member.id !== user.id && (
-                    <Button
-                      onClick={() => handleRemoveMember(member.id, member.name || member.email)}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+              )
+            )}
           </div>
         </div>
       </Card>
@@ -683,11 +656,7 @@ export default function OrganizationSettingsPage() {
               type="submit"
               disabled={inviting || !user?.isAdmin}
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can invite new team members"
-                  : undefined
-              }
+              title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
             >
               <UserPlus className="w-4 h-4 mr-2" />
               {inviting ? "Inviting..." : "Send Invite"}
@@ -697,21 +666,16 @@ export default function OrganizationSettingsPage() {
           {/* Pending Invites */}
           {invites.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                Pending Invites
-              </h4>
+              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Pending Invites</h4>
               {invites.map((invite) => (
                 <div
                   key={invite.id}
                   className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
                 >
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {invite.email}
-                    </p>
+                    <p className="font-medium text-zinc-900 dark:text-zinc-100">{invite.email}</p>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Invited on{" "}
-                      {new Date(invite.createdAt).toLocaleDateString()}
+                      Invited on {new Date(invite.createdAt).toLocaleDateString()}
                     </p>
                   </div>
                   <Button
@@ -737,8 +701,7 @@ export default function OrganizationSettingsPage() {
               Self-Serve Invite Links
             </h3>
             <p className="text-zinc-600 dark:text-zinc-400">
-              Create shareable links that allow anyone to join your
-              organization.
+              Create shareable links that allow anyone to join your organization.
             </p>
           </div>
 
@@ -749,10 +712,7 @@ export default function OrganizationSettingsPage() {
           >
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <Label
-                  htmlFor="inviteName"
-                  className="text-zinc-800 dark:text-zinc-200 mb-2"
-                >
+                <Label htmlFor="inviteName" className="text-zinc-800 dark:text-zinc-200 mb-2">
                   Invite Name
                 </Label>
                 <Input
@@ -772,10 +732,7 @@ export default function OrganizationSettingsPage() {
                 />
               </div>
               <div>
-                <Label
-                  htmlFor="expiresAt"
-                  className="text-zinc-800 dark:text-zinc-200 mb-2"
-                >
+                <Label htmlFor="expiresAt" className="text-zinc-800 dark:text-zinc-200 mb-2">
                   Expires (Optional)
                 </Label>
                 <Input
@@ -793,10 +750,7 @@ export default function OrganizationSettingsPage() {
                 />
               </div>
               <div>
-                <Label
-                  htmlFor="usageLimit"
-                  className="text-zinc-800 dark:text-zinc-200 mb-2"
-                >
+                <Label htmlFor="usageLimit" className="text-zinc-800 dark:text-zinc-200 mb-2">
                   Usage Limit (Optional)
                 </Label>
                 <Input
@@ -820,11 +774,7 @@ export default function OrganizationSettingsPage() {
               type="submit"
               disabled={creating || !user?.isAdmin}
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can create invite links"
-                  : undefined
-              }
+              title={!user?.isAdmin ? "Only admins can create invite links" : undefined}
             >
               <Link className="w-4 h-4 mr-2" />
               {creating ? "Creating..." : "Create Invite Link"}
@@ -834,9 +784,7 @@ export default function OrganizationSettingsPage() {
           {/* Active Self-Serve Invites */}
           {selfServeInvites.length > 0 && (
             <div className="space-y-3">
-              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">
-                Active Invite Links
-              </h4>
+              <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Active Invite Links</h4>
               {selfServeInvites.map((invite) => (
                 <div
                   key={invite.id}
@@ -863,8 +811,7 @@ export default function OrganizationSettingsPage() {
                           {invite.expiresAt && (
                             <span className="flex items-center">
                               <Calendar className="w-4 h-4 mr-1" />
-                              Expires{" "}
-                              {new Date(invite.expiresAt).toLocaleDateString()}
+                              Expires {new Date(invite.expiresAt).toLocaleDateString()}
                             </span>
                           )}
                         </div>
@@ -893,9 +840,7 @@ export default function OrganizationSettingsPage() {
                       </Button>
                       {user?.isAdmin && (
                         <Button
-                          onClick={() =>
-                            handleDeleteSelfServeInvite(invite.token, invite.name)
-                          }
+                          onClick={() => handleDeleteSelfServeInvite(invite.token, invite.name)}
                           variant="outline"
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
@@ -913,14 +858,18 @@ export default function OrganizationSettingsPage() {
         </div>
       </Card>
 
-      <AlertDialog open={removeMemberDialog.open} onOpenChange={(open) => setRemoveMemberDialog({ open, memberId: "", memberName: "" })}>
+      <AlertDialog
+        open={removeMemberDialog.open}
+        onOpenChange={(open) => setRemoveMemberDialog({ open, memberId: "", memberName: "" })}
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Remove team member
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to remove {removeMemberDialog.memberName} from the team? This action cannot be undone.
+              Are you sure you want to remove {removeMemberDialog.memberName} from the team? This
+              action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -937,14 +886,18 @@ export default function OrganizationSettingsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={deleteInviteDialog.open} onOpenChange={(open) => setDeleteInviteDialog({ open, inviteToken: "", inviteName: "" })}>
+      <AlertDialog
+        open={deleteInviteDialog.open}
+        onOpenChange={(open) => setDeleteInviteDialog({ open, inviteToken: "", inviteName: "" })}
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Delete invite link
             </AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete the invite link &quot;{deleteInviteDialog.inviteName}&quot;? This action cannot be undone.
+              Are you sure you want to delete the invite link &quot;{deleteInviteDialog.inviteName}
+              &quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -961,7 +914,12 @@ export default function OrganizationSettingsPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "", variant: "error" })}>
+      <AlertDialog
+        open={errorDialog.open}
+        onOpenChange={(open) =>
+          setErrorDialog({ open, title: "", description: "", variant: "error" })
+        }
+      >
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
@@ -973,7 +931,9 @@ export default function OrganizationSettingsPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
-              onClick={() => setErrorDialog({ open: false, title: "", description: "", variant: "error" })}
+              onClick={() =>
+                setErrorDialog({ open: false, title: "", description: "", variant: "error" })
+              }
               className={
                 errorDialog.variant === "success"
                   ? "bg-green-600 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-700"
