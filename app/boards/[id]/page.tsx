@@ -25,7 +25,7 @@ import {
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
-import { ProfileDropdown } from "@/components/profile-dropdown";
+import { AppHeader } from "@/components/app-header";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -867,18 +867,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:space-x-3 w-full sm:w-auto">
-            {/* Company Name */}
-            <Link href="/dashboard" className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4">
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                Gumboard
-                <BetaBadge />
-              </h1>
-            </Link>
-
-            {/* Board Selector Dropdown */}
+      <AppHeader 
+        user={user} 
+        variant="board"
+        leftContent={
+          <>
             <div className="relative board-dropdown flex-1 sm:flex-none">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
@@ -1010,10 +1003,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 className="min-w-fit"
               />
             </div>
-          </div>
-
-          {/* Right side - Search, Add Note and User dropdown */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          </>
+        }
+        rightContent={
+          <>
             {/* Search Box */}
             <div className="relative flex-1 sm:flex-none min-w-[150px]">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1056,14 +1049,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Note</span>
             </Button>
-
-            {/* User Dropdown */}
-            <div className="mr-3">
-              <ProfileDropdown user={user} />
-            </div>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Board Area */}
       <div

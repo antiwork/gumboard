@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import Link from "next/link";
-import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import type { Note, Board } from "@/components/note";
+import { AppHeader } from "@/components/app-header";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -387,16 +387,11 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4">
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                Gumboard
-                <BetaBadge />
-              </h1>
-            </Link>
-
+      <AppHeader 
+        user={null} 
+        variant="public"
+        leftContent={
+          <>
             <div className="flex items-center space-x-2">
               <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
                 {board.name}
@@ -421,9 +416,10 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
                 className="min-w-fit"
               />
             </div>
-          </div>
-
-          <div className="flex items-center space-x-2 px-3">
+          </>
+        }
+        rightContent={
+          <>
             <div className="relative hidden sm:block">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
@@ -443,9 +439,9 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
                 Sign in
               </Button>
             </Link>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <div className="relative" style={{ height: boardHeight }} ref={boardRef}>
         {layoutNotes.map((note) => (
