@@ -47,7 +47,7 @@ test.describe("Note Height Calculation", () => {
               id: "test-note",
               content: "",
               color: "#fef3c7",
-              done: false,
+              archivedAt: null,
               checklistItems: [
                 { id: "item-1", content: longContent, checked: false, order: 0 },
                 { id: "item-2", content: "Short item", checked: false, order: 1 },
@@ -96,7 +96,7 @@ test.describe("Note Height Calculation", () => {
               id: "test-note",
               content: "",
               color: "#fef3c7",
-              done: false,
+              archivedAt: null,
               checklistItems: items,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
@@ -135,7 +135,7 @@ test.describe("Note Height Calculation", () => {
               id: "test-note",
               content: "",
               color: "#fef3c7",
-              done: false,
+              archivedAt: null,
               checklistItems: [
                 { id: "item-1", content: longContent, checked: false, order: 0 },
               ],
@@ -173,7 +173,7 @@ test.describe("Note Height Calculation", () => {
               id: "test-note",
               content: "",
               color: "#fef3c7",
-              done: false,
+              archivedAt: null,
               checklistItems: [
                 { id: "item-1", content: shortContent, checked: false, order: 0 },
               ],
