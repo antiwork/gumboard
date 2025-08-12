@@ -36,6 +36,7 @@ jobs:
       AUTH_SECRET: sample-auth-secret
       AUTH_URL: http://localhost:3000
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gumboard_test
+      EMAIL_FROM: noreply@example.com
       AUTH_RESEND_KEY: dummy-resend-key
 
     steps:
