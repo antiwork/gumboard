@@ -48,7 +48,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, done, checklistItems } = await request.json();
+    const { content, color, archivedAt, checklistItems } = await request.json();
     const { id: boardId, noteId } = await params;
 
     // Verify user has access to this board (same organization)
@@ -110,7 +110,7 @@ export async function PUT(
       data: {
         ...(content !== undefined && { content }),
         ...(color !== undefined && { color }),
-        ...(done !== undefined && { done }),
+        ...(archivedAt !== undefined && { archivedAt: archivedAt ? new Date(archivedAt) : null }),
         ...(checklistItems !== undefined && { checklistItems }),
       },
       include: {
@@ -217,13 +217,13 @@ export async function PUT(
     }
 
     // Update existing Slack message when done status changes
-    if (done !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
+    if (archivedAt !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
       const userName = note.user?.name || note.user?.email || "Unknown User";
       const boardName = note.board.name;
       await updateSlackMessage(
         user.organization.slackWebhookUrl,
         note.content,
-        done,
+        archivedAt,
         boardName,
         userName
       );

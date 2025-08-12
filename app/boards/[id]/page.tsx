@@ -749,7 +749,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: true }),
+        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
       });
 
       if (!response.ok) {
@@ -778,7 +778,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ done: false }),
+        body: JSON.stringify({ archivedAt: null }),
       });
 
       if (!response.ok) {
