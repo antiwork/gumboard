@@ -40,14 +40,15 @@ export async function GET() {
       email: user.email,
       image: user.image,
       isAdmin: user.isAdmin,
-      organization: user.organization ? {
-        id: user.organization.id,
-        name: user.organization.name,
-        slackWebhookUrl: user.organization.slackWebhookUrl,
-        discordWebhookUrl: user.organization.discordWebhookUrl,
-        members: user.organization.members,
-      }
-    : null,
+      organization: user.organization
+        ? {
+            id: user.organization.id,
+            name: user.organization.name,
+            slackWebhookUrl: user.organization.slackWebhookUrl,
+            discordWebhookUrl: user.organization.discordWebhookUrl,
+            members: user.organization.members,
+          }
+        : null,
     });
   } catch (error) {
     console.error("Error fetching user:", error);

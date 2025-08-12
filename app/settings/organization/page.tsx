@@ -564,10 +564,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div>
-            <Label
-              htmlFor="discordWebhookUrl"
-              className="text-zinc-800 dark:text-zinc-200"
-            >
+            <Label htmlFor="discordWebhookUrl" className="text-zinc-800 dark:text-zinc-200">
               Discord Webhook URL
             </Label>
             <Input
@@ -596,17 +593,9 @@ export default function OrganizationSettingsPage() {
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
               onClick={handleSaveOrganization}
-              disabled={
-                saving ||
-                discordWebhookUrl === originalDiscordWebhookUrl ||
-                !user?.isAdmin
-              }
+              disabled={saving || discordWebhookUrl === originalDiscordWebhookUrl || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={
-                !user?.isAdmin
-                  ? "Only admins can update organization settings"
-                  : undefined
-              }
+              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
               {saving ? "Saving..." : "Save changes"}
             </Button>

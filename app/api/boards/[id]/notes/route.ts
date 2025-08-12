@@ -1,15 +1,14 @@
-import { NextRequest, NextResponse } from "next/server"
-import { auth } from "@/auth"
-import { db } from "@/lib/db"
+import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { db } from "@/lib/db";
 import {
   sendSlackMessage,
   formatNoteForSlack,
   hasValidContent,
-  shouldSendNotification
-} from "@/lib/slack"
-import { NOTE_COLORS } from "@/lib/constants"
-import { sendDiscordMessage, formatNoteForDiscord } from "@/lib/discord"
-
+  shouldSendNotification,
+} from "@/lib/slack";
+import { NOTE_COLORS } from "@/lib/constants";
+import { sendDiscordMessage, formatNoteForDiscord } from "@/lib/discord";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -124,38 +123,41 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
-      }
-    })
+            email: true,
+          },
+        },
+      },
+    });
 
-    if (hasValidContent(content) && shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)) {
-      const author = user.name || user.email
+    if (
+      hasValidContent(content) &&
+      shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)
+    ) {
+      const author = user.name || user.email;
 
       if (user.organization?.slackWebhookUrl) {
-        const slackMessage = formatNoteForSlack(note, board.name, author)
+        const slackMessage = formatNoteForSlack(note, board.name, author);
         const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
           text: slackMessage,
-          username: 'Gumboard',
-          icon_emoji: ':clipboard:'
-        })
+          username: "Gumboard",
+          icon_emoji: ":clipboard:",
+        });
 
         if (messageId) {
           await db.note.update({
             where: { id: note.id },
-            data: { slackMessageId: messageId }
-          })
+            data: { slackMessageId: messageId },
+          });
         }
       }
 
-      const discordWebhookUrl = user.organization?.discordWebhookUrl
+      const discordWebhookUrl = user.organization?.discordWebhookUrl;
       if (discordWebhookUrl) {
-        const contentText = formatNoteForDiscord(note, board.name, author)
+        const contentText = formatNoteForDiscord(note, board.name, author);
         await sendDiscordMessage(discordWebhookUrl, {
           content: contentText,
-          username: 'Gumboard'
-        })
+          username: "Gumboard",
+        });
       }
     }
 

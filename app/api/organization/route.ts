@@ -10,7 +10,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, slackWebhookUrl, discordWebhookUrl } = await request.json()
+    const { name, slackWebhookUrl, discordWebhookUrl } = await request.json();
 
     if (!name || typeof name !== "string") {
       return NextResponse.json({ error: "Organization name is required" }, { status: 400 });
@@ -47,7 +47,9 @@ export async function PUT(request: NextRequest) {
       data: {
         name: name.trim(),
         ...(slackWebhookUrl !== undefined && { slackWebhookUrl: slackWebhookUrl?.trim() || null }),
-        ...(discordWebhookUrl !== undefined && { discordWebhookUrl: discordWebhookUrl?.trim() || null })
+        ...(discordWebhookUrl !== undefined && {
+          discordWebhookUrl: discordWebhookUrl?.trim() || null,
+        }),
       },
     });
 
@@ -75,14 +77,15 @@ export async function PUT(request: NextRequest) {
       name: updatedUser!.name,
       email: updatedUser!.email,
       isAdmin: updatedUser!.isAdmin,
-      organization: updatedUser!.organization ? {
-        id: updatedUser!.organization.id,
-        name: updatedUser!.organization.name,
-        slackWebhookUrl: updatedUser!.organization.slackWebhookUrl,
-        discordWebhookUrl: updatedUser!.organization.discordWebhookUrl,
-        members: updatedUser!.organization.members,
-      }
-    : null,
+      organization: updatedUser!.organization
+        ? {
+            id: updatedUser!.organization.id,
+            name: updatedUser!.organization.name,
+            slackWebhookUrl: updatedUser!.organization.slackWebhookUrl,
+            discordWebhookUrl: updatedUser!.organization.discordWebhookUrl,
+            members: updatedUser!.organization.members,
+          }
+        : null,
     });
   } catch (error) {
     console.error("Error updating organization:", error);
