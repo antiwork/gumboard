@@ -368,9 +368,9 @@ test.describe("Add Task Button", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'checklist-note',
-                content: '',
-                color: '#fef3c7',
+                id: "checklist-note",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,

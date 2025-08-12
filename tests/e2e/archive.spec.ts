@@ -171,7 +171,7 @@ test.describe("Archive Functionality", () => {
     await page.route("**/api/boards/test-board/notes/test-note-1", async (route) => {
       if (route.request().method() === "PUT") {
         const putData = await route.request().postDataJSON();
-        if (putData.archivedAt && typeof putData.archivedAt === 'string') {
+        if (putData.archivedAt && typeof putData.archivedAt === "string") {
           noteArchived = true;
           archivedNoteData = putData;
         }
@@ -442,8 +442,8 @@ test.describe("Archive Functionality", () => {
       }
     });
 
-    await page.route('**/api/boards/test-board/notes/workflow-note', async (route) => {
-      if (route.request().method() === 'PUT') {
+    await page.route("**/api/boards/test-board/notes/workflow-note", async (route) => {
+      if (route.request().method() === "PUT") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
