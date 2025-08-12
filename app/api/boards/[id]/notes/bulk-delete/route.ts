@@ -35,10 +35,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Notes not found" }, { status: 404 });
     }
 
-    const deletableNoteIds = notes.filter((note) => {
-      if (note.createdBy !== sessionUserId) return false;
-      return true;
-    }).map((n) => n.id);
+    const deletableNoteIds = notes
+      .filter((note) => {
+        if (note.createdBy !== sessionUserId) return false;
+        return true;
+      })
+      .map((n) => n.id);
 
     if (deletableNoteIds.length === 0) {
       return NextResponse.json({ deleted: 0, deletedIds: [] });

@@ -1115,7 +1115,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </Button>
               </div>
             )}
-
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
