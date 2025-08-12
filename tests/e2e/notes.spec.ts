@@ -408,7 +408,7 @@ test.describe("Note Management", () => {
       await expect(page.getByText("#1 Task item")).toBeVisible();
 
       await page.getByText("#1 Task item").click();
-      const editInput = page.locator('textarea').filter({ hasText: "#1 Task item" });
+      const editInput = page.locator("textarea").filter({ hasText: "#1 Task item" });
       await expect(editInput).toBeVisible();
       await editInput.focus();
       await editInput.fill("#1 Task item edited");
