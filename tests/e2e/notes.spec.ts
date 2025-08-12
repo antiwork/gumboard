@@ -408,11 +408,11 @@ test.describe("Note Management", () => {
       await expect(page.getByText("#1 Task item")).toBeVisible();
 
       await page.getByText("#1 Task item").click();
-      const editInput = page.locator('input[value="#1 Task item"]');
+      const editInput = page.locator('textarea[value="#1 Task item"]');
       await expect(editInput).toBeVisible();
       await editInput.focus();
       await editInput.fill("#1 Task item edited");
-      await page.locator('input[value="#1 Task item edited"]').press("Enter");
+      await page.locator('textarea[value="#1 Task item edited"]').press("Enter");
       await page.waitForTimeout(500);
       await expect(page.getByText("#1 Task item edited")).toBeVisible();
     });

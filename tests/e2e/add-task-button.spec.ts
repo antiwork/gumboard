@@ -291,7 +291,7 @@ test.describe("Add Task Button", () => {
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
 
-    const newItemInput = page.locator('input[placeholder="Add new item..."]');
+    const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
     await expect(newItemInput).toBeVisible();
     await expect(newItemInput).toBeFocused();
 
@@ -352,7 +352,7 @@ test.describe("Add Task Button", () => {
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
 
-    const newItemInput = page.locator('input[placeholder="Add new item..."]');
+    const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
     await expect(newItemInput).toBeVisible();
     await expect(addTaskButton).toBeVisible();
   });
@@ -439,7 +439,7 @@ test.describe("Add Task Button", () => {
 
     await page.waitForTimeout(500);
 
-    const newItemInput = page.locator('input[placeholder="Add new item..."]');
+    const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
     await expect(newItemInput).not.toBeVisible();
     expect(noteUpdateCalled).toBe(false);
   });
