@@ -54,12 +54,6 @@ export function ChecklistItem({
     textarea.style.height = textarea.scrollHeight + "px";
   };
 
-  React.useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      autoResizeTextarea(textareaRef.current);
-    }
-  }, [isEditing]);
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -128,7 +122,7 @@ export function ChecklistItem({
           value={editContent ?? item.content}
           onChange={handleChange}
           className={cn(
-            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none min-h-[20px] min-w-0",
+            "h-auto flex-1 border-none whitespace-pre-wrap break-words bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none min-h-[20px] min-w-0",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
           onBlur={handleBlur}
@@ -140,7 +134,7 @@ export function ChecklistItem({
       ) : (
         <span
           className={cn(
-            "flex-1 text-sm leading-6 cursor-pointer select-none min-w-0",
+            "flex-1 text-sm leading-6 cursor-pointer whitespace-pre-wrap break-words select-none min-w-0",
             item.checked
               ? "line-through text-gray-500 dark:text-gray-400"
               : "text-gray-900 dark:text-gray-100",
