@@ -193,6 +193,30 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
+  // Helper function to calculate actual text height with wrapping for checklist items
+  const calculateChecklistItemHeight = (content: string, availableWidth: number) => {
+    if (!content || typeof content !== 'string') return 24; // Default line height for empty content
+    if (availableWidth <= 0) return 24;
+    
+    const fontSize = 14; // text-sm
+    const lineHeight = 24; // leading-6
+    const avgCharWidth = fontSize * 0.6; // Approximate character width for typical fonts
+    
+    const textWidth = availableWidth - 16 - 12 - 24 - 8; // 8px for additional padding/margins
+    
+    // Ensure we have a minimum text width to prevent division issues
+    const minTextWidth = 50;
+    const actualTextWidth = Math.max(minTextWidth, textWidth);
+    const charsPerLine = Math.floor(actualTextWidth / avgCharWidth);
+    
+    if (content.length === 0) return lineHeight;
+    
+    // Ensure we have at least 1 character per line to prevent infinite loops
+    const safeCharsPerLine = Math.max(1, charsPerLine);
+    const lines = Math.ceil(content.length / safeCharsPerLine);
+    return lines * lineHeight;
+  };
+
   // Helper function to calculate note height based on content
   const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
@@ -203,21 +227,36 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const paddingHeight = actualNotePadding * 2; // Top and bottom padding
     const minContentHeight = 60; // Minimum content area
 
-    if (note.checklistItems) {
-      // For checklist items, calculate height based on number of items
-      const itemHeight = 28; // Each checklist item is about 28px tall (more accurate)
+    if (note.checklistItems && Array.isArray(note.checklistItems)) {
+      // For checklist items, calculate height based on actual content wrapping
       const itemSpacing = 4; // Space between items (space-y-1 = 4px)
       const checklistItemsCount = note.checklistItems.length;
       const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
       const addTaskButtonHeight = 36; // Height for the "Add task" button including margin
-
-      const checklistHeight =
-        checklistItemsCount * itemHeight +
-        (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
+      
+      // Calculate available width for text (note width minus padding)
+      const availableWidth = actualNoteWidth - actualNotePadding * 2;
+      
+      // Calculate total height for all checklist items with dynamic wrapping
+      let totalItemHeight = 0;
+      for (let i = 0; i < note.checklistItems.length; i++) {
+        const item = note.checklistItems[i];
+        if (item && typeof item === 'object' && 'content' in item) {
+          const content = item.content || '';
+          totalItemHeight += calculateChecklistItemHeight(content, availableWidth);
+        } else {
+          totalItemHeight += 24; // Default line height
+        }
+      }
+      
+      const checklistHeight = totalItemHeight + 
+        (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) + 
         addingItemHeight;
+      
       const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
+      const bufferHeight = 8; // Small buffer for measurement accuracy
 
-      return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
+      return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight + bufferHeight;
     } else {
       // Original logic for regular notes
       const lines = note.content.split("\n");
