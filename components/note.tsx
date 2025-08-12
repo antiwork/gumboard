@@ -91,6 +91,31 @@ const getHoverBackgroundColor = (backgroundColor: string, isDark: boolean) => {
   return "hover:bg-gray-200/50";
 };
 
+const computePopoverBorderColor = (backgroundColor: string, isDark: boolean) => {
+  if (isDark) {
+    // zinc-700
+    return "#3f3f46";
+  }
+
+  const lower = backgroundColor.toLowerCase();
+  if (lower.startsWith("#")) {
+    const hex = normalizeHex(lower);
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      // Darken ~35%
+      const factor = 0.65;
+      const nr = Math.round(r * factor);
+      const ng = Math.round(g * factor);
+      const nb = Math.round(b * factor);
+      return `rgb(${nr}, ${ng}, ${nb})`;
+    }
+  }
+  // Fallback for non-hex colors
+  return "rgba(0,0,0,0.3)";
+};
+
 const getBorderColor = (backgroundColor: string, isDark: boolean) => {
   if (isDark) {
     // static classes only for dark mode
@@ -549,9 +574,13 @@ export function Note({
               </Button>
             </PopoverTrigger>
             <PopoverContent 
-              className="w-64 p-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-lg" 
+              className="w-64 p-3 border shadow-lg" 
               side="right" 
               align="start"
+              style={{ 
+                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                borderColor: computePopoverBorderColor(note.color, resolvedTheme === 'dark')
+              }}
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
               <div className="space-y-2 text-sm">
@@ -586,9 +615,13 @@ export function Note({
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent 
-                  className="w-64 p-4 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-lg" 
+                  className="w-64 p-4 border shadow-lg" 
                   side="right" 
                   align="start"
+                  style={{ 
+                    backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                    borderColor: computePopoverBorderColor(note.color, resolvedTheme === 'dark')
+                  }}
                 >
                   <div className="space-y-3">
                     <div>
