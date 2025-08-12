@@ -1,115 +1,50 @@
-import { test, expect } from "@playwright/test";
+import { test, dbUtils, expect } from "../fixtures/test-helpers";
+import { TestUser, TestOrganization } from "../fixtures/database-api";
 
 test.describe("Board Management", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: { id: "test-user", email: "test@example.com", name: "Test User" },
-          expires: new Date(Date.now() + 86400000).toISOString(),
-        }),
-      });
-    });
+  let testUser: TestUser;
+  let testOrg: TestOrganization;
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          id: "test-user",
-          email: "test@example.com",
-          name: "Test User",
-          isAdmin: true,
-          organization: {
-            id: "test-org",
-            name: "Test Organization",
-            members: [],
-          },
-        }),
-      });
-    });
+  test.beforeEach(async ({ page, dbApi }) => {
+    // Create test data
+    testUser = await dbApi.createTestUser();
+    testOrg = await dbApi.createTestOrganization();
+    await dbApi.connectUserToOrganization(testUser.id, testOrg.id);
 
-    await page.route("**/api/boards", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ boards: [] }),
-        });
-      } else if (route.request().method() === "POST") {
-        const postData = route.request().postDataJSON();
-        await route.fulfill({
-          status: 201,
-          contentType: "application/json",
-          body: JSON.stringify({
-            board: {
-              id: "new-board-id",
-              name: postData.name,
-              description: postData.description,
-              createdBy: "test-user",
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              _count: {
-                notes: 0,
-              },
-            },
-          }),
-        });
-      }
-    });
+    // Setup all mocks
+    await dbApi.setupAllMocks(page, testUser, testOrg);
   });
 
-  test("should create a new board and verify database state", async ({ page }) => {
-    let boardCreated = false;
-    let boardData: { name: string; description: string } | null = null;
+  test.afterEach(async ({ dbApi }) => {
+    await dbApi.cleanupBoardsForOrganization(testOrg.id);
+  });
 
-    await page.route("**/api/boards", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({ boards: [] }),
-        });
-      } else if (route.request().method() === "POST") {
-        boardCreated = true;
-        boardData = await route.request().postDataJSON();
+  test("should verify database state when board is created", async ({ page, prisma, dbApi }) => {
+    // Arrange: Get initial state
+    const initialBoardCount = await dbUtils.getBoardCount(prisma);
 
-        await route.fulfill({
-          status: 201,
-          contentType: "application/json",
-          body: JSON.stringify({
-            board: {
-              id: "new-board-id",
-              name: boardData!.name,
-              description: boardData!.description,
-              createdBy: "test-user",
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              _count: {
-                notes: 0,
-              },
-            },
-          }),
-        });
-      }
+    // Act: Create board using DatabaseAPI
+    await dbApi.createBoard({
+      name: "Test Board",
+      description: "Test board description",
+      createdBy: testUser.id,
+      organizationId: testOrg.id,
     });
 
+    // Assert: Verify database state changed
+    const finalBoardCount = await dbUtils.getBoardCount(prisma);
+    expect(finalBoardCount).toBe(initialBoardCount + 1);
+
+    const boardInDb = await dbUtils.verifyBoardExists(prisma, "Test Board");
+    expect(boardInDb?.name).toBe("Test Board");
+    expect(boardInDb?.description).toBe("Test board description");
+    expect(boardInDb?.createdBy).toBe(testUser.id);
+    expect(boardInDb?.organizationId).toBe(testOrg.id);
+
+    // Verify UI shows the board
     await page.goto("/dashboard");
-
-    await page.click('button:has-text("Add Board")');
-
-    await page.fill('input[placeholder*="board name"]', "Test Board");
-    await page.fill('input[placeholder*="board description"]', "Test board description");
-
-    await page.click('button:has-text("Create Board")');
-
-    expect(boardCreated).toBe(true);
-    expect(boardData).not.toBeNull();
-    expect(boardData!.name).toBe("Test Board");
-    expect(boardData!.description).toBe("Test board description");
-
+    await page.reload();
+    
     await expect(page.locator('[data-slot="card-title"]:has-text("Test Board")')).toBeVisible();
   });
 
