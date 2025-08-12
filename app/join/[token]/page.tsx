@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { db } from "@/lib/db";
 
 async function joinOrganization(token: string) {
@@ -366,7 +367,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
 
   if (user?.organizationId === invite.organizationId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 text-black dark:text-white">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-md mx-auto">
             <Card className="border-2 border-blue-200">
@@ -377,8 +378,8 @@ export default async function JoinPage({ params }: JoinPageProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
-                <Button onClick={() => (window.location.href = "/dashboard")} className="w-full">
-                  Go to Dashboard
+                <Button asChild className="w-full">
+                  <Link href="/dashboard">Go to Dashboard</Link>
                 </Button>
               </CardContent>
             </Card>
