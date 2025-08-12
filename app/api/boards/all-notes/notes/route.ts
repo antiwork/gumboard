@@ -42,8 +42,8 @@ export async function GET(request: NextRequest) {
         board: {
           select: {
             id: true,
-            name: true
-          }
+            name: true,
+          },
         },
         checklistItems: { orderBy: { order: 'asc' } }
       },
@@ -67,8 +67,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, boardId } = await request.json()
-    
+    const { content, color, boardId } = await request.json();
+
     if (!boardId) {
       return NextResponse.json({ error: "Board ID is required" }, { status: 400 });
     }
@@ -115,8 +115,8 @@ export async function POST(request: NextRequest) {
         board: {
           select: {
             id: true,
-            name: true
-          }
+            name: true,
+          },
         },
         checklistItems: { orderBy: { order: 'asc' } }
       }
@@ -127,4 +127,4 @@ export async function POST(request: NextRequest) {
     console.error("Error creating note:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
-} 
+}

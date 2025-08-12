@@ -15,7 +15,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, done, checklistItems } = await request.json();
+    const { content, color, archivedAt, checklistItems } = await request.json();
     const { id: boardId, noteId } = await params;
 
     // Verify user has access to this board (same organization)
@@ -168,7 +168,7 @@ export async function PUT(
         data: {
           ...(content !== undefined && { content }),
           ...(color !== undefined && { color }),
-          ...(done !== undefined && { done }),
+          ...(archivedAt !== undefined && { archivedAt }),
         },
         include: {
           user: { select: { id: true, name: true, email: true } },
@@ -203,10 +203,11 @@ export async function PUT(
       }
     }
 
-    if (done !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
+    if (archivedAt !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
       const userName = note.user?.name || note.user?.email || 'Unknown User'
       const boardName = note.board.name
-      await updateSlackMessage(user.organization.slackWebhookUrl, note.content, done, boardName, userName)
+      const isArchived = archivedAt !== null
+      await updateSlackMessage(user.organization.slackWebhookUrl, note.content, isArchived, boardName, userName)
     }
 
     if (user.organization?.slackWebhookUrl && checklistChanges) {
@@ -251,7 +252,7 @@ export async function PUT(
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 
-  }
+}
 
 // Delete a note (soft delete)
 export async function DELETE(
