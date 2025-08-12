@@ -122,7 +122,7 @@ const getBorderColor = (backgroundColor: string, isDark: boolean) => {
     return "border-zinc-600";
   }
 
-  const colorToBorder: Record<string, { base: string; }> = {
+  const colorToBorder: Record<string, { base: string }> = {
     "#fef3c7": { base: "border-yellow-300" },
     "#fed7d7": { base: "border-red-300" },
     "#d1fae5": { base: "border-green-300" },
