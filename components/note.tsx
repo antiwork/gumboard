@@ -39,12 +39,18 @@ const formatRelativeTime = (dateString: string) => {
   }
 };
 
-const getHoverBackgroundColor = (backgroundColor: string, isDark: boolean) => {
-  if (isDark) {
-    return "hover:bg-zinc-700/50";
+const normalizeHex = (hex: string) => {
+  const h = hex.replace("#", "").toLowerCase();
+  if (h.length === 3) {
+    return h.split("").map((c) => c + c).join("");
   }
-  
-  const colorToHover: { [key: string]: string } = {
+  return h;
+};
+
+const getHoverBackgroundColor = (backgroundColor: string, isDark: boolean) => {
+  if (isDark) return "hover:bg-zinc-700/50";
+
+  const map: Record<string, string> = {
     "#fef3c7": "hover:bg-yellow-200/50",
     "#fed7d7": "hover:bg-red-200/50",
     "#d1fae5": "hover:bg-green-200/50",
@@ -57,31 +63,28 @@ const getHoverBackgroundColor = (backgroundColor: string, isDark: boolean) => {
     "#fff7ed": "hover:bg-orange-200/50",
     "#ffffff": "hover:bg-gray-200/50",
     "#f8fafc": "hover:bg-slate-200/50",
+    // shorthand equivalents
+    "#fff": "hover:bg-gray-200/50",
+    "#fee": "hover:bg-red-200/50",
+    "#efe": "hover:bg-green-200/50",
+    "#eef": "hover:bg-indigo-200/50",
   };
 
-  const hoverColor = colorToHover[backgroundColor.toLowerCase()];
-  if (hoverColor) {
-    return hoverColor;
-  }
+  const lower = backgroundColor.toLowerCase();
+  if (map[lower]) return map[lower];
 
-  if (backgroundColor.startsWith("#")) {
-    const hex = backgroundColor.replace("#", "");
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    
-    if (brightness > 128) {
-      const darkerR = Math.max(0, r - 30);
-      const darkerG = Math.max(0, g - 30);
-      const darkerB = Math.max(0, b - 30);
-      return `hover:bg-[rgb(${darkerR},${darkerG},${darkerB})]`;
-    } else {
-      const lighterR = Math.min(255, r + 30);
-      const lighterG = Math.min(255, g + 30);
-      const lighterB = Math.min(255, b + 30);
-      return `hover:bg-[rgb(${lighterR},${lighterG},${lighterB})]`;
+  if (lower.startsWith("#")) {
+    const hex = normalizeHex(lower);
+    if (hex.length === 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+
+      // Use STATIC utilities so Tailwind keeps them
+      if (brightness > 200) return "hover:bg-black/5";
+      if (brightness > 128) return "hover:bg-black/10";
+      return "hover:bg-white/10";
     }
   }
 
@@ -90,47 +93,33 @@ const getHoverBackgroundColor = (backgroundColor: string, isDark: boolean) => {
 
 const getBorderColor = (backgroundColor: string, isDark: boolean) => {
   if (isDark) {
-    return "border-gray-600";
+    // static classes only for dark mode
+    return "border-zinc-600 hover:border-zinc-500";
   }
-  
-  const colorToBorder: { [key: string]: string } = {
-    "#fef3c7": "border-yellow-300",
-    "#fed7d7": "border-red-300",
-    "#d1fae5": "border-green-300",
-    "#dbeafe": "border-blue-300",
-    "#e0e7ff": "border-indigo-300",
-    "#f3e8ff": "border-purple-300",
-    "#fce7f3": "border-pink-300",
-    "#f0fdfa": "border-teal-300",
-    "#fef7ff": "border-fuchsia-300",
-    "#fff7ed": "border-orange-300",
-    "#ffffff": "border-gray-300",
-    "#f8fafc": "border-slate-300",
+
+  const colorToBorder: Record<string, { base: string; hover: string }> = {
+    "#fef3c7": { base: "border-yellow-300", hover: "hover:border-yellow-600" },
+    "#fed7d7": { base: "border-red-300",    hover: "hover:border-red-600" },
+    "#d1fae5": { base: "border-green-300",  hover: "hover:border-green-600" },
+    "#dbeafe": { base: "border-blue-300",   hover: "hover:border-blue-600" },
+    "#e0e7ff": { base: "border-indigo-300", hover: "hover:border-indigo-600" },
+    "#f3e8ff": { base: "border-purple-300", hover: "hover:border-purple-600" },
+    "#fce7f3": { base: "border-pink-300",   hover: "hover:border-pink-600" },
+    "#f0fdfa": { base: "border-teal-300",   hover: "hover:border-teal-600" },
+    "#fef7ff": { base: "border-fuchsia-300",hover: "hover:border-fuchsia-600" },
+    "#fff7ed": { base: "border-orange-300", hover: "hover:border-orange-600" },
+    "#ffffff": { base: "border-gray-300",   hover: "hover:border-gray-600" },
+    "#f8fafc": { base: "border-slate-300",  hover: "hover:border-slate-600" },
   };
 
-  const borderColor = colorToBorder[backgroundColor.toLowerCase()];
-  if (borderColor) {
-    return borderColor;
+  const lower = backgroundColor.toLowerCase();
+  const mapped = colorToBorder[lower];
+  if (mapped) {
+    return `${mapped.base} ${mapped.hover}`;
   }
 
-  if (backgroundColor.startsWith("#")) {
-    const hex = backgroundColor.replace("#", "");
-    const r = parseInt(hex.substr(0, 2), 16);
-    const g = parseInt(hex.substr(2, 2), 16);
-    const b = parseInt(hex.substr(4, 2), 16);
-    
-    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-    
-    if (brightness > 200) {
-      return "border-gray-400";
-    } else if (brightness > 128) {
-      return "border-gray-500";
-    } else {
-      return "border-gray-300";
-    }
-  }
-
-  return "border-gray-300";
+  // static fallbacks
+  return "border-gray-300 hover:border-gray-500";
 };
 
 // Core domain types
@@ -511,8 +500,8 @@ export function Note({
     <div
       className={cn(
         "rounded-lg shadow-md hover:shadow-lg select-none group transition-all duration-200 flex flex-col border box-border",
-        borderColorClass,
-        className
+        className,
+        borderColorClass
       )}
       style={{
         backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
