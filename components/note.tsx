@@ -102,7 +102,6 @@ export function Note({
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
-  // Auto-resize textarea function
   const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
     textarea.style.height = textarea.scrollHeight + "px";
@@ -114,7 +113,6 @@ export function Note({
     }
   }, [addingChecklistItem, note.id, canEdit]);
 
-  // Auto-resize edit content textarea when content changes
   useEffect(() => {
     if (editContentRef.current && isEditing) {
       autoResizeTextarea(editContentRef.current);
@@ -656,7 +654,6 @@ export function Note({
                 </div>
               )}
 
-              {/* Add Item Button */}
               {canEdit && (
                 <Button
                   variant="ghost"

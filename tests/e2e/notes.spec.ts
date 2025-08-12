@@ -914,7 +914,7 @@ test.describe("Note Management", () => {
       await page.waitForTimeout(500);
 
       // Add first item with content
-      const initialInput = page.locator("input.bg-transparent").first();
+      const initialInput = page.locator("textarea[placeholder='Add new item...']").first();
       await initialInput.fill("First item content");
       await initialInput.press("Enter");
       await page.waitForTimeout(500);
@@ -925,16 +925,16 @@ test.describe("Note Management", () => {
       // Click at the beginning of the existing item
       await page.getByText("First item content").click();
 
-      // Get the input field for the existing item
-      const itemInput = page.locator('input[value="First item content"]');
-      await expect(itemInput).toBeVisible();
+      // Get the textarea field for the existing item
+      const itemTextarea = page.locator('textarea[placeholder="Start typing..."]');
+      await expect(itemTextarea).toBeVisible();
 
       // Position cursor at the start (position 0)
-      await itemInput.focus();
+      await itemTextarea.focus();
       await page.keyboard.press("Home"); // Move cursor to start
 
       // Press Enter - should NOT create a new empty item
-      await itemInput.press("Enter");
+      await itemTextarea.press("Enter");
       await page.waitForTimeout(500);
 
       // Verify only one item exists and it still has the original content
@@ -951,7 +951,7 @@ test.describe("Note Management", () => {
       await page.waitForTimeout(500);
 
       // Add first item with content
-      const initialInput = page.locator("input.bg-transparent").first();
+      const initialInput = page.locator("textarea[placeholder='Add new item...']").first();
       await initialInput.fill("Last item content");
       await initialInput.press("Enter");
       await page.waitForTimeout(500);
@@ -962,16 +962,16 @@ test.describe("Note Management", () => {
       // Click on the existing item to edit it
       await page.getByText("Last item content").click();
 
-      // Get the input field for the existing item
-      const itemInput = page.locator('input[value="Last item content"]');
-      await expect(itemInput).toBeVisible();
+      // Get the textarea field for the existing item
+      const itemTextarea = page.locator('textarea[placeholder="Start typing..."]');
+      await expect(itemTextarea).toBeVisible();
 
       // Position cursor at the end
-      await itemInput.focus();
+      await itemTextarea.focus();
       await page.keyboard.press("End"); // Move cursor to end
 
       // Press Enter - should NOT create a new empty item when cursor is at end
-      await itemInput.press("Enter");
+      await itemTextarea.press("Enter");
       await page.waitForTimeout(500);
 
       // Verify only one item exists and it still has the original content

@@ -48,7 +48,6 @@ export function ChecklistItem({
 }: ChecklistItemProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize textarea function
   const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
     textarea.style.height = textarea.scrollHeight + "px";
@@ -63,14 +62,12 @@ export function ChecklistItem({
         return;
       }
 
-      // If content has changed, save the edit
       if (onEdit && editContent !== undefined) {
         onEdit(item.id, editContent);
         onStopEdit?.();
         return;
       }
 
-      // Only split if explicitly requested and content is different
       const target = e.target as HTMLTextAreaElement;
       const cursorPosition = target.selectionStart || 0;
       if (onSplit && editContent !== undefined && editContent !== item.content) {
