@@ -30,6 +30,8 @@ test.describe("Board Settings", () => {
             id: "test-org",
             name: "Test Organization",
             slackWebhookUrl: "https://hooks.slack.com/test-webhook",
+            slackApiToken: "xoxb-test-token",
+            slackChannelId: "C1234567890",
             members: [],
           },
         }),
@@ -211,6 +213,20 @@ test.describe("Board Settings", () => {
       }
     });
 
+    // Mock Slack Web API endpoint
+    await page.route("https://slack.com/api/chat.postMessage", async (route) => {
+      slackNotificationSent = true;
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: true,
+          ts: "1234.5678",
+        }),
+      });
+    });
+
+    // Also mock webhook for fallback compatibility
     await page.route("https://hooks.slack.com/test-webhook", async (route) => {
       slackNotificationSent = true;
       await route.fulfill({

@@ -4,6 +4,44 @@ interface SlackMessage {
   icon_emoji?: string;
 }
 
+interface SlackApiMessagePayload {
+  channel: string;
+  text: string;
+  username?: string;
+  icon_emoji?: string;
+}
+
+interface SlackApiResponse {
+  ok: boolean;
+  ts?: string;
+  error?: string;
+}
+
+interface NotificationParams {
+  orgToken: string;
+  orgChannelId: string;
+  boardId: string;
+  boardName: string;
+  sendSlackUpdates: boolean;
+  userId: string;
+  userName: string;
+  prevContent: string;
+  nextContent: string;
+  noteSlackMessageId?: string | null;
+  itemChanges?: {
+    created: Array<{ id: string; content: string; checked: boolean; order: number }>;
+    updated: Array<{
+      id: string;
+      content: string;
+      checked: boolean;
+      order: number;
+      previous: { content: string; checked: boolean; order: number };
+    }>;
+    deleted: Array<{ id: string; content: string; checked: boolean; order: number }>;
+  };
+  existingMessageIds?: Record<string, string>;
+}
+
 export function hasValidContent(content: string | null | undefined): boolean {
   if (!content) {
     console.log(`[Slack] hasValidContent check: "${content}" -> false (null/undefined)`);
@@ -125,16 +163,198 @@ export function formatNoteForSlack(
   return `:heavy_plus_sign: ${note.content} by ${userName} in ${boardName}`;
 }
 
+
+
+export async function sendSlackApiMessage(
+  token: string,
+  payload: SlackApiMessagePayload
+): Promise<string | null> {
+  try {
+    const response = await fetch("https://slack.com/api/chat.postMessage", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to send Slack API message:", response.statusText);
+      return null;
+    }
+
+    const data: SlackApiResponse = await response.json();
+    if (!data.ok) {
+      console.error("Slack API error:", data.error);
+      return null;
+    }
+
+    return data.ts || null;
+  } catch (error) {
+    console.error("Error sending Slack API message:", error);
+    return null;
+  }
+}
+
+export async function updateSlackApiMessage(
+  token: string,
+  channel: string,
+  ts: string,
+  payload: { text: string }
+): Promise<boolean> {
+  try {
+    const response = await fetch("https://slack.com/api/chat.update", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        channel,
+        ts,
+        text: payload.text,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to update Slack API message:", response.statusText);
+      return false;
+    }
+
+    const data: SlackApiResponse = await response.json();
+    if (!data.ok) {
+      console.error("Slack API update error:", data.error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Error updating Slack API message:", error);
+    return false;
+  }
+}
+
 export function formatTodoForSlack(
   todoContent: string,
   boardName: string,
   userName: string,
-  action: "added" | "completed"
+  action: "added" | "completed" | "reopened"
 ): string {
   if (action === "completed") {
     return `:white_check_mark: ${todoContent} by ${userName} in ${boardName}`;
+  } else if (action === "reopened") {
+    return `:recycle: ${todoContent} by ${userName} in ${boardName}`;
   }
   return `:heavy_plus_sign: ${todoContent} by ${userName} in ${boardName}`;
+}
+
+export async function notifySlackForNoteChanges(
+  params: NotificationParams
+): Promise<{ noteMessageId?: string; itemMessageIds?: Record<string, string> }> {
+  const {
+    orgToken,
+    orgChannelId,
+    boardId,
+    boardName,
+    sendSlackUpdates,
+    userId,
+    userName,
+    prevContent,
+    nextContent,
+    noteSlackMessageId,
+    itemChanges,
+    existingMessageIds = {},
+  } = params;
+
+  const result: { noteMessageId?: string; itemMessageIds?: Record<string, string> } = {};
+
+  const wasEmpty = !hasValidContent(prevContent);
+  const hasContent = hasValidContent(nextContent);
+  const isArchived = nextContent.includes("[ARCHIVED]"); // Simple check - adjust based on your archive logic
+
+  if (wasEmpty && hasContent && !noteSlackMessageId) {
+    // Create new note message
+    if (shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
+      const messageText = formatNoteForSlack({ content: nextContent }, boardName, userName);
+      const ts = await sendSlackApiMessage(orgToken, {
+        channel: orgChannelId,
+        text: messageText,
+        username: "Gumboard",
+        icon_emoji: ":clipboard:",
+      });
+      if (ts) {
+        result.noteMessageId = ts;
+      }
+    }
+  } else if (noteSlackMessageId && hasContent) {
+    // Update existing note message
+    const messageText = isArchived
+      ? `:package: [ARCHIVED] ${nextContent} by ${userName} in ${boardName}`
+      : formatNoteForSlack({ content: nextContent }, boardName, userName);
+    
+    await updateSlackApiMessage(orgToken, orgChannelId, noteSlackMessageId, {
+      text: messageText,
+    });
+  }
+
+  // Handle checklist item changes
+  if (itemChanges) {
+    const itemMessageIds: Record<string, string> = { ...existingMessageIds };
+
+    // Only post once for the first created item to avoid spam
+    if (itemChanges.created.length > 0) {
+      const firstItem = itemChanges.created[0];
+      if (
+        hasValidContent(firstItem.content) &&
+        shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)
+      ) {
+        const messageText = formatTodoForSlack(firstItem.content, boardName, userName, "added");
+        const ts = await sendSlackApiMessage(orgToken, {
+          channel: orgChannelId,
+          text: messageText,
+          username: "Gumboard",
+          icon_emoji: ":clipboard:",
+        });
+        if (ts) {
+          itemMessageIds[firstItem.id] = ts;
+        }
+      }
+    }
+
+    // Handle checked/unchecked toggles
+    for (const item of itemChanges.updated) {
+      const checkedToggle = item.previous.checked !== item.checked;
+      
+      if (checkedToggle && shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
+        const action = item.checked ? "completed" : "reopened";
+        const messageText = formatTodoForSlack(item.content, boardName, userName, action);
+        
+        const existingTs = itemMessageIds[item.id];
+        if (existingTs) {
+          // Update existing message
+          await updateSlackApiMessage(orgToken, orgChannelId, existingTs, {
+            text: messageText,
+          });
+        } else {
+          // Create new message
+          const ts = await sendSlackApiMessage(orgToken, {
+            channel: orgChannelId,
+            text: messageText,
+            username: "Gumboard",
+            icon_emoji: ":clipboard:",
+          });
+          if (ts) {
+            itemMessageIds[item.id] = ts;
+          }
+        }
+      }
+    }
+
+    result.itemMessageIds = itemMessageIds;
+  }
+
+  return result;
 }
 
 export async function sendTodoNotification(
