@@ -25,9 +25,7 @@ export function Header({ user, leftContent, rightContent }: HeaderProps) {
         </div>
         <div className="flex items-center space-x-4">
           {rightContent}
-          <div className="mr-3">
-            <ProfileDropdown user={user} />
-          </div>
+          <ProfileDropdown user={user} />
         </div>
       </div>
     </div>
