@@ -6,7 +6,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+
 import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
@@ -97,15 +97,29 @@ export function Note({
       (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
-  const newItemInputRef = useRef<HTMLInputElement>(null);
+  const newItemInputRef = useRef<HTMLTextAreaElement>(null);
+  const editContentRef = useRef<HTMLTextAreaElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+
+  // Auto-resize textarea function
+  const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+  };
 
   useEffect(() => {
     if (addingChecklistItem === note.id && canEdit) {
       setAddingItem(true);
     }
   }, [addingChecklistItem, note.id, canEdit]);
+
+  // Auto-resize edit content textarea when content changes
+  useEffect(() => {
+    if (editContentRef.current && isEditing) {
+      autoResizeTextarea(editContentRef.current);
+    }
+  }, [editContent, isEditing]);
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
@@ -429,17 +443,32 @@ export function Note({
     handleAddItem();
   };
 
-  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Escape") {
       setAddingItem(false);
       setNewItemContent("");
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleAddItem();
+    }
+  };
+
+  const handleKeyDownEditContent = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && e.ctrlKey) {
+      e.preventDefault();
+      handleStopEdit();
+    }
+    if (e.key === "Escape") {
+      setIsEditing(false);
+      setEditContent(note.content);
     }
   };
 
   return (
     <div
       className={cn(
-        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border min-h-fit",
         className
       )}
       style={{
@@ -525,28 +554,21 @@ export function Note({
       </div>
 
       {isEditing ? (
-        <div className="min-h-0">
+        <div className="flex-1">
           <textarea
+            ref={editContentRef}
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full h-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
-            placeholder="Enter note content..."
+            className="w-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
+            placeholder="Enter note content... (Shift+Enter for new line, Ctrl+Enter to save)"
             onBlur={handleStopEdit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && e.ctrlKey) {
-                handleStopEdit();
-              }
-              if (e.key === "Escape") {
-                setIsEditing(false);
-                setEditContent(note.content);
-              }
-            }}
+            onKeyDown={handleKeyDownEditContent}
             autoFocus
           />
         </div>
       ) : (
-        <div className="flex flex-col">
-          <div className="overflow-y-auto space-y-1">
+        <div className="flex flex-col flex-1">
+          <div className="space-y-1">
             {/* Checklist Items */}
             <DraggableRoot
               items={note.checklistItems ?? []}
@@ -577,21 +599,24 @@ export function Note({
 
               {/* Add New Item Input */}
               {addingItem && canEdit && (
-                <form onSubmit={handleSubmitNewItem} className="flex items-center gap-3">
+                <form onSubmit={handleSubmitNewItem} className="flex items-start gap-3">
                   <Checkbox
                     disabled
-                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1"
                   />
-                  <Input
+                  <textarea
                     ref={newItemInputRef}
-                    type="text"
                     value={newItemContent}
-                    onChange={(e) => setNewItemContent(e.target.value)}
-                    className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    onChange={(e) => {
+                      setNewItemContent(e.target.value);
+                      autoResizeTextarea(e.target);
+                    }}
+                    className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none min-h-[20px]"
                     placeholder="Add new item..."
                     onKeyDown={handleKeyDownNewItem}
                     onBlur={handleAddItem}
                     autoFocus
+                    rows={1}
                   />
                   <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <Button
@@ -622,26 +647,28 @@ export function Note({
                   {note.content || ""}
                 </div>
               )}
+
+              {/* Add Item Button */}
+              {canEdit && (
+                <div className="mt-3">
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                        newItemInputRef.current.focus();
+                      } else {
+                        setAddingItem(true);
+                      }
+                    }}
+                    className="justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add task
+                  </Button>
+                </div>
+              )}
             </DraggableRoot>
           </div>
-
-          {/* Add Item Button */}
-          {canEdit && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
-                  newItemInputRef.current.focus();
-                } else {
-                  setAddingItem(true);
-                }
-              }}
-              className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add task
-            </Button>
-          )}
         </div>
       )}
     </div>

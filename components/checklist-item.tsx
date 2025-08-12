@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
+import { useRef } from "react";
 
 export interface ChecklistItem {
   id: string;
@@ -45,13 +45,44 @@ export function ChecklistItem({
   showDeleteButton = true,
   className,
 }: ChecklistItemProps) {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize textarea function
+  const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+  };
+
+  // Auto-resize when editing starts
+  React.useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      autoResizeTextarea(textareaRef.current);
+    }
+  }, [isEditing]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      const target = e.target as HTMLInputElement;
+
+      // If content hasn't changed, just stop editing
+      if (editContent === item.content) {
+        onStopEdit?.();
+        return;
+      }
+
+      // If content has changed, save the edit
+      if (onEdit && editContent !== undefined) {
+        onEdit(item.id, editContent);
+        onStopEdit?.();
+        return;
+      }
+
+      // Only split if explicitly requested and content is different
+      const target = e.target as HTMLTextAreaElement;
       const cursorPosition = target.selectionStart || 0;
-      if (onSplit && editContent !== undefined) {
+      if (onSplit && editContent !== undefined && editContent !== item.content) {
         onSplit(item.id, editContent, cursorPosition);
+        onStopEdit?.();
       }
     }
     if (e.key === "Escape") {
@@ -61,6 +92,11 @@ export function ChecklistItem({
       e.preventDefault();
       onDelete?.(item.id);
     }
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onEditContentChange?.(e.target.value);
+    autoResizeTextarea(e.target);
   };
 
   const handleBlur = () => {
@@ -73,7 +109,7 @@ export function ChecklistItem({
   return (
     <div
       className={cn(
-        "flex items-center group/item rounded gap-3 transition-all duration-200",
+        "flex items-start group/item rounded gap-3 transition-all duration-200 min-w-0",
         className
       )}
       // To avoid flaky test locators
@@ -83,27 +119,29 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1 flex-shrink-0"
         disabled={readonly}
       />
 
       {isEditing && !readonly ? (
-        <Input
-          type="text"
+        <textarea
+          ref={textareaRef}
           value={editContent ?? item.content}
-          onChange={(e) => onEditContentChange?.(e.target.value)}
+          onChange={handleChange}
           className={cn(
-            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none min-h-[20px] min-w-0",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           autoFocus
+          rows={1}
+          placeholder="Enter item content... (Shift+Enter for new line, Enter to save)"
         />
       ) : (
         <span
           className={cn(
-            "flex-1 text-sm leading-6 cursor-pointer select-none",
+            "flex-1 text-sm leading-6 cursor-pointer select-none min-w-0",
             item.checked
               ? "line-through text-gray-500 dark:text-gray-400"
               : "text-gray-900 dark:text-gray-100",
@@ -116,15 +154,17 @@ export function ChecklistItem({
       )}
 
       {showDeleteButton && !readonly && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6 opacity-50 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
-          onClick={() => onDelete?.(item.id)}
-        >
-          <Trash2 className="h-3 w-3" />
-          <span className="sr-only">Delete item</span>
-        </Button>
+        <div className="flex-shrink-0 ml-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 opacity-50 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
+            onClick={() => onDelete?.(item.id)}
+          >
+            <Trash2 className="h-3 w-3" />
+            <span className="sr-only">Delete item</span>
+          </Button>
+        </div>
       )}
     </div>
   );
