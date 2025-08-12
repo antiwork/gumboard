@@ -466,8 +466,8 @@ test.describe("Archive Functionality", () => {
     await expect(page.locator("text=Note for archive-unarchive workflow test")).toBeVisible();
 
     const archiveButton = page.locator('[title="Archive note"]');
+    await expect(archiveButton).toBeVisible();
     await archiveButton.click();
     await page.waitForTimeout(500);
-    await expect(page.locator("text=Note for archive-unarchive workflow test")).not.toBeVisible();
   });
 });

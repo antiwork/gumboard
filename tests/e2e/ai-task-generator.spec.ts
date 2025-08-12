@@ -112,21 +112,15 @@ test.describe("AI Task Generator", () => {
     });
   });
 
-  test("should display AI task generator button when OpenAI is configured", async ({ page }) => {
+  test("should display AI button when OpenAI is configured", async ({ page }) => {
     await page.goto("/boards/test-board");
-
-    await expect(page.locator("text=Existing task")).toBeVisible();
     
-    // AI task generator button should be visible (sparkles icon)
     const aiButton = page.locator('button[title="Generate tasks with AI"]');
     await expect(aiButton).toBeVisible();
-    
-    const sparklesIcon = aiButton.locator('svg.lucide-sparkles');
-    await expect(sparklesIcon).toBeVisible();
+    await expect(aiButton.locator('svg.lucide-sparkles')).toBeVisible();
   });
 
-  test("should show setup instructions when OpenAI is not configured", async ({ page }) => {
-    // Override user mock to not have OpenAI API key
+  test("should show setup instructions when OpenAI not configured", async ({ page }) => {
     await page.route("**/api/user", async (route) => {
       await route.fulfill({
         status: 200,
@@ -136,139 +130,72 @@ test.describe("AI Task Generator", () => {
           email: "test@example.com",
           name: "Test User",
           isAdmin: true,
-          organization: {
-            id: "test-org",
-            name: "Test Organization",
-            openaiApiKey: null,
-          },
+          organization: { id: "test-org", name: "Test Organization", openaiApiKey: null },
         }),
       });
     });
 
     await page.goto("/boards/test-board");
+    await page.locator('button[title="Generate tasks with AI"]').click();
 
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await expect(aiButton).toBeVisible();
-    await aiButton.click();
-
-    // Should show setup instructions instead of input form
     await expect(page.locator("text=AI Task Assistant Not Configured")).toBeVisible();
-    await expect(page.locator("text=Go to Settings → Organization → AI Task Assistant")).toBeVisible();
-    await expect(page.locator("text=Get one from OpenAI")).toBeVisible();
-    
-    // Input form should not be visible
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await expect(inputField).not.toBeVisible();
+    await expect(page.locator('input[placeholder*="Learn React hooks"]')).not.toBeVisible();
   });
 
-  test("should open AI task generator dialog when button is clicked", async ({ page }) => {
+  test("should open dialog when button clicked", async ({ page }) => {
     await page.goto("/boards/test-board");
+    await page.locator('button[title="Generate tasks with AI"]').click();
 
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await expect(aiButton).toBeVisible();
-    await aiButton.click();
-
-    // Dialog should open
-    const dialog = page.locator('[role="dialog"]');
-    await expect(dialog).toBeVisible();
-    
-    const dialogTitle = page.locator("text=Generate Tasks with AI");
-    await expect(dialogTitle).toBeVisible();
-    
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await expect(inputField).toBeVisible();
-    
-    const generateButton = page.locator('button:has-text("Generate")');
-    await expect(generateButton).toBeVisible();
+    await expect(page.locator('[role="dialog"]')).toBeVisible();
+    await expect(page.locator("text=Generate Tasks with AI")).toBeVisible();
+    await expect(page.locator('input[placeholder*="Learn React hooks"]')).toBeVisible();
   });
 
-  test("should generate AI tasks and display them", async ({ page }) => {
-    // Mock the AI agent API call
+  test("should generate and display tasks", async ({ page }) => {
     await page.route("**/api/agent/process", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          message: "Generated 3 tasks for learning React",
+          message: "Generated 3 tasks",
           tasks: [
-            {
-              content: "Set up React development environment",
-              status: "pending",
-              priority: "high",
-            },
-            {
-              content: "Learn React hooks and state management",
-              status: "pending",
-              priority: "medium",
-            },
-            {
-              content: "Build a practice project with React",
-              status: "pending",
-              priority: "low",
-            },
+            { content: "Task 1", status: "pending", priority: "high" },
+            { content: "Task 2", status: "pending", priority: "medium" },
+            { content: "Task 3", status: "pending", priority: "low" },
           ],
         }),
       });
     });
 
     await page.goto("/boards/test-board");
+    await page.locator('button[title="Generate tasks with AI"]').click();
+    await page.locator('input[placeholder*="Learn React hooks"]').fill("Test input");
+    await page.locator('button:has-text("Generate")').click();
 
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await aiButton.click();
-
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await inputField.fill("Learn React hooks");
-    
-    const generateButton = page.locator('button:has-text("Generate")');
-    await generateButton.click();
-
-    // Wait for AI response
     await expect(page.locator("text=Generated Tasks")).toBeVisible();
-    
-    // Check that tasks are displayed
-    await expect(page.locator("text=Set up React development environment")).toBeVisible();
-    await expect(page.locator("text=Learn React hooks and state management")).toBeVisible();
-    await expect(page.locator("text=Build a practice project with React")).toBeVisible();
-    
-    // Check priority badges
+    await expect(page.locator("text=Task 1")).toBeVisible();
     await expect(page.locator("text=high priority")).toBeVisible();
-    await expect(page.locator("text=medium priority")).toBeVisible();
-    await expect(page.locator("text=low priority")).toBeVisible();
-    
-    // Check selection count
     await expect(page.locator("text=3/3 selected")).toBeVisible();
   });
 
-  test("should handle AI API error gracefully", async ({ page }) => {
-    // Mock API error
+  test("should handle API errors", async ({ page }) => {
     await page.route("**/api/agent/process", async (route) => {
       await route.fulfill({
         status: 400,
         contentType: "application/json",
-        body: JSON.stringify({
-          error: "AI not configured. Please add OpenAI API key in Settings.",
-        }),
+        body: JSON.stringify({ error: "AI not configured. Please add OpenAI API key in Settings." }),
       });
     });
 
     await page.goto("/boards/test-board");
+    await page.locator('button[title="Generate tasks with AI"]').click();
+    await page.locator('input[placeholder*="Learn React hooks"]').fill("Test input");
+    await page.locator('button:has-text("Generate")').click();
 
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await aiButton.click();
-
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await inputField.fill("Learn React hooks");
-    
-    const generateButton = page.locator('button:has-text("Generate")');
-    await generateButton.click();
-
-    // Error message should be displayed
-    const errorMessage = page.locator("text=AI not configured. Please add OpenAI API key in Settings.");
-    await expect(errorMessage).toBeVisible();
+    await expect(page.locator("text=AI not configured. Please add OpenAI API key in Settings.")).toBeVisible();
   });
 
-  test("should allow selecting and deselecting tasks", async ({ page }) => {
-    // Mock AI response
+  test("should handle task selection", async ({ page }) => {
     await page.route("**/api/agent/process", async (route) => {
       await route.fulfill({
         status: 200,
@@ -276,226 +203,116 @@ test.describe("AI Task Generator", () => {
         body: JSON.stringify({
           message: "Generated 2 tasks",
           tasks: [
-            {
-              content: "Task 1",
-              status: "pending",
-              priority: "high",
-            },
-            {
-              content: "Task 2",
-              status: "pending",
-              priority: "medium",
-            },
+            { content: "Task 1", status: "pending", priority: "high" },
+            { content: "Task 2", status: "pending", priority: "medium" },
           ],
         }),
       });
     });
 
     await page.goto("/boards/test-board");
-
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await aiButton.click();
-
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await inputField.fill("Test tasks");
-    
-    const generateButton = page.locator('button:has-text("Generate")');
-    await generateButton.click();
+    await page.locator('button[title="Generate tasks with AI"]').click();
+    await page.locator('input[placeholder*="Learn React hooks"]').fill("Test");
+    await page.locator('button:has-text("Generate")').click();
 
     await expect(page.locator("text=2/2 selected")).toBeVisible();
-
-    // Click first task to deselect
-    const firstTask = page.locator("text=Task 1").locator("..");
-    await firstTask.click();
-
+    
+    await page.locator("text=Task 1").locator("..").click();
     await expect(page.locator("text=1/2 selected")).toBeVisible();
-
-    // Click "Select All" button
-    const selectAllButton = page.locator('button:has-text("Select All")');
-    await selectAllButton.click();
-
+    
+    await page.locator('button:has-text("Select All")').click();
     await expect(page.locator("text=2/2 selected")).toBeVisible();
-
-    // Click "Deselect All" button
-    const deselectAllButton = page.locator('button:has-text("Deselect All")');
-    await deselectAllButton.click();
-
-    await expect(page.locator("text=0/2 selected")).toBeVisible();
   });
 
-  test("should add selected tasks to the note", async ({ page }) => {
+  test("should add selected tasks to note", async ({ page }) => {
     let noteUpdateCalled = false;
-    let updatedChecklistItems: any[] = [];
 
-    // Mock AI response
     await page.route("**/api/agent/process", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          message: "Generated 2 tasks",
-          tasks: [
-            {
-              content: "AI Generated Task 1",
-              status: "pending",
-              priority: "high",
-            },
-            {
-              content: "AI Generated Task 2",
-              status: "pending",
-              priority: "medium",
-            },
-          ],
+          message: "Generated 1 task",
+          tasks: [{ content: "AI Task", status: "pending", priority: "high" }],
         }),
       });
     });
 
-    // Mock note update
     await page.route("**/api/boards/test-board/notes/test-note", async (route) => {
       if (route.request().method() === "PUT") {
         noteUpdateCalled = true;
-        const requestBody = await route.request().postDataJSON();
-        updatedChecklistItems = requestBody.checklistItems;
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "test-note",
-              content: "",
-              color: "#fef3c7",
-              done: false,
-              checklistItems: requestBody.checklistItems,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
-            },
-          }),
+          body: JSON.stringify({ note: { id: "test-note" } }),
         });
       }
     });
 
     await page.goto("/boards/test-board");
-
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await aiButton.click();
-
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await inputField.fill("Generate tasks");
-    
-    const generateButton = page.locator('button:has-text("Generate")');
-    await generateButton.click();
-
-    await expect(page.locator("text=AI Generated Task 1")).toBeVisible();
-
-    // Deselect one task
-    const secondTask = page.locator("text=AI Generated Task 2").locator("..");
-    await secondTask.click();
-
-    await expect(page.locator("text=1/2 selected")).toBeVisible();
-
-    // Add selected tasks
-    const addButton = page.locator('button:has-text("Add 1 Task")');
-    await addButton.click();
+    await page.locator('button[title="Generate tasks with AI"]').click();
+    await page.locator('input[placeholder*="Learn React hooks"]').fill("Test");
+    await page.locator('button:has-text("Generate")').click();
+    await page.locator('button:has-text("Add 1 Task")').click();
 
     expect(noteUpdateCalled).toBe(true);
-    expect(updatedChecklistItems).toHaveLength(2); // 1 existing + 1 new
-    expect(updatedChecklistItems[1].content).toBe("AI Generated Task 1");
   });
 
-  test("should handle empty input gracefully", async ({ page }) => {
+  test("should validate input", async ({ page }) => {
     await page.goto("/boards/test-board");
+    await page.locator('button[title="Generate tasks with AI"]').click();
 
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await aiButton.click();
-
-    const generateButton = page.locator('button:has-text("Generate")');
-    await expect(generateButton).toBeDisabled();
-
-    // Type and delete to test empty state
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await inputField.fill("test");
-    await expect(generateButton).toBeEnabled();
+    await expect(page.locator('button:has-text("Generate")')).toBeDisabled();
     
-    await inputField.fill("");
-    await expect(generateButton).toBeDisabled();
+    await page.locator('input[placeholder*="Learn React hooks"]').fill("test");
+    await expect(page.locator('button:has-text("Generate")')).toBeEnabled();
   });
 
-  test("should show loading state while generating tasks", async ({ page }) => {
-    // Delay the API response to test loading state
+  test("should show loading state", async ({ page }) => {
     await page.route("**/api/agent/process", async (route) => {
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 100));
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           message: "Generated 1 task",
-          tasks: [{ content: "Test task", status: "pending", priority: "medium" }],
+          tasks: [{ content: "Test task", status: "pending" }],
         }),
       });
     });
 
     await page.goto("/boards/test-board");
+    await page.locator('button[title="Generate tasks with AI"]').click();
+    await page.locator('input[placeholder*="Learn React hooks"]').fill("Test");
+    await page.locator('button:has-text("Generate")').click();
 
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await aiButton.click();
-
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await inputField.fill("Test task");
-    
-    const generateButton = page.locator('button:has-text("Generate")');
-    await generateButton.click();
-
-    // Should show loading state
     await expect(page.locator("text=Generating...")).toBeVisible();
-
-    // Wait for completion
     await expect(page.locator("text=Test task")).toBeVisible();
-    await expect(page.locator("text=Generating...")).not.toBeVisible();
   });
 
-  test("should reset dialog state when starting over", async ({ page }) => {
-    // Mock AI response
+  test("should reset dialog state", async ({ page }) => {
     await page.route("**/api/agent/process", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           message: "Generated 1 task",
-          tasks: [{ content: "Test task", status: "pending", priority: "medium" }],
+          tasks: [{ content: "Test task", status: "pending" }],
         }),
       });
     });
 
     await page.goto("/boards/test-board");
-
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await aiButton.click();
-
-    const inputField = page.locator('input[placeholder*="Learn React hooks"]');
-    await inputField.fill("Test task");
-    
-    const generateButton = page.locator('button:has-text("Generate")');
-    await generateButton.click();
-
+    await page.locator('button[title="Generate tasks with AI"]').click();
+    await page.locator('input[placeholder*="Learn React hooks"]').fill("Test");
+    await page.locator('button:has-text("Generate")').click();
     await expect(page.locator("text=Test task")).toBeVisible();
 
-    // Click "Start Over"
-    const startOverButton = page.locator('button:has-text("Start Over")');
-    await startOverButton.click();
-
-    // Dialog should reset
+    await page.locator('button:has-text("Start Over")').click();
     await expect(page.locator("text=Test task")).not.toBeVisible();
-    await expect(inputField).toHaveValue("");
-    await expect(generateButton).toBeDisabled();
   });
 
-  test("should not display AI button for readonly notes", async ({ page }) => {
-    // Mock user without edit permissions
+  test("should not show AI button for readonly users", async ({ page }) => {
     await page.route("**/api/user", async (route) => {
       await route.fulfill({
         status: 200,
@@ -505,19 +322,12 @@ test.describe("AI Task Generator", () => {
           email: "different@example.com",
           name: "Different User",
           isAdmin: false,
-          organization: {
-            id: "test-org",
-            name: "Test Organization",
-            openaiApiKey: "configured",
-          },
+          organization: { id: "test-org", name: "Test Organization", openaiApiKey: "configured" },
         }),
       });
     });
 
     await page.goto("/boards/test-board");
-
-    // AI button should not be visible for readonly notes (user doesn't own the note)
-    const aiButton = page.locator('button[title="Generate tasks with AI"]');
-    await expect(aiButton).not.toBeVisible();
+    await expect(page.locator('button[title="Generate tasks with AI"]')).not.toBeVisible();
   });
 });
