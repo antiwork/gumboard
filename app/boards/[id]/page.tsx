@@ -568,60 +568,60 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     try {
 
       // Fetch all boards for the dropdown
-      const allBoardsResponse = await fetch("/api/boards");
-      if (allBoardsResponse.ok) {
-        const { boards } = await allBoardsResponse.json();
-        setAllBoards(boards);
-      }
+      let allBoardsResponse: Response;
+      let notesResponse: Response | undefined;
+      let boardResponse: Response | undefined;
 
       if (boardId === "all-notes") {
         // For all notes view, create a virtual board object and fetch all notes
+        [allBoardsResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/all-notes/notes`)
+        ]);
+
         setBoard({
           id: "all-notes",
           name: "All notes",
           description: "Notes from all boards",
         });
-
-        // Fetch notes from all boards
-        const notesResponse = await fetch(`/api/boards/all-notes/notes`);
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json();
-          setNotes(notes);
-        }
       } else if (boardId === "archive") {
+        [allBoardsResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/archive/notes`)
+        ]);
+
+        // Set virtual board immediately
         setBoard({
           id: "archive",
           name: "Archive",
           description: "Archived notes from all boards",
         });
-
-        // Fetch archived notes from all boards
-        const notesResponse = await fetch(`/api/boards/archive/notes`);
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json();
-          setNotes(notes);
-        }
       } else {
-        // Fetch current board info
-        const boardResponse = await fetch(`/api/boards/${boardId}`);
-        if (boardResponse.status === 401) {
-          router.push("/auth/signin");
-          return;
-        }
-        if (boardResponse.ok) {
-          const { board } = await boardResponse.json();
-          setBoard(board);
-          setBoardSettings({
-            sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-          });
-        }
+        [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/${boardId}`),
+          fetch(`/api/boards/${boardId}/notes`)
+        ]);
+      }
 
-        // Fetch notes for specific board
-        const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
-        if (notesResponse.ok) {
-          const { notes } = await notesResponse.json();
-          setNotes(notes);
-        }
+      if (allBoardsResponse.ok) {
+        const { boards } = await allBoardsResponse.json();
+        setAllBoards(boards);
+      }
+
+      if (boardResponse && boardResponse.ok) {
+        const { board } = await boardResponse.json();
+        setBoard(board);
+        setBoardSettings({
+          sendSlackUpdates:
+            (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ??
+            true,
+        });
+      }
+
+      if (notesResponse && notesResponse.ok) {
+        const { notes } = await notesResponse.json();
+        setNotes(notes);
       }
 
       if (boardId && boardId !== "all-notes") {
