@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { BetaBadge } from "@/components/ui/beta-badge";
+import Image from "next/image";
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -82,16 +83,18 @@ function SignInContent() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
-        <Card className="w-full max-w-sm sm:max-w-md dark:bg-zinc-900 dark:border-zinc-800">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
+        <Card className="w-full max-w-sm sm:max-w-md bg-white/95 dark:bg-zinc-900/95 border border-gray-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow">
           <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mb-4">
-              <Mail className="w-6 h-6 text-green-600 dark:text-green-400" />
+            <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mb-4 ring-1 ring-green-200/60 dark:ring-green-800/40">
+              <Mail className="w-6 h-6 text-green-700 dark:text-green-400" />
             </div>
-            <CardTitle className="text-2xl dark:text-zinc-100">Check your email</CardTitle>
-            <CardDescription className="dark:text-zinc-400">
+            <CardTitle className="text-2xl text-foreground dark:text-zinc-100">
+              Check your email
+            </CardTitle>
+            <CardDescription className="text-muted-foreground dark:text-zinc-400">
               We&apos;ve sent a magic link to{" "}
-              <strong className="dark:text-zinc-100">{email}</strong>
+              <strong className="text-foreground dark:text-zinc-100">{email}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -99,13 +102,13 @@ function SignInContent() {
               Click the link in the email to sign in to your account. The link will expire in 24
               hours.
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-500 text-center mb-4">
+            <p className="text-sm text-gray-500 dark:text-zinc-500 text-center mb-4">
               It may take up to 2 minutes for the email to arrive.
             </p>
             <div className="space-y-2">
               <Button
                 variant="outline"
-                className="w-full justify-between dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                className="w-full justify-between bg-white border-gray-200 text-gray-900 hover:bg-gray-50 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-colors active:scale-95"
                 onClick={() => window.open("https://mail.google.com", "_blank")}
               >
                 Open Gmail
@@ -113,7 +116,7 @@ function SignInContent() {
               </Button>
               <Button
                 variant="outline"
-                className="w-full justify-between dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900"
+                className="w-full justify-between bg-white border-gray-200 text-gray-900 hover:bg-gray-50 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-colors active:scale-95"
                 onClick={() => window.open("https://outlook.live.com", "_blank")}
               >
                 Open Outlook
@@ -124,9 +127,10 @@ function SignInContent() {
           <CardFooter>
             <Button
               variant="outline"
-              className="w-full dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900"
+              className="w-full bg-white border-gray-200 text-gray-900 hover:bg-gray-50 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
               onClick={handleResendEmail}
               disabled={isResending}
+              aria-busy={isResending}
             >
               {isResending ? (
                 <>
@@ -146,17 +150,17 @@ function SignInContent() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
-      <Card className="w-full max-w-sm sm:max-w-md dark:bg-zinc-900 dark:border-zinc-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
+      <Card className="w-full bg-white max-w-sm sm:max-w-md dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow">
         <CardHeader className="text-center">
-          <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
-            <Mail className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+          <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mb-4 ring-1 ring-blue-200/60 dark:ring-blue-800/40">
+            <Image src="/logo/gumboard.svg" alt="Gumboard Logo" width={48} height={48} />
           </div>
-          <CardTitle className="text-xl sm:text-2xl font-bold dark:text-zinc-100 flex items-center gap-2">
+          <CardTitle className="text-xl sm:text-2xl font-bold text-foreground dark:text-zinc-100 flex items-center gap-2 justify-center">
             Welcome to Gumboard
             <BetaBadge />
           </CardTitle>
-          <CardDescription className="dark:text-zinc-400">
+          <CardDescription className="text-muted-foreground dark:text-zinc-400">
             {searchParams.get("email")
               ? "we'll send you a magic link to verify your email address"
               : "Enter your email address and we'll send you a magic link to sign in"}
@@ -166,13 +170,13 @@ function SignInContent() {
           <CardContent className="space-y-4">
             {searchParams.get("email") && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <p className="text-sm text-blue-800 dark:text-blue-300">
                   📧 You&apos;re signing in from an organization invitation
                 </p>
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email" className="dark:text-zinc-200">
+              <Label htmlFor="email" className="text-foreground dark:text-zinc-200">
                 Email address
               </Label>
               <Input
@@ -183,15 +187,16 @@ function SignInContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading || !!searchParams.get("email")}
                 required
-                className="h-12 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:placeholder-zinc-500"
+                className="h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400 hover:border-gray-400  transition-colors"
               />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col">
             <Button
               type="submit"
-              className="w-full h-12 font-medium mt-4 dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700"
+              className="w-full h-12 font-medium mt-4 bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
               disabled={isLoading || !email}
+              aria-busy={isLoading}
             >
               {isLoading ? (
                 <>
@@ -209,7 +214,7 @@ function SignInContent() {
             {/* Divider */}
             <div className="relative mt-6 w-full">
               <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-300 dark:border-zinc-700" />
+                <span className="w-full border-t border-gray-200 dark:border-zinc-700" />
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="bg-white px-2 text-muted-foreground dark:bg-zinc-900 dark:text-zinc-400">
@@ -224,7 +229,7 @@ function SignInContent() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 justify-center dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900"
+                className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 hover:bg-gray-50 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
                 onClick={() => signIn("google", { callbackUrl: "/" })}
               >
                 <svg
@@ -257,7 +262,7 @@ function SignInContent() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 justify-center dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900"
+                className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 hover:bg-gray-50 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
                 onClick={() => signIn("github", { callbackUrl: "/" })}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
@@ -275,14 +280,16 @@ function SignInContent() {
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
-      <Card className="w-full max-w-sm sm:max-w-md dark:bg-zinc-900 dark:border-zinc-800">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
+      <Card className="w-full max-w-sm sm:max-w-md bg-white/95 dark:bg-zinc-900/95 border border-gray-200 dark:border-zinc-800 shadow-sm">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 bg-muted rounded-full flex items-center justify-center mb-4 dark:bg-zinc-800">
             <div className="w-6 h-6 animate-spin rounded-full border-2 border-muted-foreground border-t-foreground dark:border-zinc-700 dark:border-t-zinc-100" />
           </div>
-          <CardTitle className="text-xl sm:text-2xl dark:text-zinc-100">Loading...</CardTitle>
-          <CardDescription className="dark:text-zinc-400">
+          <CardTitle className="text-xl sm:text-2xl text-foreground dark:text-zinc-100">
+            Loading...
+          </CardTitle>
+          <CardDescription className="text-muted-foreground dark:text-zinc-400">
             Please wait while we prepare the sign in page
           </CardDescription>
         </CardHeader>

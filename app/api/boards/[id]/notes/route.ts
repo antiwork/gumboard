@@ -34,20 +34,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             createdBy: true,
             createdAt: true,
             updatedAt: true,
-            done: true,
-            checklistItems: true,
+            archivedAt: true,
             user: {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
-            }
+                email: true,
+              },
+            },
+            checklistItems: { orderBy: { order: "asc" } },
           },
-          orderBy: { createdAt: 'desc' }
-        }
-      }
-    })
+          orderBy: { createdAt: "desc" },
+        },
+      },
+    });
 
     if (!board) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
@@ -63,10 +63,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { 
-        organizationId: true 
-      }
-    })
+      select: {
+        organizationId: true,
+      },
+    });
 
     if (!user?.organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 });
@@ -91,23 +91,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, checklistItems } = await request.json();
+    const { content, color } = await request.json();
     const boardId = (await params).id;
 
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { 
+      select: {
         organizationId: true,
         organization: {
           select: {
-            slackWebhookUrl: true
-          }
+            slackWebhookUrl: true,
+          },
         },
         name: true,
-        email: true
-      }
-    })
+        email: true,
+      },
+    });
 
     if (!user?.organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 });
@@ -139,7 +139,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         color: randomColor,
         boardId,
         createdBy: session.user.id,
-        ...(checklistItems !== undefined && { checklistItems }),
       },
       include: {
         user: {
@@ -149,6 +148,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             email: true,
           },
         },
+        checklistItems: { orderBy: { order: "asc" } },
       },
     });
 
