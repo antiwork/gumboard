@@ -274,7 +274,7 @@ test.describe("Note Management", () => {
       const existingItem = page.locator("text=Test item").first();
       await expect(existingItem).toBeVisible();
       await existingItem.dblclick();
-      const editInput = page.locator('input[value="Test item"]');
+      const editInput = page.locator('textarea').filter({ hasText: "Test item" });
       await editInput.isVisible();
       await editInput.fill("Edited test item");
       await page.getByText("Note Actual Board").click();
