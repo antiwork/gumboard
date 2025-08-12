@@ -68,16 +68,16 @@ model User {
 }
 
 model Organization {
-  id               String                        @id @default(cuid())
-  name             String
-  slackWebhookUrl  String?
+  id                String                        @id @default(cuid())
+  name              String
+  slackWebhookUrl   String?
   discordWebhookUrl String?
-  createdAt        DateTime                      @default(now())
-  updatedAt        DateTime                      @updatedAt
-  members          User[]
-  invites          OrganizationInvite[]
-  boards           Board[]
-  selfServeInvites OrganizationSelfServeInvite[]
+  createdAt         DateTime                      @default(now())
+  updatedAt         DateTime                      @updatedAt
+  members           User[]
+  invites           OrganizationInvite[]
+  boards            Board[]
+  selfServeInvites  OrganizationSelfServeInvite[]
 
   @@map("organizations")
 }
