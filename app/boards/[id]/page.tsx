@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { AddNoteCard } from "@/components/add-note-card";
 import {
   Plus,
   ChevronDown,
@@ -276,7 +277,7 @@ export default function BoardPage({
 
   // Helper function to calculate bin-packed layout for desktop
   const calculateGridLayout = () => {
-    if (typeof window === "undefined") return [];
+    if (typeof window === "undefined") return { notes: [], addNoteCard: null };
 
     const config = getResponsiveConfig();
     const containerWidth = window.innerWidth - config.containerPadding * 2;
@@ -308,7 +309,7 @@ export default function BoardPage({
       config.containerPadding
     );
 
-    return filteredNotes.map((note) => {
+    const layoutNotes = filteredNotes.map((note) => {
       const noteHeight = calculateNoteHeight(
         note,
         adjustedNoteWidth,
@@ -341,11 +342,38 @@ export default function BoardPage({
         height: noteHeight,
       };
     });
+
+    let addNoteCard: null | {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    } = null;
+
+    if (boardId !== "archive") {
+      const addNoteHeight = 200;
+
+      let bestColumn = 0;
+      let minBottom = columnBottoms[0];
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+
+      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
+      const y = columnBottoms[bestColumn];
+
+      addNoteCard = { x, y, width: adjustedNoteWidth, height: addNoteHeight };
+    }
+
+    return { notes: layoutNotes, addNoteCard };
   };
 
   // Helper function to calculate mobile layout (optimized single/double column)
   const calculateMobileLayout = () => {
-    if (typeof window === "undefined") return [];
+    if (typeof window === "undefined") return { notes: [], addNoteCard: null };
 
     const config = getResponsiveConfig();
     const containerWidth = window.innerWidth - config.containerPadding * 2;
@@ -365,7 +393,7 @@ export default function BoardPage({
       config.containerPadding
     );
 
-    return filteredNotes.map((note) => {
+    const layoutNotes = filteredNotes.map((note) => {
       const noteHeight = calculateNoteHeight(
         note,
         noteWidth,
@@ -399,6 +427,33 @@ export default function BoardPage({
         height: noteHeight,
       };
     });
+
+    let addNoteCard: null | {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    } = null;
+
+    if (boardId !== "archive") {
+      const addNoteHeight = 200;
+
+      let bestColumn = 0;
+      let minBottom = columnBottoms[0];
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+
+      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
+      const y = columnBottoms[bestColumn];
+
+      addNoteCard = { x, y, width: noteWidth, height: addNoteHeight };
+    }
+
+    return { notes: layoutNotes, addNoteCard };
   };
 
   useEffect(() => {
@@ -615,23 +670,34 @@ export default function BoardPage({
       ),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
-  const layoutNotes = useMemo(
+  const layout = useMemo(
     () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, calculateMobileLayout, calculateGridLayout]
+    [isMobile, filteredNotes, boardId]
   );
+  const layoutNotes = layout.notes;
+  const addNoteCardLayout = layout.addNoteCard;
 
   const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
+    if (layoutNotes.length === 0 && !addNoteCardLayout) {
       return "calc(100vh - 64px)";
     }
-    const maxBottom = Math.max(
-      ...layoutNotes.map((note) => note.y + note.height)
-    );
+
+    const elements: number[] = [];
+    layoutNotes.forEach((note) => elements.push(note.y + note.height));
+    if (addNoteCardLayout) {
+      elements.push(addNoteCardLayout.y + addNoteCardLayout.height);
+    }
+
+    if (elements.length === 0) {
+      return "calc(100vh - 64px)";
+    }
+
+    const maxBottom = Math.max(...elements);
     const minHeight =
       typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
     return `${calculatedHeight}px`;
-  }, [layoutNotes]);
+  }, [layoutNotes, addNoteCardLayout]);
 
   const fetchBoardData = async () => {
     try {
@@ -1161,6 +1227,33 @@ export default function BoardPage({
       >
         {/* Notes */}
         <div className="relative w-full h-full">
+          {/* Add Note Card */}
+          {addNoteCardLayout && (
+            <AddNoteCard
+              onClick={() => {
+                if (boardId === "all-notes" && allBoards.length > 0) {
+                  handleAddNote(allBoards[0].id);
+                } else if (boardId === "archive") {
+                  setErrorDialog({
+                    open: true,
+                    title: "Cannot Add Note",
+                    description:
+                      "You cannot add notes directly to the archive. Notes are archived from other boards.",
+                  });
+                } else {
+                  handleAddNote();
+                }
+              }}
+              style={{
+                position: "absolute",
+                left: addNoteCardLayout.x,
+                top: addNoteCardLayout.y,
+                width: addNoteCardLayout.width,
+                height: addNoteCardLayout.height,
+              }}
+            />
+          )}
+
           {layoutNotes.map((note) => (
             <NoteCard
               key={note.id}
