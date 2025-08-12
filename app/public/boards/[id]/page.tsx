@@ -4,17 +4,13 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
-import Link from "next/link"
+import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import type { Note, Board } from "@/components/note";
 
-export default function PublicBoardPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
+export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -81,11 +77,7 @@ export default function PublicBoardPage({
     }
   };
 
-  const calculateNoteHeight = (
-    note: Note,
-    noteWidth?: number,
-    notePadding?: number
-  ) => {
+  const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
     const actualNotePadding = notePadding || config.notePadding;
     const actualNoteWidth = noteWidth || config.noteWidth;
@@ -100,8 +92,7 @@ export default function PublicBoardPage({
       const checklistItemsCount = note.checklistItems.length;
 
       const checklistHeight =
-        checklistItemsCount * itemHeight +
-        (checklistItemsCount - 1) * itemSpacing;
+        checklistItemsCount * itemHeight + (checklistItemsCount - 1) * itemSpacing;
       const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
 
       return headerHeight + paddingHeight + totalChecklistHeight + 40;
@@ -125,17 +116,12 @@ export default function PublicBoardPage({
       const lineHeight = 28;
       const contentHeight = totalLines * lineHeight;
 
-      return (
-        headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight)
-      );
+      return headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight);
     }
   };
 
   const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<
-      string,
-      { id: string; name: string; email: string }
-    >();
+    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
 
     notes.forEach((note) => {
       if (!authorsMap.has(note.user.id)) {
@@ -147,9 +133,7 @@ export default function PublicBoardPage({
       }
     });
 
-    return Array.from(authorsMap.values()).sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
   };
 
   const filterAndSortNotes = (
@@ -179,20 +163,11 @@ export default function PublicBoardPage({
         const startOfDay = (date: Date) =>
           new Date(date.getFullYear(), date.getMonth(), date.getDate());
         const endOfDay = (date: Date) =>
-          new Date(
-            date.getFullYear(),
-            date.getMonth(),
-            date.getDate(),
-            23,
-            59,
-            59,
-            999
-          );
+          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
 
         if (dateRange.startDate && dateRange.endDate) {
           return (
-            noteDate >= startOfDay(dateRange.startDate) &&
-            noteDate <= endOfDay(dateRange.endDate)
+            noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate)
           );
         } else if (dateRange.startDate) {
           return noteDate >= startOfDay(dateRange.startDate);
@@ -204,9 +179,7 @@ export default function PublicBoardPage({
     }
 
     filteredNotes.sort((a, b) => {
-      return (
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
 
     return filteredNotes;
@@ -218,34 +191,20 @@ export default function PublicBoardPage({
     const config = getResponsiveConfig();
     const containerWidth = window.innerWidth - config.containerPadding * 2;
     const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / noteWidthWithGap
-    );
+    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
     const actualColumnsCount = Math.max(1, columnsCount);
 
-    const availableWidthForNotes =
-      containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(
-      availableWidthForNotes / actualColumnsCount
-    );
+    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
     const minWidth = config.noteWidth - 40;
     const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(
-      minWidth,
-      Math.min(maxWidth, calculatedNoteWidth)
-    );
+    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
 
     const offsetX = config.containerPadding;
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
-      config.containerPadding
-    );
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
     return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(
-        note,
-        adjustedNoteWidth,
-        config.notePadding
-      );
+      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
 
       let bestColumn = 0;
       let minBottom = columnBottoms[0];
@@ -283,20 +242,13 @@ export default function PublicBoardPage({
     );
     const actualColumnsCount = Math.max(1, columnsCount);
 
-    const availableWidthForNotes =
-      containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
     const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
 
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(
-      config.containerPadding
-    );
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
     return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(
-        note,
-        noteWidth,
-        config.notePadding
-      );
+      const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
 
       let bestColumn = 0;
       let minBottom = columnBottoms[0];
@@ -308,8 +260,7 @@ export default function PublicBoardPage({
         }
       }
 
-      const x =
-        config.containerPadding + bestColumn * (noteWidth + config.gridGap);
+      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
       const y = columnBottoms[bestColumn];
 
       columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
@@ -393,13 +344,7 @@ export default function PublicBoardPage({
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
   const filteredNotes = useMemo(
-    () =>
-      filterAndSortNotes(
-        notes,
-        searchTerm,
-        dateRange,
-        selectedAuthor
-      ),
+    () => filterAndSortNotes(notes, searchTerm, dateRange, selectedAuthor),
     [notes, searchTerm, dateRange, selectedAuthor]
   );
 
@@ -413,11 +358,8 @@ export default function PublicBoardPage({
       return "calc(100vh - 64px)";
     }
 
-    const maxBottom = Math.max(
-      ...layoutNotes.map((note) => note.y + note.height)
-    );
-    const minHeight =
-      typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
+    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
+    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
 
     return `${calculatedHeight}px`;
@@ -454,7 +396,7 @@ export default function PublicBoardPage({
                 <BetaBadge />
               </h1>
             </Link>
-            
+
             <div className="flex items-center space-x-2">
               <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
                 {board.name}

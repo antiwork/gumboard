@@ -83,30 +83,22 @@ test.describe("Board Settings", () => {
     });
   });
 
-  test("should open board settings dialog and display current settings", async ({
-    page,
-  }) => {
+  test("should open board settings dialog and display current settings", async ({ page }) => {
     await page.goto("/boards/test-board");
 
     await page.click('button:has(div:has-text("Test Board"))');
     await page.click('button:has-text("Board settings")');
 
     await expect(page.locator("text=Board settings")).toBeVisible();
-    await expect(
-      page.locator('text=Configure settings for "Test Board" board.')
-    ).toBeVisible();
-    await expect(
-      page.locator('label:has-text("Send updates to Slack")')
-    ).toBeVisible();
+    await expect(page.locator('text=Configure settings for "Test Board" board.')).toBeVisible();
+    await expect(page.locator('label:has-text("Send updates to Slack")')).toBeVisible();
 
     const checkbox = page.locator("#sendSlackUpdates");
     await expect(checkbox).toBeVisible();
     await expect(checkbox).toBeChecked();
   });
 
-  test("should toggle Slack updates setting and save changes", async ({
-    page,
-  }) => {
+  test("should toggle Slack updates setting and save changes", async ({ page }) => {
     let boardUpdateCalled = false;
     let updatedSettings: any = null;
 
@@ -163,9 +155,7 @@ test.describe("Board Settings", () => {
     await expect(page.locator("text=Board settings")).not.toBeVisible();
   });
 
-  test("should respect Slack updates setting when creating notes", async ({
-    page,
-  }) => {
+  test("should respect Slack updates setting when creating notes", async ({ page }) => {
     let slackNotificationSent = false;
     let noteCreated = false;
 
@@ -273,9 +263,7 @@ test.describe("Board Settings", () => {
     await page.click('button:has-text("Board settings")');
 
     await expect(page.locator("text=Board settings")).toBeVisible();
-    await expect(
-      page.locator('label:has-text("Send updates to Slack")')
-    ).toBeVisible();
+    await expect(page.locator('label:has-text("Send updates to Slack")')).toBeVisible();
 
     const checkbox = page.locator("#sendSlackUpdates");
     await expect(checkbox).toBeVisible();

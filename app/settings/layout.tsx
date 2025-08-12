@@ -1,73 +1,49 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { User as UserIcon, Building2, ArrowLeft, Settings, LogOut, ChevronDown } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { BetaBadge } from "@/components/ui/beta-badge"
-import { signOut } from "next-auth/react"
-import { FullPageLoader } from "@/components/ui/loader"
-import type { User } from "@/components/note"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { User as UserIcon, Building2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { BetaBadge } from "@/components/ui/beta-badge";
+import { FullPageLoader } from "@/components/ui/loader";
+import type { User } from "@/components/note";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 
-export default function SettingsLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [showUserDropdown, setShowUserDropdown] = useState(false)
-  const router = useRouter()
-  const pathname = usePathname()
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const fetchUserData = useCallback(async () => {
     try {
-      const response = await fetch("/api/user")
+      const response = await fetch("/api/user");
       if (response.status === 401) {
-        router.push("/auth/signin")
-        return
+        router.push("/auth/signin");
+        return;
       }
 
       if (response.ok) {
-        const userData = await response.json()
-        setUser(userData)
+        const userData = await response.json();
+        setUser(userData);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error)
+      console.error("Error fetching user data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [router])
+  }, [router]);
 
   useEffect(() => {
-    fetchUserData()
-  }, [fetchUserData])
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showUserDropdown) {
-        const target = event.target as Element
-        if (!target.closest('.user-dropdown')) {
-          setShowUserDropdown(false)
-        }
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showUserDropdown])
-
-  const handleSignOut = async () => {
-    await signOut()
-  }
+    fetchUserData();
+  }, [fetchUserData]);
 
   if (loading) {
-    return <FullPageLoader message="Loading settings..." />
+    return <FullPageLoader message="Loading settings..." />;
   }
 
-  const isProfileActive = pathname === '/settings'
-  const isOrganizationActive = pathname === '/settings/organization'
+  const isProfileActive = pathname === "/settings";
+  const isOrganizationActive = pathname === "/settings/organization";
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
@@ -75,50 +51,12 @@ export default function SettingsLayout({
         <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-4 sm:space-x-6">
             <Link href="/dashboard" className="flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">Gumboard <BetaBadge /></h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                Gumboard <BetaBadge />
+              </h1>
             </Link>
           </div>
-          <div className="relative user-dropdown">
-            <Button
-              onClick={() => setShowUserDropdown(!showUserDropdown)}
-              className="flex items-center space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:ring-offset-2 rounded-md px-3 py-2"
-            >
-              <div className="w-8 h-8 bg-blue-500 dark:bg-blue-600 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-white">
-                  {user?.name ? user.name.charAt(0).toUpperCase() : user?.email?.charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <span className="text-sm font-medium hidden md:inline">
-                {user?.name?.split(' ')[0] || 'User'}
-              </span>
-              <ChevronDown className="w-4 h-4 ml-1" />
-            </Button>
-
-            {showUserDropdown && (
-              <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-gray-200 dark:border-zinc-800 z-50">
-                <div className="py-1">
-                  <div className="px-4 py-2 text-sm text-muted-foreground dark:text-zinc-400 border-b dark:border-zinc-800">
-                    {user?.email}
-                  </div>
-                  <Link
-                    href="/settings"
-                    className="flex items-center px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                    onClick={() => setShowUserDropdown(false)}
-                  >
-                    <Settings className="w-4 h-4 mr-2" />
-                    Settings
-                  </Link>
-                  <Button
-                    onClick={handleSignOut}
-                    className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                  >
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
+          <ProfileDropdown user={user} />
         </div>
       </nav>
 
@@ -163,11 +101,9 @@ export default function SettingsLayout({
               </Link>
             </nav>
           </div>
-          <div className="flex-1">
-            {children}
-          </div>
+          <div className="flex-1">{children}</div>
         </div>
       </div>
     </div>
-  )
+  );
 }
