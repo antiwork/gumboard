@@ -21,7 +21,7 @@ export function ProfileDropdown({ user }: Props) {
         <Avatar className="w-9 h-9 cursor-pointer">
           <div className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors ">
             <AvatarImage
-              className="w-8 h-8 rounded-full" 
+              className="w-8 h-8 rounded-full"
               src={user?.image || ""}
               alt={user?.name || ""}
             />
