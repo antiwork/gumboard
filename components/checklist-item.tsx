@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
@@ -45,10 +45,25 @@ export function ChecklistItem({
   showDeleteButton = true,
   className,
 }: ChecklistItemProps) {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+
+
+  const autoResize = React.useCallback(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, []);
+
+  React.useEffect(() => {
+    if (isEditing) {
+      autoResize();
+    }
+  }, [isEditing, editContent, autoResize]);
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
-      e.preventDefault();
-      const target = e.target as HTMLInputElement;
+      const target = e.target as HTMLTextAreaElement;
       const cursorPosition = target.selectionStart || 0;
       if (onSplit && editContent !== undefined) {
         onSplit(item.id, editContent, cursorPosition);
@@ -73,7 +88,7 @@ export function ChecklistItem({
   return (
     <div
       className={cn(
-        "flex items-center group/item rounded gap-3 transition-all duration-200",
+        "flex items-start group/item rounded gap-3 transition-all duration-200 w-full",
         className
       )}
       // To avoid flaky test locators
@@ -83,27 +98,38 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1"
         disabled={readonly}
       />
 
       {isEditing && !readonly ? (
-        <Input
-          type="text"
+        <Textarea
+          ref={textareaRef}
           value={editContent ?? item.content}
-          onChange={(e) => onEditContentChange?.(e.target.value)}
+          onChange={(e) => {
+            onEditContentChange?.(e.target.value);
+          }}
+          onInput={autoResize}
           className={cn(
-            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "min-h-6 h-auto flex-1 min-w-0 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none overflow-hidden whitespace-pre-wrap",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
+          style={{ 
+            wordWrap: 'break-word', 
+            overflowWrap: 'break-word',
+            wordBreak: 'break-word',
+            whiteSpace: 'pre-wrap',
+            maxWidth: '100%'
+          }}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
           autoFocus
+          rows={1}
         />
       ) : (
         <span
           className={cn(
-            "flex-1 text-sm leading-6 cursor-pointer select-none",
+            "flex-1 min-w-0 text-sm leading-6 cursor-pointer select-none break-words whitespace-pre-wrap",
             item.checked
               ? "line-through text-gray-500 dark:text-gray-400"
               : "text-gray-900 dark:text-gray-100",

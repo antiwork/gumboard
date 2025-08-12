@@ -1103,7 +1103,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 left: note.x,
                 top: note.y,
                 width: note.width,
-                height: note.height,
+                minHeight: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
                 backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
               }}
