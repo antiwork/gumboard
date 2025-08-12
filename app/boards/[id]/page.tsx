@@ -41,7 +41,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  // Responsive state is inferred on demand; no explicit isMobile state needed
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -250,159 +250,55 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  // Helper function to calculate bin-packed layout for desktop
-  const calculateGridLayout = () => {
-    if (typeof window === "undefined") return { notes: [], addNoteCard: null };
+  // DRY helpers and unified layout calculation
+  const bestColumnIndex = (bottoms: number[]) => bottoms.indexOf(Math.min(...bottoms));
+
+  const calculateLayout = () => {
+    if (typeof window === "undefined")
+      return {
+        notes: [],
+        addNoteCard: null as null | { x: number; y: number; width: number; height: number },
+      };
 
     const config = getResponsiveConfig();
     const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
-    const actualColumnsCount = Math.max(1, columnsCount);
 
-    // Calculate the actual available width and adjust note width to fill better
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-    // Ensure notes don't get too narrow or too wide based on screen size
+    // Slightly tighter baseline on small screens
+    const targetNoteWidth = window.innerWidth < 768 ? config.noteWidth - 20 : config.noteWidth;
+
+    const columnsCount = Math.max(
+      1,
+      Math.floor((containerWidth + config.gridGap) / (targetNoteWidth + config.gridGap))
+    );
+
+    const availableWidthForNotes = containerWidth - (columnsCount - 1) * config.gridGap;
+    const rawNoteWidth = Math.floor(availableWidthForNotes / columnsCount);
+
     const minWidth = config.noteWidth - 40;
     const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
+    const noteWidth = Math.max(minWidth, Math.min(maxWidth, rawNoteWidth));
 
-    // Use full width with minimal left offset
     const offsetX = config.containerPadding;
-
-    // Bin-packing algorithm: track the bottom Y position of each column
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    const layoutNotes = filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: adjustedNoteWidth,
-        height: noteHeight,
-      };
-    });
-
-    let addNoteCard: null | {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    } = null;
-
-    if (boardId !== "archive") {
-      const addNoteHeight = 200;
-
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      addNoteCard = { x, y, width: adjustedNoteWidth, height: addNoteHeight };
-    }
-
-    return { notes: layoutNotes, addNoteCard };
-  };
-
-  // Helper function to calculate mobile layout (optimized single/double column)
-  const calculateMobileLayout = () => {
-    if (typeof window === "undefined") return { notes: [], addNoteCard: null };
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const minNoteWidth = config.noteWidth - 20; // Slightly smaller minimum for mobile
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate note width for mobile
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-
-    // Bin-packing for mobile with fewer columns
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
+    const columnBottoms: number[] = new Array(columnsCount).fill(config.containerPadding);
 
     const layoutNotes = filteredNotes.map((note) => {
       const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
 
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
+      const col = bestColumnIndex(columnBottoms);
+      const x = offsetX + col * (noteWidth + config.gridGap);
+      const y = columnBottoms[col];
 
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
+      columnBottoms[col] = y + noteHeight + config.gridGap;
 
-      // Place the note in the best column
-      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: noteWidth,
-        height: noteHeight,
-      };
+      return { ...note, x, y, width: noteWidth, height: noteHeight };
     });
 
-    let addNoteCard: null | {
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-    } = null;
-
+    let addNoteCard: null | { x: number; y: number; width: number; height: number } = null;
     if (boardId !== "archive") {
       const addNoteHeight = 200;
-
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
+      const col = bestColumnIndex(columnBottoms);
+      const x = offsetX + col * (noteWidth + config.gridGap);
+      const y = columnBottoms[col];
       addNoteCard = { x, y, width: noteWidth, height: addNoteHeight };
     }
 
@@ -472,29 +368,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   // Removed debounce cleanup effect; editing is scoped to Note
 
-  // Enhanced responsive handling with debounced resize and better breakpoints
+  // Enhanced responsive handling with debounced resize
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
 
-    const checkResponsive = () => {
+    const handleResize = () => {
       if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768); // Tablet breakpoint
-
-        // Force re-render of notes layout after screen size change
-        // This ensures notes are properly repositioned
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
           setNotes((prevNotes) => [...prevNotes]);
         }, 50); // Debounce resize events - reduced for real-time feel
       }
     };
 
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
+    handleResize();
+    window.addEventListener("resize", handleResize);
     return () => {
-      window.removeEventListener("resize", checkResponsive);
+      window.removeEventListener("resize", handleResize);
       clearTimeout(resizeTimeout);
     };
   }, []);
@@ -602,10 +492,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
-  const layout = useMemo(
-    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, filteredNotes, boardId]
-  );
+  const layout = useMemo(() => calculateLayout(), [filteredNotes, boardId]);
   const layoutNotes = layout.notes;
   const addNoteCardLayout = layout.addNoteCard;
 
@@ -762,6 +649,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       }
     } catch (error) {
       console.error("Error creating note:", error);
+    }
+  };
+
+  // Guarded add-note click handler used across the UI
+  const handleAddNoteClick = () => {
+    if (boardId === "all-notes" && allBoards.length > 0) {
+      handleAddNote(allBoards[0].id);
+    } else if (boardId === "archive") {
+      setErrorDialog({
+        open: true,
+        title: "Cannot Add Note",
+        description:
+          "You cannot add notes directly to the archive. Notes are archived from other boards.",
+      });
+    } else {
+      handleAddNote();
     }
   };
 
@@ -1114,13 +1017,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </div>
 
             <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else {
-                  handleAddNote();
-                }
-              }}
+              onClick={handleAddNoteClick}
               className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
             >
               <Plus className="w-4 h-4" />
@@ -1149,20 +1046,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           {/* Add Note Card */}
           {addNoteCardLayout && (
             <AddNoteCard
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else if (boardId === "archive") {
-                  setErrorDialog({
-                    open: true,
-                    title: "Cannot Add Note",
-                    description:
-                      "You cannot add notes directly to the archive. Notes are archived from other boards.",
-                  });
-                } else {
-                  handleAddNote();
-                }
-              }}
+              onClick={handleAddNoteClick}
               style={{
                 position: "absolute",
                 left: addNoteCardLayout.x,
@@ -1242,20 +1126,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="text-xl mb-2">No notes yet</div>
             <div className="text-sm mb-4">Click &ldquo;Add Note&rdquo; to get started</div>
             <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else if (boardId === "archive") {
-                  setErrorDialog({
-                    open: true,
-                    title: "Cannot Add Note",
-                    description:
-                      "You cannot add notes directly to the archive. Notes are archived from other boards.",
-                  });
-                } else {
-                  handleAddNote();
-                }
-              }}
+              onClick={handleAddNoteClick}
               className="flex items-center space-x-2 cursor-pointer"
             >
               <Plus className="w-4 h-4" />
