@@ -9,8 +9,126 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
 import { cn } from "@/lib/utils";
-import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
+import { Trash2, Plus, Archive, ArchiveRestore, Info } from "lucide-react";
 import { useTheme } from "next-themes";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
+const formatRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInMs = now.getTime() - date.getTime();
+  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+
+  if (diffInDays > 0) {
+    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+  } else if (diffInHours > 0) {
+    return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+  } else if (diffInMinutes > 0) {
+    return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+  } else {
+    return 'Just now';
+  }
+};
+
+const getHoverBackgroundColor = (backgroundColor: string, isDark: boolean) => {
+  if (isDark) {
+    return "hover:bg-zinc-700/50";
+  }
+  
+  const colorToHover: { [key: string]: string } = {
+    "#fef3c7": "hover:bg-yellow-200/50",
+    "#fed7d7": "hover:bg-red-200/50",
+    "#d1fae5": "hover:bg-green-200/50",
+    "#dbeafe": "hover:bg-blue-200/50",
+    "#e0e7ff": "hover:bg-indigo-200/50",
+    "#f3e8ff": "hover:bg-purple-200/50",
+    "#fce7f3": "hover:bg-pink-200/50",
+    "#f0fdfa": "hover:bg-teal-200/50",
+    "#fef7ff": "hover:bg-fuchsia-200/50",
+    "#fff7ed": "hover:bg-orange-200/50",
+    "#ffffff": "hover:bg-gray-200/50",
+    "#f8fafc": "hover:bg-slate-200/50",
+  };
+
+  const hoverColor = colorToHover[backgroundColor.toLowerCase()];
+  if (hoverColor) {
+    return hoverColor;
+  }
+
+  if (backgroundColor.startsWith("#")) {
+    const hex = backgroundColor.replace("#", "");
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    if (brightness > 128) {
+      const darkerR = Math.max(0, r - 30);
+      const darkerG = Math.max(0, g - 30);
+      const darkerB = Math.max(0, b - 30);
+      return `hover:bg-[rgb(${darkerR},${darkerG},${darkerB})]`;
+    } else {
+      const lighterR = Math.min(255, r + 30);
+      const lighterG = Math.min(255, g + 30);
+      const lighterB = Math.min(255, b + 30);
+      return `hover:bg-[rgb(${lighterR},${lighterG},${lighterB})]`;
+    }
+  }
+
+  return "hover:bg-gray-200/50";
+};
+
+const getBorderColor = (backgroundColor: string, isDark: boolean) => {
+  if (isDark) {
+    return "border-gray-600";
+  }
+  
+  const colorToBorder: { [key: string]: string } = {
+    "#fef3c7": "border-yellow-300",
+    "#fed7d7": "border-red-300",
+    "#d1fae5": "border-green-300",
+    "#dbeafe": "border-blue-300",
+    "#e0e7ff": "border-indigo-300",
+    "#f3e8ff": "border-purple-300",
+    "#fce7f3": "border-pink-300",
+    "#f0fdfa": "border-teal-300",
+    "#fef7ff": "border-fuchsia-300",
+    "#fff7ed": "border-orange-300",
+    "#ffffff": "border-gray-300",
+    "#f8fafc": "border-slate-300",
+  };
+
+  const borderColor = colorToBorder[backgroundColor.toLowerCase()];
+  if (borderColor) {
+    return borderColor;
+  }
+
+  if (backgroundColor.startsWith("#")) {
+    const hex = backgroundColor.replace("#", "");
+    const r = parseInt(hex.substr(0, 2), 16);
+    const g = parseInt(hex.substr(2, 2), 16);
+    const b = parseInt(hex.substr(4, 2), 16);
+    
+    const brightness = (r * 299 + g * 587 + b * 114) / 1000;
+    
+    if (brightness > 200) {
+      return "border-gray-400";
+    } else if (brightness > 128) {
+      return "border-gray-500";
+    } else {
+      return "border-gray-300";
+    }
+  }
+
+  return "border-gray-300";
+};
 
 // Core domain types
 export interface User {
@@ -93,6 +211,8 @@ export function Note({
     (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
+  const [showDeletePopover, setShowDeletePopover] = useState(false);
+  const [showInfoPopover, setShowInfoPopover] = useState(false);
   const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
@@ -404,10 +524,13 @@ export function Note({
     }
   };
 
+  const borderColorClass = getBorderColor(note.color, resolvedTheme === 'dark');
+
   return (
     <div
       className={cn(
-        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "rounded-lg shadow-md hover:shadow-lg select-none group transition-all duration-200 flex flex-col border box-border",
+        borderColorClass,
         className
       )}
       style={{
@@ -442,21 +565,94 @@ export function Note({
             </div>
           </div>
         </div>
-        <div className="flex items-center space-x-2">
-          {canEdit && (
-            <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+        <div className="flex items-center space-x-1.5">
+          <Popover open={showInfoPopover} onOpenChange={setShowInfoPopover}>
+            <PopoverTrigger asChild>
               <Button
-                aria-label={`Delete Note ${note.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete?.(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                 variant="ghost"
                 size="icon"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowInfoPopover((v) => !v);
+                }}
               >
-                <Trash2 className="w-3 h-3" />
+                <Info className="w-3 h-3" />
               </Button>
+            </PopoverTrigger>
+            <PopoverContent 
+              className="w-64 p-3 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-lg" 
+              side="right" 
+              align="start"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
+              <div className="space-y-2 text-sm">
+                <div>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Created:</span>
+                  <div className="text-gray-600 dark:text-gray-300">
+                    {formatRelativeTime(note.createdAt)}
+                  </div>
+                </div>
+                <div>
+                  <span className="font-medium text-gray-900 dark:text-gray-100">Updated:</span>
+                  <div className="text-gray-600 dark:text-gray-300">
+                    {formatRelativeTime(note.updatedAt)}
+                  </div>
+                </div>
+              </div>
+            </PopoverContent>
+          </Popover>
+
+          {canEdit && (
+            <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <Popover open={showDeletePopover} onOpenChange={setShowDeletePopover}>
+                <PopoverTrigger asChild>
+                  <Button
+                    aria-label={`Delete Note ${note.id}`}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent 
+                  className="w-64 p-4 bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 shadow-lg" 
+                  side="right" 
+                  align="start"
+                >
+                  <div className="space-y-3">
+                    <div>
+                      <h4 className="font-medium text-gray-900 dark:text-gray-100">Delete note</h4>
+                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                        Are you sure? This action cannot be undone.
+                      </p>
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setShowDeletePopover(false)}
+                        className="border-gray-300 dark:border-zinc-600 text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-zinc-700"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="destructive"
+                        onClick={() => {
+                          setShowDeletePopover(false);
+                          onDelete?.(note.id);
+                        }}
+                        className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+                      >
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
           {canEdit && onArchive && (
@@ -495,11 +691,11 @@ export function Note({
       </div>
 
       {isEditing ? (
-        <div className="min-h-0">
+        <div className="flex-1 min-h-[120px]">
           <textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full h-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
+            className="w-full h-full min-h-[120px] p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
             placeholder="Enter note content..."
             onBlur={handleStopEdit}
             onKeyDown={(e) => {
@@ -576,7 +772,10 @@ export function Note({
                   setAddingItem(true);
                 }
               }}
-              className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+              className={cn(
+                "mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors duration-200",
+                getHoverBackgroundColor(note.color, resolvedTheme === 'dark')
+              )}
             >
               <Plus className="mr-2 h-4 w-4" />
               Add task
