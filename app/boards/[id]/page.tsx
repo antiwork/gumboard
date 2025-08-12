@@ -1224,8 +1224,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-      {/* Big delete dialog removed in favor of small per-note popover */}
-
       <AlertDialog
         open={errorDialog.open}
         onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
