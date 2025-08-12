@@ -10,19 +10,20 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user with organization
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true },
-    });
+      select: { 
+        organizationId: true 
+      }
+    })
 
-    if (!user?.organization) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 });
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
     // Get all boards for the organization
     const boards = await db.board.findMany({
-      where: { organizationId: user.organization.id },
+      where: { organizationId: user.organizationId },
       select: {
         id: true,
         name: true,
@@ -65,14 +66,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Board name is required" }, { status: 400 });
     }
 
-    // Get user with organization
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true },
-    });
+      select: { 
+        organizationId: true 
+      }
+    })
 
-    if (!user?.organization) {
-      return NextResponse.json({ error: "No organization found" }, { status: 404 });
+    if (!user?.organizationId) {
+      return NextResponse.json({ error: "No organization found" }, { status: 404 })
     }
 
     // Create new board
@@ -81,10 +83,18 @@ export async function POST(request: NextRequest) {
         name,
         description,
         isPublic: Boolean(isPublic || false),
-        organizationId: user.organization.id,
+        organizationId: user.organizationId,
         createdBy: session.user.id,
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        isPublic: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        organizationId: true,
         _count: {
           select: { notes: true },
         },
