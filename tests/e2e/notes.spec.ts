@@ -296,7 +296,7 @@ test.describe("Note Management", () => {
       await page.click('button:has-text("Add Your First Note")');
       await page.waitForTimeout(500);
 
-      const initialInput = page.locator("input.bg-transparent").first();
+      const initialInput = page.locator("textarea.bg-transparent").first();
       await initialInput.fill("First item");
       await initialInput.press("Enter");
       await page.waitForTimeout(300);
@@ -408,11 +408,11 @@ test.describe("Note Management", () => {
       await expect(page.getByText("#1 Task item")).toBeVisible();
 
       await page.getByText("#1 Task item").click();
-      const editInput = page.locator('textarea[value="#1 Task item"]');
+      const editInput = page.locator('textarea').filter({ hasText: "#1 Task item" });
       await expect(editInput).toBeVisible();
       await editInput.focus();
       await editInput.fill("#1 Task item edited");
-      await page.locator('textarea[value="#1 Task item edited"]').press("Enter");
+      await editInput.blur();
       await page.waitForTimeout(500);
       await expect(page.getByText("#1 Task item edited")).toBeVisible();
     });
