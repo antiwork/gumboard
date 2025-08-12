@@ -14,8 +14,8 @@ describe("Slack Web API Functions", () => {
   beforeEach(() => {
     mockFetch.mockClear();
     jest.clearAllMocks();
-    jest.spyOn(console, 'log').mockImplementation(() => {});
-    jest.spyOn(console, 'error').mockImplementation(() => {});
+    jest.spyOn(console, "log").mockImplementation(() => {});
+    jest.spyOn(console, "error").mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -40,7 +40,7 @@ describe("Slack Web API Functions", () => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer xoxb-token",
+          Authorization: "Bearer xoxb-token",
         },
         body: JSON.stringify({
           channel: "C1234567890",
@@ -100,18 +100,15 @@ describe("Slack Web API Functions", () => {
         json: async () => ({ ok: true }),
       } as Response);
 
-      const result = await updateSlackApiMessage(
-        "xoxb-token",
-        "C1234567890",
-        "1234.5678",
-        { text: "Updated message" }
-      );
+      const result = await updateSlackApiMessage("xoxb-token", "C1234567890", "1234.5678", {
+        text: "Updated message",
+      });
 
       expect(mockFetch).toHaveBeenCalledWith("https://slack.com/api/chat.update", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer xoxb-token",
+          Authorization: "Bearer xoxb-token",
         },
         body: JSON.stringify({
           channel: "C1234567890",
@@ -129,12 +126,9 @@ describe("Slack Web API Functions", () => {
         statusText: "Unauthorized",
       } as Response);
 
-      const result = await updateSlackApiMessage(
-        "invalid-token",
-        "C1234567890",
-        "1234.5678",
-        { text: "Updated message" }
-      );
+      const result = await updateSlackApiMessage("invalid-token", "C1234567890", "1234.5678", {
+        text: "Updated message",
+      });
 
       expect(result).toBe(false);
     });
@@ -145,12 +139,9 @@ describe("Slack Web API Functions", () => {
         json: async () => ({ ok: false, error: "message_not_found" }),
       } as Response);
 
-      const result = await updateSlackApiMessage(
-        "xoxb-token",
-        "C1234567890",
-        "INVALID",
-        { text: "Updated message" }
-      );
+      const result = await updateSlackApiMessage("xoxb-token", "C1234567890", "INVALID", {
+        text: "Updated message",
+      });
 
       expect(result).toBe(false);
     });
@@ -158,12 +149,9 @@ describe("Slack Web API Functions", () => {
     it("should return false on network error", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      const result = await updateSlackApiMessage(
-        "xoxb-token",
-        "C1234567890",
-        "1234.5678",
-        { text: "Updated message" }
-      );
+      const result = await updateSlackApiMessage("xoxb-token", "C1234567890", "1234.5678", {
+        text: "Updated message",
+      });
 
       expect(result).toBe(false);
     });
@@ -208,7 +196,10 @@ describe("Slack Web API Functions", () => {
         noteSlackMessageId: null,
       });
 
-      expect(mockFetch).toHaveBeenCalledWith("https://slack.com/api/chat.postMessage", expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://slack.com/api/chat.postMessage",
+        expect.any(Object)
+      );
       expect(result.noteMessageId).toBe("1234.5678");
     });
 
@@ -231,7 +222,10 @@ describe("Slack Web API Functions", () => {
         noteSlackMessageId: "1234.5678",
       });
 
-      expect(mockFetch).toHaveBeenCalledWith("https://slack.com/api/chat.update", expect.any(Object));
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://slack.com/api/chat.update",
+        expect.any(Object)
+      );
       expect(result.noteMessageId).toBeUndefined();
     });
 
@@ -296,15 +290,20 @@ describe("Slack Web API Functions", () => {
         },
       });
 
-      expect(mockFetch).toHaveBeenCalledWith("https://slack.com/api/chat.postMessage", expect.objectContaining({
-        body: expect.stringContaining(":white_check_mark: Task completed by John Doe in Production Board"),
-      }));
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://slack.com/api/chat.postMessage",
+        expect.objectContaining({
+          body: expect.stringContaining(
+            ":white_check_mark: Task completed by John Doe in Production Board"
+          ),
+        })
+      );
       expect(result.itemMessageIds).toEqual({ item1: mockTs });
     });
 
     it("should post on unchecked toggle (reopened)", async () => {
-      await new Promise(resolve => setTimeout(resolve, 50));
-      
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
       const mockTs = `reopened${Date.now()}`;
       mockFetch.mockResolvedValueOnce({
         ok: true,
@@ -336,9 +335,12 @@ describe("Slack Web API Functions", () => {
         },
       });
 
-      expect(mockFetch).toHaveBeenCalledWith("https://slack.com/api/chat.postMessage", expect.objectContaining({
-        body: expect.stringContaining(":recycle: Task reopened by John Doe in Production Board"),
-      }));
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://slack.com/api/chat.postMessage",
+        expect.objectContaining({
+          body: expect.stringContaining(":recycle: Task reopened by John Doe in Production Board"),
+        })
+      );
       expect(result.itemMessageIds).toEqual({ item1: mockTs });
     });
 
@@ -374,9 +376,12 @@ describe("Slack Web API Functions", () => {
         },
       });
 
-      expect(mockFetch).toHaveBeenCalledWith("https://slack.com/api/chat.update", expect.objectContaining({
-        body: expect.stringContaining("existing123.456"),
-      }));
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://slack.com/api/chat.update",
+        expect.objectContaining({
+          body: expect.stringContaining("existing123.456"),
+        })
+      );
     });
 
     it("should not post for reorder-only changes", async () => {

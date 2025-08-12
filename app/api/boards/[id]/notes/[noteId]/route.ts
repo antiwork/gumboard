@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import {
-  notifySlackForNoteChanges,
-} from "@/lib/slack";
+import { notifySlackForNoteChanges } from "@/lib/slack";
 
 // Update a note
 export async function PUT(

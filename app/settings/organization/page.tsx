@@ -6,16 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Trash2,
-  UserPlus,
-  Shield,
-  ShieldCheck,
-  Link,
-  Copy,
-  Calendar,
-  Users,
-} from "lucide-react";
+import { Trash2, UserPlus, Shield, ShieldCheck, Link, Copy, Calendar, Users } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
   AlertDialog,
@@ -488,7 +479,13 @@ export default function OrganizationSettingsPage() {
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
               onClick={handleSaveOrganization}
-              disabled={saving || (orgName === originalOrgName && slackApiToken === originalSlackApiToken && slackChannelId === originalSlackChannelId) || !user?.isAdmin}
+              disabled={
+                saving ||
+                (orgName === originalOrgName &&
+                  slackApiToken === originalSlackApiToken &&
+                  slackChannelId === originalSlackChannelId) ||
+                !user?.isAdmin
+              }
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
@@ -557,12 +554,15 @@ export default function OrganizationSettingsPage() {
             </div>
           </div>
 
-
-
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
               onClick={handleSaveOrganization}
-              disabled={saving || (slackApiToken === originalSlackApiToken && slackChannelId === originalSlackChannelId) || !user?.isAdmin}
+              disabled={
+                saving ||
+                (slackApiToken === originalSlackApiToken &&
+                  slackChannelId === originalSlackChannelId) ||
+                !user?.isAdmin
+              }
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >

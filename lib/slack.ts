@@ -104,8 +104,6 @@ export function formatNoteForSlack(
   return `:heavy_plus_sign: ${note.content} by ${userName} in ${boardName}`;
 }
 
-
-
 export async function sendSlackApiMessage(
   token: string,
   payload: SlackApiMessagePayload
@@ -115,7 +113,7 @@ export async function sendSlackApiMessage(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify(payload),
     });
@@ -149,7 +147,7 @@ export async function updateSlackApiMessage(
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
         channel,
@@ -233,7 +231,7 @@ export async function notifySlackForNoteChanges(
     const messageText = isArchived
       ? `:package: [ARCHIVED] ${nextContent} by ${userName} in ${boardName}`
       : formatNoteForSlack({ content: nextContent }, boardName, userName);
-    
+
     await updateSlackApiMessage(orgToken, orgChannelId, noteSlackMessageId, {
       text: messageText,
     });
@@ -266,11 +264,11 @@ export async function notifySlackForNoteChanges(
     // Handle checked/unchecked toggles
     for (const item of itemChanges.updated) {
       const checkedToggle = item.previous.checked !== item.checked;
-      
+
       if (checkedToggle) {
         const action = item.checked ? "completed" : "reopened";
         const messageText = formatTodoForSlack(item.content, boardName, userName, action);
-        
+
         const existingTs = itemMessageIds[item.id];
         if (existingTs) {
           // Update existing message
