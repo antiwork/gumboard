@@ -102,9 +102,9 @@ test.describe("Archive Functionality", () => {
         body: JSON.stringify({
           notes: [
             {
-              id: 'archived-note-1',
-              content: 'This is an archived note',
-              color: '#fef3c7',
+              id: "archived-note-1",
+              content: "This is an archived note",
+              color: "#fef3c7",
               archivedAt: true,
               checklistItems: [],
               createdAt: new Date().toISOString(),
@@ -144,9 +144,9 @@ test.describe("Archive Functionality", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'test-note-1',
-                content: 'Test note to archive',
-                color: '#fef3c7',
+                id: "test-note-1",
+                content: "Test note to archive",
+                color: "#fef3c7",
                 archivedAt: null,
                 checklistItems: [],
                 createdAt: new Date().toISOString(),
@@ -181,9 +181,9 @@ test.describe("Archive Functionality", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'test-note-1',
-              content: 'Test note to archive',
-              color: '#fef3c7',
+              id: "test-note-1",
+              content: "Test note to archive",
+              color: "#fef3c7",
               archivedAt: true,
               checklistItems: [],
               createdAt: new Date().toISOString(),
@@ -221,9 +221,9 @@ test.describe("Archive Functionality", () => {
         body: JSON.stringify({
           notes: [
             {
-              id: 'archived-note-1',
-              content: 'This is an archived note',
-              color: '#fef3c7',
+              id: "archived-note-1",
+              content: "This is an archived note",
+              color: "#fef3c7",
               archivedAt: true,
               checklistItems: [],
               createdAt: new Date().toISOString(),
@@ -295,9 +295,9 @@ test.describe("Archive Functionality", () => {
         body: JSON.stringify({
           notes: [
             {
-              id: 'note1',
-              content: 'This is an archived note',
-              color: '#fef3c7',
+              id: "note1",
+              content: "This is an archived note",
+              color: "#fef3c7",
               archivedAt: true,
               checklistItems: [],
               createdAt: new Date().toISOString(),
@@ -338,9 +338,9 @@ test.describe("Archive Functionality", () => {
         body: JSON.stringify({
           notes: [
             {
-              id: 'note1',
-              content: 'Test note to unarchive',
-              color: '#fef3c7',
+              id: "note1",
+              content: "Test note to unarchive",
+              color: "#fef3c7",
               archivedAt: true,
               checklistItems: [],
               createdAt: new Date().toISOString(),
@@ -373,9 +373,9 @@ test.describe("Archive Functionality", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'note1',
-              content: 'Test note to unarchive',
-              color: '#fef3c7',
+              id: "note1",
+              content: "Test note to unarchive",
+              color: "#fef3c7",
               archivedAt: null,
               checklistItems: [],
               createdAt: new Date().toISOString(),
@@ -406,7 +406,7 @@ test.describe("Archive Functionality", () => {
     await expect(page.locator("text=Test note to unarchive")).not.toBeVisible();
     expect(noteUnarchived).toBe(true);
     expect(unarchivedNoteData.archivedAt).toBe(null);
-    await expect(page.locator('text=Test note to unarchive')).not.toBeVisible();
+    await expect(page.locator("text=Test note to unarchive")).not.toBeVisible();
   });
 
   test("should complete full archive-unarchive workflow", async ({ page }) => {
@@ -418,17 +418,17 @@ test.describe("Archive Functionality", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'workflow-note',
-                content: 'Note for archive-unarchive workflow test',
-                color: '#fef3c7',
+                id: "workflow-note",
+                content: "Note for archive-unarchive workflow test",
+                color: "#fef3c7",
                 archivedAt: null,
                 checklistItems: [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
-                boardId: 'test-board',
+                boardId: "test-board",
                 board: {
-                  id: 'test-board',
-                  name: 'Test Board',
+                  id: "test-board",
+                  name: "Test Board",
                 },
                 user: {
                   id: "test-user",
@@ -449,17 +449,17 @@ test.describe("Archive Functionality", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'workflow-note',
-              content: 'Note for archive-unarchive workflow test',
-              color: '#fef3c7',
+              id: "workflow-note",
+              content: "Note for archive-unarchive workflow test",
+              color: "#fef3c7",
               archivedAt: true,
               checklistItems: [],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
-              boardId: 'test-board',
+              boardId: "test-board",
               board: {
-                id: 'test-board',
-                name: 'Test Board',
+                id: "test-board",
+                name: "Test Board",
               },
               user: {
                 id: "test-user",
@@ -472,9 +472,9 @@ test.describe("Archive Functionality", () => {
       }
     });
 
-    await page.goto('/boards/test-board');
-    await expect(page.locator('text=Note for archive-unarchive workflow test')).toBeVisible();
-    
+    await page.goto("/boards/test-board");
+    await expect(page.locator("text=Note for archive-unarchive workflow test")).toBeVisible();
+
     const archiveButton = page.locator('[title="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();

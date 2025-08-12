@@ -79,16 +79,18 @@ test.describe("Note Management with Newlines", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'new-note-id',
-              content: '',
-              color: '#fef3c7',
+              id: "new-note-id",
+              content: "",
+              color: "#fef3c7",
               archivedAt: null,
-              checklistItems: postData.checklistItems || [{
-                id: `item-${Date.now()}`,
-                content: '',
-                checked: false,
-                order: 0,
-              }],
+              checklistItems: postData.checklistItems || [
+                {
+                  id: `item-${Date.now()}`,
+                  content: "",
+                  checked: false,
+                  order: 0,
+                },
+              ],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               board: {
@@ -115,9 +117,9 @@ test.describe("Note Management with Newlines", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'new-note-id',
-              content: '',
-              color: '#fef3c7',
+              id: "new-note-id",
+              content: "",
+              color: "#fef3c7",
               archivedAt: null,
               checklistItems: postData.checklistItems || [],
               createdAt: new Date().toISOString(),
@@ -150,9 +152,9 @@ test.describe("Note Management with Newlines", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'all-notes-note-id',
-              content: postData.content || '',
-              color: '#fef3c7',
+              id: "all-notes-note-id",
+              content: postData.content || "",
+              color: "#fef3c7",
               archivedAt: null,
               checklistItems: postData.checklistItems || [],
               createdAt: new Date().toISOString(),
@@ -177,16 +179,18 @@ test.describe("Note Management with Newlines", () => {
     let apiCallsMade: { url: string; method: string }[] = [];
 
     const mockNoteData = {
-      id: 'test-note-123',
-      content: 'Original content',
-      color: '#fef3c7',
+      id: "test-note-123",
+      content: "Original content",
+      color: "#fef3c7",
       archivedAt: null,
-      checklistItems: [{
-        id: 'item-1',
-        content: 'Test item',
-        checked: false,
-        order: 0,
-      }],
+      checklistItems: [
+        {
+          id: "item-1",
+          content: "Test item",
+          checked: false,
+          order: 0,
+        },
+      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       boardId: "note-actual-board-id",
@@ -292,16 +296,18 @@ test.describe("Note Management with Newlines", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'new-note-id',
-              content: '',
-              color: '#fef3c7',
+              id: "new-note-id",
+              content: "",
+              color: "#fef3c7",
               archivedAt: null,
-              checklistItems: postData.checklistItems || [{
-                id: `item-${Date.now()}`,
-                content: '',
-                checked: false,
-                order: 0,
-              }],
+              checklistItems: postData.checklistItems || [
+                {
+                  id: `item-${Date.now()}`,
+                  content: "",
+                  checked: false,
+                  order: 0,
+                },
+              ],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               board: {

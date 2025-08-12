@@ -48,7 +48,6 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-
     const { content, color, archivedAt, checklistItems } = await request.json()
     const { id: boardId, noteId } = await params;
 
@@ -217,11 +216,17 @@ export async function PUT(
       }
     }
 
-    // Update existing Slack message when archive status changes
+    // Update existing Slack message when done status changes
     if (archivedAt !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
-      const userName = note.user?.name || note.user?.email || 'Unknown User'
-      const boardName = note.board.name
-      await updateSlackMessage(user.organization.slackWebhookUrl, note.content, archivedAt, boardName, userName)
+      const userName = note.user?.name || note.user?.email || "Unknown User";
+      const boardName = note.board.name;
+      await updateSlackMessage(
+        user.organization.slackWebhookUrl,
+        note.content,
+        archivedAt,
+        boardName,
+        userName
+      );
     }
 
     return NextResponse.json({ note: updatedNote });

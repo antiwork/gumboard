@@ -77,9 +77,9 @@ test.describe("Single-Click Note Editing", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'test-note-1',
-                content: '',
-                color: '#fef3c7',
+                id: "test-note-1",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,
@@ -116,9 +116,9 @@ test.describe("Single-Click Note Editing", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'test-note-1',
-              content: '',
-              color: '#fef3c7',
+              id: "test-note-1",
+              content: "",
+              color: "#fef3c7",
               archivedAt: null,
               x: 100,
               y: 100,
@@ -161,9 +161,9 @@ test.describe("Single-Click Note Editing", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'test-checklist-note',
-                content: '',
-                color: '#fef3c7',
+                id: "test-checklist-note",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,
@@ -200,9 +200,9 @@ test.describe("Single-Click Note Editing", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'test-checklist-note',
-              content: '',
-              color: '#fef3c7',
+              id: "test-checklist-note",
+              content: "",
+              color: "#fef3c7",
               archivedAt: null,
               x: 100,
               y: 100,
@@ -260,9 +260,9 @@ test.describe("Single-Click Note Editing", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'test-note-1',
-                content: '',
-                color: '#fef3c7',
+                id: "test-note-1",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,
@@ -313,9 +313,9 @@ test.describe("Single-Click Note Editing", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'test-note-1',
-                content: '',
-                color: '#fef3c7',
+                id: "test-note-1",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,
@@ -352,9 +352,9 @@ test.describe("Single-Click Note Editing", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'test-note-1',
-              content: '',
-              color: '#fef3c7',
+              id: "test-note-1",
+              content: "",
+              color: "#fef3c7",
               archivedAt: null,
               x: 100,
               y: 100,

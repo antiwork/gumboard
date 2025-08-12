@@ -75,9 +75,9 @@ test.describe("Add Task Button", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'checklist-note',
-                content: '',
-                color: '#fef3c7',
+                id: "checklist-note",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,
@@ -100,9 +100,9 @@ test.describe("Add Task Button", () => {
                 },
               },
               {
-                id: 'regular-note',
-                content: 'Regular note content',
-                color: '#fef3c7',
+                id: "regular-note",
+                content: "Regular note content",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 300,
                 y: 100,
@@ -166,9 +166,9 @@ test.describe("Add Task Button", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'checklist-note',
-                content: '',
-                color: '#fef3c7',
+                id: "checklist-note",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,
@@ -216,9 +216,9 @@ test.describe("Add Task Button", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'checklist-note',
-                content: '',
-                color: '#fef3c7',
+                id: "checklist-note",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,
@@ -261,9 +261,9 @@ test.describe("Add Task Button", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'checklist-note',
-              content: '',
-              color: '#fef3c7',
+              id: "checklist-note",
+              content: "",
+              color: "#fef3c7",
               archivedAt: null,
               x: 100,
               y: 100,
@@ -314,9 +314,9 @@ test.describe("Add Task Button", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: 'checklist-note',
-                content: '',
-                color: '#fef3c7',
+                id: "checklist-note",
+                content: "",
+                color: "#fef3c7",
                 archivedAt: null,
                 x: 100,
                 y: 100,
@@ -406,9 +406,9 @@ test.describe("Add Task Button", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: 'checklist-note',
-              content: '',
-              color: '#fef3c7',
+              id: "checklist-note",
+              content: "",
+              color: "#fef3c7",
               archivedAt: null,
               x: 100,
               y: 100,
