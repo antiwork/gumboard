@@ -7,7 +7,11 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { ChecklistItem as ChecklistItemComponent, ChecklistItem } from "@/components/checklist-item";
+import {
+  ChecklistItem as ChecklistItemComponent,
+  ChecklistItem,
+} from "@/components/checklist-item";
+import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -88,9 +92,9 @@ export function Note({
   const [editingItemContent, setEditingItemContent] = useState("");
   const [addingItem, setAddingItem] = useState(
     !readonly &&
-    currentUser &&
-    (currentUser.id === note.user.id || currentUser.isAdmin) &&
-    (!note.checklistItems || note.checklistItems.length === 0)
+      currentUser &&
+      (currentUser.id === note.user.id || currentUser.isAdmin) &&
+      (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
   const newItemInputRef = useRef<HTMLInputElement>(null);
@@ -112,12 +116,8 @@ export function Note({
       );
 
       const sortedItems = [
-        ...updatedItems
-          .filter((item) => !item.checked)
-          .sort((a, b) => a.order - b.order),
-        ...updatedItems
-          .filter((item) => item.checked)
-          .sort((a, b) => a.order - b.order),
+        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
+        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
       ];
 
       const optimisticNote = {
@@ -159,36 +159,30 @@ export function Note({
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
-      const updatedItems = note.checklistItems.filter(
-        (item) => item.id !== itemId
-      );
-      
+      const updatedItems = note.checklistItems.filter((item) => item.id !== itemId);
+
       const optimisticNote = {
         ...note,
         checklistItems: updatedItems,
       };
-  
+
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: updatedItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: updatedItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
           onUpdate?.(updatedNote);
         } else {
-          console.error("Server error, reverting optimistic update");
           onUpdate?.(note);
         }
       }
@@ -213,26 +207,71 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: updatedItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: updatedItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
           onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
         }
       }
     } catch (error) {
       console.error("Error editing checklist item:", error);
+    }
+  };
+
+  const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItem[]) => {
+    try {
+      if (!note.checklistItems) return;
+      const allItemsChecked = newItems.every((item) => item.checked);
+      // Disallow unchecked items to be after checked items
+      const firstCheckedIndex = newItems.findIndex((element) => element.checked);
+      const lastUncheckedIndex = newItems.map((element) => element.checked).lastIndexOf(false);
+      if (
+        firstCheckedIndex !== -1 &&
+        lastUncheckedIndex !== -1 &&
+        lastUncheckedIndex > firstCheckedIndex
+      ) {
+        return;
+      }
+
+      const optimisticNote = {
+        ...note,
+        checklistItems: newItems.map((items, index) => ({ ...items, order: index })),
+      };
+
+      onUpdate?.(optimisticNote);
+
+      if (syncDB) {
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: newItems,
+            done: allItemsChecked,
+          }),
+        });
+
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to reorder checklist item:", error);
     }
   };
 
@@ -251,9 +290,7 @@ export function Note({
         item.id === itemId ? { ...item, content: firstHalf } : item
       );
 
-      const currentItem = note.checklistItems.find(
-        (item) => item.id === itemId
-      );
+      const currentItem = note.checklistItems.find((item) => item.id === itemId);
       const currentOrder = currentItem?.order || 0;
 
       const newItem = {
@@ -263,9 +300,7 @@ export function Note({
         order: currentOrder + 0.5,
       };
 
-      const allItems = [...updatedItems, newItem].sort(
-        (a, b) => a.order - b.order
-      );
+      const allItems = [...updatedItems, newItem].sort((a, b) => a.order - b.order);
 
       const optimisticNote = {
         ...note,
@@ -275,20 +310,19 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              checklistItems: allItems,
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            checklistItems: allItems,
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
           onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
         }
       }
     } catch (error) {
@@ -302,7 +336,7 @@ export function Note({
         id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         content,
         checked: false,
-        order: (note.checklistItems?.length || 0) + 1,
+        order: note.checklistItems?.length ?? 0,
       };
 
       const allItemsChecked = [...(note.checklistItems || []), newItem].every(
@@ -318,18 +352,15 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(
-          `/api/boards/${note.boardId}/notes/${note.id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              checklistItems: [...(note.checklistItems || []), newItem],
-            }),
-          }
-        );
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            checklistItems: [...(note.checklistItems || []), newItem],
+          }),
+        });
 
         if (response.ok) {
           const { note: updatedNote } = await response.json();
@@ -411,7 +442,7 @@ export function Note({
         className
       )}
       style={{
-        backgroundColor: resolvedTheme === 'dark' ? "#18181B" : note.color,
+        backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
         ...style,
       }}
     >
@@ -426,13 +457,11 @@ export function Note({
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate max-w-20">
-              {note.user.name
-                ? note.user.name.split(" ")[0]
-                : note.user.email.split("@")[0]}
+              {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
               {showBoardName && note.board && (
-                <Link 
+                <Link
                   href={`/boards/${note.board.id}`}
                   className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
                 >
@@ -518,51 +547,64 @@ export function Note({
         <div className="flex flex-col">
           <div className="overflow-y-auto space-y-1">
             {/* Checklist Items */}
-            {note.checklistItems?.map((item) => (
-              <ChecklistItemComponent
-                key={item.id}
-                item={item}
-                onToggle={handleToggleChecklistItem}
-                onEdit={handleEditItem}
-                onDelete={handleDeleteItem}
-                onSplit={handleSplitItem}
-                isEditing={editingItem === item.id}
-                editContent={editingItem === item.id ? editingItemContent : undefined}
-                onEditContentChange={setEditingItemContent}
-                onStartEdit={handleStartEditItem}
-                onStopEdit={handleStopEditItem}
-                readonly={readonly}
-                showDeleteButton={canEdit}
-              />
-            ))}
+            <DraggableRoot
+              items={note.checklistItems ?? []}
+              onItemsChange={(newItems) => {
+                handleReorderChecklistItems(note.id, newItems);
+              }}
+            >
+              <DraggableContainer className="space-y-1">
+                {note.checklistItems?.map((item) => (
+                  <DraggableItem key={item.id} id={item.id}>
+                    <ChecklistItemComponent
+                      item={item}
+                      onToggle={handleToggleChecklistItem}
+                      onEdit={handleEditItem}
+                      onDelete={handleDeleteItem}
+                      onSplit={handleSplitItem}
+                      isEditing={editingItem === item.id}
+                      editContent={editingItem === item.id ? editingItemContent : undefined}
+                      onEditContentChange={setEditingItemContent}
+                      onStartEdit={handleStartEditItem}
+                      onStopEdit={handleStopEditItem}
+                      readonly={readonly}
+                      showDeleteButton={canEdit}
+                    />
+                  </DraggableItem>
+                ))}
+              </DraggableContainer>
 
-            {/* Add New Item Input */}
-            {addingItem && canEdit && (
-              <div className="flex items-center gap-3">
-                <Checkbox disabled className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600" />
-                <Input
-                  ref={newItemInputRef}
-                  type="text"
-                  value={newItemContent}
-                  onChange={(e) => setNewItemContent(e.target.value)}
-                  className="h-auto flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  placeholder="Add new item..."
-                  onBlur={handleAddItem}
-                  onKeyDown={handleKeyDownNewItem}
-                  autoFocus
-                />
-              </div>
-            )}
+              {/* Add New Item Input */}
+              {addingItem && canEdit && (
+                <div className="flex items-center gap-3">
+                  <Checkbox
+                    disabled
+                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                  />
+                  <Input
+                    ref={newItemInputRef}
+                    type="text"
+                    value={newItemContent}
+                    onChange={(e) => setNewItemContent(e.target.value)}
+                    className="h-auto flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    placeholder="Add new item..."
+                    onBlur={handleAddItem}
+                    onKeyDown={handleKeyDownNewItem}
+                    autoFocus
+                  />
+                </div>
+              )}
 
-            {/* Content as text if no checklist items */}
-            {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
-              <div
-                className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
-                onClick={handleStartEdit}
-              >
-                {note.content || ""}
-              </div>
-            )}
+              {/* Content as text if no checklist items */}
+              {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
+                <div
+                  className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
+                  onClick={handleStartEdit}
+                >
+                  {note.content || ""}
+                </div>
+              )}
+            </DraggableRoot>
           </div>
 
           {/* Add Item Button */}
