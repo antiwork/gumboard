@@ -44,7 +44,7 @@ test.describe("Home Page", () => {
     const editInput = page.locator('input[value="Gumboard release by Friday"]');
     await expect(editInput).toBeVisible();
     await editInput.fill("Updated Gumboard release deadline");
-    await page.getByText("Sahil").click();
+    await page.locator('input[value="Updated Gumboard release deadline"]').press("Enter");
     await expect(page.getByText("Updated Gumboard release deadline")).toBeVisible();
 
     // Test 5: Delete a checklist item
@@ -73,6 +73,28 @@ test.describe("Home Page", () => {
     }
     await expect(page.getByTestId("203")).toBeVisible();
     await expect(page.getByText("(Mon-Fri)")).toBeVisible();
+
+    // Test 8: Should re-order items
+    const sourceElement = page.locator("text=Metabase queries");
+    const targetElement = page.locator("text=Review support huddle");
+
+    await expect(page.getByTestId("301")).toHaveAttribute("data-testorder", "0");
+    await expect(page.getByTestId("302")).toHaveAttribute("data-testorder", "1");
+
+    await expect(sourceElement).toBeVisible();
+
+    const targetBox = await targetElement.boundingBox();
+    if (!targetBox) throw Error("will never throw");
+
+    await sourceElement.hover();
+    await page.mouse.down();
+    await targetElement.hover();
+    await targetElement.hover();
+    await page.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + 5);
+    await page.mouse.up();
+
+    await expect(page.getByTestId("302")).toHaveAttribute("data-testorder", "0");
+    await expect(page.getByTestId("301")).toHaveAttribute("data-testorder", "1");
 
     expect(networkCalls).toBe(0);
   });

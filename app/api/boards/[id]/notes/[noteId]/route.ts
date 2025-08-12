@@ -54,7 +54,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, done, checklistItems } = await request.json();
+    const { content, color, archivedAt, checklistItems } = await request.json();
     const { id: boardId, noteId } = await params;
 
     // Verify user has access to this board (same organization)
@@ -117,7 +117,7 @@ export async function PUT(
       data: {
         ...(content !== undefined && { content }),
         ...(color !== undefined && { color }),
-        ...(done !== undefined && { done }),
+        ...(archivedAt !== undefined && { archivedAt: archivedAt ? new Date(archivedAt) : null }),
         ...(checklistItems !== undefined && { checklistItems }),
       },
       include: {
@@ -228,20 +228,44 @@ export async function PUT(
       }
     }
 
-    // Update webhook notifications when done status changes
-    if (done !== undefined && (user.organization?.slackWebhookUrl || user.organization?.discordWebhookUrl)) {
-      const userName = note.user?.name || note.user?.email || 'Unknown User'
-      const boardName = note.board.name
-      // Slack: only update if we previously sent a Slack message for this note
-      if (user.organization?.slackWebhookUrl && note.slackMessageId) {
-        await updateSlackMessage(user.organization.slackWebhookUrl, note.content, done, boardName, userName)
-      }
-      // Discord: always post a new status message (no edit API via simple webhooks)
-      const discordWebhookUrl = user.organization?.discordWebhookUrl
-      if (discordWebhookUrl) {
-        await updateDiscordMessage(discordWebhookUrl, note.content, done, boardName, userName)
-      }
+// Update webhook notifications when note status changes
+if (user.organization?.slackWebhookUrl || user.organization?.discordWebhookUrl) {
+  const userName = note.user?.name || note.user?.email || "Unknown User";
+  const boardName = note.board.name;
+
+  // Slack: update the existing message if we have its ID
+  if (user.organization?.slackWebhookUrl && note.slackMessageId) {
+    if (done !== undefined) {
+      await updateSlackMessage(
+        user.organization.slackWebhookUrl,
+        note.content,
+        done,
+        boardName,
+        userName
+      );
     }
+    if (archivedAt !== undefined) {
+      await updateSlackMessage(
+        user.organization.slackWebhookUrl,
+        note.content,
+        archivedAt,
+        boardName,
+        userName
+      );
+    }
+  }
+
+  // Discord: post a new status message on done changes (no edit API for simple webhooks)
+  if (user.organization?.discordWebhookUrl && done !== undefined) {
+    await updateDiscordMessage(
+      user.organization.discordWebhookUrl,
+      note.content,
+      done,
+      boardName,
+      userName
+    );
+  }
+}
 
     return NextResponse.json({ note: updatedNote });
   } catch (error) {
