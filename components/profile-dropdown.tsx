@@ -21,11 +21,11 @@ export function ProfileDropdown({ user }: Props) {
         <Avatar className="w-9 h-9 cursor-pointer">
           <div className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors ">
             <AvatarImage
-              className="w-7 h-7 rounded-full"
+              className="w-8 h-8 rounded-full" 
               src={user?.image || ""}
               alt={user?.name || ""}
             />
-            <AvatarFallback className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-900 dark:text-zinc-100 bg-blue-500 ">
+            <AvatarFallback className="w-8 h-8 flex items-center justify-center rounded-full text-zinc-900 dark:text-zinc-100 bg-blue-500">
               <span className="text-sm font-medium text-white">
                 {user?.name
                   ? user.name.charAt(0).toUpperCase()
