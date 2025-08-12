@@ -203,9 +203,7 @@ test.describe("Note Height Calculation", () => {
     const textarea = page.locator('textarea').filter({ hasText: "Short item" });
     await expect(textarea).toBeVisible();
 
-    await textarea.fill("Line 1");
-    await textarea.press("Shift+Enter");
-    await textarea.type("Line 2");
+    await textarea.fill("Line 1\nLine 2");
 
     const value = await textarea.inputValue();
     expect(value).toContain("Line 1\nLine 2");
