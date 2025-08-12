@@ -13,6 +13,7 @@ import {
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
+import { getNoteColors } from "@/lib/constants";
 import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
 
@@ -437,16 +438,14 @@ export function Note({
   };
 
   return (
-    <div
-      className={cn(
-        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
-        className
-      )}
-      style={{
-        backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-        ...style,
-      }}
-    >
+<div
+  className={cn(
+    "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border box-border",
+    getNoteColors(note.color, resolvedTheme === "dark"),
+    className
+  )}
+  style={{ backgroundColor: note.color, ...style }}
+>
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex items-center space-x-2">
           <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
