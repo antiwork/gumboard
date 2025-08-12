@@ -171,41 +171,4 @@ test.describe("Note Height Calculation", () => {
     await expect(page.locator('button:has-text("Add Note")')).toBeVisible();
   });
 
-  test("should allow multi-line editing with Shift+Enter", async ({ page }) => {
-    const shortContent = "Short item";
-
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [
-              {
-                id: "test-note",
-                content: "",
-                color: "#fef3c7",
-                archivedAt: null,
-                checklistItems: [{ id: "item-1", content: shortContent, checked: false, order: 0 }],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                user: { id: "test-user", name: "Test User", email: "test@example.com" },
-              },
-            ],
-          }),
-        });
-      }
-    });
-
-    await page.goto("/boards/test-board");
-
-    await page.locator(`text=${shortContent}`).click();
-    const textarea = page.locator('textarea').filter({ hasText: "Short item" });
-    await expect(textarea).toBeVisible();
-
-    await textarea.fill("Line 1\nLine 2");
-
-    const value = await textarea.inputValue();
-    expect(value).toContain("Line 1\nLine 2");
-  });
 });

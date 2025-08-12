@@ -265,7 +265,7 @@ test.describe("Note Management", () => {
       const addTaskButton = page.locator('button:has-text("Add task")');
       await expect(addTaskButton).toBeVisible();
       await addTaskButton.click();
-      const newItemInput = page.locator('input[placeholder="Add new item..."]');
+      const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
       await expect(newItemInput).toBeVisible();
       await newItemInput.fill("New test item");
       await newItemInput.press("Enter");
