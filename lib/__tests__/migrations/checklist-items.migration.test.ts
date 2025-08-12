@@ -5,18 +5,19 @@ import path from "path";
 jest.setTimeout(60_000);
 
 function getTestDbUrl(): string {
-  let url = process.env.TEST_DATABASE_URL || 
-            process.env.DATABASE_URL;
+  let url = process.env.TEST_DATABASE_URL || process.env.DATABASE_URL;
   if (!url) {
     url = "postgresql://postgres:postgres@localhost:5432/gumboard";
     console.warn(`No TEST_DATABASE_URL or DATABASE_URL found, using default: ${url}`);
   }
 
-  if (url.includes('gumboard_test')) {
-    url = url.replace('gumboard_test', 'gumboard');
-    console.warn(`Migration test: Using 'gumboard' database instead of 'gumboard_test' (isolated with schema)`);
+  if (url.includes("gumboard_test")) {
+    url = url.replace("gumboard_test", "gumboard");
+    console.warn(
+      `Migration test: Using 'gumboard' database instead of 'gumboard_test' (isolated with schema)`
+    );
   }
-  
+
   return url;
 }
 
@@ -76,9 +77,7 @@ function splitSqlStatements(sql: string): string[] {
 }
 
 describe("migration: create_checklist_items_table", () => {
-  const schema = `mig_checklist_${Date.now()}_${Math.random()
-    .toString(36)
-    .slice(2, 7)}`;
+  const schema = `mig_checklist_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   let client: PrismaClient;
   let pgcryptoAvailable = false;
   let shouldSkipTests = false;
@@ -87,27 +86,29 @@ describe("migration: create_checklist_items_table", () => {
     client = new PrismaClient({
       datasources: { db: { url: getTestDbUrl() } },
     });
-    
+
     try {
       await client.$connect();
     } catch (error) {
       const dbUrl = getTestDbUrl();
       console.error(`Failed to connect to database: ${dbUrl}`);
-      console.error('');
-      console.error('To fix this:');
-      console.error('1. Make sure PostgreSQL is running');
-      console.error('2. Make sure the database exists:');
-      console.error('   createdb gumboard  # if using default database');
-      console.error('3. Or set TEST_DATABASE_URL to a working database:');
-      console.error('   TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/gumboard npm run test');
-      console.error('');
+      console.error("");
+      console.error("To fix this:");
+      console.error("1. Make sure PostgreSQL is running");
+      console.error("2. Make sure the database exists:");
+      console.error("   createdb gumboard  # if using default database");
+      console.error("3. Or set TEST_DATABASE_URL to a working database:");
+      console.error(
+        "   TEST_DATABASE_URL=postgresql://postgres:postgres@localhost:5433/gumboard npm run test"
+      );
+      console.error("");
 
       if (process.env.CI) {
-        console.warn('CI environment detected - marking database tests as skipped');
+        console.warn("CI environment detected - marking database tests as skipped");
         shouldSkipTests = true;
         return;
       }
-      
+
       throw error;
     }
 
@@ -186,10 +187,10 @@ describe("migration: create_checklist_items_table", () => {
 
   it("backfills checklist items into checklist_items with correct values", async () => {
     if (shouldSkipTests) {
-      console.log('Skipping test - database connection failed');
+      console.log("Skipping test - database connection failed");
       return;
     }
-    
+
     const items = await q<{
       id: string;
       content: string;
@@ -233,10 +234,10 @@ describe("migration: create_checklist_items_table", () => {
 
   it("enforces FK to notes(id)", async () => {
     if (shouldSkipTests) {
-      console.log('Skipping test - database connection failed');
+      console.log("Skipping test - database connection failed");
       return;
     }
-    
+
     await expect(
       client.$executeRawUnsafe(
         `INSERT INTO "checklist_items"(id, content, checked, "order", "noteId")
@@ -247,10 +248,10 @@ describe("migration: create_checklist_items_table", () => {
 
   it('drops the legacy notes."checklistItems" column', async () => {
     if (shouldSkipTests) {
-      console.log('Skipping test - database connection failed');
+      console.log("Skipping test - database connection failed");
       return;
     }
-    
+
     const cols = await q<{ column_name: string }>(
       client,
       `
@@ -266,10 +267,10 @@ describe("migration: create_checklist_items_table", () => {
 
   it("creates the expected indexes", async () => {
     if (shouldSkipTests) {
-      console.log('Skipping test - database connection failed');
+      console.log("Skipping test - database connection failed");
       return;
     }
-    
+
     const idx = await q<{ indexname: string }>(
       client,
       `
