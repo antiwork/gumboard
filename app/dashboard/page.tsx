@@ -322,7 +322,7 @@ export default function Dashboard() {
         )}
 
         <Dialog open={isAddBoardDialogOpen} onOpenChange={handleOpenChange}>
-          <DialogContent className="bg-white dark:bg-zinc-950 border border-zinc-800 dark:border-zinc-800 sm:max-w-[425px] ">
+          <DialogContent className="bg-white dark:bg-zinc-950  sm:max-w-[425px] ">
             <DialogHeader>
               <DialogTitle className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
                 {editingBoard ? "Edit Board" : "Create New Board"}
