@@ -11,10 +11,10 @@ export async function GET() {
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      select: { 
-        organizationId: true 
-      }
-    })
+      select: {
+        organizationId: true,
+      },
+    });
 
     if (!user?.organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 });
@@ -36,7 +36,7 @@ export async function GET() {
         createdBy: true,
         createdAt: true,
         updatedAt: true,
-        done: true,
+        archivedAt: true,
         checklistItems: true,
         user: {
           select: {
