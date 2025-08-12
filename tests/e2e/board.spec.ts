@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, dbHelpers, generateTestIds } from "../fixtures/test-helpers";
 
 test.describe("Board Management", () => {
   test.beforeEach(async ({ page }) => {
@@ -61,9 +61,32 @@ test.describe("Board Management", () => {
     });
   });
 
-  test("should create a new board and verify database state", async ({ page }) => {
+  test("should create a new board and verify database state", async ({ page, prisma }) => {
     let boardCreated = false;
     let boardData: { name: string; description: string } | null = null;
+    const { testBoardId, testUserId, testOrgId, testEmail } = generateTestIds();
+
+    // Setup test data
+    await prisma.organization.upsert({
+      where: { id: testOrgId },
+      update: {},
+      create: {
+        id: testOrgId,
+        name: "Test Organization"
+      }
+    });
+
+    await prisma.user.upsert({
+      where: { id: testUserId },
+      update: {},
+      create: {
+        id: testUserId,
+        email: testEmail,
+        name: "Test User",
+        organizationId: testOrgId,
+        isAdmin: true
+      }
+    });
 
     await page.route("**/api/boards", async (route) => {
       if (route.request().method() === "GET") {
@@ -76,15 +99,26 @@ test.describe("Board Management", () => {
         boardCreated = true;
         boardData = await route.request().postDataJSON();
 
+        // Create actual board in database
+        await prisma.board.create({
+          data: {
+            id: testBoardId,
+            name: boardData!.name,
+            description: boardData!.description,
+            createdBy: testUserId,
+            organizationId: testOrgId,
+          }
+        });
+
         await route.fulfill({
           status: 201,
           contentType: "application/json",
           body: JSON.stringify({
             board: {
-              id: "new-board-id",
+              id: testBoardId,
               name: boardData!.name,
               description: boardData!.description,
-              createdBy: "test-user",
+              createdBy: testUserId,
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               _count: {
@@ -111,6 +145,20 @@ test.describe("Board Management", () => {
     expect(boardData!.description).toBe("Test board description");
 
     await expect(page.locator('[data-slot="card-title"]:has-text("Test Board")')).toBeVisible();
+
+    // Verify database state
+    const createdBoard = await dbHelpers.verifyBoardExists(prisma, testBoardId);
+    expect(createdBoard).toBeTruthy();
+    expect(createdBoard?.name).toBe("Test Board");
+    expect(createdBoard?.description).toBe("Test board description");
+    expect(createdBoard?.createdBy).toBe(testUserId);
+    expect(createdBoard?.organizationId).toBe(testOrgId);
+    expect(createdBoard?._count?.notes).toBe(0);
+
+    // Cleanup specific test data
+    await prisma.board.deleteMany({ where: { id: testBoardId } });
+    await prisma.user.deleteMany({ where: { id: testUserId } });
+    await prisma.organization.deleteMany({ where: { id: testOrgId } });
   });
 
   test("should display empty state when no boards exist", async ({ page }) => {

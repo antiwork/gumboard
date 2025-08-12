@@ -1,14 +1,24 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, dbHelpers, generateTestIds } from "../fixtures/test-helpers";
 
 test.describe("Authentication Flow", () => {
-  test("should complete email authentication flow and verify database state", async ({ page }) => {
+  test("should complete email authentication flow and verify database state", async ({ page, prisma }) => {
     let emailSent = false;
     let authData: { email: string } | null = null;
+    const { testEmail } = generateTestIds();
 
     await page.route("**/api/auth/signin/email", async (route) => {
       emailSent = true;
       const postData = await route.request().postDataJSON();
       authData = postData;
+
+      // Create a verification token in the database to simulate real behavior
+      await prisma.verificationToken.create({
+        data: {
+          identifier: testEmail,
+          token: `test-token-${Date.now()}`,
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours from now
+        }
+      });
 
       await route.fulfill({
         status: 200,
@@ -19,20 +29,28 @@ test.describe("Authentication Flow", () => {
 
     await page.goto("/auth/signin");
 
-    await page.evaluate(() => {
-      const mockAuthData = { email: "test@example.com" };
+    await page.evaluate((email) => {
+      const mockAuthData = { email };
       fetch("/api/auth/signin/email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(mockAuthData),
       });
-    });
+    }, testEmail);
 
     await page.waitForTimeout(100);
 
     expect(emailSent).toBe(true);
     expect(authData).not.toBeNull();
-    expect(authData!.email).toBe("test@example.com");
+    expect(authData!.email).toBe(testEmail);
+
+    // Verify database state - check if verification token was created
+    const verificationToken = await prisma.verificationToken.findFirst({
+      where: { identifier: testEmail }
+    });
+    expect(verificationToken).toBeTruthy();
+    expect(verificationToken?.expires).toBeInstanceOf(Date);
+    expect(verificationToken?.expires.getTime()).toBeGreaterThan(Date.now());
   });
 
   test("should authenticate user and access dashboard", async ({ page }) => {

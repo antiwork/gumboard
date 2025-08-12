@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, dbHelpers, generateTestIds } from "../fixtures/test-helpers";
 
 test.describe("Board Settings", () => {
   test.beforeEach(async ({ page }) => {
@@ -98,18 +98,55 @@ test.describe("Board Settings", () => {
     await expect(checkbox).toBeChecked();
   });
 
-  test("should toggle Slack updates setting and save changes", async ({ page }) => {
+  test("should toggle Slack updates setting and verify database state", async ({ page, prisma }) => {
     let boardUpdateCalled = false;
     let updatedSettings: any = null;
+    const { testBoardId, testUserId, testOrgId, testEmail } = generateTestIds();
 
-    await page.route("**/api/boards/test-board", async (route) => {
+    // Setup test data
+    await prisma.organization.upsert({
+      where: { id: testOrgId },
+      update: {},
+      create: { 
+        id: testOrgId, 
+        name: "Test Organization",
+        slackWebhookUrl: "https://hooks.slack.com/test-webhook"
+      }
+    });
+
+    await prisma.user.upsert({
+      where: { id: testUserId },
+      update: {},
+      create: {
+        id: testUserId,
+        email: testEmail,
+        name: "Test User",
+        organizationId: testOrgId,
+        isAdmin: true
+      }
+    });
+
+    await prisma.board.upsert({
+      where: { id: testBoardId },
+      update: {},
+      create: {
+        id: testBoardId,
+        name: "Test Board",
+        description: "A test board",
+        sendSlackUpdates: true,
+        createdBy: testUserId,
+        organizationId: testOrgId
+      }
+    });
+
+    await page.route(`**/api/boards/${testBoardId}`, async (route) => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
             board: {
-              id: "test-board",
+              id: testBoardId,
               name: "Test Board",
               description: "A test board",
               sendSlackUpdates: true,
@@ -120,12 +157,21 @@ test.describe("Board Settings", () => {
         boardUpdateCalled = true;
         updatedSettings = await route.request().postDataJSON();
 
+        // Update database - find the board first to ensure it exists
+        const existingBoard = await prisma.board.findUnique({ where: { id: testBoardId } });
+        if (existingBoard) {
+          await prisma.board.update({
+            where: { id: testBoardId },
+            data: { sendSlackUpdates: updatedSettings.sendSlackUpdates }
+          });
+        }
+
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
             board: {
-              id: "test-board",
+              id: testBoardId,
               name: "Test Board",
               description: "A test board",
               sendSlackUpdates: updatedSettings.sendSlackUpdates,
@@ -135,7 +181,7 @@ test.describe("Board Settings", () => {
       }
     });
 
-    await page.goto("/boards/test-board");
+    await page.goto(`/boards/${testBoardId}`);
 
     await page.click('button:has(div:has-text("Test Board"))');
     await page.click('button:has-text("Board settings")');
@@ -153,6 +199,17 @@ test.describe("Board Settings", () => {
     expect(updatedSettings.sendSlackUpdates).toBe(false);
 
     await expect(page.locator("text=Board settings")).not.toBeVisible();
+
+    // Verify database state
+    const settingsVerified = await dbHelpers.verifyBoardSettings(prisma, testBoardId, {
+      sendSlackUpdates: false
+    });
+    expect(settingsVerified).toBe(true);
+
+    // Cleanup specific test data
+    await prisma.board.deleteMany({ where: { id: testBoardId } });
+    await prisma.user.deleteMany({ where: { id: testUserId } });
+    await prisma.organization.deleteMany({ where: { id: testOrgId } });
   });
 
   test("should respect Slack updates setting when creating notes", async ({ page }) => {

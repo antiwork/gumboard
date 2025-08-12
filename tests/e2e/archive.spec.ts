@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, dbHelpers, generateTestIds } from "../fixtures/test-helpers";
 
 test.describe("Archive Functionality", () => {
   test.beforeEach(async ({ page }) => {
@@ -132,11 +132,55 @@ test.describe("Archive Functionality", () => {
     await expect(page.locator("text=This is an archived note")).toBeVisible();
   });
 
-  test("should archive a note and remove it from regular board", async ({ page }) => {
+  test("should archive a note and verify database state", async ({ page, prisma }) => {
     let noteArchived = false;
     let archivedNoteData: any = null;
+    const { testNoteId, testBoardId, testUserId, testOrgId, testEmail } = generateTestIds();
 
-    await page.route("**/api/boards/test-board/notes", async (route) => {
+    // Setup test data in correct order (respecting foreign keys)
+    const org = await prisma.organization.upsert({
+      where: { id: testOrgId },
+      update: {},
+      create: { 
+        id: testOrgId, 
+        name: "Test Organization" 
+      }
+    });
+
+    const user = await prisma.user.upsert({
+      where: { id: testUserId },
+      update: {},
+      create: {
+        id: testUserId,
+        email: testEmail,
+        name: "Test User",
+        organizationId: testOrgId
+      }
+    });
+
+    const board = await prisma.board.upsert({
+      where: { id: testBoardId },
+      update: {},
+      create: {
+        id: testBoardId,
+        name: "Test Board",
+        createdBy: testUserId,
+        organizationId: testOrgId
+      }
+    });
+
+    const note = await prisma.note.upsert({
+      where: { id: testNoteId },
+      update: {},
+      create: {
+        id: testNoteId,
+        content: "Test note to archive",
+        boardId: testBoardId,
+        createdBy: testUserId
+      }
+    });
+
+    await page.route(`**/api/boards/${testBoardId}/notes`, async (route) => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
@@ -144,7 +188,7 @@ test.describe("Archive Functionality", () => {
           body: JSON.stringify({
             notes: [
               {
-                id: "test-note-1",
+                id: testNoteId,
                 content: "Test note to archive",
                 color: "#fef3c7",
                 archivedAt: null,
@@ -152,12 +196,12 @@ test.describe("Archive Functionality", () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 board: {
-                  id: "test-board",
+                  id: testBoardId,
                   name: "Test Board",
                 },
-                boardId: "test-board",
+                boardId: testBoardId,
                 user: {
-                  id: "test-user",
+                  id: testUserId,
                   name: "Test User",
                   email: "test@example.com",
                 },
@@ -168,12 +212,18 @@ test.describe("Archive Functionality", () => {
       }
     });
 
-    await page.route("**/api/boards/test-board/notes/test-note-1", async (route) => {
+    await page.route(`**/api/boards/${testBoardId}/notes/${testNoteId}`, async (route) => {
       if (route.request().method() === "PUT") {
         const putData = await route.request().postDataJSON();
         if (putData.archivedAt && typeof putData.archivedAt === "string") {
           noteArchived = true;
           archivedNoteData = putData;
+          
+          // Update database state
+          await prisma.note.update({
+            where: { id: testNoteId },
+            data: { archivedAt: new Date() }
+          });
         }
 
         await route.fulfill({
@@ -181,7 +231,7 @@ test.describe("Archive Functionality", () => {
           contentType: "application/json",
           body: JSON.stringify({
             note: {
-              id: "test-note-1",
+              id: testNoteId,
               content: "Test note to archive",
               color: "#fef3c7",
               archivedAt: true,
@@ -189,7 +239,7 @@ test.describe("Archive Functionality", () => {
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               user: {
-                id: "test-user",
+                id: testUserId,
                 name: "Test User",
                 email: "test@example.com",
               },
@@ -199,7 +249,22 @@ test.describe("Archive Functionality", () => {
       }
     });
 
-    await page.goto("/boards/test-board");
+    // Add board endpoint route for the test board
+    await page.route(`**/api/boards/${testBoardId}`, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          board: {
+            id: testBoardId,
+            name: "Test Board",
+            description: "A test board",
+          },
+        }),
+      });
+    });
+
+    await page.goto(`/boards/${testBoardId}`);
 
     await expect(page.locator("text=Test note to archive")).toBeVisible();
 
@@ -211,6 +276,19 @@ test.describe("Archive Functionality", () => {
 
     expect(noteArchived).toBe(true);
     expect(archivedNoteData.archivedAt).toBeTruthy();
+
+    // Verify database state
+    const isArchived = await dbHelpers.verifyNoteArchived(prisma, testNoteId);
+    expect(isArchived).toBe(true);
+
+    const archivedNotes = await dbHelpers.getArchivedNotes(prisma);
+    expect(archivedNotes.some(note => note.id === testNoteId)).toBe(true);
+
+    // Cleanup specific test data
+    await prisma.note.deleteMany({ where: { id: testNoteId } });
+    await prisma.board.deleteMany({ where: { id: testBoardId } });
+    await prisma.user.deleteMany({ where: { id: testUserId } });
+    await prisma.organization.deleteMany({ where: { id: testOrgId } });
   });
 
   test("should not show archive button on Archive board", async ({ page }) => {

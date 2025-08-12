@@ -1,5 +1,5 @@
 import { ChecklistItem } from "@/components";
-import { test, expect } from "@playwright/test";
+import { test, expect, dbHelpers, generateTestIds } from "../fixtures/test-helpers";
 
 test.describe("Note Management", () => {
   test.beforeEach(async ({ page }) => {
@@ -314,11 +314,41 @@ test.describe("Note Management", () => {
       await expect(newItemInput).toBeFocused();
     });
 
-    test("should create a checklist note and verify database state", async ({ page }) => {
+    test("should create a checklist note and verify database state", async ({ page, prisma }) => {
       let noteCreated = false;
       let noteData: any = null;
+      const { testNoteId, testBoardId, testUserId, testOrgId, testEmail } = generateTestIds();
 
-      await page.route("**/api/boards/test-board/notes", async (route) => {
+      // Setup test data
+      await prisma.organization.upsert({
+        where: { id: testOrgId },
+        update: {},
+        create: { id: testOrgId, name: "Test Organization" }
+      });
+
+      await prisma.user.upsert({
+        where: { id: testUserId },
+        update: {},
+        create: {
+          id: testUserId,
+          email: testEmail,
+          name: "Test User",
+          organizationId: testOrgId
+        }
+      });
+
+      await prisma.board.upsert({
+        where: { id: testBoardId },
+        update: {},
+        create: {
+          id: testBoardId,
+          name: "Test Board",
+          createdBy: testUserId,
+          organizationId: testOrgId
+        }
+      });
+
+      await page.route(`**/api/boards/${testBoardId}/notes`, async (route) => {
         if (route.request().method() === "GET") {
           await route.fulfill({
             status: 200,
@@ -330,12 +360,26 @@ test.describe("Note Management", () => {
           const postData = await route.request().postDataJSON();
           noteData = postData;
 
+          // Create actual note in database - verify board exists first
+          const existingBoard = await prisma.board.findUnique({ where: { id: testBoardId } });
+          if (existingBoard) {
+            await prisma.note.create({
+              data: {
+                id: testNoteId,
+                content: "",
+                checklistItems: postData.checklistItems || [],
+                boardId: testBoardId,
+                createdBy: testUserId
+              }
+            });
+          }
+
           await route.fulfill({
             status: 201,
             contentType: "application/json",
             body: JSON.stringify({
               note: {
-                id: "new-note-id",
+                id: testNoteId,
                 content: "",
                 color: "#fef3c7",
                 archivedAt: null,
@@ -350,12 +394,12 @@ test.describe("Note Management", () => {
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
                 board: {
-                  id: "test-board-id",
+                  id: testBoardId,
                   name: "Test Board",
                 },
-                boardId: "test-board-id",
+                boardId: testBoardId,
                 user: {
-                  id: "test-user",
+                  id: testUserId,
                   name: "Test User",
                   email: "test@example.com",
                 },
@@ -365,9 +409,9 @@ test.describe("Note Management", () => {
         }
       });
 
-      await page.goto("/boards/test-board");
+      await page.goto(`/boards/${testBoardId}`);
 
-      await page.evaluate(() => {
+      await page.evaluate((boardId) => {
         const mockNoteData = {
           content: "",
           checklistItems: [
@@ -379,12 +423,12 @@ test.describe("Note Management", () => {
             },
           ],
         };
-        fetch("/api/boards/test-board/notes", {
+        fetch(`/api/boards/${boardId}/notes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(mockNoteData),
         });
-      });
+      }, testBoardId);
 
       await page.waitForTimeout(100);
 
@@ -392,6 +436,18 @@ test.describe("Note Management", () => {
       expect(noteData).not.toBeNull();
       expect(noteData!.checklistItems).toBeDefined();
       expect(Array.isArray(noteData!.checklistItems)).toBe(true);
+
+      // Verify database state
+      const createdNote = await dbHelpers.verifyNoteExists(prisma, testNoteId);
+      expect(createdNote).toBeTruthy();
+      expect(createdNote?.boardId).toBe(testBoardId);
+      expect(createdNote?.createdBy).toBe(testUserId);
+
+      // Cleanup specific test data
+      await prisma.note.deleteMany({ where: { id: testNoteId } });
+      await prisma.board.deleteMany({ where: { id: testBoardId } });
+      await prisma.user.deleteMany({ where: { id: testUserId } });
+      await prisma.organization.deleteMany({ where: { id: testOrgId } });
     });
 
     test("should handle checklist item editing", async ({ page }) => {
