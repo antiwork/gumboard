@@ -1,6 +1,32 @@
 import { test, expect } from "@playwright/test";
 
 test.describe("Home Page", () => {
+  test.beforeEach(async ({ page }) => {
+    await page.route("**/api/auth/session", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          user: { id: "demo-user", email: "demo@example.com", name: "Demo User" },
+        }),
+      });
+    });
+
+    await page.route("**/api/user", async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          id: "demo-user",
+          email: "demo@example.com",
+          name: "Demo User",
+          isAdmin: true,
+          organization: { id: "demo-org", name: "Demo Organization" },
+        }),
+      });
+    });
+  });
+
   test("sticky notes demo - should handle all UI interactions correctly", async ({ page }) => {
     let networkCalls: number = 0;
 
@@ -40,11 +66,14 @@ test.describe("Home Page", () => {
     await expect(page.getByText("Brand new task item")).toBeVisible();
 
     // Test 4: Edit existing checklist item content
-    await page.getByText("Gumboard release by Friday").click();
-    const editInput = page.locator('textarea[value="Gumboard release by Friday"]');
+    let editInput = page.locator('textarea').filter({ hasText: "Gumboard release by Friday" });
+    if (!(await editInput.isVisible())) {
+      await page.getByText("Gumboard release by Friday").click();
+      editInput = page.locator('textarea').filter({ hasText: "Gumboard release by Friday" });
+    }
     await expect(editInput).toBeVisible();
     await editInput.fill("Updated Gumboard release deadline");
-    await page.locator('textarea[value="Updated Gumboard release deadline"]').press("Enter");
+    await editInput.press("Enter");
     await expect(page.getByText("Updated Gumboard release deadline")).toBeVisible();
 
     // Test 5: Delete a checklist item
@@ -61,9 +90,12 @@ test.describe("Home Page", () => {
     initialNotes -= 1;
 
     // Test 7: Split checklist item (Enter in middle of text)
-    const itemToSplit = page.getByText("Helper Tix (Mon-Fri)");
-    await itemToSplit.click();
-    const editSplitInput = page.locator('textarea[value="Helper Tix (Mon-Fri)"]');
+    let editSplitInput = page.locator('textarea').filter({ hasText: "Helper Tix (Mon-Fri)" });
+    if (!(await editSplitInput.isVisible())) {
+      const itemToSplit = page.getByText("Helper Tix (Mon-Fri)");
+      await itemToSplit.click();
+      editSplitInput = page.locator('textarea').filter({ hasText: "Helper Tix (Mon-Fri)" });
+    }
     if (await editSplitInput.isVisible()) {
       await editSplitInput.click();
       await editSplitInput.press("ArrowLeft");
