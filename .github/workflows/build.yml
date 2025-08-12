@@ -31,13 +31,12 @@ jobs:
           - 5432:5432
 
     env:
-      # Required environment variables for Next.js build
       GITHUB_CLIENT_ID: dummy-client-id
       GITHUB_CLIENT_SECRET: dummy-client-secret
       AUTH_SECRET: sample-auth-secret
       AUTH_URL: http://localhost:3000
-      # Database URL for Prisma (using PostgreSQL service)
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gumboard_test
+      AUTH_RESEND_KEY: dummy-resend-key
 
     steps:
       - name: Checkout code
