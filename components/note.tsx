@@ -15,11 +15,7 @@ import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/u
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive, ArchiveRestore, Info } from "lucide-react";
 import { useTheme } from "next-themes";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const formatRelativeTime = (dateString: string) => {
   const date = new Date(dateString);
@@ -30,20 +26,23 @@ const formatRelativeTime = (dateString: string) => {
   const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
 
   if (diffInDays > 0) {
-    return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+    return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
   } else if (diffInHours > 0) {
-    return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+    return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
   } else if (diffInMinutes > 0) {
-    return `${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''} ago`;
+    return `${diffInMinutes} minute${diffInMinutes > 1 ? "s" : ""} ago`;
   } else {
-    return 'Just now';
+    return "Just now";
   }
 };
 
 const normalizeHex = (hex: string) => {
   const h = hex.replace("#", "").toLowerCase();
   if (h.length === 3) {
-    return h.split("").map((c) => c + c).join("");
+    return h
+      .split("")
+      .map((c) => c + c)
+      .join("");
   }
   return h;
 };
@@ -125,17 +124,17 @@ const getBorderColor = (backgroundColor: string, isDark: boolean) => {
 
   const colorToBorder: Record<string, { base: string; hover: string }> = {
     "#fef3c7": { base: "border-yellow-300", hover: "hover:border-yellow-600" },
-    "#fed7d7": { base: "border-red-300",    hover: "hover:border-red-600" },
-    "#d1fae5": { base: "border-green-300",  hover: "hover:border-green-600" },
-    "#dbeafe": { base: "border-blue-300",   hover: "hover:border-blue-600" },
+    "#fed7d7": { base: "border-red-300", hover: "hover:border-red-600" },
+    "#d1fae5": { base: "border-green-300", hover: "hover:border-green-600" },
+    "#dbeafe": { base: "border-blue-300", hover: "hover:border-blue-600" },
     "#e0e7ff": { base: "border-indigo-300", hover: "hover:border-indigo-600" },
     "#f3e8ff": { base: "border-purple-300", hover: "hover:border-purple-600" },
-    "#fce7f3": { base: "border-pink-300",   hover: "hover:border-pink-600" },
-    "#f0fdfa": { base: "border-teal-300",   hover: "hover:border-teal-600" },
-    "#fef7ff": { base: "border-fuchsia-300",hover: "hover:border-fuchsia-600" },
+    "#fce7f3": { base: "border-pink-300", hover: "hover:border-pink-600" },
+    "#f0fdfa": { base: "border-teal-300", hover: "hover:border-teal-600" },
+    "#fef7ff": { base: "border-fuchsia-300", hover: "hover:border-fuchsia-600" },
     "#fff7ed": { base: "border-orange-300", hover: "hover:border-orange-600" },
-    "#ffffff": { base: "border-gray-300",   hover: "hover:border-gray-600" },
-    "#f8fafc": { base: "border-slate-300",  hover: "hover:border-slate-600" },
+    "#ffffff": { base: "border-gray-300", hover: "hover:border-gray-600" },
+    "#f8fafc": { base: "border-slate-300", hover: "hover:border-slate-600" },
   };
 
   const lower = backgroundColor.toLowerCase();
@@ -570,7 +569,7 @@ export function Note({
     }
   };
 
-  const borderColorClass = getBorderColor(note.color, resolvedTheme === 'dark');
+  const borderColorClass = getBorderColor(note.color, resolvedTheme === "dark");
 
   return (
     <div
@@ -624,13 +623,13 @@ export function Note({
                 <Info className="w-3 h-3" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent 
-              className="w-64 p-3 border shadow-lg" 
-              side="right" 
+            <PopoverContent
+              className="w-64 p-3 border shadow-lg"
+              side="right"
               align="start"
-              style={{ 
+              style={{
                 backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-                borderColor: computePopoverBorderColor(note.color, resolvedTheme === 'dark')
+                borderColor: computePopoverBorderColor(note.color, resolvedTheme === "dark"),
               }}
               onOpenAutoFocus={(e) => e.preventDefault()}
             >
@@ -665,13 +664,13 @@ export function Note({
                     <Trash2 className="w-3 h-3" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent 
-                  className="w-64 p-4 border shadow-lg" 
-                  side="right" 
+                <PopoverContent
+                  className="w-64 p-4 border shadow-lg"
+                  side="right"
                   align="start"
-                  style={{ 
+                  style={{
                     backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-                    borderColor: computePopoverBorderColor(note.color, resolvedTheme === 'dark')
+                    borderColor: computePopoverBorderColor(note.color, resolvedTheme === "dark"),
                   }}
                 >
                   <div className="space-y-3">
@@ -856,7 +855,7 @@ export function Note({
               }}
               className={cn(
                 "mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors duration-200",
-                getHoverBackgroundColor(note.color, resolvedTheme === 'dark')
+                getHoverBackgroundColor(note.color, resolvedTheme === "dark")
               )}
             >
               <Plus className="mr-2 h-4 w-4" />
