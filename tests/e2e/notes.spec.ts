@@ -83,7 +83,7 @@ test.describe("Note Management", () => {
               id: "new-note-id",
               content: "",
               color: "#fef3c7",
-              done: false,
+              archivedAt: null,
               checklistItems: postData.checklistItems || [
                 {
                   id: `item-${Date.now()}`,
@@ -121,7 +121,7 @@ test.describe("Note Management", () => {
               id: "new-note-id",
               content: "",
               color: "#fef3c7",
-              done: false,
+              archivedAt: null,
               checklistItems: postData.checklistItems || [
                 {
                   id: `item-${Date.now()}`,
@@ -168,7 +168,7 @@ test.describe("Note Management", () => {
               id: "all-notes-note-id",
               content: postData.content || "",
               color: "#fef3c7",
-              done: false,
+              archivedAt: null,
               checklistItems: postData.checklistItems || [],
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
@@ -197,7 +197,7 @@ test.describe("Note Management", () => {
         id: "test-note-123",
         content: "Original content",
         color: "#fef3c7",
-        done: false,
+        archivedAt: null,
         checklistItems: [
           {
             id: "item-1",
@@ -338,7 +338,7 @@ test.describe("Note Management", () => {
                 id: "new-note-id",
                 content: "",
                 color: "#fef3c7",
-                done: false,
+                archivedAt: null,
                 checklistItems: postData.checklistItems || [
                   {
                     id: `item-${Date.now()}`,
@@ -468,7 +468,7 @@ test.describe("Note Management", () => {
       id,
       content,
       color: noteColor,
-      done: false,
+      archivedAt: null,
       checklistItems,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -495,7 +495,7 @@ test.describe("Note Management", () => {
                 id: "new-note-id",
                 content: "",
                 color: noteColor,
-                done: false,
+                archivedAt: null,
                 checklistItems: postData.checklistItems || [
                   {
                     id: `item-${Date.now()}`,
@@ -539,7 +539,7 @@ test.describe("Note Management", () => {
             id: noteId,
             content: "Test Note with Checklist",
             color: noteColor,
-            done: body.done,
+            archivedAt: body.archivedAt,
             checklistItems: processedChecklistItems,
             slackMessageId: null,
             boardId: "test-board",
@@ -613,7 +613,7 @@ test.describe("Note Management", () => {
                 id: "new-note-id",
                 content: "",
                 color: noteColor,
-                done: false,
+                archivedAt: null,
                 checklistItems: postData.checklistItems || [
                   {
                     id: `item-${Date.now()}`,
@@ -656,7 +656,7 @@ test.describe("Note Management", () => {
                 id: "all-notes-note-id",
                 content: postData.content || "",
                 color: noteColor,
-                done: false,
+                archivedAt: null,
                 checklistItems: postData.checklistItems || [],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
