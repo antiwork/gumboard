@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-
 import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
@@ -15,6 +14,7 @@ import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/u
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
+import { Textarea } from "./ui/textarea";
 
 // Core domain types
 export interface User {
@@ -555,7 +555,7 @@ export function Note({
 
       {isEditing ? (
         <div className="flex-1">
-          <textarea
+          <Textarea
             ref={editContentRef}
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
@@ -604,7 +604,7 @@ export function Note({
                     disabled
                     className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1"
                   />
-                  <textarea
+                  <Textarea
                     ref={newItemInputRef}
                     value={newItemContent}
                     onChange={(e) => {
@@ -650,22 +650,20 @@ export function Note({
 
               {/* Add Item Button */}
               {canEdit && (
-                <div className="mt-3">
-                  <Button
-                    variant="ghost"
-                    onClick={() => {
-                      if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
-                        newItemInputRef.current.focus();
-                      } else {
-                        setAddingItem(true);
-                      }
-                    }}
-                    className="justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add task
-                  </Button>
-                </div>
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                      newItemInputRef.current.focus();
+                    } else {
+                      setAddingItem(true);
+                    }
+                  }}
+                  className="justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Add task
+                </Button>
               )}
             </DraggableRoot>
           </div>

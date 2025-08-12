@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 import { useRef } from "react";
+import { Textarea } from "./ui/textarea";
 
 export interface ChecklistItem {
   id: string;
@@ -53,7 +54,6 @@ export function ChecklistItem({
     textarea.style.height = textarea.scrollHeight + "px";
   };
 
-  // Auto-resize when editing starts
   React.useEffect(() => {
     if (isEditing && textareaRef.current) {
       autoResizeTextarea(textareaRef.current);
@@ -64,7 +64,6 @@ export function ChecklistItem({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
 
-      // If content hasn't changed, just stop editing
       if (editContent === item.content) {
         onStopEdit?.();
         return;
@@ -124,7 +123,7 @@ export function ChecklistItem({
       />
 
       {isEditing && !readonly ? (
-        <textarea
+        <Textarea
           ref={textareaRef}
           value={editContent ?? item.content}
           onChange={handleChange}
@@ -136,7 +135,7 @@ export function ChecklistItem({
           onKeyDown={handleKeyDown}
           autoFocus
           rows={1}
-          placeholder="Enter item content... (Shift+Enter for new line, Enter to save)"
+          placeholder="Start typing..."
         />
       ) : (
         <span
