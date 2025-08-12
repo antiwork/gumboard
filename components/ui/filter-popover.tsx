@@ -1,27 +1,27 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useState, useRef, useEffect } from "react"
-import { Filter, ChevronDown, User } from "lucide-react"
-import { clsx } from "clsx"
-import { Button } from "./button"
+import * as React from "react";
+import { useState, useRef, useEffect } from "react";
+import { Filter, ChevronDown, User } from "lucide-react";
+import { clsx } from "clsx";
+import { Button } from "./button";
 
 const cn = (...classes: (string | undefined | null | false)[]) => {
-  return clsx(classes.filter(Boolean))
-}
-import { DateRangePicker } from "./date-range-picker"
+  return clsx(classes.filter(Boolean));
+};
+import { DateRangePicker } from "./date-range-picker";
 
 interface FilterPopoverProps {
-  startDate?: Date | null
-  endDate?: Date | null
-  onDateRangeChange?: (startDate: Date | null, endDate: Date | null) => void
-  
-  selectedAuthor?: string | null
-  authors: Array<{ id: string; name: string; email: string }>
-  onAuthorChange?: (authorId: string | null) => void
-  
-  className?: string
-  disabled?: boolean
+  startDate?: Date | null;
+  endDate?: Date | null;
+  onDateRangeChange?: (startDate: Date | null, endDate: Date | null) => void;
+
+  selectedAuthor?: string | null;
+  authors: Array<{ id: string; name: string; email: string }>;
+  onAuthorChange?: (authorId: string | null) => void;
+
+  className?: string;
+  disabled?: boolean;
 }
 
 function FilterPopover({
@@ -34,39 +34,39 @@ function FilterPopover({
   className,
   disabled = false,
 }: FilterPopoverProps) {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const getFilterCount = () => {
-    let count = 0
-    if (startDate || endDate) count++
-    if (selectedAuthor) count++
-    return count
-  }
+    let count = 0;
+    if (startDate || endDate) count++;
+    if (selectedAuthor) count++;
+    return count;
+  };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
-    }
+    };
 
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsOpen(false)
+      if (event.key === "Escape") {
+        setIsOpen(false);
       }
-    }
+    };
 
     if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside)
-      document.addEventListener('keydown', handleKeyDown)
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
     }
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside)
-      document.removeEventListener('keydown', handleKeyDown)
-    }
-  }, [isOpen])
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpen]);
 
   return (
     <div className={cn("relative", className)} ref={dropdownRef}>
@@ -88,10 +88,12 @@ function FilterPopover({
             </span>
           )}
         </span>
-        <ChevronDown className={cn(
-          "w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform",
-          isOpen && "rotate-180"
-        )} />
+        <ChevronDown
+          className={cn(
+            "w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform",
+            isOpen && "rotate-180"
+          )}
+        />
       </Button>
 
       {isOpen && (
@@ -156,12 +158,11 @@ function FilterPopover({
                 ))}
               </div>
             </div>
-
           </div>
         </div>
       )}
     </div>
-  )
+  );
 }
 
-export { FilterPopover }
+export { FilterPopover };

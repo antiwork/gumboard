@@ -1,4 +1,4 @@
-"use client"
+"use client";
 
 import { usePathname } from "next/navigation"
 import { User as UserIcon, Building2, ArrowLeft } from "lucide-react"
@@ -19,11 +19,11 @@ export default function SettingsLayout({
   const { user, loading } = useUser()
 
   if (loading) {
-    return <FullPageLoader message="Loading settings..." />
+    return <FullPageLoader message="Loading settings..." />;
   }
 
-  const isProfileActive = pathname === '/settings'
-  const isOrganizationActive = pathname === '/settings/organization'
+  const isProfileActive = pathname === "/settings";
+  const isOrganizationActive = pathname === "/settings/organization";
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
@@ -31,7 +31,9 @@ export default function SettingsLayout({
         <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-4 sm:space-x-6">
             <Link href="/dashboard" className="flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">Gumboard <BetaBadge /></h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                Gumboard <BetaBadge />
+              </h1>
             </Link>
           </div>
           <ProfileDropdown user={user} />
@@ -79,11 +81,9 @@ export default function SettingsLayout({
               </Link>
             </nav>
           </div>
-          <div className="flex-1">
-            {children}
-          </div>
+          <div className="flex-1">{children}</div>
         </div>
       </div>
     </div>
-  )
+  );
 }
