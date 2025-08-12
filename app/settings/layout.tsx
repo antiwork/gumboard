@@ -1,22 +1,17 @@
 "use client";
 
-import { usePathname } from "next/navigation"
-import { User as UserIcon, Building2, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { BetaBadge } from "@/components/ui/beta-badge"
-import { FullPageLoader } from "@/components/ui/loader"
-import { useUser } from "@/lib/hooks"
-import { ProfileDropdown } from "@/components/profile-dropdown"
+import { usePathname } from "next/navigation";
+import { User as UserIcon, Building2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { BetaBadge } from "@/components/ui/beta-badge";
+import { FullPageLoader } from "@/components/ui/loader";
+import { useUser } from "@/lib/hooks";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 
-export default function SettingsLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const pathname = usePathname()
-  
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
 
-  const { user, loading } = useUser()
+  const { user, loading } = useUser();
 
   if (loading) {
     return <FullPageLoader message="Loading settings..." />;

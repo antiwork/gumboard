@@ -12,7 +12,7 @@ import { useUser } from "@/lib/hooks";
 export default function ProfileSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [profileName, setProfileName] = useState("");
-  
+
   // Use the shared user data from context
   const { user, loading, refreshUser } = useUser();
 

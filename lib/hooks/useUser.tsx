@@ -1,7 +1,14 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect, createContext, useContext, ReactNode, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import React, {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  ReactNode,
+  useCallback,
+} from "react";
+import { useRouter } from "next/navigation";
 
 export type UserWithOrganization = {
   id: string;
@@ -39,10 +46,10 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const fetchUser = useCallback(async () => {
     try {
-      const response = await fetch('/api/user');
-      
+      const response = await fetch("/api/user");
+
       if (response.status === 401) {
-        router.push('/auth/signin');
+        router.push("/auth/signin");
         return;
       }
 
@@ -54,8 +61,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setUser(userData);
       setError(null);
     } catch (err) {
-      console.error('Error fetching user:', err);
-      setError(err instanceof Error ? err.message : 'Failed to fetch user');
+      console.error("Error fetching user:", err);
+      setError(err instanceof Error ? err.message : "Failed to fetch user");
     } finally {
       setLoading(false);
     }
@@ -80,7 +87,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
 export function useUser() {
   const context = useContext(UserContext);
   if (context === undefined) {
-    throw new Error('useUser must be used within a UserProvider');
+    throw new Error("useUser must be used within a UserProvider");
   }
   return context;
 }

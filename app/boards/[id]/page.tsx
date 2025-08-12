@@ -565,7 +565,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const fetchBoardData = async () => {
     try {
-
       // Fetch all boards for the dropdown
       let allBoardsResponse: Response;
       let notesResponse: Response | undefined;

@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import type { Board } from "@/components/note";
 import { useUser } from "@/lib/hooks";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -75,7 +75,7 @@ export default function Dashboard() {
   }>({ open: false, title: "", description: "" });
   const [copiedBoardId, setCopiedBoardId] = useState<string | null>(null);
   const router = useRouter();
-  
+
   const { user, loading: userLoading } = useUser();
 
   useEffect(() => {
