@@ -67,7 +67,7 @@ test.describe("Home Page", () => {
 
     // Test 4: Edit existing checklist item content
     await page.getByText("Finance update by Friday").click();
-    const editInput = page.locator('textarea').first();
+    const editInput = page.locator("textarea").first();
     await expect(editInput).toBeVisible();
     await editInput.fill("Updated Finance deadline");
     await editInput.blur(); // Use blur instead of Enter to save the edit
@@ -87,11 +87,11 @@ test.describe("Home Page", () => {
     initialNotes -= 1;
 
     // Test 7: Split checklist item (Enter in middle of text)
-    let editSplitInput = page.locator('textarea').filter({ hasText: "Helper Tix (Mon-Fri)" });
+    let editSplitInput = page.locator("textarea").filter({ hasText: "Helper Tix (Mon-Fri)" });
     if (!(await editSplitInput.isVisible())) {
       const itemToSplit = page.getByText("Helper Tix (Mon-Fri)");
       await itemToSplit.click();
-      editSplitInput = page.locator('textarea').filter({ hasText: "Helper Tix (Mon-Fri)" });
+      editSplitInput = page.locator("textarea").filter({ hasText: "Helper Tix (Mon-Fri)" });
     }
     if (await editSplitInput.isVisible()) {
       await editSplitInput.click();

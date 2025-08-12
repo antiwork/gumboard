@@ -74,7 +74,7 @@ test.describe("Note Height Calculation", () => {
     await expect(page.locator('button:has-text("Add Note")')).toBeVisible();
 
     await page.locator(`text=${longContent}`).click();
-    const textarea = page.locator('textarea').filter({ hasText: "This is a very long" });
+    const textarea = page.locator("textarea").filter({ hasText: "This is a very long" });
     await expect(textarea).toBeVisible();
 
     await textarea.fill(longContent + " with even more content added to make it longer");
@@ -200,7 +200,7 @@ test.describe("Note Height Calculation", () => {
     await page.goto("/boards/test-board");
 
     await page.locator(`text=${shortContent}`).click();
-    const textarea = page.locator('textarea').filter({ hasText: "Short item" });
+    const textarea = page.locator("textarea").filter({ hasText: "Short item" });
     await expect(textarea).toBeVisible();
 
     await textarea.fill("Line 1\nLine 2");
