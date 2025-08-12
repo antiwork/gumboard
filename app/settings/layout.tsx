@@ -6,7 +6,7 @@ import { User as UserIcon, Building2, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { FullPageLoader } from "@/components/ui/loader";
 import type { User } from "@/components/note";
-import { AppHeader } from "@/components/app-header";
+import { Header } from "@/components/header";
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -46,7 +46,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
-      <AppHeader user={user} />
+      <Header user={user} />
 
       <div className="md:hidden bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 px-4 py-3">
         <h2 className="text-lg font-semibold text-foreground dark:text-zinc-100">Settings</h2>

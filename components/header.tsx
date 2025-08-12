@@ -4,13 +4,13 @@ import { BetaBadge } from "@/components/ui/beta-badge";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import type { User } from "@/components/note";
 
-interface AppHeaderProps {
+interface HeaderProps {
   user: User | null;
   leftContent?: React.ReactNode;
   rightContent?: React.ReactNode;
 }
 
-export function AppHeader({ user, leftContent, rightContent }: AppHeaderProps) {
+export function Header({ user, leftContent, rightContent }: HeaderProps) {
   return (
     <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
       <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">

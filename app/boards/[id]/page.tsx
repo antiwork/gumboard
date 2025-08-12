@@ -7,7 +7,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Plus, ChevronDown, Settings, Search } from "lucide-react";
 import Link from "next/link";
-import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
@@ -25,7 +24,7 @@ import {
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
-import { AppHeader } from "@/components/app-header";
+import { Header } from "@/components/header";
 import { toast } from "sonner";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -877,7 +876,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <AppHeader 
+      <Header 
         user={user} 
         leftContent={
           <>

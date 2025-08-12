@@ -8,7 +8,7 @@ import Link from "next/link";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import type { Note, Board } from "@/components/note";
-import { AppHeader } from "@/components/app-header";
+import { Header } from "@/components/header";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -387,7 +387,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <AppHeader 
+      <Header 
         user={null} 
         leftContent={
           <>

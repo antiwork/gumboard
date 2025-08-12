@@ -7,7 +7,6 @@ import z from "zod";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -41,7 +40,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { AppHeader } from "@/components/app-header";
+import { Header } from "@/components/header";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -280,7 +279,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-950">
-      <AppHeader 
+      <Header 
         user={user} 
         rightContent={
           <Button
