@@ -103,7 +103,7 @@ model Note {
   id             String    @id @default(cuid())
   content        String    @db.Text
   color          String    @default("#fef3c7") // Default yellow color
-  done           Boolean   @default(false) // Track completion status
+  archivedAt     DateTime? // Track archived status
   checklistItems Json? // Store checklist items as JSON
   slackMessageId String?
   boardId        String
