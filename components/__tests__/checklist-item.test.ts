@@ -24,7 +24,8 @@ const multiLineItem: ChecklistItemType = {
 
 const checkedLongItem: ChecklistItemType = {
   id: "test-item-4",
-  content: "This is a completed long task with a lot of text that should still wrap properly even when it's checked and has line-through styling applied to it",
+  content:
+    "This is a completed long task with a lot of text that should still wrap properly even when it's checked and has line-through styling applied to it",
   checked: true,
   order: 3,
 };
@@ -128,7 +129,8 @@ describe("ChecklistItem Type Tests", () => {
   it("should handle very long single word", () => {
     const longWordItem: ChecklistItemType = {
       ...mockItem,
-      content: "Pneumonoultramicroscopicsilicovolcanoconiosispneumonoultramicroscopicsilicovolcanoconiosis",
+      content:
+        "Pneumonoultramicroscopicsilicovolcanoconiosispneumonoultramicroscopicsilicovolcanoconiosis",
     };
 
     expect(longWordItem.content.length).toBeGreaterThan(50);
@@ -155,7 +157,9 @@ export const mockChecklistItems = {
   checkedLongItem,
 };
 
-export const createMockChecklistItem = (overrides: Partial<ChecklistItemType>): ChecklistItemType => ({
+export const createMockChecklistItem = (
+  overrides: Partial<ChecklistItemType>
+): ChecklistItemType => ({
   id: "mock-item",
   content: "Mock content",
   checked: false,
