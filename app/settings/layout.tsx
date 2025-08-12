@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { User as UserIcon, Building2, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { FullPageLoader } from "@/components/ui/loader"
-import type { User } from "@/components/note"
-import { Navbar } from "@/components/navbar"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { User as UserIcon, Building2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { FullPageLoader } from "@/components/ui/loader";
+import type { User } from "@/components/note";
+import { Navbar } from "@/components/navbar";
 
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);

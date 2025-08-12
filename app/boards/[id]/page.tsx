@@ -23,12 +23,7 @@ import {
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
 import { Navbar } from "@/components/navbar";
-import { 
-  BoardSelector, 
-  SearchBar, 
-  Filter, 
-  AddNoteButton 
-} from "@/components/board-actions";
+import { BoardSelector, SearchBar, Filter, AddNoteButton } from "@/components/board-actions";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -870,7 +865,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   return (
     <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <Navbar 
+      <Navbar
         user={user}
         boardActions={
           <>
@@ -902,11 +897,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               setDebouncedSearchTerm={setDebouncedSearchTerm}
               updateURL={updateURL}
             />
-            <AddNoteButton
-              onAddNote={handleAddNote}
-              boardId={boardId}
-              allBoards={allBoards}
-            />
+            <AddNoteButton onAddNote={handleAddNote} boardId={boardId} allBoards={allBoards} />
           </>
         }
       />

@@ -2,13 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
-import {
-  Plus,
-  Search,
-  ChevronDown,
-  Pencil,
-  Settings,
-} from "lucide-react";
+import { Plus, Search, ChevronDown, Pencil, Settings } from "lucide-react";
 import type { Board } from "@/components/note";
 import { FilterPopover } from "@/components/ui/filter-popover";
 
@@ -24,10 +18,10 @@ interface BoardSelectorProps {
 }
 
 interface SearchBarProps {
-    searchTerm?: string;
-    setSearchTerm?: (term: string) => void;
-    setDebouncedSearchTerm?: (term: string) => void;
-    updateURL?: (searchTerm?: string) => void;
+  searchTerm?: string;
+  setSearchTerm?: (term: string) => void;
+  setDebouncedSearchTerm?: (term: string) => void;
+  updateURL?: (searchTerm?: string) => void;
 }
 
 interface AddNoteButtonProps {
@@ -37,7 +31,7 @@ interface AddNoteButtonProps {
 }
 
 interface AddBoardButtonProps {
-    onAddBoard?: () => void;
+  onAddBoard?: () => void;
 }
 
 export function BoardSelector({
@@ -145,8 +139,7 @@ export function BoardSelector({
                 onClick={() => {
                   setBoardSettings?.({
                     sendSlackUpdates:
-                      (board as { sendSlackUpdates?: boolean })
-                        ?.sendSlackUpdates ?? true,
+                      (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
                   });
                   setBoardSettingsDialog?.(true);
                   setShowBoardDropdown?.(false);
@@ -210,7 +203,11 @@ interface FilterProps {
   selectedAuthor?: string | null;
   setSelectedAuthor?: (authorId: string | null) => void;
   uniqueAuthors?: Array<{ id: string; name: string; email: string }>;
-  updateURL?: (searchTerm?: string, dateRange?: { startDate: Date | null; endDate: Date | null }, authorId?: string | null) => void;
+  updateURL?: (
+    searchTerm?: string,
+    dateRange?: { startDate: Date | null; endDate: Date | null },
+    authorId?: string | null
+  ) => void;
 }
 
 export function Filter({
@@ -243,11 +240,7 @@ export function Filter({
   );
 }
 
-export function AddNoteButton({
-  onAddNote,
-  boardId,
-  allBoards = [],
-}: AddNoteButtonProps) {
+export function AddNoteButton({ onAddNote, boardId, allBoards = [] }: AddNoteButtonProps) {
   return (
     <Button
       onClick={() => {
@@ -274,4 +267,4 @@ export function AddBoardButton({ onAddBoard }: AddBoardButtonProps) {
       <span className="hidden sm:inline">Add Board</span>
     </Button>
   );
-} 
+}

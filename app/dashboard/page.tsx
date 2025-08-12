@@ -6,7 +6,7 @@ import z from "zod";
 
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState, useEffect } from "react";
@@ -32,7 +32,14 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Navbar } from "@/components/navbar";
 import { AddBoardButton } from "@/components/board-actions";
 
@@ -265,12 +272,12 @@ export default function Dashboard() {
       form.reset();
       setEditingBoard(null);
     }
-  }
+  };
 
   const handleAddBoardClick = () => {
     form.reset({ name: "", description: "" });
     setIsAddBoardDialogOpen(true);
-    setEditingBoard(null); 
+    setEditingBoard(null);
   };
 
   if (loading) {
@@ -279,12 +286,7 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-950">
-      <Navbar 
-        user={user} 
-        userActions={
-          <AddBoardButton onAddBoard={handleAddBoardClick} />
-        }
-      />
+      <Navbar user={user} userActions={<AddBoardButton onAddBoard={handleAddBoardClick} />} />
       <div className="px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {boards.length > 0 && (
           <div className="mb-6 sm:mb-8">
