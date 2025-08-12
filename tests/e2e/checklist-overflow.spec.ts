@@ -85,49 +85,51 @@ test.describe("Checklist Item Overflow Behavior", () => {
                 color: "#fef3c7",
                 archivedAt: null,
                 checklistItems: [
-                {
-                  id: "item-1",
-                  content: "This is an extremely long task description that goes on and on and contains many words to test how our migration handles very long content that might cause issues with database storage or JSON formatting when converted to checklist items and we want to make sure it works correctly without truncation or corruption of the data",
-                  checked: false,
-                  order: 0,
-                  noteId: "test-note-1",
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
+                  {
+                    id: "item-1",
+                    content:
+                      "This is an extremely long task description that goes on and on and contains many words to test how our migration handles very long content that might cause issues with database storage or JSON formatting when converted to checklist items and we want to make sure it works correctly without truncation or corruption of the data",
+                    checked: false,
+                    order: 0,
+                    noteId: "test-note-1",
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  },
+                  {
+                    id: "item-2",
+                    content:
+                      "Another long checklist item with substantial content to ensure text wrapping works properly across multiple lines",
+                    checked: true,
+                    order: 1,
+                    noteId: "test-note-1",
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  },
+                  {
+                    id: "item-3",
+                    content: "Short item",
+                    checked: false,
+                    order: 2,
+                    noteId: "test-note-1",
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  },
+                ],
+                createdAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString(),
+                user: {
+                  id: "test-user",
+                  name: "Test User",
+                  email: "test@example.com",
                 },
-                {
-                  id: "item-2",
-                  content: "Another long checklist item with substantial content to ensure text wrapping works properly across multiple lines",
-                  checked: true,
-                  order: 1,
-                  noteId: "test-note-1",
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
+                board: {
+                  id: "test-board",
+                  name: "Test Board",
                 },
-                {
-                  id: "item-3",
-                  content: "Short item",
-                  checked: false,
-                  order: 2,
-                  noteId: "test-note-1",
-                  createdAt: new Date().toISOString(),
-                  updatedAt: new Date().toISOString(),
-                },
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
+                boardId: "test-board",
+                createdBy: "test-user",
               },
-              board: {
-                id: "test-board",
-                name: "Test Board",
-              },
-              boardId: "test-board",
-              createdBy: "test-user",
-            }
-          ]
+            ],
           }),
         });
       } else if (route.request().method() === "PUT") {
@@ -259,16 +261,16 @@ test.describe("Checklist Item Overflow Behavior", () => {
       expect(textareaBox.height).toBeGreaterThan(50);
     }
 
-   
-    const newContent = "This is an extremely long task description that goes on and on Here is some additional content to test how the textarea handles very long text that should wrap properly within the note boundaries.\nNew line of text";
+    const newContent =
+      "This is an extremely long task description that goes on and on Here is some additional content to test how the textarea handles very long text that should wrap properly within the note boundaries.\nNew line of text";
     await textareaField.fill(newContent);
-    
+
     const textareaValue = await textareaField.inputValue();
     expect(textareaValue).toContain("\n");
 
     await textareaField.press("Escape");
     await expect(textareaField).toHaveCount(0);
-    
+
     await expect(checklistItemSpan).toContainText("This is an extremely long task description");
   });
 
@@ -325,7 +327,8 @@ test.describe("Checklist Item Overflow Behavior", () => {
     const inputTextarea = note.locator('textarea[placeholder="Add new item..."]');
     await expect(inputTextarea).toBeVisible();
 
-    const newItemContent = "This is a newly added checklist item with substantial content to test text wrapping when adding items. It should wrap properly within the note boundaries.";
+    const newItemContent =
+      "This is a newly added checklist item with substantial content to test text wrapping when adding items. It should wrap properly within the note boundaries.";
     await inputTextarea.fill(newItemContent);
 
     await expect(inputTextarea).toHaveCSS("white-space", "pre-wrap");
@@ -344,6 +347,4 @@ test.describe("Checklist Item Overflow Behavior", () => {
     const newHeight = await note.boundingBox().then((box) => box?.height || 0);
     expect(newHeight).toBeGreaterThan(initialHeight);
   });
-
-
 });
