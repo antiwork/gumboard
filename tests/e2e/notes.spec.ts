@@ -453,7 +453,9 @@ test.describe("Note Management", () => {
   });
 
   test.describe("Delete with Undo (toasts)", () => {
-    test("should show Undo toast and restore note without issuing DELETE when undone", async ({ page }) => {
+    test("should show Undo toast and restore note without issuing DELETE when undone", async ({
+      page,
+    }) => {
       let deleteCalled = false;
 
       await page.route("**/api/boards/test-board", async (route) => {
@@ -502,7 +504,11 @@ test.describe("Note Management", () => {
       await page.route("**/api/boards/test-board/notes/note-to-delete", async (route) => {
         if (route.request().method() === "DELETE") {
           deleteCalled = true;
-          await route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify({}) });
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({}),
+          });
         }
       });
 
@@ -511,7 +517,9 @@ test.describe("Note Management", () => {
       await expect(page.getByText("Note deleted")).toBeVisible();
       await page.getByRole("button", { name: "Undo" }).click();
 
-      await expect(page.getByRole("button", { name: "Delete Note note-to-delete", exact: true })).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Delete Note note-to-delete", exact: true })
+      ).toBeVisible();
 
       await page.waitForTimeout(300);
       expect(deleteCalled).toBe(false);
