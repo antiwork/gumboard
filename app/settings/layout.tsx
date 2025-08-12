@@ -1,53 +1,49 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useCallback } from "react"
-import { useRouter, usePathname } from "next/navigation"
-import { User as UserIcon, Building2, ArrowLeft } from "lucide-react"
-import Link from "next/link"
-import { BetaBadge } from "@/components/ui/beta-badge"
-import { FullPageLoader } from "@/components/ui/loader"
-import type { User } from "@/components/note"
-import { ProfileDropdown } from "@/components/profile-dropdown"
+import { useState, useEffect, useCallback } from "react";
+import { useRouter, usePathname } from "next/navigation";
+import { User as UserIcon, Building2, ArrowLeft } from "lucide-react";
+import Link from "next/link";
+import { BetaBadge } from "@/components/ui/beta-badge";
+import { FullPageLoader } from "@/components/ui/loader";
+import type { User } from "@/components/note";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 
-export default function SettingsLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const [user, setUser] = useState<User | null>(null)
-  const [loading, setLoading] = useState(true)
-  const router = useRouter()
-  const pathname = usePathname()
+export default function SettingsLayout({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  const router = useRouter();
+  const pathname = usePathname();
 
   const fetchUserData = useCallback(async () => {
     try {
-      const response = await fetch("/api/user")
+      const response = await fetch("/api/user");
       if (response.status === 401) {
-        router.push("/auth/signin")
-        return
+        router.push("/auth/signin");
+        return;
       }
 
       if (response.ok) {
-        const userData = await response.json()
-        setUser(userData)
+        const userData = await response.json();
+        setUser(userData);
       }
     } catch (error) {
-      console.error("Error fetching user data:", error)
+      console.error("Error fetching user data:", error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [router])
+  }, [router]);
 
   useEffect(() => {
-    fetchUserData()
-  }, [fetchUserData])
+    fetchUserData();
+  }, [fetchUserData]);
 
   if (loading) {
-    return <FullPageLoader message="Loading settings..." />
+    return <FullPageLoader message="Loading settings..." />;
   }
 
-  const isProfileActive = pathname === '/settings'
-  const isOrganizationActive = pathname === '/settings/organization'
+  const isProfileActive = pathname === "/settings";
+  const isOrganizationActive = pathname === "/settings/organization";
 
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
@@ -55,7 +51,9 @@ export default function SettingsLayout({
         <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center space-x-4 sm:space-x-6">
             <Link href="/dashboard" className="flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">Gumboard <BetaBadge /></h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                Gumboard <BetaBadge />
+              </h1>
             </Link>
           </div>
           <ProfileDropdown user={user} />
@@ -103,11 +101,9 @@ export default function SettingsLayout({
               </Link>
             </nav>
           </div>
-          <div className="flex-1">
-            {children}
-          </div>
+          <div className="flex-1">{children}</div>
         </div>
       </div>
     </div>
-  )
+  );
 }

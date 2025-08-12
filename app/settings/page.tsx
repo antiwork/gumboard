@@ -88,7 +88,9 @@ export default function ProfileSettingsPage() {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name" className="text-foreground dark:text-zinc-200">Full Name</Label>
+            <Label htmlFor="name" className="text-foreground dark:text-zinc-200">
+              Full Name
+            </Label>
             <Input
               id="name"
               type="text"
@@ -100,7 +102,9 @@ export default function ProfileSettingsPage() {
           </div>
 
           <div>
-            <Label htmlFor="email" className="text-foreground dark:text-zinc-200">Email Address</Label>
+            <Label htmlFor="email" className="text-foreground dark:text-zinc-200">
+              Email Address
+            </Label>
             <div className="relative mt-1">
               <Input
                 id="email"

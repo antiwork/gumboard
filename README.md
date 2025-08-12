@@ -20,7 +20,7 @@ npm install
 1. Create your environment variables file:
 
 ```bash
-cp env.example .env
+cp .env.example .env
 ```
 
 2. Start the PostgreSQL database using Docker:
