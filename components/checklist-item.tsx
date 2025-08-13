@@ -44,14 +44,36 @@ export function ChecklistItem({
   showDeleteButton = true,
   className,
 }: ChecklistItemProps) {
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const previousContentRef = React.useRef<string>("");
+
+  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
+    textarea.style.height = "auto";
+    textarea.style.height = textarea.scrollHeight + "px";
+  };
+
+  React.useEffect(() => {
+    if (isEditing && textareaRef.current) {
+      adjustTextareaHeight(textareaRef.current);
+      previousContentRef.current = editContent ?? item.content;
+    }
+  }, [isEditing, editContent, item.content]);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       const target = e.target as HTMLTextAreaElement;
       const cursorPosition = target.selectionStart || 0;
-      if (onSplit && editContent !== undefined) {
+      const content = editContent || "";
+
+      if (cursorPosition >= content.length) {
+        target.blur();
+      } else if (onSplit && editContent !== undefined) {
         onSplit(item.id, editContent, cursorPosition);
       }
+    }
+    if (e.key === "Enter" && e.shiftKey) {
+      const target = e.target as HTMLTextAreaElement;
+      setTimeout(() => adjustTextareaHeight(target), 0);
     }
     if (e.key === "Escape") {
       onStopEdit?.();
@@ -72,7 +94,7 @@ export function ChecklistItem({
   return (
     <div
       className={cn(
-        "flex items-center group/item rounded gap-3 transition-all duration-200",
+        "flex items-start group/item rounded gap-2 transition-all duration-200",
         className
       )}
       // To avoid flaky test locators
@@ -82,43 +104,43 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5"
         disabled={readonly}
       />
 
-      {isEditing && !readonly ? (
-        <textarea
-          value={editContent ?? item.content}
-          onChange={(e) => onEditContentChange?.(e.target.value)}
-          className={cn(
-            "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none overflow-hidden",
-            item.checked && "text-slate-500 dark:text-zinc-500 line-through"
-          )}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          autoFocus
-          rows={1}
-          style={{ height: "auto" }}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            target.style.height = "auto";
-            target.style.height = target.scrollHeight + "px";
-          }}
-        />
-      ) : (
-        <span
-          className={cn(
-            "flex-1 text-sm leading-6 cursor-pointer select-none",
-            item.checked
-              ? "line-through text-gray-500 dark:text-gray-400"
-              : "text-gray-900 dark:text-gray-100",
-            !readonly && "rounded px-1 py-0.5 hover:bg-transparent"
-          )}
-          onClick={() => !readonly && onStartEdit?.(item.id)}
-        >
-          {item.content}
-        </span>
-      )}
+      <textarea
+        ref={textareaRef}
+        value={editContent ?? item.content}
+        onChange={(e) => onEditContentChange?.(e.target.value)}
+        className={cn(
+          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none overflow-hidden",
+          item.checked && "text-slate-500 dark:text-zinc-500 line-through"
+        )}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        onFocus={() => {
+          if (!isEditing && !readonly) {
+            onStartEdit?.(item.id);
+          }
+        }}
+        onClick={() => {
+          if (!isEditing && !readonly) {
+            onStartEdit?.(item.id);
+          }
+        }}
+        autoFocus={isEditing}
+        rows={1}
+        style={{ height: "auto" }}
+        onInput={(e) => {
+          const target = e.target as HTMLTextAreaElement;
+          const currentContent = target.value;
+
+          if (currentContent !== previousContentRef.current) {
+            adjustTextareaHeight(target);
+            previousContentRef.current = currentContent;
+          }
+        }}
+      />
 
       {showDeleteButton && !readonly && (
         <Button
