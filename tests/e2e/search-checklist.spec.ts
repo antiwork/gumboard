@@ -43,9 +43,7 @@ test.describe("Search Notes Checklist Items", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          boards: [
-            { id: "test-board", name: "Test Board", description: "A test board" },
-          ],
+          boards: [{ id: "test-board", name: "Test Board", description: "A test board" }],
         }),
       });
     });
@@ -65,7 +63,7 @@ test.describe("Search Notes Checklist Items", () => {
         ],
       },
       {
-        id: "note-2", 
+        id: "note-2",
         title: "Work Tasks",
         content: "Development work",
         checklistItems: [
@@ -83,7 +81,7 @@ test.describe("Search Notes Checklist Items", () => {
       },
       {
         id: "note-4",
-        title: "Empty Note", 
+        title: "Empty Note",
         content: "This note has no checklist items",
         checklistItems: [],
       },
@@ -120,11 +118,11 @@ test.describe("Search Notes Checklist Items", () => {
     await page.reload();
 
     const searchInput = page.getByPlaceholder("Search notes...");
-    
+
     // Helper: Wait for debounce and search results
     const waitForSearch = async () => {
       await page.waitForTimeout(1000);
-      await page.waitForLoadState('networkidle');
+      await page.waitForLoadState("networkidle");
     };
 
     // Helper function to check visibility
@@ -132,11 +130,11 @@ test.describe("Search Notes Checklist Items", () => {
       for (const text of visibleTexts) {
         await expect(page.locator(`text=${text}`)).toBeVisible();
       }
-      
+
       for (const text of hiddenTexts) {
         const element = page.locator(`text=${text}`);
         const count = await element.count();
-        
+
         if (count > 0) {
           await expect(element).toBeHidden();
         }
@@ -147,47 +145,47 @@ test.describe("Search Notes Checklist Items", () => {
     await searchInput.fill("milk");
     await waitForSearch();
     await verifyNoteVisibility(["Buy milk"], ["Write Playwright tests", "Plan vacation"]);
-    
+
     // Test case 2: Case insensitive search
     await searchInput.fill("MILK");
     await waitForSearch();
-    await expect(page.locator('text=Buy milk')).toBeVisible();
+    await expect(page.locator("text=Buy milk")).toBeVisible();
 
     await searchInput.fill("MiLk");
     await waitForSearch();
-    await expect(page.locator('text=Buy milk')).toBeVisible();
-    
+    await expect(page.locator("text=Buy milk")).toBeVisible();
+
     // Test case 3: Partial word match
     await searchInput.fill("play");
     await waitForSearch();
-    await expect(page.locator('text=Write Playwright tests')).toBeVisible();
-    
+    await expect(page.locator("text=Write Playwright tests")).toBeVisible();
+
     // Test case 4: Multiple word search
     await searchInput.fill("pull requests");
     await waitForSearch();
-    await expect(page.locator('text=Review pull requests')).toBeVisible();
-    
+    await expect(page.locator("text=Review pull requests")).toBeVisible();
+
     // Test case 5: Single character search
     await searchInput.fill("m");
     await waitForSearch();
-    await expect(page.locator('text=Buy milk')).toBeVisible();
-    await expect(page.locator('text=Call mom')).toBeVisible();
-    
+    await expect(page.locator("text=Buy milk")).toBeVisible();
+    await expect(page.locator("text=Call mom")).toBeVisible();
+
     // Test case 6: Search in both checked and unchecked items
     await searchInput.fill("requests"); // This is a checked item
     await waitForSearch();
-    await expect(page.locator('text=Review pull requests')).toBeVisible();
-    
+    await expect(page.locator("text=Review pull requests")).toBeVisible();
+
     // Test case 7: Search term not found
     await searchInput.fill("nonexistentterm");
     await waitForSearch();
-    
+
     const searchTermNotFoundChecks = [
-      page.locator('text=Buy milk'),
-      page.locator('text=Write Playwright tests'),
-      page.locator('text=Plan vacation')
+      page.locator("text=Buy milk"),
+      page.locator("text=Write Playwright tests"),
+      page.locator("text=Plan vacation"),
     ];
-    
+
     let allHidden = true;
     for (const check of searchTermNotFoundChecks) {
       const count = await check.count();
@@ -204,9 +202,9 @@ test.describe("Search Notes Checklist Items", () => {
     // Test case 8: Clear search - all notes visible
     await searchInput.fill("");
     await waitForSearch();
-    await expect(page.locator('text=Buy milk')).toBeVisible();
-    await expect(page.locator('text=Write Playwright tests')).toBeVisible();
-    await expect(page.locator('text=Plan vacation')).toBeVisible();
+    await expect(page.locator("text=Buy milk")).toBeVisible();
+    await expect(page.locator("text=Write Playwright tests")).toBeVisible();
+    await expect(page.locator("text=Plan vacation")).toBeVisible();
   });
 
   test("should handle edge cases and special characters", async ({ page }) => {
@@ -226,7 +224,7 @@ test.describe("Search Notes Checklist Items", () => {
       {
         id: "note-numbers",
         title: "Numbers and Time",
-        content: "", 
+        content: "",
         checklistItems: [
           { id: "item-numbers-1", content: "Meeting at 3:30 PM", checked: false, order: 0 },
           { id: "item-numbers-2", content: "Call at 09:00 AM", checked: false, order: 1 },
@@ -241,7 +239,12 @@ test.describe("Search Notes Checklist Items", () => {
         checklistItems: [
           { id: "item-whitespace-1", content: "  leading spaces", checked: false, order: 0 },
           { id: "item-whitespace-2", content: "trailing spaces  ", checked: false, order: 1 },
-          { id: "item-whitespace-3", content: "multiple   spaces   between", checked: false, order: 2 },
+          {
+            id: "item-whitespace-3",
+            content: "multiple   spaces   between",
+            checked: false,
+            order: 2,
+          },
           { id: "item-whitespace-4", content: "\ttab\tcharacters\t", checked: false, order: 3 },
         ],
       },
@@ -251,7 +254,7 @@ test.describe("Search Notes Checklist Items", () => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
-          contentType: "application/json", 
+          contentType: "application/json",
           body: JSON.stringify({
             notes: edgeCaseNotes.map((note, index) => ({
               ...note,
@@ -265,7 +268,7 @@ test.describe("Search Notes Checklist Items", () => {
               updatedAt: new Date().toISOString(),
               user: {
                 id: "test-user",
-                name: "Test User", 
+                name: "Test User",
                 email: "test@example.com",
               },
             })),
@@ -275,62 +278,62 @@ test.describe("Search Notes Checklist Items", () => {
     });
 
     await page.reload();
-    await expect(page.locator('text=Buy @#$% special items!')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=Buy @#$% special items!")).toBeVisible({ timeout: 5000 });
 
     const searchInput = page.getByPlaceholder("Search notes...");
-    
+
     // Test special characters
     await searchInput.fill("@#$%");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=Buy @#$% special items!')).toBeVisible();
-    
+    await expect(page.locator("text=Buy @#$% special items!")).toBeVisible();
+
     // Test email search
     await searchInput.fill("@domain.com");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=Email: user@domain.com')).toBeVisible();
-    
+    await expect(page.locator("text=Email: user@domain.com")).toBeVisible();
+
     // Test phone number search
     await searchInput.fill("555-123");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=Call +1-555-123-4567')).toBeVisible();
-    
+    await expect(page.locator("text=Call +1-555-123-4567")).toBeVisible();
+
     // Test currency symbol
     await searchInput.fill("$99.99");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=Price: $99.99')).toBeVisible();
-    
+    await expect(page.locator("text=Price: $99.99")).toBeVisible();
+
     // Test percentage
     await searchInput.fill("100%");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=100% completion rate')).toBeVisible();
-    
+    await expect(page.locator("text=100% completion rate")).toBeVisible();
+
     // Test time format
     await searchInput.fill("3:30");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=Meeting at 3:30 PM')).toBeVisible();
-    
+    await expect(page.locator("text=Meeting at 3:30 PM")).toBeVisible();
+
     // Test date format
     await searchInput.fill("2024-12-31");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=Date: 2024-12-31')).toBeVisible();
-    
+    await expect(page.locator("text=Date: 2024-12-31")).toBeVisible();
+
     // Test order number with hash
     await searchInput.fill("#12345");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=Order #12345')).toBeVisible();
-    
+    await expect(page.locator("text=Order #12345")).toBeVisible();
+
     // Test whitespace handling
     await searchInput.fill("leading");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=leading spaces')).toBeVisible();
-    
+    await expect(page.locator("text=leading spaces")).toBeVisible();
+
     await searchInput.fill("trailing");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=trailing spaces')).toBeVisible();
-    
+    await expect(page.locator("text=trailing spaces")).toBeVisible();
+
     await searchInput.fill("multiple spaces");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=multiple   spaces   between')).toBeVisible();
+    await expect(page.locator("text=multiple   spaces   between")).toBeVisible();
   });
 
   test("should handle search with very long and very short queries", async ({ page }) => {
@@ -340,14 +343,20 @@ test.describe("Search Notes Checklist Items", () => {
         title: "Long Content",
         content: "",
         checklistItems: [
-          { 
-            id: "item-long-1", 
-            content: "This is a very long checklist item that contains multiple words and should test how the search handles longer text strings with various combinations", 
-            checked: false, 
-            order: 0 
+          {
+            id: "item-long-1",
+            content:
+              "This is a very long checklist item that contains multiple words and should test how the search handles longer text strings with various combinations",
+            checked: false,
+            order: 0,
           },
           { id: "item-long-2", content: "a", checked: false, order: 1 },
-          { id: "item-long-3", content: "supercalifragilisticexpialidocious", checked: false, order: 2 },
+          {
+            id: "item-long-3",
+            content: "supercalifragilisticexpialidocious",
+            checked: false,
+            order: 2,
+          },
         ],
       },
     ];
@@ -356,7 +365,7 @@ test.describe("Search Notes Checklist Items", () => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
-          contentType: "application/json", 
+          contentType: "application/json",
           body: JSON.stringify({
             notes: lengthTestNotes.map((note, index) => ({
               ...note,
@@ -370,7 +379,7 @@ test.describe("Search Notes Checklist Items", () => {
               updatedAt: new Date().toISOString(),
               user: {
                 id: "test-user",
-                name: "Test User", 
+                name: "Test User",
                 email: "test@example.com",
               },
             })),
@@ -380,29 +389,29 @@ test.describe("Search Notes Checklist Items", () => {
     });
 
     await page.reload();
-    await expect(page.locator('text=This is a very long checklist')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=This is a very long checklist")).toBeVisible({ timeout: 5000 });
 
     const searchInput = page.getByPlaceholder("Search notes...");
-    
+
     // Test single character
     await searchInput.fill("a");
     await page.waitForTimeout(1000);
     await expect(page.locator('text="a"')).toBeVisible();
-    
+
     // Test very long search term
     await searchInput.fill("very long checklist item that contains multiple words");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=This is a very long checklist')).toBeVisible();
-    
+    await expect(page.locator("text=This is a very long checklist")).toBeVisible();
+
     // Test very long single word
     await searchInput.fill("supercalifragilisticexpialidocious");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=supercalifragilisticexpialidocious')).toBeVisible();
-    
+    await expect(page.locator("text=supercalifragilisticexpialidocious")).toBeVisible();
+
     // Test partial match of long word
     await searchInput.fill("supercali");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=supercalifragilisticexpialidocious')).toBeVisible();
+    await expect(page.locator("text=supercalifragilisticexpialidocious")).toBeVisible();
   });
 
   test("should handle rapid consecutive searches (debouncing)", async ({ page }) => {
@@ -423,7 +432,7 @@ test.describe("Search Notes Checklist Items", () => {
       if (route.request().method() === "GET") {
         await route.fulfill({
           status: 200,
-          contentType: "application/json", 
+          contentType: "application/json",
           body: JSON.stringify({
             notes: rapidSearchNotes.map((note, index) => ({
               ...note,
@@ -437,7 +446,7 @@ test.describe("Search Notes Checklist Items", () => {
               updatedAt: new Date().toISOString(),
               user: {
                 id: "test-user",
-                name: "Test User", 
+                name: "Test User",
                 email: "test@example.com",
               },
             })),
@@ -447,29 +456,27 @@ test.describe("Search Notes Checklist Items", () => {
     });
 
     await page.reload();
-    await expect(page.locator('text=apple pie')).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("text=apple pie")).toBeVisible({ timeout: 5000 });
 
     const searchInput = page.getByPlaceholder("Search notes...");
-    
+
     // Rapid fire searches to test debouncing
     await searchInput.fill("a");
-    await searchInput.fill("ap");  
+    await searchInput.fill("ap");
     await searchInput.fill("app");
     await searchInput.fill("appl");
     await searchInput.fill("apple");
-    
+
     // Wait for debounce to settle
     await page.waitForTimeout(1200);
-    await page.waitForLoadState('networkidle');
-    
+    await page.waitForLoadState("networkidle");
+
     // Final result should show apple
-    await expect(page.locator('text=apple pie')).toBeVisible();
-    
+    await expect(page.locator("text=apple pie")).toBeVisible();
+
     // Quick change to different search
     await searchInput.fill("banana");
     await page.waitForTimeout(1000);
-    await expect(page.locator('text=banana split')).toBeVisible();
+    await expect(page.locator("text=banana split")).toBeVisible();
   });
-
-  
 });
