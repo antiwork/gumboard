@@ -452,6 +452,80 @@ test.describe("Note Management", () => {
     });
   });
 
+  test.describe("Delete with Undo (toasts)", () => {
+    test("should show Undo toast and restore note without issuing DELETE when undone", async ({
+      page,
+    }) => {
+      let deleteCalled = false;
+
+      await page.route("**/api/boards/test-board", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            board: { id: "test-board", name: "Test Board", description: "A test board" },
+          }),
+        });
+      });
+
+      await page.route("**/api/boards", async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            boards: [{ id: "test-board", name: "Test Board", description: "A test board" }],
+          }),
+        });
+      });
+
+      const note = {
+        id: "note-to-delete",
+        content: "",
+        color: "#fef3c7",
+        archivedAt: null,
+        checklistItems: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        user: { id: "test-user", name: "Test User", email: "test@example.com" },
+        board: { id: "test-board", name: "Test Board" },
+        boardId: "test-board",
+      };
+
+      await page.route("**/api/boards/test-board/notes", async (route) => {
+        if (route.request().method() === "GET") {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ notes: [note] }),
+          });
+        }
+      });
+
+      await page.route("**/api/boards/test-board/notes/note-to-delete", async (route) => {
+        if (route.request().method() === "DELETE") {
+          deleteCalled = true;
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({}),
+          });
+        }
+      });
+
+      await page.goto("/boards/test-board");
+      await page.getByRole("button", { name: "Delete Note note-to-delete", exact: true }).click();
+      await expect(page.getByText("Note deleted")).toBeVisible();
+      await page.getByRole("button", { name: "Undo" }).click();
+
+      await expect(
+        page.getByRole("button", { name: "Delete Note note-to-delete", exact: true })
+      ).toBeVisible();
+
+      await page.waitForTimeout(300);
+      expect(deleteCalled).toBe(false);
+    });
+  });
+
   test.describe("Drag N Drop", () => {
     const testUser = { id: "test-user", name: "Test User", email: "test@example.com" };
     const testBoard = { id: "test-board", name: "Test Board", sendSlackUpdates: false };
@@ -816,6 +890,82 @@ test.describe("Note Management", () => {
         "item-a4": 3,
         "item-a5": 4,
       });
+    });
+  });
+
+  test.describe("Empty Note Prevention", () => {
+    test("should not create empty item when pressing Enter at start of item", async ({ page }) => {
+      await page.goto("/boards/test-board");
+
+      // Create a new note with initial checklist item
+      await page.click('button:has-text("Add Your First Note")');
+      await page.waitForTimeout(500);
+
+      // Add first item with content
+      const initialInput = page.locator("input.bg-transparent").first();
+      await initialInput.fill("First item content");
+      await initialInput.press("Enter");
+      await page.waitForTimeout(500);
+
+      // Wait for the item to be visible
+      await expect(page.getByText("First item content")).toBeVisible();
+
+      // Click at the beginning of the existing item
+      await page.getByText("First item content").click();
+
+      // Get the input field for the existing item
+      const itemInput = page.locator('input[value="First item content"]');
+      await expect(itemInput).toBeVisible();
+
+      // Position cursor at the start (position 0)
+      await itemInput.focus();
+      await page.keyboard.press("Home"); // Move cursor to start
+
+      // Press Enter - should NOT create a new empty item
+      await itemInput.press("Enter");
+      await page.waitForTimeout(500);
+
+      // Verify only one item exists and it still has the original content
+      const checklistItems = page.getByRole("checkbox");
+      await expect(checklistItems).toHaveCount(1);
+      await expect(page.getByText("First item content")).toBeVisible();
+    });
+
+    test("should not create empty item when pressing Enter at end of item", async ({ page }) => {
+      await page.goto("/boards/test-board");
+
+      // Create a new note with initial checklist item
+      await page.click('button:has-text("Add Your First Note")');
+      await page.waitForTimeout(500);
+
+      // Add first item with content
+      const initialInput = page.locator("input.bg-transparent").first();
+      await initialInput.fill("Last item content");
+      await initialInput.press("Enter");
+      await page.waitForTimeout(500);
+
+      // Wait for the item to be visible
+      await expect(page.getByText("Last item content")).toBeVisible();
+
+      // Click on the existing item to edit it
+      await page.getByText("Last item content").click();
+
+      // Get the input field for the existing item
+      const itemInput = page.locator('input[value="Last item content"]');
+      await expect(itemInput).toBeVisible();
+
+      // Position cursor at the end
+      await itemInput.focus();
+      await page.keyboard.press("End"); // Move cursor to end
+
+      // Press Enter - should NOT create a new empty item when cursor is at end
+      await itemInput.press("Enter");
+      await page.waitForTimeout(500);
+
+      // Verify only one item exists and it still has the original content
+      const checklistItems = page.getByRole("checkbox");
+      await expect(checklistItems).toHaveCount(1);
+      await expect(page.getByText("Last item content")).toBeVisible();
     });
   });
 });
