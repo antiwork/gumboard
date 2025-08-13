@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   ChecklistItem as ChecklistItemComponent,
@@ -32,7 +34,6 @@ export interface Board {
 
 export interface Note {
   id: string;
-  content: string;
   color: string;
   archivedAt?: string | null;
   createdAt: string;
@@ -95,6 +96,7 @@ export function Note({
       (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
+  const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -349,6 +351,21 @@ export function Note({
     }
   };
 
+  const handleSubmitNewItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    handleAddItem();
+  };
+
+  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddItem();
+    } else if (e.key === "Escape") {
+      setAddingItem(false);
+      setNewItemContent("");
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -466,43 +483,56 @@ export function Note({
               ))}
             </DraggableContainer>
 
+            {/* Add New Item Input */}
             {addingItem && canEdit && (
-              <ChecklistItemComponent
-                item={{
-                  id: "new-item",
-                  content: newItemContent,
-                  checked: false,
-                  order: 0,
-                }}
-                onEdit={() => handleAddItem()}
-                onDelete={() => {
-                  setAddingItem(false);
-                  setNewItemContent("");
-                }}
-                isEditing={true}
-                editContent={newItemContent}
-                onEditContentChange={setNewItemContent}
-                onStopEdit={() => {
-                  if (newItemContent.trim()) {
-                    handleAddItem();
-                  } else {
-                    setAddingItem(false);
-                    setNewItemContent("");
-                  }
-                }}
-                readonly={false}
-                showDeleteButton={true}
-                className="gap-3"
-              />
+              <form onSubmit={handleSubmitNewItem} className="flex items-center gap-3">
+                <Checkbox
+                  disabled
+                  className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                />
+                <Input
+                  ref={newItemInputRef}
+                  type="text"
+                  value={newItemContent}
+                  onChange={(e) => setNewItemContent(e.target.value)}
+                  className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  placeholder="Add new item..."
+                  onKeyDown={handleKeyDownNewItem}
+                  onBlur={handleAddItem}
+                  autoFocus
+                />
+                <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <Button
+                    type="button"
+                    aria-label={`Delete New Item`}
+                    onMouseDown={() => {
+                      setAddingItem(false);
+                      setNewItemContent("");
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </form>
             )}
           </DraggableRoot>
         </div>
 
+        {/* Add Item Button */}
         {canEdit && (
           <Button
             variant="ghost"
-            onClick={() => setAddingItem(true)}
-            className="mt-2 !p-0 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+            onClick={() => {
+              if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                newItemInputRef.current.focus();
+              } else {
+                setAddingItem(true);
+              }
+            }}
+            className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add task
