@@ -33,7 +33,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Slack OAuth is not configured" }, { status: 500 });
     }
 
-    // Generate CSRF state that includes user ID for verification
     const state = `${crypto.randomUUID()}-${user.id}`;
 
     // Store state in httpOnly cookie
@@ -44,7 +43,7 @@ export async function GET(request: NextRequest) {
       sameSite: "lax",
       maxAge: 600, // 10 minutes
       path: "/",
-      domain: env.NODE_ENV === "production" ? undefined : undefined, // Let browser handle domain
+      domain: env.NODE_ENV === "production" ? undefined : undefined,
     });
 
     // Build redirect URI

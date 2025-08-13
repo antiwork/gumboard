@@ -6,7 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Trash2, UserPlus, Shield, ShieldCheck, Link, Copy, Calendar, Users } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Trash2,
+  UserPlus,
+  Shield,
+  ShieldCheck,
+  Link,
+  Copy,
+  Calendar,
+  Users,
+  Hash,
+  Lock,
+} from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
   AlertDialog,
@@ -69,6 +87,15 @@ export default function OrganizationSettingsPage() {
 
   const [slackChannelId, setSlackChannelId] = useState("");
   const [originalSlackChannelId, setOriginalSlackChannelId] = useState("");
+  const [slackChannels, setSlackChannels] = useState<
+    Array<{
+      id: string;
+      name: string;
+      type: "public" | "private";
+      isMember: boolean;
+    }>
+  >([]);
+  const [loadingChannels, setLoadingChannels] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -129,6 +156,13 @@ export default function OrganizationSettingsPage() {
     fetchSelfServeInvites();
   }, [fetchUserData]);
 
+  // Fetch Slack channels when user data is loaded and Slack is configured
+  useEffect(() => {
+    if (user?.organization?.hasSlackConfigured && user.isAdmin) {
+      fetchSlackChannels();
+    }
+  }, [user?.organization?.hasSlackConfigured, user?.isAdmin]);
+
   useEffect(() => {
     const slackStatus = searchParams?.get("slack");
     const message = searchParams?.get("message");
@@ -142,6 +176,8 @@ export default function OrganizationSettingsPage() {
         variant: "success",
       });
       fetchUserData();
+      // Fetch available channels after connection
+      setTimeout(() => fetchSlackChannels(), 1000);
     } else if (slackStatus === "error") {
       setErrorDialog({
         open: true,
@@ -178,6 +214,25 @@ export default function OrganizationSettingsPage() {
       }
     } catch (error) {
       console.error("Error fetching self-serve invites:", error);
+    }
+  };
+
+  const fetchSlackChannels = async () => {
+    if (!user?.organization?.hasSlackConfigured || !user.isAdmin) return;
+
+    setLoadingChannels(true);
+    try {
+      const response = await fetch("/api/slack/channels");
+      if (response.ok) {
+        const data = await response.json();
+        setSlackChannels(data.channels || []);
+      } else {
+        console.error("Failed to fetch Slack channels");
+      }
+    } catch (error) {
+      console.error("Error fetching Slack channels:", error);
+    } finally {
+      setLoadingChannels(false);
     }
   };
 
@@ -561,7 +616,7 @@ export default function OrganizationSettingsPage() {
                             } else {
                               setErrorDialog({
                                 open: true,
-                                title: "Failed to disconnect Slack",
+                                title: "Failed to Disconnect Slack",
                                 description: "Failed to disconnect Slack integration",
                               });
                             }
@@ -569,7 +624,7 @@ export default function OrganizationSettingsPage() {
                             console.error("Error disconnecting Slack:", error);
                             setErrorDialog({
                               open: true,
-                              title: "Failed to disconnect Slack",
+                              title: "Failed to Disconnect Slack",
                               description: "Failed to disconnect Slack integration",
                             });
                           }
@@ -617,26 +672,86 @@ export default function OrganizationSettingsPage() {
                   Channel Configuration
                 </h4>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                  Configure which channel notifications are sent to (temporary manual input).
+                  Choose which Slack channel notifications will be sent to.
                 </p>
               </div>
 
               <div>
-                <Label htmlFor="slackChannelId" className="text-zinc-800 dark:text-zinc-200">
-                  Slack Channel ID
+                <Label htmlFor="slackChannel" className="text-zinc-800 dark:text-zinc-200">
+                  Slack Channel
                 </Label>
-                <Input
-                  id="slackChannelId"
-                  type="text"
-                  value={slackChannelId}
-                  onChange={(e) => setSlackChannelId(e.target.value)}
-                  placeholder="C1234567890"
-                  className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                  disabled={!user?.isAdmin}
-                />
+                <div className="mt-1">
+                  {loadingChannels ? (
+                    <div className="flex items-center space-x-2 p-3 border rounded-md bg-white dark:bg-zinc-800">
+                      <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                      <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                        Loading channels...
+                      </span>
+                    </div>
+                  ) : slackChannels.length > 0 ? (
+                    <Select
+                      value={slackChannelId}
+                      onValueChange={setSlackChannelId}
+                      disabled={!user?.isAdmin}
+                    >
+                      <SelectTrigger className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100">
+                        <SelectValue placeholder="Select a channel">
+                          {slackChannels.find((ch) => ch.id === slackChannelId) && (
+                            <div className="flex items-center space-x-2">
+                              {slackChannels.find((ch) => ch.id === slackChannelId)?.type ===
+                              "private" ? (
+                                <Lock className="w-4 h-4 text-zinc-500" />
+                              ) : (
+                                <Hash className="w-4 h-4 text-zinc-500" />
+                              )}
+                              <span>
+                                #{slackChannels.find((ch) => ch.id === slackChannelId)?.name}
+                              </span>
+                            </div>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {slackChannels.map((channel) => (
+                          <SelectItem key={channel.id} value={channel.id}>
+                            <div className="flex items-center space-x-2">
+                              {channel.type === "private" ? (
+                                <Lock className="w-4 h-4 text-zinc-500" />
+                              ) : (
+                                <Hash className="w-4 h-4 text-zinc-500" />
+                              )}
+                              <span>#{channel.name}</span>
+                              {!channel.isMember && (
+                                <span className="text-xs text-zinc-500">(not a member)</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="p-3 border rounded-md bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
+                        No channels available. This could be because:
+                      </p>
+                      <ul className="text-xs text-yellow-700 dark:text-yellow-300 list-disc list-inside space-y-1">
+                        <li>The bot needs to be invited to channels</li>
+                        <li>You may need additional permissions</li>
+                        <li>Try re-connecting Slack</li>
+                      </ul>
+                      <Button
+                        onClick={fetchSlackChannels}
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 text-yellow-800 border-yellow-300 hover:bg-yellow-100 dark:text-yellow-200 dark:border-yellow-600 dark:hover:bg-yellow-800"
+                      >
+                        Refresh Channels
+                      </Button>
+                    </div>
+                  )}
+                </div>
                 <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                  Channel ID where notifications will be sent (e.g., C1234567890). In the future,
-                  you&apos;ll be able to select from a dropdown.
+                  Select the channel where Gumboard notifications will be posted.
                 </p>
               </div>
 
