@@ -44,6 +44,7 @@ export function ChecklistItem({
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
+  const deletingRef = React.useRef<boolean>(false);
 
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
@@ -76,6 +77,10 @@ export function ChecklistItem({
   };
 
   const handleBlur = () => {
+    if (deletingRef.current) {
+      deletingRef.current = false;
+      return;
+    }
     if (isEditing && editContent !== undefined && onEdit) {
       onEdit(item.id, editContent);
     }
@@ -138,7 +143,13 @@ export function ChecklistItem({
           variant="ghost"
           size="icon"
           className="h-6 w-6 opacity-50 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
-          onClick={() => onDelete?.(item.id)}
+          onMouseDown={() => {
+            deletingRef.current = true;
+          }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete?.(item.id);
+          }}
         >
           <Trash2 className="h-3 w-3" />
           <span className="sr-only">Delete item</span>
