@@ -102,12 +102,6 @@ export function Note({
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
-  const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = "auto";
-
-    textarea.style.height = `${textarea.scrollHeight}px`;
-  };
-
   useEffect(() => {
     if (addingChecklistItem === note.id && canEdit) {
       setAddingItem(true);
@@ -612,7 +606,6 @@ export function Note({
                     value={newItemContent}
                     onChange={(e) => {
                       setNewItemContent(e.target.value);
-                      autoResizeTextarea(e.target);
                     }}
                     className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none min-h-[20px]"
                     placeholder="Add new item..."

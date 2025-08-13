@@ -55,10 +55,16 @@ export function ChecklistItem({
   };
 
   useEffect(() => {
-    if (isEditing && textareaRef.current && editContent !== undefined) {
-      autoResizeTextarea(textareaRef.current);
+    if (isEditing && textareaRef.current) {
+      const textarea = textareaRef.current;
+
+      autoResizeTextarea(textarea);
+
+      // Focus the textarea and set the cursor to the end of the text
+      textarea.focus();
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     }
-  }, [editContent, isEditing]);
+  }, [isEditing]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
