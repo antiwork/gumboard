@@ -1,41 +1,96 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowRight } from "lucide-react";
 
-interface StatsData {
-  metric: string;
-  value: number;
+interface WeeklyStatsData {
+  week: string;
+  weekStart: string;
+  boardsCreated: number;
+  usersCreated: number;
+  orgsCreated: number;
+  notesCreated: number;
+  checklistItemsCreated: number;
 }
 
+interface TotalsData {
+  totalUsers: number;
+  totalOrgs: number;
+  totalBoards: number;
+  totalNotes: number;
+  totalChecklistItems: number;
+}
+
+interface CustomTooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    payload: WeeklyStatsData;
+  }>;
+  label?: string;
+}
+
+const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload;
+    return (
+      <div className="bg-white dark:bg-zinc-800 p-3 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg">
+        <p className="font-semibold text-gray-900 dark:text-white mb-2">
+          Week of {label}
+        </p>
+        <div className="space-y-1 text-sm">
+          <p className="text-blue-600 dark:text-blue-400">
+            <span className="font-medium">Boards Created:</span> {data.boardsCreated}
+          </p>
+          <p className="text-green-600 dark:text-green-400">
+            <span className="font-medium">Users Created:</span> {data.usersCreated}
+          </p>
+          <p className="text-purple-600 dark:text-purple-400">
+            <span className="font-medium">Organizations Created:</span> {data.orgsCreated}
+          </p>
+          <p className="text-orange-600 dark:text-orange-400">
+            <span className="font-medium">Notes Created:</span> {data.notesCreated}
+          </p>
+          <p className="text-red-600 dark:text-red-400">
+            <span className="font-medium">Checklist Items Created:</span> {data.checklistItemsCreated}
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return null;
+};
+
 export function StatsSection() {
-  const [stats, setStats] = useState<StatsData[]>([]);
+  const [weeklyStats, setWeeklyStats] = useState<WeeklyStatsData[]>([]);
+  const [totals, setTotals] = useState<TotalsData | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchStats();
+    fetchWeeklyStats();
   }, []);
 
-  const fetchStats = async () => {
+  const fetchWeeklyStats = async () => {
     try {
       const response = await fetch("/api/stats");
       if (response.ok) {
-        const { stats } = await response.json();
-        setStats(stats);
+        const { weeklyStats, totals } = await response.json();
+        setWeeklyStats(weeklyStats);
+        setTotals(totals);
       }
     } catch (error) {
-      console.error("Error fetching stats:", error);
+      console.error("Error fetching weekly stats:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading || stats.length === 0) {
+  if (loading || weeklyStats.length === 0 || !totals) {
     return null;
   }
 
-  const maxValue = Math.max(...stats.map(item => item.value));
+  const maxValue = Math.max(...weeklyStats.map(item => item.boardsCreated));
   const yAxisMax = Math.ceil(maxValue * 1.1);
 
   return (
@@ -43,27 +98,27 @@ export function StatsSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Platform Statistics
+            Platform Growth
           </h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">
-            Real-time metrics showing current platform usage and activity
+            Weekly boards created over time with platform growth metrics
           </p>
         </div>
 
         <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 mb-8">
           <CardHeader>
             <CardTitle className="text-lg font-semibold text-gray-900 dark:text-white">
-              Platform Metrics
+              Weekly Boards Created
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300">
-              Overview of key platform statistics
+              Hover over data points to see all metrics created that week
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-96 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={stats}
+                <LineChart
+                  data={weeklyStats}
                   margin={{
                     top: 20,
                     right: 30,
@@ -73,7 +128,7 @@ export function StatsSection() {
                 >
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
                   <XAxis 
-                    dataKey="metric" 
+                    dataKey="week" 
                     angle={-45}
                     textAnchor="end"
                     height={80}
@@ -84,37 +139,84 @@ export function StatsSection() {
                     domain={[0, yAxisMax]}
                     className="text-xs"
                   />
-                  <Tooltip 
-                    contentStyle={{
-                      backgroundColor: 'var(--background)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '6px',
-                    }}
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line 
+                    type="monotone"
+                    dataKey="boardsCreated" 
+                    stroke="#3b82f6"
+                    strokeWidth={3}
+                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }}
                   />
-                  <Bar 
-                    dataKey="value" 
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
-                  />
-                </BarChart>
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-          {stats.map((stat) => (
-            <Card key={stat.metric} className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700">
-              <CardHeader className="pb-2">
-                <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
-                  {stat.metric}
-                </CardDescription>
-                <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stat.value.toLocaleString()}
-                </CardTitle>
-              </CardHeader>
-            </Card>
-          ))}
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6">
+          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
+            <CardHeader className="pb-2 text-center">
+              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
+                Organizations
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                {totals.totalOrgs.toLocaleString()}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          
+          <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
+          
+          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
+            <CardHeader className="pb-2 text-center">
+              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
+                Users
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                {totals.totalUsers.toLocaleString()}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          
+          <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
+          
+          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
+            <CardHeader className="pb-2 text-center">
+              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
+                Boards
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                {totals.totalBoards.toLocaleString()}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          
+          <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
+          
+          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
+            <CardHeader className="pb-2 text-center">
+              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
+                Notes
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                {totals.totalNotes.toLocaleString()}
+              </CardTitle>
+            </CardHeader>
+          </Card>
+          
+          <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
+          
+          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
+            <CardHeader className="pb-2 text-center">
+              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
+                Checklist Items
+              </CardDescription>
+              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                {totals.totalChecklistItems.toLocaleString()}
+              </CardTitle>
+            </CardHeader>
+          </Card>
         </div>
       </div>
     </section>
