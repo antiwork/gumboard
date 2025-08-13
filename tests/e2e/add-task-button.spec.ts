@@ -275,7 +275,7 @@ test.describe("Add Task Button", () => {
 
     const noteBackground = authenticatedPage
       .locator(`[data-testid="note-${note.id}"]`)
-      .or(authenticatedPage.locator(".note-background").first());
+      .or(authenticatedPage.locator(".shadow-md").first());
     await noteBackground.click({ position: { x: 50, y: 50 } });
 
     const newItemInput = authenticatedPage.locator('textarea[placeholder="Add new item..."]');
