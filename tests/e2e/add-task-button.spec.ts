@@ -63,7 +63,11 @@ test.describe("Add Task Button", () => {
     await expect(secondAddTaskButton).toBeVisible();
   });
 
-  test('should not display "Add task" button when user is not authorized', async ({ page, testContext, testPrisma }) => {
+  test('should not display "Add task" button when user is not authorized', async ({
+    page,
+    testContext,
+    testPrisma,
+  }) => {
     const boardName = testContext.getBoardName("Test Board");
     const board = await testPrisma.board.create({
       data: {
@@ -98,7 +102,11 @@ test.describe("Add Task Button", () => {
     await expect(addTaskButton).not.toBeVisible();
   });
 
-  test('should create new checklist item when "Add task" button is clicked', async ({ authenticatedPage, testContext, testPrisma }) => {
+  test('should create new checklist item when "Add task" button is clicked', async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const boardName = testContext.getBoardName("Test Board");
     const board = await testPrisma.board.create({
       data: {
@@ -216,7 +224,11 @@ test.describe("Add Task Button", () => {
     await expect(addTaskButton).toBeVisible();
   });
 
-  test("should not add checklist item on background click", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should not add checklist item on background click", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const boardName = testContext.getBoardName("Test Board");
     const board = await testPrisma.board.create({
       data: {

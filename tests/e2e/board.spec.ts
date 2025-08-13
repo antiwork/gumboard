@@ -9,7 +9,7 @@ test.describe("Board Management", () => {
     await authenticatedPage.goto("/dashboard");
     const boardName = testContext.getBoardName("Test Board");
     const boardDescription = "Test board description";
-    
+
     await authenticatedPage.click('button:has-text("Add Board")');
     await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
     await authenticatedPage.fill('input[placeholder*="board description"]', boardDescription);
@@ -20,7 +20,9 @@ test.describe("Board Management", () => {
     await authenticatedPage.click('button:has-text("Create Board")');
     await responsePromise;
 
-    await expect(authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)
+    ).toBeVisible();
     const board = await testPrisma.board.findFirst({
       where: {
         name: boardName,

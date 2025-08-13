@@ -40,7 +40,11 @@ test.describe("Authentication Flow", () => {
     expect(authData!.email).toBe("test@example.com");
   });
 
-  test("should authenticate user and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should authenticate user and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const boardCount = await testPrisma.board.count({
       where: {
         createdBy: testContext.userId,
@@ -68,7 +72,11 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 5000 });
   });
 
-  test("should authenticate user via Google OAuth and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should authenticate user via Google OAuth and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const googleUser = await testPrisma.user.upsert({
       where: { email: testContext.userEmail },
       update: {
@@ -97,7 +105,11 @@ test.describe("Authentication Flow", () => {
     await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should authenticate user via GitHub OAuth and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should authenticate user via GitHub OAuth and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const githubUser = await testPrisma.user.upsert({
       where: { email: testContext.userEmail },
       update: {

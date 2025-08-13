@@ -1,7 +1,11 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Board Name Link Functionality", () => {
-  test("should display board names as clickable links in All notes view", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should display board names as clickable links in All notes view", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const board1 = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board 1"),
@@ -60,7 +64,11 @@ test.describe("Board Name Link Functionality", () => {
     await expect(boardLink2).toHaveAttribute("href", `/boards/${board2.id}`);
   });
 
-  test("should navigate to correct board when clicking board name link", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should navigate to correct board when clicking board name link", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const board1 = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board 1"),

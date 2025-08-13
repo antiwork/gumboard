@@ -47,10 +47,11 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const createNoteResponse = authenticatedPage.waitForResponse((resp) =>
-      resp.url().includes(`/api/boards/${board.id}/notes`) &&
-      resp.request().method() === "POST" &&
-      resp.status() === 201
+    const createNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
     );
     await authenticatedPage.click('button:has-text("Add Your First Note")');
     await createNoteResponse;
@@ -244,10 +245,11 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const deleteItemResponse = authenticatedPage.waitForResponse((resp) =>
-      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-      resp.request().method() === "PUT" &&
-      resp.ok()
+    const deleteItemResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
     );
     await authenticatedPage.getByRole("button", { name: "Delete item", exact: true }).click();
     await deleteItemResponse;
@@ -270,7 +272,7 @@ test.describe("Note Management", () => {
       testContext,
       testPrisma,
     }) => {
-        const boardName = testContext.getBoardName("Test Board");
+      const boardName = testContext.getBoardName("Test Board");
       const board = await testPrisma.board.create({
         data: {
           name: boardName,
@@ -345,7 +347,7 @@ test.describe("Note Management", () => {
       testContext,
       testPrisma,
     }) => {
-        const boardName = testContext.getBoardName("Test Board");
+      const boardName = testContext.getBoardName("Test Board");
       const board = await testPrisma.board.create({
         data: {
           name: boardName,
@@ -441,7 +443,7 @@ test.describe("Note Management", () => {
       testContext,
       testPrisma,
     }) => {
-        const boardName = testContext.getBoardName("Test Board");
+      const boardName = testContext.getBoardName("Test Board");
       const board = await testPrisma.board.create({
         data: {
           name: boardName,
@@ -497,7 +499,7 @@ test.describe("Note Management", () => {
       testContext,
       testPrisma,
     }) => {
-        const boardName = testContext.getBoardName("Test Board");
+      const boardName = testContext.getBoardName("Test Board");
       const board = await testPrisma.board.create({
         data: {
           name: boardName,
@@ -509,10 +511,11 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.goto(`/boards/${board.id}`);
 
-      const createNoteResponse = authenticatedPage.waitForResponse((resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes`) &&
-        resp.request().method() === "POST" &&
-        resp.status() === 201
+      const createNoteResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes`) &&
+          resp.request().method() === "POST" &&
+          resp.status() === 201
       );
       await authenticatedPage.click('button:has-text("Add Your First Note")');
       await createNoteResponse;
@@ -552,7 +555,7 @@ test.describe("Note Management", () => {
       testContext,
       testPrisma,
     }) => {
-        const boardName = testContext.getBoardName("Test Board");
+      const boardName = testContext.getBoardName("Test Board");
       const board = await testPrisma.board.create({
         data: {
           name: boardName,
@@ -564,10 +567,11 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.goto(`/boards/${board.id}`);
 
-      const createNoteResponse = authenticatedPage.waitForResponse((resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes`) &&
-        resp.request().method() === "POST" &&
-        resp.status() === 201
+      const createNoteResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes`) &&
+          resp.request().method() === "POST" &&
+          resp.status() === 201
       );
       await authenticatedPage.click('button:has-text("Add Your First Note")');
       await createNoteResponse;
