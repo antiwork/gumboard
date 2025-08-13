@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 
@@ -111,13 +111,13 @@ export function StatsSection() {
               Weekly Boards Created
             </CardTitle>
             <CardDescription className="text-gray-600 dark:text-gray-300">
-              Hover over data points to see all metrics created that week
+              Hover over bars to see all metrics created that week
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-96 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart
+                <BarChart
                   data={weeklyStats}
                   margin={{
                     top: 20,
@@ -140,15 +140,12 @@ export function StatsSection() {
                     className="text-xs"
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Line 
-                    type="monotone"
+                  <Bar 
                     dataKey="boardsCreated" 
-                    stroke="#3b82f6"
-                    strokeWidth={3}
-                    dot={{ fill: "#3b82f6", strokeWidth: 2, r: 4 }}
-                    activeDot={{ r: 6, stroke: "#3b82f6", strokeWidth: 2 }}
+                    fill="#3b82f6"
+                    radius={[4, 4, 0, 0]}
                   />
-                </LineChart>
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>

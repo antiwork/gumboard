@@ -3,14 +3,13 @@ import { db } from "@/lib/db";
 
 export async function GET() {
   try {
-    const twelveWeeksAgo = new Date();
-    twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - (12 * 7));
+    const startDate = new Date('2024-07-21');
 
     const weeklyStats = await db.$queryRaw`
       WITH week_series AS (
         SELECT 
           date_trunc('week', generate_series(
-            date_trunc('week', ${twelveWeeksAgo}::timestamp),
+            date_trunc('week', ${startDate}::timestamp),
             date_trunc('week', CURRENT_DATE),
             '1 week'::interval
           )) as week_start
@@ -20,7 +19,7 @@ export async function GET() {
           date_trunc('week', "createdAt") as week_start,
           COUNT(*) as users_created
         FROM "users"
-        WHERE "createdAt" >= ${twelveWeeksAgo}
+        WHERE "createdAt" >= ${startDate}
         GROUP BY date_trunc('week', "createdAt")
       ),
       weekly_orgs AS (
@@ -28,7 +27,7 @@ export async function GET() {
           date_trunc('week', "createdAt") as week_start,
           COUNT(*) as orgs_created
         FROM "organizations"
-        WHERE "createdAt" >= ${twelveWeeksAgo}
+        WHERE "createdAt" >= ${startDate}
         GROUP BY date_trunc('week', "createdAt")
       ),
       weekly_boards AS (
@@ -36,7 +35,7 @@ export async function GET() {
           date_trunc('week', "createdAt") as week_start,
           COUNT(*) as boards_created
         FROM "boards"
-        WHERE "createdAt" >= ${twelveWeeksAgo}
+        WHERE "createdAt" >= ${startDate}
         GROUP BY date_trunc('week', "createdAt")
       ),
       weekly_notes AS (
@@ -44,7 +43,7 @@ export async function GET() {
           date_trunc('week', "createdAt") as week_start,
           COUNT(*) as notes_created
         FROM "notes"
-        WHERE "createdAt" >= ${twelveWeeksAgo}
+        WHERE "createdAt" >= ${startDate}
           AND "deletedAt" IS NULL
         GROUP BY date_trunc('week', "createdAt")
       ),
@@ -53,7 +52,7 @@ export async function GET() {
           date_trunc('week', "createdAt") as week_start,
           COUNT(*) as checklist_items_created
         FROM "checklist_items"
-        WHERE "createdAt" >= ${twelveWeeksAgo}
+        WHERE "createdAt" >= ${startDate}
         GROUP BY date_trunc('week', "createdAt")
       )
       SELECT 
