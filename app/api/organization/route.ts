@@ -10,7 +10,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, slackApiToken, slackChannelId } = await request.json();
+    const { name, slackChannelId } = await request.json();
 
     if (!name || typeof name !== "string") {
       return NextResponse.json({ error: "Organization name is required" }, { status: 400 });
@@ -45,7 +45,6 @@ export async function PUT(request: NextRequest) {
       where: { id: user.organizationId },
       data: {
         name: name.trim(),
-        ...(slackApiToken !== undefined && { slackApiToken: slackApiToken?.trim() || null }),
         ...(slackChannelId !== undefined && { slackChannelId: slackChannelId?.trim() || null }),
       },
     });
@@ -78,7 +77,10 @@ export async function PUT(request: NextRequest) {
         ? {
             id: updatedUser!.organization.id,
             name: updatedUser!.organization.name,
-            slackApiToken: updatedUser!.organization.slackApiToken,
+            hasSlackConfigured: !!(
+              updatedUser!.organization.slackApiToken && updatedUser!.organization.slackTeamId
+            ),
+            slackTeamName: updatedUser!.organization.slackTeamName,
             slackChannelId: updatedUser!.organization.slackChannelId,
             members: updatedUser!.organization.members,
           }

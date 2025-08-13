@@ -44,7 +44,10 @@ export async function GET() {
         ? {
             id: user.organization.id,
             name: user.organization.name,
-            slackApiToken: user.organization.slackApiToken,
+            hasSlackConfigured: !!(
+              user.organization.slackApiToken && user.organization.slackTeamId
+            ),
+            slackTeamName: user.organization.slackTeamName,
             slackChannelId: user.organization.slackChannelId,
             members: user.organization.members,
           }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,8 @@ export type UserWithOrganization = User & {
   organization: {
     id: string;
     name: string;
-    slackApiToken?: string | null;
+    hasSlackConfigured?: boolean;
+    slackTeamName?: string | null;
     slackChannelId?: string | null;
     members: {
       id: string;
@@ -66,8 +67,6 @@ export default function OrganizationSettingsPage() {
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
 
-  const [slackApiToken, setSlackApiToken] = useState("");
-  const [originalSlackApiToken, setOriginalSlackApiToken] = useState("");
   const [slackChannelId, setSlackChannelId] = useState("");
   const [originalSlackChannelId, setOriginalSlackChannelId] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -97,6 +96,7 @@ export default function OrganizationSettingsPage() {
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -110,12 +110,9 @@ export default function OrganizationSettingsPage() {
         const userData = await response.json();
         setUser(userData);
         const orgNameValue = userData.organization?.name || "";
-        const slackApiTokenValue = userData.organization?.slackApiToken || "";
         const slackChannelIdValue = userData.organization?.slackChannelId || "";
         setOrgName(orgNameValue);
         setOriginalOrgName(orgNameValue);
-        setSlackApiToken(slackApiTokenValue);
-        setOriginalSlackApiToken(slackApiTokenValue);
         setSlackChannelId(slackChannelIdValue);
         setOriginalSlackChannelId(slackChannelIdValue);
       }
@@ -131,6 +128,34 @@ export default function OrganizationSettingsPage() {
     fetchInvites();
     fetchSelfServeInvites();
   }, [fetchUserData]);
+
+  useEffect(() => {
+    const slackStatus = searchParams?.get("slack");
+    const message = searchParams?.get("message");
+    if (!slackStatus) return;
+
+    if (slackStatus === "connected") {
+      setErrorDialog({
+        open: true,
+        title: "Slack Connected",
+        description: "Your Slack workspace is now connected successfully.",
+        variant: "success",
+      });
+      fetchUserData();
+    } else if (slackStatus === "error") {
+      setErrorDialog({
+        open: true,
+        title: "Slack Connection Failed",
+        description: message || "Failed to connect to Slack. Please try again.",
+        variant: "error",
+      });
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("slack");
+    url.searchParams.delete("message");
+    window.history.replaceState({}, "", url.toString());
+  }, [searchParams, fetchUserData]);
 
   const fetchInvites = async () => {
     try {
@@ -166,7 +191,6 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           name: orgName,
-          slackApiToken: slackApiToken,
           slackChannelId: slackChannelId,
         }),
       });
@@ -176,7 +200,6 @@ export default function OrganizationSettingsPage() {
         setUser(updatedUser);
         // Update the original values to reflect the saved state
         setOriginalOrgName(orgName);
-        setOriginalSlackApiToken(slackApiToken);
         setOriginalSlackChannelId(slackChannelId);
       } else {
         const errorData = await response.json();
@@ -481,9 +504,7 @@ export default function OrganizationSettingsPage() {
               onClick={handleSaveOrganization}
               disabled={
                 saving ||
-                (orgName === originalOrgName &&
-                  slackApiToken === originalSlackApiToken &&
-                  slackChannelId === originalSlackChannelId) ||
+                (orgName === originalOrgName && slackChannelId === originalSlackChannelId) ||
                 !user?.isAdmin
               }
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
@@ -503,72 +524,136 @@ export default function OrganizationSettingsPage() {
               Slack Integration
             </h3>
             <p className="text-zinc-600 dark:text-zinc-400">
-              Configure Slack notifications for notes and todos.
+              Connect your Slack workspace to receive notifications for notes and todos.
             </p>
           </div>
 
-          <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div>
-              <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
-                Slack API Integration (Recommended)
-              </h4>
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
-                Use a bot token for enhanced features like message editing and better reliability.
-              </p>
+          {user?.organization?.hasSlackConfigured ? (
+            <div className="space-y-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">
+                    Connected to {user.organization.slackTeamName || "Slack"}
+                  </h4>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Your organization is connected to Slack and can send notifications.
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  {user?.isAdmin && (
+                    <>
+                      <Button
+                        onClick={() => window.open("/api/slack/oauth/start", "_self")}
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900"
+                      >
+                        Re-connect
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch("/api/slack/disconnect", {
+                              method: "POST",
+                            });
+                            if (response.ok) {
+                              fetchUserData();
+                            } else {
+                              setErrorDialog({
+                                open: true,
+                                title: "Failed to disconnect Slack",
+                                description: "Failed to disconnect Slack integration",
+                              });
+                            }
+                          } catch (error) {
+                            console.error("Error disconnecting Slack:", error);
+                            setErrorDialog({
+                              open: true,
+                              title: "Failed to disconnect Slack",
+                              description: "Failed to disconnect Slack integration",
+                            });
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                      >
+                        Disconnect
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
+          ) : (
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div>
+                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">Connect Slack</h4>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                  Connect your Slack workspace to automatically send notifications when notes and
+                  todos are created or updated.
+                </p>
+              </div>
 
-            <div>
-              <Label htmlFor="slackApiToken" className="text-zinc-800 dark:text-zinc-200">
-                Slack Bot Token
-              </Label>
-              <Input
-                id="slackApiToken"
-                type="password"
-                value={slackApiToken}
-                onChange={(e) => setSlackApiToken(e.target.value)}
-                placeholder="xoxb-..."
-                className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                disabled={!user?.isAdmin}
-              />
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                Bot token from your Slack app with `chat:write` scope.
-              </p>
+              {user?.isAdmin ? (
+                <Button
+                  onClick={() => window.open("/api/slack/oauth/start", "_self")}
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
+                >
+                  Connect Slack
+                </Button>
+              ) : (
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Only organization admins can connect Slack integration.
+                </p>
+              )}
             </div>
+          )}
 
-            <div>
-              <Label htmlFor="slackChannelId" className="text-zinc-800 dark:text-zinc-200">
-                Slack Channel ID
-              </Label>
-              <Input
-                id="slackChannelId"
-                type="text"
-                value={slackChannelId}
-                onChange={(e) => setSlackChannelId(e.target.value)}
-                placeholder="C1234567890"
-                className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-                disabled={!user?.isAdmin}
-              />
-              <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-                Channel ID where notifications will be sent (e.g., C1234567890).
-              </p>
+          {user?.organization?.hasSlackConfigured && (
+            <div className="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <div>
+                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+                  Channel Configuration
+                </h4>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                  Configure which channel notifications are sent to (temporary manual input).
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="slackChannelId" className="text-zinc-800 dark:text-zinc-200">
+                  Slack Channel ID
+                </Label>
+                <Input
+                  id="slackChannelId"
+                  type="text"
+                  value={slackChannelId}
+                  onChange={(e) => setSlackChannelId(e.target.value)}
+                  placeholder="C1234567890"
+                  className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  disabled={!user?.isAdmin}
+                />
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  Channel ID where notifications will be sent (e.g., C1234567890). In the future,
+                  you&apos;ll be able to select from a dropdown.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <Button
+                  onClick={handleSaveOrganization}
+                  disabled={saving || slackChannelId === originalSlackChannelId || !user?.isAdmin}
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+                  title={
+                    !user?.isAdmin ? "Only admins can update organization settings" : undefined
+                  }
+                >
+                  {saving ? "Saving..." : "Save Channel"}
+                </Button>
+              </div>
             </div>
-          </div>
-
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <Button
-              onClick={handleSaveOrganization}
-              disabled={
-                saving ||
-                (slackApiToken === originalSlackApiToken &&
-                  slackChannelId === originalSlackChannelId) ||
-                !user?.isAdmin
-              }
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
-            >
-              {saving ? "Saving..." : "Save changes"}
-            </Button>
-          </div>
+          )}
         </div>
       </Card>
 

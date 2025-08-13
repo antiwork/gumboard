@@ -72,6 +72,9 @@ model Organization {
   name      String
   slackApiToken String?
   slackChannelId String?
+  slackTeamId String?
+  slackTeamName String?
+  slackBotUserId String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   members   User[]

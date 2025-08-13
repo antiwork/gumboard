@@ -29,7 +29,8 @@ test.describe("Board Settings", () => {
           organization: {
             id: "test-org",
             name: "Test Organization",
-            slackApiToken: "xoxb-test-token",
+            hasSlackConfigured: true,
+            slackTeamName: "Test Team",
             slackChannelId: "C1234567890",
             members: [],
           },

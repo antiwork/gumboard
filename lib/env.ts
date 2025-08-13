@@ -16,6 +16,11 @@ const schema = z.object({
   GITHUB_CLIENT_ID: z.string().optional(),
   GITHUB_CLIENT_SECRET: z.string().optional(),
 
+  // Slack OAuth
+  SLACK_CLIENT_ID: z.string().optional(),
+  SLACK_CLIENT_SECRET: z.string().optional(),
+  NEXT_PUBLIC_APP_URL: z.string().optional(),
+
   // NextAuth
   AUTH_URL: z.string(),
   AUTH_SECRET: z.string(),
