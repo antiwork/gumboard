@@ -7,10 +7,10 @@ test.describe("Board Management", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          user: { 
-            id: testUser.id, 
-            email: testUser.email, 
-            name: testUser.name 
+          user: {
+            id: testUser.id,
+            email: testUser.email,
+            name: testUser.name,
           },
           expires: new Date(Date.now() + 86400000).toISOString(),
         }),
@@ -62,11 +62,11 @@ test.describe("Board Management", () => {
     });
   });
 
-  test("should create a new board and verify database state", async ({ 
-    page, 
-    prisma, 
-    testUser, 
-    testOrganization 
+  test("should create a new board and verify database state", async ({
+    page,
+    prisma,
+    testUser,
+    testOrganization,
   }) => {
     let boardData: { name: string; description: string } | null = null;
     let createdBoardId: string | null = null;

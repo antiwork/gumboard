@@ -1,14 +1,14 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Authentication Flow", () => {
-  test("should complete email authentication flow and verify database state", async ({ 
-    page, 
-    prisma, 
-    testUser, 
-    testOrganization 
+  test("should complete email authentication flow and verify database state", async ({
+    page,
+    prisma,
+    testUser,
+    testOrganization,
   }) => {
     const testEmail = "auth-test@example.com";
-    
+
     await page.route("**/api/auth/session", async (route) => {
       await route.fulfill({
         status: 200,
@@ -50,11 +50,11 @@ test.describe("Authentication Flow", () => {
     expect(userBefore?.organization?.name).toBe("Test Organization");
   });
 
-  test("should authenticate user and access dashboard", async ({ 
-    page, 
-    prisma, 
-    testUser, 
-    testOrganization 
+  test("should authenticate user and access dashboard", async ({
+    page,
+    prisma,
+    testUser,
+    testOrganization,
   }) => {
     await page.route("**/api/auth/session", async (route) => {
       await route.fulfill({
@@ -101,7 +101,7 @@ test.describe("Authentication Flow", () => {
 
     await expect(page).toHaveURL(/.*dashboard/);
     await expect(page.locator("text=No boards yet")).toBeVisible();
-    
+
     expect(userInDb).toBeTruthy();
     expect(userInDb?.organization?.name).toBe("Test Organization");
   });

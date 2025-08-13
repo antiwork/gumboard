@@ -17,7 +17,8 @@ interface TestFixtures {
 
 export const test = base.extend<TestFixtures>({
   prisma: async ({}, use) => {
-    const testDatabaseUrl = process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/gumboard_test";
+    const testDatabaseUrl =
+      process.env.DATABASE_URL || "postgresql://postgres:postgres@localhost:5432/gumboard_test";
     const prisma = new PrismaClient({
       datasources: {
         db: {
