@@ -107,16 +107,16 @@ test.describe("Note Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: {
-          create: [
-            {
-              id: testContext.prefix("item-1"),
-              content: testContext.prefix("Test item"),
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: testContext.prefix("item-1"),
+        content: originalContent,
+        checked: false,
+        order: 0,
+        noteId: note.id,
       },
     });
 
@@ -352,16 +352,16 @@ test.describe("Note Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: {
-          create: [
-            {
-              id: toggleItemId,
-              content: testItemContent,
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: toggleItemId,
+        content: testItemContent,
+        checked: false,
+        order: 0,
+        noteId: note.id,
       },
     });
 
@@ -409,16 +409,16 @@ test.describe("Note Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: {
-          create: [
-            {
-              id: deleteItemId,
-              content: itemToDeleteContent,
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: deleteItemId,
+        content: itemToDeleteContent,
+        checked: false,
+        order: 0,
+        noteId: note.id,
       },
     });
 
@@ -471,14 +471,15 @@ test.describe("Note Management", () => {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
-          checklistItems: {
-            create: [
-              { id: itemA1Id, content: testContext.prefix("Item A1"), checked: false, order: 0 },
-              { id: itemA2Id, content: testContext.prefix("Item A2"), checked: false, order: 1 },
-              { id: itemA3Id, content: testContext.prefix("Item A3"), checked: false, order: 2 },
-            ],
-          },
         },
+      });
+
+      await testPrisma.checklistItem.createMany({
+        data: [
+          { id: itemA1Id, content: testContext.prefix("Item A1"), checked: false, order: 0, noteId: note.id },
+          { id: itemA2Id, content: testContext.prefix("Item A2"), checked: false, order: 1, noteId: note.id },
+          { id: itemA3Id, content: testContext.prefix("Item A3"), checked: false, order: 2, noteId: note.id },
+        ],
       });
 
       await authenticatedPage.goto(`/boards/${board.id}`);
@@ -545,16 +546,16 @@ test.describe("Note Management", () => {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
-          checklistItems: {
-            create: [
-              {
-                id: note1ItemId,
-                content: testContext.prefix("Note1 Item"),
-                checked: false,
-                order: 0,
-              },
-            ],
-          },
+        },
+      });
+
+      await testPrisma.checklistItem.create({
+        data: {
+          id: note1ItemId,
+          content: testContext.prefix("Note1 Item"),
+          checked: false,
+          order: 0,
+          noteId: note1.id,
         },
       });
 
@@ -563,16 +564,16 @@ test.describe("Note Management", () => {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
-          checklistItems: {
-            create: [
-              {
-                id: note2ItemId,
-                content: testContext.prefix("Note2 Item"),
-                checked: false,
-                order: 0,
-              },
-            ],
-          },
+        },
+      });
+
+      await testPrisma.checklistItem.create({
+        data: {
+          id: note2ItemId,
+          content: testContext.prefix("Note2 Item"),
+          checked: false,
+          order: 0,
+          noteId: note2.id,
         },
       });
 

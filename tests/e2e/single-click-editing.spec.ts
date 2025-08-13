@@ -18,21 +18,21 @@ test.describe("Single-Click Note Editing", () => {
     });
 
     // Create a checklist note with test item
-    await testPrisma.note.create({
+    const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
-        checklistItems: {
-          create: [
-            {
-              id: testContext.prefix("item-1"),
-              content: testContext.prefix("Test checklist item"),
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
         createdBy: testContext.userId,
         boardId: board.id,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: testContext.prefix("item-1"),
+        content: testContext.prefix("Test checklist item"),
+        checked: false,
+        order: 0,
+        noteId: note.id,
       },
     });
 
@@ -69,21 +69,21 @@ test.describe("Single-Click Note Editing", () => {
     });
 
     // Create a checklist note with test item
-    await testPrisma.note.create({
+    const note2 = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
-        checklistItems: {
-          create: [
-            {
-              id: testContext.prefix("item-1"),
-              content: testContext.prefix("Test checklist item"),
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
         createdBy: testContext.userId,
         boardId: board.id,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: testContext.prefix("item-1"),
+        content: testContext.prefix("Test checklist item"),
+        checked: false,
+        order: 0,
+        noteId: note2.id,
       },
     });
 
@@ -135,21 +135,21 @@ test.describe("Single-Click Note Editing", () => {
     });
 
     // Create a note owned by original user
-    await testPrisma.note.create({
+    const note3 = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
-        checklistItems: {
-          create: [
-            {
-              id: testContext.prefix("item-1"),
-              content: testContext.prefix("Test checklist item"),
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
         createdBy: testContext.userId, // Note owned by original user
         boardId: board.id,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: testContext.prefix("item-1"),
+        content: testContext.prefix("Test checklist item"),
+        checked: false,
+        order: 0,
+        noteId: note3.id,
       },
     });
 
@@ -204,21 +204,21 @@ test.describe("Single-Click Note Editing", () => {
     });
 
     // Create a checklist note with test item
-    await testPrisma.note.create({
+    const note4 = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
-        checklistItems: {
-          create: [
-            {
-              id: testContext.prefix("item-1"),
-              content: testContext.prefix("Original item content"),
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
         createdBy: testContext.userId,
         boardId: board.id,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: testContext.prefix("item-1"),
+        content: testContext.prefix("Original item content"),
+        checked: false,
+        order: 0,
+        noteId: note4.id,
       },
     });
 
