@@ -265,7 +265,7 @@ test.describe("Note Management", () => {
       const addTaskButton = page.locator('button:has-text("Add task")');
       await expect(addTaskButton).toBeVisible();
       await addTaskButton.click();
-      const newItemInput = page.locator('input[placeholder="Add new item..."]');
+      const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
       await expect(newItemInput).toBeVisible();
       await newItemInput.fill("New test item");
       await newItemInput.press("Enter");
@@ -274,7 +274,7 @@ test.describe("Note Management", () => {
       const existingItem = page.locator("text=Test item").first();
       await expect(existingItem).toBeVisible();
       await existingItem.dblclick();
-      const editInput = page.locator('input[value="Test item"]');
+      const editInput = page.locator('textarea[value="Test item"]');
       await editInput.isVisible();
       await editInput.fill("Edited test item");
       await page.getByText("Note Actual Board").click();
@@ -296,14 +296,14 @@ test.describe("Note Management", () => {
       await page.click('button:has-text("Add Your First Note")');
       await page.waitForTimeout(500);
 
-      const initialInput = page.locator("input.bg-transparent").first();
+      const initialInput = page.locator("textarea.bg-transparent").first();
       await initialInput.fill("First item");
       await initialInput.press("Enter");
       await page.waitForTimeout(300);
 
       await page.click('button:has-text("Add task")');
 
-      const newItemInput = page.locator('input[placeholder="Add new item..."]');
+      const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
       await expect(newItemInput).toBeVisible();
       await expect(newItemInput).toBeFocused();
 
@@ -408,11 +408,11 @@ test.describe("Note Management", () => {
       await expect(page.getByText("#1 Task item")).toBeVisible();
 
       await page.getByText("#1 Task item").click();
-      const editInput = page.locator('input[value="#1 Task item"]');
+      const editInput = page.locator('textarea[value="#1 Task item"]');
       await expect(editInput).toBeVisible();
       await editInput.focus();
       await editInput.fill("#1 Task item edited");
-      await page.locator('input[value="#1 Task item edited"]').press("Enter");
+      await page.locator('textarea[value="#1 Task item edited"]').press("Enter");
       await page.waitForTimeout(500);
       await expect(page.getByText("#1 Task item edited")).toBeVisible();
     });
