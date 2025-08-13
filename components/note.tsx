@@ -566,7 +566,7 @@ export function Note({
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             className="w-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
-            placeholder="Enter note content... (Shift+Enter for new line, Ctrl+Enter to save)"
+            placeholder="Enter note content..."
             onBlur={handleStopEdit}
             onKeyDown={handleKeyDownEditContent}
             autoFocus
