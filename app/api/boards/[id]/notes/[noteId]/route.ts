@@ -5,7 +5,6 @@ import {
   updateSlackMessage,
   formatNoteForSlack,
   sendSlackMessage,
-
   sendOrUpdateChecklistMessage,
   shouldSendChecklistMessage,
   hasValidContent,
@@ -287,7 +286,7 @@ export async function PUT(
         // Handle status changes (completed/uncompleted)
         if (u.previous.checked !== u.checked && shouldSendUpdate) {
           const action = u.checked ? "checked" : "unchecked";
-          
+
           if (shouldSendChecklistMessage(u.id, action, u.content)) {
             const messageId = await sendOrUpdateChecklistMessage(
               user.organization.slackWebhookUrl,

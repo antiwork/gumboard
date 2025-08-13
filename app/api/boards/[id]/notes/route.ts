@@ -4,7 +4,6 @@ import { db } from "@/lib/db";
 import {
   sendSlackMessage,
   formatNoteForSlack,
-
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";

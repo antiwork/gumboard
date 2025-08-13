@@ -2,10 +2,8 @@ interface SlackMessage {
   text: string;
   username?: string;
   icon_emoji?: string;
-  ts?: string;  // Message timestamp for updates
+  ts?: string; // Message timestamp for updates
 }
-
-
 
 export function hasValidContent(content: string | null | undefined): boolean {
   if (!content) {
@@ -136,16 +134,21 @@ export async function sendOrUpdateChecklistMessage(
 ): Promise<string | null> {
   try {
     const emoji = checklistItem.checked ? ":white_check_mark:" : ":heavy_plus_sign:";
-    const actionText = action === "created" ? "added" : 
-                     action === "checked" ? "completed" :
-                     action === "unchecked" ? "reopened" : "updated";
-    
+    const actionText =
+      action === "created"
+        ? "added"
+        : action === "checked"
+          ? "completed"
+          : action === "unchecked"
+            ? "reopened"
+            : "updated";
+
     const messageText = `${emoji} Checklist item ${actionText}: "${checklistItem.content}" by ${userName} in ${boardName}`;
 
     // For webhook URLs, we can't update existing messages directly
     // Instead, we'll post a new message and track it
     const response = await fetch(webhookUrl, {
-      method: "POST", 
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
@@ -187,14 +190,14 @@ export function shouldSendChecklistMessage(
   }
 
   recentMessages.set(key, { timestamp: now, messageId: "" });
-  
+
   // Clean up old entries
   for (const [msgKey, value] of recentMessages.entries()) {
     if (now - value.timestamp > MESSAGE_DEDUPE_WINDOW) {
       recentMessages.delete(msgKey);
     }
   }
-  
+
   return true;
 }
 
