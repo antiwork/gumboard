@@ -931,7 +931,7 @@ test.describe("Note Management", () => {
       await page.waitForTimeout(200); // Wait for edit mode to activate
 
       // Get the textarea field for the existing item
-      const itemInput = page.locator('textarea').filter({ hasText: 'First item content' });
+      const itemInput = page.locator("textarea").filter({ hasText: "First item content" });
       await expect(itemInput).toBeVisible();
 
       // Position cursor at the start (position 0)
@@ -970,7 +970,7 @@ test.describe("Note Management", () => {
       await page.waitForTimeout(200); // Wait for edit mode to activate
 
       // Get the textarea field for the existing item
-      const itemInput = page.locator('textarea').filter({ hasText: 'Last item content' });
+      const itemInput = page.locator("textarea").filter({ hasText: "Last item content" });
       await expect(itemInput).toBeVisible();
 
       // Position cursor at the end
