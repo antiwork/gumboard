@@ -41,7 +41,7 @@ test.describe("Checklist Backspace Behavior", () => {
     ).toBeVisible();
 
     const checklistItemElement = authenticatedPage
-      .locator("span.flex-1.text-sm.leading-6.cursor-pointer")
+      .locator("textarea")
       .filter({ hasText: testContext.prefix("Test item") });
     await expect(checklistItemElement).toBeVisible();
   });
