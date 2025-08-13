@@ -11,7 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const initialNotes: Note[] = [
   {
     id: "1",
-    content: "",
+
     color: "bg-green-200/70",
     archivedAt: null,
     createdAt: new Date().toISOString(),
@@ -30,7 +30,7 @@ const initialNotes: Note[] = [
   },
   {
     id: "2",
-    content: "",
+
     color: "bg-purple-200/60",
     archivedAt: null,
     createdAt: new Date().toISOString(),
@@ -49,7 +49,7 @@ const initialNotes: Note[] = [
   },
   {
     id: "3",
-    content: "",
+
     color: "bg-blue-200/60",
     archivedAt: null,
     createdAt: new Date().toISOString(),
@@ -67,7 +67,7 @@ const initialNotes: Note[] = [
   },
   {
     id: "4",
-    content: "",
+
     color: "bg-pink-200/70",
     archivedAt: null,
     createdAt: new Date().toISOString(),
@@ -323,7 +323,7 @@ export function StickyNotesDemo() {
     const randomAuthor = authors[Math.floor(Math.random() * authors.length)];
     const newNote: Note = {
       id: `${Date.now()}`,
-      content: "",
+
       color: randomColor,
       archivedAt: null,
       createdAt: new Date().toISOString(),

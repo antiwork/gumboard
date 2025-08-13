@@ -90,7 +90,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, checklistItems } = await request.json();
+    const { color, checklistItems } = await request.json();
     const boardId = (await params).id;
 
     // Verify user has access to this board (same organization)
@@ -132,23 +132,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     const randomColor = color || NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)];
 
-    // If content is provided, convert it to a checklist item
-    const initialChecklistItems = [];
-    if (content && content.trim()) {
-      initialChecklistItems.push({
-        content: content.trim(),
-        checked: false,
-        order: 0,
-      });
-    }
-
-    // If checklistItems are provided, add them too
+    // Process checklist items
+    const initialChecklistItems: Array<{
+      content: string;
+      checked: boolean;
+      order: number;
+    }> = [];
     if (checklistItems && Array.isArray(checklistItems)) {
       checklistItems.forEach((item, index) => {
         initialChecklistItems.push({
           content: item.content || "",
           checked: item.checked || false,
-          order: item.order !== undefined ? item.order : initialChecklistItems.length,
+          order: item.order !== undefined ? item.order : index,
         });
       });
     }
@@ -174,16 +169,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     });
 
-    // Send Slack notification if note has content (now in checklist items)
-    const hasContent = note.checklistItems && note.checklistItems.length > 0 &&
-                      note.checklistItems.some(item => hasValidContent(item.content));
+    // Send Slack notification if note has checklist items with content
+    const noteWithItems = note as typeof note & { checklistItems?: Array<{ content: string }> };
+    const hasContent = noteWithItems.checklistItems && noteWithItems.checklistItems.length > 0 &&
+                      noteWithItems.checklistItems.some(item => hasValidContent(item.content));
 
     if (
       user.organization?.slackWebhookUrl &&
       hasContent &&
       shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)
     ) {
-      const slackMessage = formatNoteForSlack(note, board.name, user.name || user.email);
+      const slackMessage = formatNoteForSlack(noteWithItems, board.name, user.name || user.email);
       const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
         text: slackMessage,
         username: "Gumboard",
