@@ -67,7 +67,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const boardId = (await params).id;
-    const { name, description, sendSlackUpdates } = await request.json();
+    const { name, description, isPublic, sendSlackUpdates } = await request.json();
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
@@ -99,9 +99,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // For name/description updates, check if user can edit this board (board creator or admin)
+    // For name/description/isPublic updates, check if user can edit this board (board creator or admin)
     if (
-      (name !== undefined || description !== undefined) &&
+      (name !== undefined || description !== undefined || isPublic !== undefined) &&
       board.createdBy !== session.user.id &&
       !currentUser.isAdmin
     ) {
@@ -114,11 +114,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const updateData: {
       name?: string;
       description?: string;
+      isPublic?: boolean;
       sendSlackUpdates?: boolean;
     } = {};
     if (name !== undefined) updateData.name = name?.trim() || board.name;
     if (description !== undefined)
       updateData.description = description?.trim() || board.description;
+    if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates;
 
     const updatedBoard = await db.board.update({
