@@ -121,7 +121,7 @@ export function ChecklistItem({
           ref={editItemInputRef}
           onChange={(e) => onEditContentChange?.(e.target.value)}
           className={cn(
-            "h-auto min-h-0 flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none break-all overflow-wrap-anywhere whitespace-pre-wrap",
+            "h-auto min-h-0 flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none break-all word-wrap whitespace-pre-wrap",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
           onBlur={handleBlur}
@@ -132,7 +132,7 @@ export function ChecklistItem({
       ) : (
         <span
           className={cn(
-            "flex-1 text-sm leading-6 cursor-pointer select-none break-all overflow-wrap-anywhere whitespace-pre-wrap",
+            "flex-1 text-sm leading-6 cursor-pointer select-none break-all word-wrap whitespace-pre-wrap",
             item.checked
               ? "line-through text-gray-500 dark:text-gray-400"
               : "text-gray-900 dark:text-gray-100",
