@@ -261,7 +261,7 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
               <Link href="/boards/all-notes">
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75 h-40">
+                <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
                   <CardHeader>
                     <div className="flex items-center space-x-2">
                       <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -271,7 +271,7 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-blue-700 dark:text-blue-300 text-sm">
+                    <p className="text-blue-700 dark:text-blue-300 truncate">
                       View notes from all boards
                     </p>
                   </CardContent>
@@ -280,7 +280,7 @@ export default function Dashboard() {
 
               {/* Archive Board */}
               <Link href="/boards/archive">
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
+                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                   <CardHeader>
                     <div className="flex items-center space-x-2">
                       <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -290,14 +290,14 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700 dark:text-gray-300 text-sm">View archived notes</p>
+                    <p className="text-gray-700 dark:text-gray-300 truncate">View archived notes</p>
                   </CardContent>
                 </Card>
               </Link>
 
               {boards.map((board) => (
                 <Link href={`/boards/${board.id}`} key={board.id}>
-                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 h-40">
+                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
@@ -308,7 +308,7 @@ export default function Dashboard() {
                     </CardHeader>
                     {board.description && (
                       <CardContent>
-                        <p className="text-slate-600 dark:text-zinc-300 text-sm">
+                        <p className="text-slate-600 dark:text-zinc-300 truncate">
                           {board.description}
                         </p>
                       </CardContent>
