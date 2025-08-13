@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { Button } from "@/components/ui/button";
 import { StickyNote, Users, Building2 } from "lucide-react";
 import { StickyNotesDemo } from "@/components/sticky-notes-demo";
+import { StatsSection } from "@/components/stats-section";
 import { Card, CardContent, CardTitle, CardDescription } from "@/components/ui/card";
 import Image from "next/image";
 import { BetaBadge } from "@/components/ui/beta-badge";
@@ -105,6 +106,8 @@ export default async function HomePage() {
             </div>
           </div>
         </section>
+
+        <StatsSection />
       </main>
       <footer className="w-full border-t border-slate-200 py-6 dark:border-zinc-800">
         <div className="container mx-auto text-center text-sm text-slate-600 dark:text-zinc-400">
