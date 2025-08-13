@@ -36,9 +36,7 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label })
     const data = payload[0].payload;
     return (
       <div className="bg-white dark:bg-zinc-800 p-3 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg">
-        <p className="font-semibold text-gray-900 dark:text-white mb-2">
-          Week of {label}
-        </p>
+        <p className="font-semibold text-gray-900 dark:text-white mb-2">Week of {label}</p>
         <div className="space-y-1 text-sm">
           <p className="text-blue-600 dark:text-blue-400">
             <span className="font-medium">Boards Created:</span> {data.boardsCreated}
@@ -53,7 +51,8 @@ const CustomTooltip: React.FC<CustomTooltipProps> = ({ active, payload, label })
             <span className="font-medium">Notes Created:</span> {data.notesCreated}
           </p>
           <p className="text-red-600 dark:text-red-400">
-            <span className="font-medium">Checklist Items Created:</span> {data.checklistItemsCreated}
+            <span className="font-medium">Checklist Items Created:</span>{" "}
+            {data.checklistItemsCreated}
           </p>
         </div>
       </div>
@@ -90,16 +89,14 @@ export function StatsSection() {
     return null;
   }
 
-  const maxValue = Math.max(...weeklyStats.map(item => item.boardsCreated));
+  const maxValue = Math.max(...weeklyStats.map((item) => item.boardsCreated));
   const yAxisMax = Math.ceil(maxValue * 1.1);
 
   return (
     <section className="py-16 bg-gray-50 dark:bg-zinc-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Platform Growth
-          </h2>
+          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">Platform Growth</h2>
           <p className="text-lg text-gray-600 dark:text-gray-300">
             Weekly boards created over time with platform growth metrics
           </p>
@@ -127,18 +124,15 @@ export function StatsSection() {
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis 
-                    dataKey="week" 
+                  <XAxis
+                    dataKey="week"
                     angle={-45}
                     textAnchor="end"
                     height={80}
                     interval={0}
                     className="text-xs"
                   />
-                  <YAxis 
-                    domain={[0, yAxisMax]}
-                    className="text-xs"
-                  />
+                  <YAxis domain={[0, yAxisMax]} className="text-xs" />
                   <Tooltip content={<CustomTooltip />} />
                   <Bar 
                     dataKey="boardsCreated" 
@@ -162,9 +156,9 @@ export function StatsSection() {
               </CardTitle>
             </CardHeader>
           </Card>
-          
+
           <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
-          
+
           <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
             <CardHeader className="pb-2 text-center">
               <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
@@ -175,9 +169,9 @@ export function StatsSection() {
               </CardTitle>
             </CardHeader>
           </Card>
-          
+
           <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
-          
+
           <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
             <CardHeader className="pb-2 text-center">
               <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
@@ -188,9 +182,9 @@ export function StatsSection() {
               </CardTitle>
             </CardHeader>
           </Card>
-          
+
           <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
-          
+
           <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
             <CardHeader className="pb-2 text-center">
               <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
@@ -201,9 +195,9 @@ export function StatsSection() {
               </CardTitle>
             </CardHeader>
           </Card>
-          
+
           <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
-          
+
           <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
             <CardHeader className="pb-2 text-center">
               <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
