@@ -2,10 +2,12 @@
 
 import * as React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
+import { Textarea } from "./ui/textarea";
+import { useEffect } from "react";
+import { useRef } from "react";
 
 export interface ChecklistItem {
   id: string;
@@ -45,8 +47,8 @@ export function ChecklistItem({
   showDeleteButton = true,
   className,
 }: ChecklistItemProps) {
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       const target = e.target as HTMLInputElement;
       const cursorPosition = target.selectionStart || 0;
@@ -70,6 +72,21 @@ export function ChecklistItem({
     onStopEdit?.();
   };
 
+  const autoResizeTextarea = (textarea: HTMLTextAreaElement | null) => {
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  };
+
+  const editItemInputRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if(editItemInputRef.current) {
+      autoResizeTextarea(editItemInputRef.current)
+    }
+  }, [isEditing, editContent])
+
   return (
     <div
       className={cn(
@@ -88,16 +105,17 @@ export function ChecklistItem({
       />
 
       {isEditing && !readonly ? (
-        <Input
-          type="text"
+        <Textarea
           value={editContent ?? item.content}
+          ref={editItemInputRef}
           onChange={(e) => onEditContentChange?.(e.target.value)}
           className={cn(
-            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0",
+            "h-auto flex-1 border-none bg-transparent resize-none p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
+          draggable={false}
           autoFocus
         />
       ) : (

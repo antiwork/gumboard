@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
@@ -15,6 +14,7 @@ import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/u
 import { cn } from "@/lib/utils";
 import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
+import { Textarea } from "./ui/textarea";
 
 // Core domain types
 export interface User {
@@ -97,7 +97,7 @@ export function Note({
       (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
-  const newItemInputRef = useRef<HTMLInputElement>(null);
+  const newItemInputRef = useRef<HTMLTextAreaElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -429,17 +429,27 @@ export function Note({
     handleAddItem();
   };
 
-  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Escape") {
       setAddingItem(false);
       setNewItemContent("");
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      handleAddItem();
+    }
+  };
+
+  const autoResizeTextarea = (textarea: HTMLTextAreaElement | null) => {
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${textarea.scrollHeight}px`;
     }
   };
 
   return (
     <div
       className={cn(
-        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border min-h-fit",
         className
       )}
       style={{
@@ -526,12 +536,14 @@ export function Note({
 
       {isEditing ? (
         <div className="min-h-0">
-          <textarea
+          <Textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full h-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
+            className="w-full h-full resize-none p-2 bg-transparent border-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
             placeholder="Enter note content..."
             onBlur={handleStopEdit}
+            rows={1}
+            draggable={false}
             onKeyDown={(e) => {
               if (e.key === "Enter" && e.ctrlKey) {
                 handleStopEdit();
@@ -546,7 +558,7 @@ export function Note({
         </div>
       ) : (
         <div className="flex flex-col">
-          <div className="overflow-y-auto space-y-1">
+          <div className="space-y-1">
             {/* Checklist Items */}
             <DraggableRoot
               items={note.checklistItems ?? []}
@@ -582,15 +594,19 @@ export function Note({
                     disabled
                     className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
                   />
-                  <Input
+                  <Textarea
                     ref={newItemInputRef}
-                    type="text"
                     value={newItemContent}
-                    onChange={(e) => setNewItemContent(e.target.value)}
-                    className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    onChange={(e) => {
+                      autoResizeTextarea(e.currentTarget)
+                      setNewItemContent(e.target.value)
+                    }}
+                    className="min-h-3 shadow-none border-none resize-none flex-1 bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
                     placeholder="Add new item..."
                     onKeyDown={handleKeyDownNewItem}
                     onBlur={handleAddItem}
+                    rows={1}
+                    draggable={false}
                     autoFocus
                   />
                   <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
