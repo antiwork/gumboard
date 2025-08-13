@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
@@ -253,66 +253,55 @@ export default function Dashboard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
             <Link href="/boards/all-notes">
               <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75 h-40">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
-                          All Notes
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-blue-700 dark:text-blue-300">
-                        View notes from all boards
-                      </CardDescription>
-                    </div>
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                    <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
+                      All Notes
+                    </CardTitle>
                   </div>
                 </CardHeader>
+                <CardContent>
+                  <p className="text-blue-700 dark:text-blue-300 text-sm">
+                    View notes from all boards
+                  </p>
+                </CardContent>
               </Card>
             </Link>
 
             {/* Archive Board */}
             <Link href="/boards/archive">
               <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                        <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
-                          Archive
-                        </CardTitle>
-                      </div>
-                      <CardDescription className="text-gray-700 dark:text-gray-300">
-                        View archived notes
-                      </CardDescription>
-                    </div>
+                <CardHeader>
+                  <div className="flex items-center space-x-2">
+                    <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                    <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
+                      Archive
+                    </CardTitle>
                   </div>
                 </CardHeader>
+                <CardContent>
+                  <p className="text-gray-700 dark:text-gray-300 text-sm">View archived notes</p>
+                </CardContent>
               </Card>
             </Link>
 
             {boards.map((board) => (
               <Link href={`/boards/${board.id}`} key={board.id}>
                 <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-50 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
-                  <CardHeader className="flex flex-col h-full">
-                    <div className="w-full">
-                      <div className="flex items-center justify-between mb-1">
-                        <CardTitle className="text-lg w-3/4 dark:text-zinc-100">
-                          {board.name}
-                        </CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                        </span>
-                      </div>
-
-                      {board.description && (
-                        <CardDescription className=" dark:text-zinc-400">
-                          {board.description}
-                        </CardDescription>
-                      )}
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                      </span>
                     </div>
                   </CardHeader>
+                  {board.description && (
+                    <CardContent>
+                      <p className="text-sm dark:text-zinc-400">{board.description}</p>
+                    </CardContent>
+                  )}
                 </Card>
               </Link>
             ))}
