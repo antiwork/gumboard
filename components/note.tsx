@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   ChecklistItem as ChecklistItemComponent,
@@ -32,7 +34,6 @@ export interface Board {
 
 export interface Note {
   id: string;
-  content: string;
   color: string;
   archivedAt?: string | null;
   createdAt: string;
@@ -95,6 +96,7 @@ export function Note({
       (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
+  const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -349,6 +351,21 @@ export function Note({
     }
   };
 
+  const handleSubmitNewItem = async (e: React.FormEvent) => {
+    e.preventDefault();
+    handleAddItem();
+  };
+
+  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddItem();
+    } else if (e.key === "Escape") {
+      setAddingItem(false);
+      setNewItemContent("");
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -466,6 +483,7 @@ export function Note({
               ))}
             </DraggableContainer>
 
+            {/* Add New Item Input */}
             {addingItem && canEdit && (
               <ChecklistItemComponent
                 item={{
@@ -497,11 +515,18 @@ export function Note({
           </DraggableRoot>
         </div>
 
+        {/* Add Item Button */}
         {canEdit && (
           <Button
             variant="ghost"
-            onClick={() => setAddingItem(true)}
-            className="mt-2 !p-0 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+            onClick={() => {
+              if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                newItemInputRef.current.focus();
+              } else {
+                setAddingItem(true);
+              }
+            }}
+            className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add task

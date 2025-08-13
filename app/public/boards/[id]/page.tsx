@@ -80,44 +80,22 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
     const actualNotePadding = notePadding || config.notePadding;
-    const actualNoteWidth = noteWidth || config.noteWidth;
 
     const headerHeight = 76;
     const paddingHeight = actualNotePadding * 2;
     const minContentHeight = 84;
 
-    if (note.checklistItems) {
-      const itemHeight = 32;
-      const itemSpacing = 8;
-      const checklistItemsCount = note.checklistItems.length;
+    // All notes now use checklist items
+    const itemHeight = 32;
+    const itemSpacing = 8;
+    const checklistItemsCount = note.checklistItems?.length || 0;
 
-      const checklistHeight =
-        checklistItemsCount * itemHeight + (checklistItemsCount - 1) * itemSpacing;
-      const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
+    const checklistHeight =
+      checklistItemsCount * itemHeight +
+      (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0);
+    const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
 
-      return headerHeight + paddingHeight + totalChecklistHeight + 40;
-    } else {
-      const lines = note.content.split("\n");
-      const avgCharWidth = 9;
-      const contentWidth = actualNoteWidth - actualNotePadding * 2 - 16;
-      const charsPerLine = Math.floor(contentWidth / avgCharWidth);
-
-      let totalLines = 0;
-      lines.forEach((line) => {
-        if (line.length === 0) {
-          totalLines += 1;
-        } else {
-          const wrappedLines = Math.ceil(line.length / charsPerLine);
-          totalLines += Math.max(1, wrappedLines);
-        }
-      });
-
-      totalLines = Math.max(3, totalLines);
-      const lineHeight = 28;
-      const contentHeight = totalLines * lineHeight;
-
-      return headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight);
-    }
+    return headerHeight + paddingHeight + totalChecklistHeight + 40;
   };
 
   const getUniqueAuthors = (notes: Note[]) => {
@@ -148,8 +126,10 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
       const search = searchTerm.toLowerCase();
       filteredNotes = filteredNotes.filter((note) => {
         const authorName = (note.user.name || note.user.email).toLowerCase();
-        const noteContent = note.content.toLowerCase();
-        return authorName.includes(search) || noteContent.includes(search);
+        // Search in checklist items content
+        const checklistContent =
+          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
+        return authorName.includes(search) || checklistContent.includes(search);
       });
     }
 
@@ -481,7 +461,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
               </div>
 
               <div className="flex-1 overflow-hidden">
-                {note.checklistItems ? (
+                {note.checklistItems && note.checklistItems.length > 0 && (
                   <div className="space-y-2">
                     {note.checklistItems
                       .sort((a, b) => a.order - b.order)
@@ -504,10 +484,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
                           </span>
                         </div>
                       ))}
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed">
-                    {note.content}
                   </div>
                 )}
               </div>
