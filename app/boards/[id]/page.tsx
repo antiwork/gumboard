@@ -459,9 +459,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       filteredNotes = filteredNotes.filter((note) => {
         const authorName = (note.user.name || note.user.email).toLowerCase();
         // Search in checklist items content
-        const checklistContent = note.checklistItems
-          ?.map(item => item.content.toLowerCase())
-          .join(' ') || '';
+        const checklistContent =
+          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
         return authorName.includes(search) || checklistContent.includes(search);
       });
     }

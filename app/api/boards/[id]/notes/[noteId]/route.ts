@@ -191,9 +191,8 @@ export async function PUT(
       const boardName = note.board.name;
       const isArchived = archivedAt !== null;
       // Get content from first checklist item for Slack message
-      const noteContent = note.checklistItems && note.checklistItems.length > 0
-        ? note.checklistItems[0].content
-        : "";
+      const noteContent =
+        note.checklistItems && note.checklistItems.length > 0 ? note.checklistItems[0].content : "";
       await updateSlackMessage(
         user.organization.slackWebhookUrl,
         noteContent,

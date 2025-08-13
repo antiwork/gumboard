@@ -153,9 +153,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         color: randomColor,
         boardId,
         createdBy: session.user.id,
-        checklistItems: initialChecklistItems.length > 0 ? {
-          create: initialChecklistItems,
-        } : undefined,
+        checklistItems:
+          initialChecklistItems.length > 0
+            ? {
+                create: initialChecklistItems,
+              }
+            : undefined,
       },
       include: {
         user: {
@@ -171,8 +174,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Send Slack notification if note has checklist items with content
     const noteWithItems = note as typeof note & { checklistItems?: Array<{ content: string }> };
-    const hasContent = noteWithItems.checklistItems && noteWithItems.checklistItems.length > 0 &&
-                      noteWithItems.checklistItems.some(item => hasValidContent(item.content));
+    const hasContent =
+      noteWithItems.checklistItems &&
+      noteWithItems.checklistItems.length > 0 &&
+      noteWithItems.checklistItems.some((item) => hasValidContent(item.content));
 
     if (
       user.organization?.slackWebhookUrl &&

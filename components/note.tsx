@@ -84,7 +84,6 @@ export function Note({
   syncDB = true,
   style,
 }: NoteProps) {
-
   const { resolvedTheme } = useTheme();
 
   const [editingItem, setEditingItem] = useState<string | null>(null);
@@ -522,95 +521,95 @@ export function Note({
       </div>
 
       <div className="flex flex-col">
-          <div className="overflow-y-auto space-y-1">
-            {/* Checklist Items */}
-            <DraggableRoot
-              items={note.checklistItems ?? []}
-              onItemsChange={(newItems) => {
-                handleReorderChecklistItems(note.id, newItems);
-              }}
-            >
-              <DraggableContainer className="space-y-1">
-                {note.checklistItems?.map((item) => (
-                  <DraggableItem key={item.id} id={item.id}>
-                    <ChecklistItemComponent
-                      item={item}
-                      onToggle={handleToggleChecklistItem}
-                      onEdit={handleEditItem}
-                      onDelete={handleDeleteItem}
-                      onSplit={handleSplitItem}
-                      isEditing={editingItem === item.id}
-                      editContent={editingItem === item.id ? editingItemContent : undefined}
-                      onEditContentChange={setEditingItemContent}
-                      onStartEdit={handleStartEditItem}
-                      onStopEdit={handleStopEditItem}
-                      readonly={readonly}
-                      showDeleteButton={canEdit}
-                    />
-                  </DraggableItem>
-                ))}
-              </DraggableContainer>
-
-              {/* Add New Item Input */}
-              {addingItem && canEdit && (
-                <form onSubmit={handleSubmitNewItem} className="flex items-center gap-3">
-                  <Checkbox
-                    disabled
-                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+        <div className="overflow-y-auto space-y-1">
+          {/* Checklist Items */}
+          <DraggableRoot
+            items={note.checklistItems ?? []}
+            onItemsChange={(newItems) => {
+              handleReorderChecklistItems(note.id, newItems);
+            }}
+          >
+            <DraggableContainer className="space-y-1">
+              {note.checklistItems?.map((item) => (
+                <DraggableItem key={item.id} id={item.id}>
+                  <ChecklistItemComponent
+                    item={item}
+                    onToggle={handleToggleChecklistItem}
+                    onEdit={handleEditItem}
+                    onDelete={handleDeleteItem}
+                    onSplit={handleSplitItem}
+                    isEditing={editingItem === item.id}
+                    editContent={editingItem === item.id ? editingItemContent : undefined}
+                    onEditContentChange={setEditingItemContent}
+                    onStartEdit={handleStartEditItem}
+                    onStopEdit={handleStopEditItem}
+                    readonly={readonly}
+                    showDeleteButton={canEdit}
                   />
-                  <Input
-                    ref={newItemInputRef}
-                    type="text"
-                    value={newItemContent}
-                    onChange={(e) => setNewItemContent(e.target.value)}
-                    className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
-                    placeholder="Add new item..."
-                    onKeyDown={handleKeyDownNewItem}
-                    onBlur={handleAddItem}
-                    autoFocus
-                  />
-                  <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <Button
-                      type="button"
-                      aria-label={`Delete New Item`}
-                      onMouseDown={() => {
-                        // onMouseDown fires before onBlur, so the delete action happens before the blur handler can interfere
+                </DraggableItem>
+              ))}
+            </DraggableContainer>
 
-                        setAddingItem(false);
-                        setNewItemContent("");
-                      }}
-                      className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
-                      variant="ghost"
-                      size="icon"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </form>
-              )}
+            {/* Add New Item Input */}
+            {addingItem && canEdit && (
+              <form onSubmit={handleSubmitNewItem} className="flex items-center gap-3">
+                <Checkbox
+                  disabled
+                  className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+                />
+                <Input
+                  ref={newItemInputRef}
+                  type="text"
+                  value={newItemContent}
+                  onChange={(e) => setNewItemContent(e.target.value)}
+                  className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                  placeholder="Add new item..."
+                  onKeyDown={handleKeyDownNewItem}
+                  onBlur={handleAddItem}
+                  autoFocus
+                />
+                <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                  <Button
+                    type="button"
+                    aria-label={`Delete New Item`}
+                    onMouseDown={() => {
+                      // onMouseDown fires before onBlur, so the delete action happens before the blur handler can interfere
 
-              {/* All content is now handled via checklist items */}
-            </DraggableRoot>
-          </div>
+                      setAddingItem(false);
+                      setNewItemContent("");
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </form>
+            )}
 
-          {/* Add Item Button */}
-          {canEdit && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
-                  newItemInputRef.current.focus();
-                } else {
-                  setAddingItem(true);
-                }
-              }}
-              className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add task
-            </Button>
-          )}
+            {/* All content is now handled via checklist items */}
+          </DraggableRoot>
         </div>
+
+        {/* Add Item Button */}
+        {canEdit && (
+          <Button
+            variant="ghost"
+            onClick={() => {
+              if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                newItemInputRef.current.focus();
+              } else {
+                setAddingItem(true);
+              }
+            }}
+            className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Add task
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

@@ -91,7 +91,8 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     const checklistItemsCount = note.checklistItems?.length || 0;
 
     const checklistHeight =
-      checklistItemsCount * itemHeight + (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0);
+      checklistItemsCount * itemHeight +
+      (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0);
     const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
 
     return headerHeight + paddingHeight + totalChecklistHeight + 40;
@@ -126,9 +127,8 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
       filteredNotes = filteredNotes.filter((note) => {
         const authorName = (note.user.name || note.user.email).toLowerCase();
         // Search in checklist items content
-        const checklistContent = note.checklistItems
-          ?.map(item => item.content.toLowerCase())
-          .join(' ') || '';
+        const checklistContent =
+          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
         return authorName.includes(search) || checklistContent.includes(search);
       });
     }

@@ -123,9 +123,10 @@ export function formatNoteForSlack(
   userName: string
 ): string {
   // Get content from first checklist item
-  const content = note.checklistItems && note.checklistItems.length > 0
-    ? note.checklistItems[0].content
-    : "New note";
+  const content =
+    note.checklistItems && note.checklistItems.length > 0
+      ? note.checklistItems[0].content
+      : "New note";
   return `:heavy_plus_sign: ${content} by ${userName} in ${boardName}`;
 }
 

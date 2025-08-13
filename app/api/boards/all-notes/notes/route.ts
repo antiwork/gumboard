@@ -118,9 +118,12 @@ export async function POST(request: NextRequest) {
         color: randomColor,
         boardId,
         createdBy: session.user.id,
-        checklistItems: initialChecklistItems.length > 0 ? {
-          create: initialChecklistItems,
-        } : undefined,
+        checklistItems:
+          initialChecklistItems.length > 0
+            ? {
+                create: initialChecklistItems,
+              }
+            : undefined,
       },
       include: {
         user: {
