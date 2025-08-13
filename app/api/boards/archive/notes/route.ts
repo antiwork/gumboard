@@ -28,10 +28,9 @@ export async function GET() {
           organizationId: user.organizationId,
         },
       },
-      select: {
-        id: true,
-        content: true,
-        color: true,
+              select: {
+          id: true,
+          color: true,
         boardId: true,
         createdBy: true,
         createdAt: true,

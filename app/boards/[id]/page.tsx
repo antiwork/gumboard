@@ -201,7 +201,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
     const actualNotePadding = notePadding || config.notePadding;
-    const actualNoteWidth = noteWidth || config.noteWidth;
 
     const headerHeight = 60; // User info header + margins
     const paddingHeight = actualNotePadding * 2; // Top and bottom padding

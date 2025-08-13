@@ -80,7 +80,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
     const actualNotePadding = notePadding || config.notePadding;
-    const actualNoteWidth = noteWidth || config.noteWidth;
 
     const headerHeight = 76;
     const paddingHeight = actualNotePadding * 2;
@@ -462,7 +461,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
               </div>
 
               <div className="flex-1 overflow-hidden">
-                {note.checklistItems ? (
+                {note.checklistItems && note.checklistItems.length > 0 && (
                   <div className="space-y-2">
                     {note.checklistItems
                       .sort((a, b) => a.order - b.order)

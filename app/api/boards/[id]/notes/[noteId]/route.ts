@@ -3,8 +3,6 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
   updateSlackMessage,
-  formatNoteForSlack,
-  sendSlackMessage,
   sendTodoNotification,
   hasValidContent,
   shouldSendNotification,

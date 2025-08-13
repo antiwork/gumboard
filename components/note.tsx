@@ -521,28 +521,7 @@ export function Note({
         </div>
       </div>
 
-      {isEditing ? (
-        <div className="min-h-0">
-          <textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            className="w-full h-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
-            placeholder="Enter note content..."
-            onBlur={handleStopEdit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && e.ctrlKey) {
-                handleStopEdit();
-              }
-              if (e.key === "Escape") {
-                setIsEditing(false);
-                setEditContent(note.content);
-              }
-            }}
-            autoFocus
-          />
-        </div>
-      ) : (
-        <div className="flex flex-col">
+      <div className="flex flex-col">
           <div className="overflow-y-auto space-y-1">
             {/* Checklist Items */}
             <DraggableRoot
@@ -632,7 +611,6 @@ export function Note({
             </Button>
           )}
         </div>
-      )}
     </div>
   );
 }
