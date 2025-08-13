@@ -53,9 +53,6 @@ jobs:
       - name: Generate Prisma Client
         run: npm run db:generate
 
-      - name: Push Database Schema
-        run: npm run db:push
-
       - name: Test
         run: npm test
 
