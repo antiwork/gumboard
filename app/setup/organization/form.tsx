@@ -9,7 +9,10 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@/app/contexts/UserContext";
 
 interface OrganizationSetupFormProps {
-  onSubmit: (orgName: string, teamEmails: string[]) => Promise<{ success: boolean; organization?: unknown }>;
+  onSubmit: (
+    orgName: string,
+    teamEmails: string[]
+  ) => Promise<{ success: boolean; organization?: unknown }>;
 }
 
 export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFormProps) {

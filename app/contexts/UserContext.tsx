@@ -9,7 +9,6 @@ import React, {
   useCallback,
 } from "react";
 
-
 export type Organization = {
   id: string;
   name: string;
@@ -39,7 +38,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
 
   const fetchUser = useCallback(async () => {
     try {
@@ -73,8 +71,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
-
-
 
   return (
     <UserContext.Provider value={{ user, loading, error, refreshUser }}>

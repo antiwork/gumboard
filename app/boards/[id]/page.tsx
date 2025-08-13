@@ -35,7 +35,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [notesloading, setNotesLoading] = useState(true);
-  const {user, loading: userLoading } = useUser();
+  const { user, loading: userLoading } = useUser();
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
