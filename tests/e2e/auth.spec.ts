@@ -1,52 +1,54 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Authentication Flow", () => {
-  test("should complete email authentication flow and verify database state", async ({ page }) => {
-    let emailSent = false;
-    let authData: { email: string } | null = null;
+  test("should complete email authentication flow and verify database state", async ({ page, prisma }) => {
+    const email = "test@example.com";
 
-    await page.route("**/api/auth/signin/email", async (route) => {
-      emailSent = true;
-      const postData = await route.request().postDataJSON();
-      authData = postData;
-
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ url: "/auth/verify-request" }),
-      });
+    await prisma.verificationToken.deleteMany({
+      where: { identifier: email },
     });
 
     await page.goto("/auth/signin");
 
-    await page.evaluate(() => {
-      const mockAuthData = { email: "test@example.com" };
-      fetch("/api/auth/signin/email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mockAuthData),
-      });
+    await page.fill('input[id="email"]', email);
+    await page.click('button[type="submit"]');
+
+    await expect(page.locator("text=Check your email")).toBeVisible({ timeout: 100000 });
+
+    await page.waitForTimeout(1000);
+
+    const verificationToken = await prisma.verificationToken.findFirst({
+      where: { identifier: email },
     });
 
-    await page.waitForTimeout(100);
+    expect(verificationToken).not.toBeNull();
+    expect(verificationToken!.identifier).toBe(email);
+    expect(verificationToken!.token).toBeDefined();
+    expect(verificationToken!.expires).toBeInstanceOf(Date);
+    expect(verificationToken!.expires.getTime()).toBeGreaterThan(Date.now());
 
-    expect(emailSent).toBe(true);
-    expect(authData).not.toBeNull();
-    expect(authData!.email).toBe("test@example.com");
+    await prisma.verificationToken.delete({
+      where: { 
+        identifier_token: {
+          identifier: email,
+          token: verificationToken!.token,
+        },
+      },
+    });
   });
 
   test("should authenticate user and access dashboard", async ({ page }) => {
+    const user = {
+      id: "test-user",
+      name: "Test User",
+      email: "test@example.com",
+    };
+
     await page.route("**/api/auth/session", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            name: "Test User",
-            email: "test@example.com",
-          },
-        }),
+        body: JSON.stringify({ user }),
       });
     });
 
@@ -54,13 +56,7 @@ test.describe("Authentication Flow", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            name: "Test User",
-            email: "test@example.com",
-          },
-        }),
+        body: JSON.stringify({ user }),
       });
     });
 
@@ -92,18 +88,17 @@ test.describe("Authentication Flow", () => {
   });
 
   test("should authenticate user via Google OAuth and access dashboard", async ({ page }) => {
+    const user = {
+      id: "google-user",
+      name: "Google User",
+      email: "google@example.com",
+    };
+
     await page.route("**/api/auth/session", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "google-user",
-            name: "Google User",
-            email: "google@example.com",
-            image: "https://example.com/avatar.jpg",
-          },
-        }),
+        body: JSON.stringify({ user: { ...user, image: "https://example.com/avatar.jpg" } }),
       });
     });
 
@@ -111,13 +106,7 @@ test.describe("Authentication Flow", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "google-user",
-            name: "Google User",
-            email: "google@example.com",
-          },
-        }),
+        body: JSON.stringify({ user }),
       });
     });
 
@@ -136,18 +125,17 @@ test.describe("Authentication Flow", () => {
   });
 
   test("should authenticate user via GitHub OAuth and access dashboard", async ({ page }) => {
+    const user = {
+      id: "github-user",
+      name: "GitHub User",
+      email: "github@example.com",
+    };
+
     await page.route("**/api/auth/session", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user",
-            name: "GitHub User",
-            email: "github@example.com",
-            image: "https://avatars.githubusercontent.com/u/123?v=4",
-          },
-        }),
+        body: JSON.stringify({ user: { ...user, image: "https://avatars.githubusercontent.com/u/123?v=4" } }),
       });
     });
 
@@ -155,13 +143,7 @@ test.describe("Authentication Flow", () => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user",
-            name: "GitHub User",
-            email: "github@example.com",
-          },
-        }),
+        body: JSON.stringify({ user }),
       });
     });
 

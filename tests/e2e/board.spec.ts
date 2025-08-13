@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Board Management", () => {
   test.beforeEach(async ({ page }) => {
@@ -61,7 +61,7 @@ test.describe("Board Management", () => {
     });
   });
 
-  test("should create a new board and verify database state", async ({ page }) => {
+  test("should create a new board and verify database state", async ({ page, prisma }) => {
     let boardCreated = false;
     let boardData: { name: string; description: string } | null = null;
 
@@ -95,7 +95,7 @@ test.describe("Board Management", () => {
         });
       }
     });
-
+    
     await page.goto("/dashboard");
 
     await page.click('button:has-text("Add Board")');
