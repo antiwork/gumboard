@@ -151,7 +151,7 @@ test.describe("Add Task Button", () => {
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
 
-    const newItemInput = authenticatedPage.locator('textarea');
+    const newItemInput = authenticatedPage.locator("textarea");
     await expect(newItemInput).toBeVisible();
     await expect(newItemInput).toBeFocused();
 
@@ -224,7 +224,7 @@ test.describe("Add Task Button", () => {
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
 
-    const newItemInput = authenticatedPage.locator('textarea');
+    const newItemInput = authenticatedPage.locator("textarea");
     await expect(newItemInput).toBeVisible();
     await expect(addTaskButton).toBeVisible();
   });
@@ -281,7 +281,7 @@ test.describe("Add Task Button", () => {
       .or(authenticatedPage.locator(".shadow-md").first());
     await noteBackground.click({ position: { x: 50, y: 50 } });
 
-    const newItemInput = authenticatedPage.locator('textarea');
+    const newItemInput = authenticatedPage.locator("textarea");
     await expect(newItemInput).not.toBeVisible();
 
     const finalNote = await testPrisma.note.findUnique({

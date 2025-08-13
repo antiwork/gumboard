@@ -64,8 +64,8 @@ test.describe("Note Management", () => {
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    await authenticatedPage.locator('textarea').fill(testItemContent);
-    await authenticatedPage.locator('textarea').press("Enter");
+    await authenticatedPage.locator("textarea").fill(testItemContent);
+    await authenticatedPage.locator("textarea").press("Enter");
     await addItemResponse;
 
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
@@ -226,7 +226,7 @@ test.describe("Note Management", () => {
     const addTaskButton = page.locator('button:has-text("Add task")');
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
-    const newItemInput = page.locator('textarea');
+    const newItemInput = page.locator("textarea");
     await expect(newItemInput).toBeVisible();
     await newItemInput.fill("New test item");
     await newItemInput.press("Enter");
@@ -264,7 +264,7 @@ test.describe("Note Management", () => {
 
     await page.click('button:has-text("Add task")');
 
-    const newItemInput = page.locator('textarea');
+    const newItemInput = page.locator("textarea");
     await expect(newItemInput).toBeVisible();
     await expect(newItemInput).toBeFocused();
 
@@ -727,8 +727,8 @@ test.describe("Note Management", () => {
           resp.request().method() === "PUT" &&
           resp.ok()
       );
-      await authenticatedPage.locator('textarea').fill(testItemContent);
-      await authenticatedPage.locator('textarea').press("Enter");
+      await authenticatedPage.locator("textarea").fill(testItemContent);
+      await authenticatedPage.locator("textarea").press("Enter");
       await addItemResponse;
 
       await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
@@ -785,8 +785,8 @@ test.describe("Note Management", () => {
           resp.request().method() === "PUT" &&
           resp.ok()
       );
-      await authenticatedPage.locator('textarea').fill(testItemContent);
-      await authenticatedPage.locator('textarea').press("Enter");
+      await authenticatedPage.locator("textarea").fill(testItemContent);
+      await authenticatedPage.locator("textarea").press("Enter");
       await addItemResponse;
 
       await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
