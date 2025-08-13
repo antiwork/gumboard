@@ -156,12 +156,14 @@ test.describe("Board Name Link Functionality", () => {
 
     await page.locator("a", { hasText: "Test Board 1" }).click();
 
+    await page.waitForURL("/boards/test-board-1");
     await expect(page).toHaveURL("/boards/test-board-1");
 
     await page.goto("/boards/all-notes");
 
     await page.locator("a", { hasText: "Test Board 2" }).click();
 
+    await page.waitForURL("/boards/test-board-2");
     await expect(page).toHaveURL("/boards/test-board-2");
   });
 

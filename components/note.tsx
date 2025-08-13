@@ -98,7 +98,6 @@ export function Note({
   );
   const [newItemContent, setNewItemContent] = useState("");
   const newItemInputRef = useRef<HTMLTextAreaElement>(null);
-  const editContentRef = useRef<HTMLTextAreaElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -451,17 +450,6 @@ export function Note({
     }
   };
 
-  const handleKeyDownEditContent = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && e.ctrlKey) {
-      e.preventDefault();
-      handleStopEdit();
-    }
-    if (e.key === "Escape") {
-      setIsEditing(false);
-      setEditContent(note.content);
-    }
-  };
-
   return (
     <div
       className={cn(
@@ -553,13 +541,11 @@ export function Note({
       {isEditing ? (
         <div className="flex-1">
           <Textarea
-            ref={editContentRef}
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
             className="w-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
             placeholder="Enter note content..."
             onBlur={handleStopEdit}
-            onKeyDown={handleKeyDownEditContent}
             autoFocus
           />
         </div>
