@@ -71,7 +71,7 @@ async function createOrganization(orgName: string, teamEmails: string[]) {
     }
   }
 
-  redirect("/dashboard");
+  return { success: true, organization };
 }
 
 export default async function OrganizationSetup() {

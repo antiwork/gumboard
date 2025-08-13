@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,22 +28,9 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import type { User } from "@/components/note";
+import { useUser } from "@/app/contexts/UserContext";
+import { useRouter } from "next/navigation";
 
-// Settings-specific extended types
-export type UserWithOrganization = User & {
-  organization: {
-    id: string;
-    name: string;
-    slackWebhookUrl?: string | null;
-    members: {
-      id: string;
-      name: string | null;
-      email: string;
-      isAdmin: boolean;
-    }[];
-  } | null;
-};
 
 interface OrganizationInvite {
   id: string;
@@ -69,8 +55,8 @@ interface SelfServeInvite {
 }
 
 export default function OrganizationSettingsPage() {
-  const [user, setUser] = useState<UserWithOrganization | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, refreshUser } = useUser();
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
@@ -102,38 +88,33 @@ export default function OrganizationSettingsPage() {
     variant?: "default" | "success" | "error";
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
-  const router = useRouter();
-
-  const fetchUserData = useCallback(async () => {
-    try {
-      const response = await fetch("/api/user");
-      if (response.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        const orgNameValue = userData.organization?.name || "";
-        const slackWebhookValue = userData.organization?.slackWebhookUrl || "";
-        setOrgName(orgNameValue);
-        setOriginalOrgName(orgNameValue);
-        setSlackWebhookUrl(slackWebhookValue);
-        setOriginalSlackWebhookUrl(slackWebhookValue);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
 
   useEffect(() => {
-    fetchUserData();
-    fetchInvites();
-    fetchSelfServeInvites();
-  }, [fetchUserData]);
+    if (user?.organization) {
+      const orgNameValue = user.organization.name || "";
+      const slackWebhookValue = user.organization.slackWebhookUrl || "";
+      setOrgName(orgNameValue);
+      setOriginalOrgName(orgNameValue);
+      setSlackWebhookUrl(slackWebhookValue);
+      setOriginalSlackWebhookUrl(slackWebhookValue);
+    }
+  }, [user?.organization?.name, user?.organization?.slackWebhookUrl]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/signin");
+    }
+  }, [user, loading, router]);
+
+
+  useEffect(() => {
+    if (user?.organization) {
+      fetchInvites();
+      fetchSelfServeInvites();
+    }
+  }, [user?.organization]);
+
+
 
   const fetchInvites = async () => {
     try {
@@ -174,11 +155,10 @@ export default function OrganizationSettingsPage() {
       });
 
       if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser);
         // Update the original values to reflect the saved state
         setOriginalOrgName(orgName);
         setOriginalSlackWebhookUrl(slackWebhookUrl);
+        refreshUser();
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -253,7 +233,7 @@ export default function OrganizationSettingsPage() {
       });
 
       if (response.ok) {
-        fetchUserData();
+        await refreshUser();
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -299,7 +279,7 @@ export default function OrganizationSettingsPage() {
       });
 
       if (response.ok) {
-        fetchUserData(); // Refresh the data to show updated admin status
+        await refreshUser();
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -558,8 +538,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="space-y-3">
-            {user?.organization?.members?.map(
-              (member: { id: string; name: string | null; email: string; isAdmin: boolean }) => (
+            {user?.organization?.members?.map((member) => (
                 <div
                   key={member.id}
                   className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
@@ -593,7 +572,7 @@ export default function OrganizationSettingsPage() {
                     {/* Only show admin toggle to current admins and not for yourself */}
                     {user?.isAdmin && member.id !== user.id && (
                       <Button
-                        onClick={() => handleToggleAdmin(member.id, member.isAdmin)}
+                        onClick={() => handleToggleAdmin(member.id, !!member.isAdmin)}
                         variant="outline"
                         size="sm"
                         className={`${
