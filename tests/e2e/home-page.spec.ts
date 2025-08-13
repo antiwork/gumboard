@@ -61,8 +61,8 @@ test.describe("Home Page", () => {
 
     // Test 3: Add a new checklist item
     await page.getByRole("button", { name: "Add task" }).first().click();
-    await page.getByPlaceholder("Add new item...").fill("Brand new task item");
-    await page.getByPlaceholder("Add new item...").press("Enter");
+    await page.locator("textarea").fill("Brand new task item");
+    await page.locator("textarea").press("Enter");
     await expect(page.getByText("Brand new task item")).toBeVisible();
 
     // Test 4: Edit existing checklist item content
