@@ -71,6 +71,4 @@ test.describe("Board Management", () => {
     await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
     await expect(createButton).toBeEnabled();
   });
-
-
 });

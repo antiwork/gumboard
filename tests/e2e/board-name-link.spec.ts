@@ -104,10 +104,12 @@ test.describe("Board Name Link Functionality", () => {
 
     // Use Promise.race to handle navigation with a timeout
     await Promise.race([
-      boardLink.click().then(() => authenticatedPage.waitForURL(`/boards/${board1.id}`, { timeout: 10000 })),
+      boardLink
+        .click()
+        .then(() => authenticatedPage.waitForURL(`/boards/${board1.id}`, { timeout: 10000 })),
       authenticatedPage.waitForTimeout(15000).then(() => {
-        throw new Error('Navigation timeout - link may not be working properly');
-      })
+        throw new Error("Navigation timeout - link may not be working properly");
+      }),
     ]);
 
     // Verify we're on the correct page
