@@ -252,6 +252,22 @@ test.describe("Note Management", () => {
         }
       });
 
+      await page.route("**/api/boards/all-notes", async (route) => {
+        if (route.request().method() === "GET") {
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({
+              board: {
+                id: "all-notes",
+                name: "All Notes",
+                description: "All notes view",
+              },
+            }),
+          });
+        }
+      });
+
       await page.goto("/boards/all-notes");
 
       // Check for all the actions for notes & checklistitem
