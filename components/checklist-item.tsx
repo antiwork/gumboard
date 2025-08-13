@@ -107,7 +107,7 @@ export function ChecklistItem({
             item.checked
               ? "line-through text-gray-500 dark:text-gray-400"
               : "text-gray-900 dark:text-gray-100",
-            !readonly && "rounded"
+            !readonly && "rounded hover:bg-transparent"
           )}
           onClick={() => !readonly && onStartEdit?.(item.id)}
         >
