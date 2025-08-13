@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { Resend } from "resend";
 import OrganizationSetupForm from "./form";
 import { env } from "@/lib/env";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
@@ -89,6 +90,7 @@ export default async function OrganizationSetup() {
     where: { id: session.user.id },
     include: { organization: true },
   });
+  
 
   if (user?.organization) {
     redirect("/dashboard");
@@ -106,13 +108,12 @@ export default async function OrganizationSetup() {
               Create your workspace and invite your team
             </p>
           </div>
-          <Card className="border-2 bg-white dark:bg-zinc-900 dark:border-zinc-800">
+          <Card className="border border-zinc-300 dark:border-zinc-800 bg-white dark:bg-zinc-900">
             <CardHeader className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 dark:from-zinc-800 dark:to-blue-900 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-2xl font-bold text-white">
-                  {session.user.name?.charAt(0).toUpperCase()}
-                </span>
-              </div>
+              <Avatar className="mx-auto mb-4 w-16 h-16">
+                <AvatarImage src={session.user.image || ""} />
+                <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 dark:from-zinc-800 dark:to-blue-900 rounded-full text-2xl font-medium">{session.user.name?.charAt(0)}</AvatarFallback>
+              </Avatar>
               <CardTitle className="text-lg sm:text-xl text-blue-700 dark:text-blue-300">
                 Welcome, {session.user.name}!
               </CardTitle>
