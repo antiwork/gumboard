@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 
 export async function GET() {
   try {
-    const startDate = new Date('2024-07-21');
+    const startDate = new Date("2024-07-21");
 
     const weeklyStats = await db.$queryRaw`
       WITH week_series AS (
