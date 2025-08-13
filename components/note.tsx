@@ -243,9 +243,11 @@ export function Note({
         return;
       }
 
+      const updatedItems = newItems.map((item, index) => ({ ...item, order: index }));
+
       const optimisticNote = {
         ...note,
-        checklistItems: newItems.map((items, index) => ({ ...items, order: index })),
+        checklistItems: updatedItems,
       };
 
       onUpdate?.(optimisticNote);
@@ -257,7 +259,7 @@ export function Note({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: newItems,
+            checklistItems: updatedItems,
             archivedAt: allItemsChecked ? new Date().toISOString() : null,
           }),
         });
@@ -285,8 +287,11 @@ export function Note({
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();
 
+      const cursorAtTheStart = firstHalf.length === 0;
+
+      // if cursor is at the start, don't update the item
       const updatedItems = note.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, content: firstHalf } : item
+        item.id === itemId && !cursorAtTheStart ? { ...item, content: firstHalf } : item
       );
 
       const currentItem = note.checklistItems.find((item) => item.id === itemId);
@@ -299,7 +304,12 @@ export function Note({
         order: currentOrder + 0.5,
       };
 
-      const allItems = [...updatedItems, newItem].sort((a, b) => a.order - b.order);
+      // Prevent creating empty items when splitting
+      const shouldCreateNewItem = newItem.content.trim() !== "" && !cursorAtTheStart;
+
+      const allItems = shouldCreateNewItem
+        ? [...updatedItems, newItem].sort((a, b) => a.order - b.order)
+        : updatedItems;
 
       const optimisticNote = {
         ...note,
