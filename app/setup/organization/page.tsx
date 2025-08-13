@@ -1,17 +1,19 @@
 import { auth } from "@/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Resend } from "resend";
 import OrganizationSetupForm from "./form";
 import { env } from "@/lib/env";
+import { headers } from "next/headers";
+import { getBaseUrl } from "@/lib/utils";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
 async function createOrganization(orgName: string, teamEmails: string[]) {
   "use server";
 
+  const baseUrl = getBaseUrl(await headers());
   const session = await auth();
   if (!session?.user?.id) {
     throw new Error("Not authenticated");
@@ -55,7 +57,7 @@ async function createOrganization(orgName: string, teamEmails: string[]) {
               <h2>You&apos;re invited to join ${orgName}!</h2>
               <p>${session.user.name} (${session.user.email}) has invited you to join their organization on Gumboard.</p>
               <p>Click the link below to accept the invitation:</p>
-              <a href="${env.AUTH_URL}/invite/accept?token=${invite.id}"
+              <a href="${baseUrl}/invite/accept?token=${invite.id}"
                  style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                 Accept Invitation
               </a>
