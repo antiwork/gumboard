@@ -114,3 +114,78 @@ In your `.env.local` file, add:
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
+
+## 💬 Slack Integration Setup
+
+To enable Slack notifications, follow these steps:
+
+### 1. Create a Slack App
+
+1. Go to [Slack API: Your Apps](https://api.slack.com/apps)
+2. Click **Create New App** → **From scratch**
+3. Enter app name (e.g., "Gumboard") and select your workspace
+4. Click **Create App**
+
+### 2. Configure OAuth & Permissions
+
+1. In your app dashboard, go to **OAuth & Permissions**
+2. Scroll down to **Scopes** → **Bot Token Scopes**
+3. Add these scopes:
+   - `chat:write` - Send messages to channels
+   - `chat:write.public` - Send messages to channels without joining
+   - `channels:read` - View basic information about public channels
+   - `groups:read` - View basic information about private channels
+
+### 3. Set Redirect URLs
+
+1. Still in **OAuth & Permissions**, scroll to **Redirect URLs**
+2. Add your redirect URL:
+   ```
+   http://localhost:3000/api/slack/oauth/callback
+   ```
+   *(Replace with your production URL when deploying)*
+
+### 4. Add Environment Variables
+
+In your `.env.local` file, add:
+
+```env
+SLACK_CLIENT_ID=your_slack_client_id
+SLACK_CLIENT_SECRET=your_slack_client_secret
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+**Where to find these values:**
+- **Client ID**: Found on the **Basic Information** page of your Slack app
+- **Client Secret**: Found on the **Basic Information** page of your Slack app
+- **App URL**: Your application's base URL (use your ngrok/production URL when deploying)
+
+### 5. Install the App to Your Workspace
+
+1. In **Settings** → **Install App**, click **Install to Workspace**
+2. Authorize the app for your workspace
+3. In Gumboard, go to **Settings** → **Organization** → **Connect Slack**
+4. Complete the OAuth flow to connect your workspace
+5. Select a channel for notifications
+
+### 6. Development with ngrok (Optional)
+
+For local development with Slack OAuth, you may need to expose your local server:
+
+```bash
+# Install ngrok if you haven't already
+npm install -g ngrok
+
+# Expose your local server
+ngrok http 3000
+```
+
+Then update your Slack app's redirect URL and `NEXT_PUBLIC_APP_URL` to use the ngrok URL.
+
+### 7. Invite Bot to Channels
+
+To send notifications to specific channels, invite your Slack bot:
+
+1. Go to the desired Slack channel
+2. Type `/invite @YourBotName` (replace with your app name)
+3. The channel will now appear in the Gumboard channel picker
