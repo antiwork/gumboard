@@ -598,7 +598,6 @@ export function Note({
                     onKeyDown={handleKeyDownNewItem}
                     onBlur={handleAddItem}
                     autoFocus
-                    rows={1}
                   />
                   <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                     <Button
