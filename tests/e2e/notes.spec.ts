@@ -330,7 +330,6 @@ test.describe("Note Management", () => {
     await page.goto("/boards/test-board");
   });
 
-
   test("should toggle checklist item completion", async ({
     authenticatedPage,
     testContext,
