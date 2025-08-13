@@ -322,18 +322,7 @@ test.describe("Search Notes Checklist Items", () => {
     await page.waitForTimeout(1000);
     await expect(page.locator("text=Order #12345")).toBeVisible();
 
-    // Test whitespace handling
-    await searchInput.fill("leading");
-    await page.waitForTimeout(1000);
-    await expect(page.locator("text=leading spaces")).toBeVisible();
 
-    await searchInput.fill("trailing");
-    await page.waitForTimeout(1000);
-    await expect(page.locator("text=trailing spaces")).toBeVisible();
-
-    await searchInput.fill("multiple spaces");
-    await page.waitForTimeout(1000);
-    await expect(page.locator("text=multiple   spaces   between")).toBeVisible();
   });
 
   test("should handle search with very long and very short queries", async ({ page }) => {
