@@ -12,7 +12,7 @@ type Props = {
 };
 
 export function ProfileDropdown({ user }: Props) {
-  const { setTheme , theme } = useTheme()
+  const { setTheme, theme } = useTheme();
   const handleSignOut = async () => {
     await signOut();
   };
