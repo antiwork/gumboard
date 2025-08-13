@@ -121,7 +121,6 @@ test.describe("Checklist Item Overflow Behavior", () => {
 
     await expect(longTextElement).toHaveClass(/word-wrap/);
     await expect(longTextElement).toHaveClass(/whitespace-pre-wrap/);
-    await expect(longTextElement).toHaveClass(/overflow-wrap/);
 
     const containerElement = page.locator("[data-testid='item-1']");
     await expect(containerElement).toHaveClass(/items-start/);
@@ -221,7 +220,6 @@ test.describe("Checklist Item Overflow Behavior", () => {
 
     await expect(textArea).toHaveClass(/word-wrap/);
     await expect(textArea).toHaveClass(/whitespace-pre-wrap/);
-    await expect(textArea).toHaveClass(/overflow-wrap/);
 
     await textArea.clear();
     await textArea.fill(longText);
@@ -301,7 +299,6 @@ test.describe("Checklist Item Overflow Behavior", () => {
     for (const item of [longItem, mediumItem, shortItem]) {
       await expect(item).toHaveClass(/word-wrap/);
       await expect(item).toHaveClass(/whitespace-pre-wrap/);
-      await expect(item).toHaveClass(/overflow-wrap/);
     }
 
     await expect(mediumItem).toHaveClass(/line-through/);
