@@ -64,7 +64,7 @@ export function ChecklistItem({
       textarea.focus();
       textarea.setSelectionRange(textarea.value.length, textarea.value.length);
     }
-  }, [isEditing]);
+  }, [isEditing, editContent]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter") {
