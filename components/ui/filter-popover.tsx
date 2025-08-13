@@ -75,7 +75,9 @@ function FilterPopover({
       <Button
         onClick={() => {
           setshowBoardDropdown?.(false)
-          !disabled && setIsOpen(!isOpen)
+          if(!disabled){
+            setIsOpen(!isOpen)
+          }          
         }}      
         disabled={disabled}
         className={cn(
