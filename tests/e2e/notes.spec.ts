@@ -103,8 +103,8 @@ test.describe("Note Management", () => {
     const originalContent = testContext.prefix("Original item");
 
     const note = await testPrisma.note.create({
-              data: {
-          color: "#fef3c7",
+      data: {
+        color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -170,8 +170,8 @@ test.describe("Note Management", () => {
     const testItemContent = testContext.prefix("Test item");
 
     const note = await testPrisma.note.create({
-              data: {
-          color: "#fef3c7",
+      data: {
+        color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -227,8 +227,8 @@ test.describe("Note Management", () => {
     const itemToDeleteContent = testContext.prefix("Item to delete");
 
     const note = await testPrisma.note.create({
-              data: {
-          color: "#fef3c7",
+      data: {
+        color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -289,7 +289,7 @@ test.describe("Note Management", () => {
       const itemA3Id = testContext.prefix("item-a3");
 
       const note = await testPrisma.note.create({
-                data: {
+        data: {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
@@ -363,7 +363,7 @@ test.describe("Note Management", () => {
       const note2ItemId = testContext.prefix("note2-item");
 
       const note1 = await testPrisma.note.create({
-                data: {
+        data: {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
@@ -381,7 +381,7 @@ test.describe("Note Management", () => {
       });
 
       const note2 = await testPrisma.note.create({
-                data: {
+        data: {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
@@ -454,7 +454,7 @@ test.describe("Note Management", () => {
       });
 
       const note = await testPrisma.note.create({
-                data: {
+        data: {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
