@@ -90,7 +90,6 @@ export default async function OrganizationSetup() {
     where: { id: session.user.id },
     include: { organization: true },
   });
-  
 
   if (user?.organization) {
     redirect("/dashboard");
@@ -112,7 +111,9 @@ export default async function OrganizationSetup() {
             <CardHeader className="text-center">
               <Avatar className="mx-auto mb-4 w-16 h-16">
                 <AvatarImage src={session.user.image || ""} />
-                <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 dark:from-zinc-800 dark:to-blue-900 rounded-full text-2xl font-medium">{session.user.name?.charAt(0)}</AvatarFallback>
+                <AvatarFallback className="bg-gradient-to-br from-green-500 to-blue-600 dark:from-zinc-800 dark:to-blue-900 rounded-full text-2xl font-medium">
+                  {session.user.name?.charAt(0)}
+                </AvatarFallback>
               </Avatar>
               <CardTitle className="text-lg sm:text-xl text-blue-700 dark:text-blue-300">
                 Welcome, {session.user.name}!
