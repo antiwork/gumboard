@@ -909,7 +909,7 @@ test.describe("Note Management", () => {
       await page.waitForTimeout(500);
 
       // Add first item with content
-      const initialInput = page.locator("input.bg-transparent").first();
+      const initialInput = page.locator("textarea.bg-transparent").first();
       await initialInput.fill("First item content");
       await initialInput.press("Enter");
       await page.waitForTimeout(500);
@@ -920,8 +920,11 @@ test.describe("Note Management", () => {
       // Click at the beginning of the existing item
       await page.getByText("First item content").click();
 
-      // Get the input field for the existing item
-      const itemInput = page.locator('input[value="First item content"]');
+      // Get the textarea field for the existing item
+      const itemInput = page
+        .locator("textarea")
+        .filter({ hasText: "First item content" })
+        .or(page.locator('textarea[value*="First item content"]'));
       await expect(itemInput).toBeVisible();
 
       // Position cursor at the start (position 0)
@@ -946,7 +949,7 @@ test.describe("Note Management", () => {
       await page.waitForTimeout(500);
 
       // Add first item with content
-      const initialInput = page.locator("input.bg-transparent").first();
+      const initialInput = page.locator("textarea.bg-transparent").first();
       await initialInput.fill("Last item content");
       await initialInput.press("Enter");
       await page.waitForTimeout(500);
@@ -957,8 +960,11 @@ test.describe("Note Management", () => {
       // Click on the existing item to edit it
       await page.getByText("Last item content").click();
 
-      // Get the input field for the existing item
-      const itemInput = page.locator('input[value="Last item content"]');
+      // Get the textarea field for the existing item
+      const itemInput = page
+        .locator("textarea")
+        .filter({ hasText: "Last item content" })
+        .or(page.locator('textarea[value*="Last item content"]'));
       await expect(itemInput).toBeVisible();
 
       // Position cursor at the end
