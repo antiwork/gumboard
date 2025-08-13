@@ -1,144 +1,48 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Checklist Backspace Behavior", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            email: "test@example.com",
-            name: "Test User",
-          },
-        }),
-      });
+  test("should verify backspace behavior exists in checklist items", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
-
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          id: "test-user",
-          email: "test@example.com",
-          name: "Test User",
-          isAdmin: true,
-          organization: {
-            id: "test-org",
-            name: "Test Organization",
-          },
-        }),
-      });
-    });
-
-    await page.route("**/api/boards/test-board", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          board: {
-            id: "test-board",
-            name: "Test Board",
-            description: "A test board",
-          },
-        }),
-      });
-    });
-
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          boards: [
+    await testPrisma.note.create({
+      data: {
+        content: "",
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        checklistItems: {
+          create: [
             {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Test item"),
+              checked: false,
+              order: 0,
             },
           ],
-        }),
-      });
+        },
+      },
     });
 
-    await page.goto("/boards/test-board");
-  });
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-  test("should verify backspace behavior exists in checklist items", async ({ page }) => {
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [
-              {
-                id: "test-note-1",
-                content: "",
-                color: "#fef3c7",
-                archivedAt: null,
-                x: 100,
-                y: 100,
-                width: 200,
-                height: 150,
-                checklistItems: [
-                  {
-                    id: "item-1",
-                    content: "Test item",
-                    checked: false,
-                    order: 0,
-                  },
-                ],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
-              },
-            ],
-          }),
-        });
-      }
-    });
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test item")}`)
+    ).toBeVisible();
 
-    await page.route("**/api/boards/test-board/notes/test-note-1", async (route) => {
-      if (route.request().method() === "PUT") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "test-note-1",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              x: 100,
-              y: 100,
-              width: 200,
-              height: 150,
-              checklistItems: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
-            },
-          }),
-        });
-      }
-    });
-
-    await expect(page.locator("text=Test item")).toBeVisible();
-
-    const checklistItemElement = page
+    const checklistItemElement = authenticatedPage
       .locator("span.flex-1.text-sm.leading-6.cursor-pointer")
-      .filter({ hasText: "Test item" });
+      .filter({ hasText: testContext.prefix("Test item") });
     await expect(checklistItemElement).toBeVisible();
   });
 });
