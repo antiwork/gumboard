@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { getBaseUrl } from "@/lib/utils";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
@@ -101,7 +102,7 @@ export async function POST(request: NextRequest) {
             <h2>You're invited to join ${user.organization.name}!</h2>
             <p>${session.user.name} (${session.user.email}) has invited you to join their organization on Gumboard.</p>
             <p>Click the link below to accept the invitation:</p>
-            <a href="${env.AUTH_URL}/invite/accept?token=${invite.id}" 
+            <a href="${getBaseUrl(request)}/invite/accept?token=${invite.id}" 
                style="background-color: #007bff; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
               Accept Invitation
             </a>
