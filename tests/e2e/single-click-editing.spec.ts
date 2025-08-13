@@ -1,388 +1,248 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Single-Click Note Editing", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            email: "test@example.com",
-            name: "Test User",
-          },
-        }),
-      });
+  test("should enter edit mode on single click for checklist notes", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a board with real data
+    const boardName = testContext.getBoardName("Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          id: "test-user",
-          email: "test@example.com",
-          name: "Test User",
-          isAdmin: true,
-          organization: {
-            id: "test-org",
-            name: "Test Organization",
-          },
-        }),
-      });
-    });
-
-    await page.route("**/api/boards/test-board", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          board: {
-            id: "test-board",
-            name: "Test Board",
-            description: "A test board",
-          },
-        }),
-      });
-    });
-
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          boards: [
+    // Create a checklist note with test item
+    await testPrisma.note.create({
+      data: {
+        content: "",
+        color: "#fef3c7",
+        checklistItems: {
+          create: [
             {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Test checklist item"),
+              checked: false,
+              order: 0,
             },
           ],
-        }),
-      });
+        },
+        createdBy: testContext.userId,
+        boardId: board.id,
+      },
     });
 
-    await page.goto("/boards/test-board");
-  });
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-  test("should enter edit mode on single click for checklist notes", async ({ page }) => {
-    let noteUpdateCalled = false;
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
+    ).toBeVisible();
 
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [
-              {
-                id: "test-note-1",
-                content: "",
-                color: "#fef3c7",
-                archivedAt: null,
-                x: 100,
-                y: 100,
-                width: 200,
-                height: 150,
-                checklistItems: [
-                  {
-                    id: "item-1",
-                    content: "Test checklist item",
-                    checked: false,
-                    order: 0,
-                  },
-                ],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
-              },
-            ],
-          }),
-        });
-      }
-    });
-
-    await page.route("**/api/boards/test-board/notes/test-note-1", async (route) => {
-      if (route.request().method() === "PUT") {
-        noteUpdateCalled = true;
-        const requestBody = await route.request().postDataJSON();
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "test-note-1",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              x: 100,
-              y: 100,
-              width: 200,
-              height: 150,
-              checklistItems: requestBody.checklistItems,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
-            },
-          }),
-        });
-      }
-    });
-
-    await page.goto("/boards/test-board");
-
-    await expect(page.locator("text=Test checklist item")).toBeVisible();
-
-    const checklistItemElement = page
+    const checklistItemElement = authenticatedPage
       .locator("span.flex-1.text-sm.leading-6.cursor-pointer")
-      .filter({ hasText: "Test checklist item" });
+      .filter({ hasText: testContext.prefix("Test checklist item") });
     await expect(checklistItemElement).toBeVisible();
 
-    await expect(page.locator("text=Test checklist item")).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
+    ).toBeVisible();
   });
 
-  test("should enter edit mode on single click for checklist items", async ({ page }) => {
-    let noteUpdateCalled = false;
-
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [
-              {
-                id: "test-checklist-note",
-                content: "",
-                color: "#fef3c7",
-                archivedAt: null,
-                x: 100,
-                y: 100,
-                width: 200,
-                height: 150,
-                checklistItems: [
-                  {
-                    id: "item-1",
-                    content: "Test checklist item",
-                    checked: false,
-                    order: 0,
-                  },
-                ],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
-              },
-            ],
-          }),
-        });
-      }
+  test("should enter edit mode on single click for checklist items", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a board with real data
+    const boardName = testContext.getBoardName("Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/boards/test-board/notes/test-checklist-note", async (route) => {
-      if (route.request().method() === "PUT") {
-        noteUpdateCalled = true;
-        const requestBody = await route.request().postDataJSON();
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "test-checklist-note",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              x: 100,
-              y: 100,
-              width: 200,
-              height: 150,
-              checklistItems: requestBody.checklistItems,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
+    // Create a checklist note with test item
+    await testPrisma.note.create({
+      data: {
+        content: "",
+        color: "#fef3c7",
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Test checklist item"),
+              checked: false,
+              order: 0,
             },
-          }),
-        });
-      }
+          ],
+        },
+        createdBy: testContext.userId,
+        boardId: board.id,
+      },
     });
 
-    await page.goto("/boards/test-board");
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(page.locator("text=Test checklist item")).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
+    ).toBeVisible();
 
-    const checklistItemElement = page
+    const checklistItemElement = authenticatedPage
       .locator("span.flex-1.text-sm.leading-6.cursor-pointer")
-      .filter({ hasText: "Test checklist item" });
+      .filter({ hasText: testContext.prefix("Test checklist item") });
     await expect(checklistItemElement).toBeVisible();
 
-    await expect(page.locator("text=Test checklist item")).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
+    ).toBeVisible();
   });
 
-  test("should not enter edit mode when user is not authorized", async ({ page }) => {
-    await page.route("**/api/user", async (route) => {
+  test("should not enter edit mode when user is not authorized", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a different user and organization for this test
+    const differentOrg = await testPrisma.organization.create({
+      data: {
+        name: testContext.prefix("Different Organization"),
+      },
+    });
+
+    const differentUser = await testPrisma.user.create({
+      data: {
+        email: testContext.prefix("different@example.com"),
+        name: "Different User",
+        organizationId: differentOrg.id,
+      },
+    });
+
+    // Create a board owned by original user
+    const boardName = testContext.getBoardName("Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    // Create a note owned by original user
+    await testPrisma.note.create({
+      data: {
+        content: "",
+        color: "#fef3c7",
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Test checklist item"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
+        createdBy: testContext.userId, // Note owned by original user
+        boardId: board.id,
+      },
+    });
+
+    // Mock the API to return the different user when checking authorization
+    await authenticatedPage.route("**/api/user", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: "different-user",
-          email: "different@example.com",
-          name: "Different User",
+          id: differentUser.id,
+          email: differentUser.email,
+          name: differentUser.name,
           isAdmin: false,
           organization: {
-            id: "test-org",
-            name: "Test Organization",
+            id: differentOrg.id,
+            name: differentOrg.name,
           },
         }),
       });
     });
 
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [
-              {
-                id: "test-note-1",
-                content: "",
-                color: "#fef3c7",
-                archivedAt: null,
-                x: 100,
-                y: 100,
-                width: 200,
-                height: 150,
-                checklistItems: [
-                  {
-                    id: "item-1",
-                    content: "Test checklist item",
-                    checked: false,
-                    order: 0,
-                  },
-                ],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
-              },
-            ],
-          }),
-        });
-      }
-    });
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await page.goto("/boards/test-board");
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
+    ).toBeVisible();
 
-    await expect(page.locator("text=Test checklist item")).toBeVisible();
-
-    const checklistItemElement = page
+    const checklistItemElement = authenticatedPage
       .locator("span.flex-1.text-sm.leading-6.cursor-pointer")
-      .filter({ hasText: "Test checklist item" });
+      .filter({ hasText: testContext.prefix("Test checklist item") });
     await expect(checklistItemElement).toBeVisible();
 
-    await expect(page.locator("text=Test checklist item")).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
+    ).toBeVisible();
   });
 
-  test("should save changes when editing checklist item content", async ({ page }) => {
-    let savedChecklistItems: any[] = [];
-
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [
-              {
-                id: "test-note-1",
-                content: "",
-                color: "#fef3c7",
-                archivedAt: null,
-                x: 100,
-                y: 100,
-                width: 200,
-                height: 150,
-                checklistItems: [
-                  {
-                    id: "item-1",
-                    content: "Original item content",
-                    checked: false,
-                    order: 0,
-                  },
-                ],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
-              },
-            ],
-          }),
-        });
-      }
+  test("should save changes when editing checklist item content", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a board with real data
+    const boardName = testContext.getBoardName("Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/boards/test-board/notes/test-note-1", async (route) => {
-      if (route.request().method() === "PUT") {
-        const requestBody = await route.request().postDataJSON();
-        savedChecklistItems = requestBody.checklistItems;
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "test-note-1",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              x: 100,
-              y: 100,
-              width: 200,
-              height: 150,
-              checklistItems: requestBody.checklistItems,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
+    // Create a checklist note with test item
+    await testPrisma.note.create({
+      data: {
+        content: "",
+        color: "#fef3c7",
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Original item content"),
+              checked: false,
+              order: 0,
             },
-          }),
-        });
-      }
+          ],
+        },
+        createdBy: testContext.userId,
+        boardId: board.id,
+      },
     });
 
-    await page.goto("/boards/test-board");
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(page.locator("text=Original item content")).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`)
+    ).toBeVisible();
 
-    const checklistItemElement = page
+    const checklistItemElement = authenticatedPage
       .locator("span.flex-1.text-sm.leading-6.cursor-pointer")
-      .filter({ hasText: "Original item content" });
+      .filter({ hasText: testContext.prefix("Original item content") });
     await expect(checklistItemElement).toBeVisible();
 
-    await expect(page.locator("text=Original item content")).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`)
+    ).toBeVisible();
+
+    // Note: This test mainly validates that the UI renders correctly.
+    // The actual editing behavior would require more complex UI interactions
+    // that are already tested in the notes.spec.ts file.
   });
 });
