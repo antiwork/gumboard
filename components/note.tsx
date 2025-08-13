@@ -5,8 +5,6 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   ChecklistItem as ChecklistItemComponent,
@@ -351,20 +349,6 @@ export function Note({
     }
   };
 
-  const handleSubmitNewItem = async (e: React.FormEvent) => {
-    e.preventDefault();
-    handleAddItem();
-  };
-
-  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddItem();
-    } else if (e.key === "Escape") {
-      setAddingItem(false);
-      setNewItemContent("");
-    }
-  };
 
   return (
     <div
