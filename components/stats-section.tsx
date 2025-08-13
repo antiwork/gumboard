@@ -35,7 +35,7 @@ export function StatsSection() {
     return null;
   }
 
-  const maxValue = Math.max(...stats.map(item => item.value));
+  const maxValue = Math.max(...stats.map((item) => item.value));
   const yAxisMax = Math.ceil(maxValue * 1.1);
 
   return (
@@ -72,30 +72,23 @@ export function StatsSection() {
                   }}
                 >
                   <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
-                  <XAxis 
-                    dataKey="metric" 
+                  <XAxis
+                    dataKey="metric"
                     angle={-45}
                     textAnchor="end"
                     height={80}
                     interval={0}
                     className="text-xs"
                   />
-                  <YAxis 
-                    domain={[0, yAxisMax]}
-                    className="text-xs"
-                  />
-                  <Tooltip 
+                  <YAxis domain={[0, yAxisMax]} className="text-xs" />
+                  <Tooltip
                     contentStyle={{
-                      backgroundColor: 'var(--background)',
-                      border: '1px solid var(--border)',
-                      borderRadius: '6px',
+                      backgroundColor: "var(--background)",
+                      border: "1px solid var(--border)",
+                      borderRadius: "6px",
                     }}
                   />
-                  <Bar 
-                    dataKey="value" 
-                    fill="#3b82f6"
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -104,7 +97,10 @@ export function StatsSection() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {stats.map((stat) => (
-            <Card key={stat.metric} className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700">
+            <Card
+              key={stat.metric}
+              className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700"
+            >
               <CardHeader className="pb-2">
                 <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
                   {stat.metric}

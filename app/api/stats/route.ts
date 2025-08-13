@@ -24,12 +24,12 @@ export async function GET() {
       db.note.count({ where: { deletedAt: null } }),
       db.note.count({ where: { deletedAt: { not: null } } }),
       db.organizationInvite.count(),
-      db.organizationInvite.count({ where: { status: 'PENDING' } }),
-      db.organizationInvite.count({ where: { status: 'ACCEPTED' } }),
+      db.organizationInvite.count({ where: { status: "PENDING" } }),
+      db.organizationInvite.count({ where: { status: "ACCEPTED" } }),
       db.organizationSelfServeInvite.count({ where: { isActive: true } }),
       db.note.groupBy({
-        by: ['createdBy'],
-        _count: { createdBy: true }
+        by: ["createdBy"],
+        _count: { createdBy: true },
       }),
       db.checklistItem.count(),
       db.checklistItem.count({ where: { checked: true } }),
@@ -39,19 +39,19 @@ export async function GET() {
     const usersWithNotesCount = usersWithNotesResult.length;
 
     const stats = [
-      { metric: 'Users', value: usersCount },
-      { metric: 'Organizations', value: organizationsCount },
-      { metric: 'Boards', value: boardsCount },
-      { metric: 'Active Notes', value: activeNotesCount },
-      { metric: 'Deleted Notes', value: deletedNotesCount },
-      { metric: 'Org Invites', value: orgInvitesCount },
-      { metric: 'Pending Org Invites', value: pendingOrgInvitesCount },
-      { metric: 'Accepted Org Invites', value: acceptedOrgInvitesCount },
-      { metric: 'Active Self-Serve Invites', value: activeSelfServeInvitesCount },
-      { metric: 'Users with Notes', value: usersWithNotesCount },
-      { metric: 'Total Checklist Items', value: totalChecklistItemsCount },
-      { metric: 'Checked Items', value: checkedItemsCount },
-      { metric: 'Unchecked Items', value: uncheckedItemsCount },
+      { metric: "Users", value: usersCount },
+      { metric: "Organizations", value: organizationsCount },
+      { metric: "Boards", value: boardsCount },
+      { metric: "Active Notes", value: activeNotesCount },
+      { metric: "Deleted Notes", value: deletedNotesCount },
+      { metric: "Org Invites", value: orgInvitesCount },
+      { metric: "Pending Org Invites", value: pendingOrgInvitesCount },
+      { metric: "Accepted Org Invites", value: acceptedOrgInvitesCount },
+      { metric: "Active Self-Serve Invites", value: activeSelfServeInvitesCount },
+      { metric: "Users with Notes", value: usersWithNotesCount },
+      { metric: "Total Checklist Items", value: totalChecklistItemsCount },
+      { metric: "Checked Items", value: checkedItemsCount },
+      { metric: "Unchecked Items", value: uncheckedItemsCount },
     ];
 
     return NextResponse.json({ stats });
