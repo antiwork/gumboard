@@ -24,21 +24,37 @@ test.describe("Board Name Link Functionality", () => {
       },
     });
 
-    await testPrisma.note.create({
+    const note1 = await testPrisma.note.create({
       data: {
-        content: testContext.prefix("Note from Board 1"),
         color: "#fef3c7",
         createdBy: testContext.userId,
         boardId: board1.id,
       },
     });
 
-    await testPrisma.note.create({
+    await testPrisma.checklistItem.create({
       data: {
-        content: testContext.prefix("Note from Board 2"),
+        content: testContext.prefix("Note from Board 1"),
+        checked: false,
+        order: 0,
+        noteId: note1.id,
+      },
+    });
+
+    const note2 = await testPrisma.note.create({
+      data: {
         color: "#dcfce7",
         createdBy: testContext.userId,
         boardId: board2.id,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        content: testContext.prefix("Note from Board 2"),
+        checked: false,
+        order: 0,
+        noteId: note2.id,
       },
     });
 
@@ -79,12 +95,20 @@ test.describe("Board Name Link Functionality", () => {
     });
 
     // Create a note in the board
-    await testPrisma.note.create({
+    const note = await testPrisma.note.create({
       data: {
-        content: testContext.prefix("Note from Board 1"),
         color: "#fef3c7",
         createdBy: testContext.userId,
         boardId: board1.id,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        content: testContext.prefix("Note from Board 1"),
+        checked: false,
+        order: 0,
+        noteId: note.id,
       },
     });
 
@@ -132,12 +156,20 @@ test.describe("Board Name Link Functionality", () => {
     });
 
     // Create a note in the board
-    await testPrisma.note.create({
+    const noteForStyling = await testPrisma.note.create({
       data: {
-        content: testContext.prefix("Note from Board 1"),
         color: "#fef3c7",
         createdBy: testContext.userId,
         boardId: board.id,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        content: testContext.prefix("Note from Board 1"),
+        checked: false,
+        order: 0,
+        noteId: noteForStyling.id,
       },
     });
 
