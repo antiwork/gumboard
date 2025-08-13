@@ -251,9 +251,11 @@ export function Note({
         return;
       }
 
+      const updatedItems = newItems.map((item, index) => ({ ...item, order: index }));
+
       const optimisticNote = {
         ...note,
-        checklistItems: newItems.map((items, index) => ({ ...items, order: index })),
+        checklistItems: updatedItems,
       };
 
       onUpdate?.(optimisticNote);
@@ -265,7 +267,7 @@ export function Note({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: newItems,
+            checklistItems: updatedItems,
             archivedAt: allItemsChecked ? new Date().toISOString() : null,
           }),
         });
