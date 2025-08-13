@@ -382,8 +382,6 @@ export function Note({
     }
   };
 
-  // Note: Direct content editing removed - all content is now in checklist items
-
   const handleStartEditItem = (itemId: string) => {
     const item = note.checklistItems?.find((i) => i.id === itemId);
     if (item && canEdit) {
@@ -587,8 +585,6 @@ export function Note({
                 </div>
               </form>
             )}
-
-            {/* All content is now handled via checklist items */}
           </DraggableRoot>
         </div>
 

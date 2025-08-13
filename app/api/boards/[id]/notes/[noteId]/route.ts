@@ -184,8 +184,6 @@ export async function PUT(
       });
     });
 
-    // Note: Slack notifications for new content are now handled via checklist changes
-
     if (archivedAt !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
       const userName = note.user?.name || note.user?.email || "Unknown User";
       const boardName = note.board.name;
