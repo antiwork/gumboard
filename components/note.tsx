@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -104,7 +104,8 @@ export function Note({
 
   const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
+
+    textarea.style.height = `${textarea.scrollHeight}px`;
   };
 
   useEffect(() => {
@@ -112,12 +113,6 @@ export function Note({
       setAddingItem(true);
     }
   }, [addingChecklistItem, note.id, canEdit]);
-
-  useEffect(() => {
-    if (editContentRef.current && isEditing) {
-      autoResizeTextarea(editContentRef.current);
-    }
-  }, [editContent, isEditing]);
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {

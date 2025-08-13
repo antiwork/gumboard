@@ -5,7 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { Textarea } from "./ui/textarea";
 
 export interface ChecklistItem {
@@ -50,8 +50,15 @@ export function ChecklistItem({
 
   const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
+
+    textarea.style.height = `${textarea.scrollHeight}px`;
   };
+
+  useEffect(() => {
+    if (isEditing && textareaRef.current && editContent !== undefined) {
+      autoResizeTextarea(textareaRef.current);
+    }
+  }, [editContent, isEditing]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -84,11 +91,6 @@ export function ChecklistItem({
     }
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    onEditContentChange?.(e.target.value);
-    autoResizeTextarea(e.target);
-  };
-
   const handleBlur = () => {
     if (isEditing && editContent !== undefined && onEdit) {
       onEdit(item.id, editContent);
@@ -117,7 +119,7 @@ export function ChecklistItem({
         <Textarea
           ref={textareaRef}
           value={editContent ?? item.content}
-          onChange={handleChange}
+          onChange={(e) => onEditContentChange?.(e.target.value)}
           className={cn(
             "h-auto flex-1 border-none whitespace-pre-wrap break-words bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none resize-none min-h-[20px] min-w-0",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
