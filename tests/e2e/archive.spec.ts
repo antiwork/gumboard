@@ -37,7 +37,6 @@ test.describe("Archive Functionality", () => {
 
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         archivedAt: new Date(),
         createdBy: testContext.userId,
@@ -79,9 +78,9 @@ test.describe("Archive Functionality", () => {
       },
     });
 
+    const noteContent = testContext.prefix("Test note to archive");
     const note = await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         archivedAt: null,
         createdBy: testContext.userId,
@@ -89,7 +88,8 @@ test.describe("Archive Functionality", () => {
         checklistItems: {
           create: [
             {
-              content: testContext.prefix("Test note to archive"),
+              id: testContext.prefix("archive-item-1"),
+              content: noteContent,
               checked: false,
               order: 0,
             },
@@ -98,22 +98,12 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("Test note to archive"),
-        checked: false,
-        order: 0,
-        noteId: note.id,
-      },
-    });
-
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(
-      authenticatedPage.getByText(testContext.prefix("Test note to archive"))
-    ).toBeVisible();
+    await expect(authenticatedPage.locator(`text=${noteContent}`)).toBeVisible();
 
-    await authenticatedPage.getByText(testContext.prefix("Test note to archive")).hover();
+    // Hover over the note to reveal the archive button
+    await authenticatedPage.locator(`text=${noteContent}`).hover();
 
     const archiveButton = authenticatedPage.locator('[title="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
@@ -151,9 +141,8 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    const archivedNote2 = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         archivedAt: new Date(),
         createdBy: testContext.userId,
@@ -167,15 +156,6 @@ test.describe("Archive Functionality", () => {
             },
           ],
         },
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("This is an archived note"),
-        checked: false,
-        order: 0,
-        noteId: archivedNote2.id,
       },
     });
 
@@ -227,9 +207,8 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    const archivedNote3 = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         archivedAt: new Date(),
         createdBy: testContext.userId,
@@ -243,15 +222,6 @@ test.describe("Archive Functionality", () => {
             },
           ],
         },
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("This is an archived note"),
-        checked: false,
-        order: 0,
-        noteId: archivedNote3.id,
       },
     });
 
@@ -284,7 +254,6 @@ test.describe("Archive Functionality", () => {
 
     const archivedNote = await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         archivedAt: new Date(),
         createdBy: testContext.userId,
@@ -298,15 +267,6 @@ test.describe("Archive Functionality", () => {
             },
           ],
         },
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("Test note to unarchive"),
-        checked: false,
-        order: 0,
-        noteId: archivedNote.id,
       },
     });
 
@@ -354,7 +314,6 @@ test.describe("Archive Functionality", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         archivedAt: null,
         createdBy: testContext.userId,
@@ -368,15 +327,6 @@ test.describe("Archive Functionality", () => {
             },
           ],
         },
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("Note for archive-unarchive workflow test"),
-        checked: false,
-        order: 0,
-        noteId: note.id,
       },
     });
 

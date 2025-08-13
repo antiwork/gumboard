@@ -151,7 +151,7 @@ test.describe("Add Task Button", () => {
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
 
-    const newItemInput = authenticatedPage.getByTestId("new-item").getByRole("textbox");
+    const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
     await expect(newItemInput).toBeFocused();
 
@@ -166,7 +166,9 @@ test.describe("Add Task Button", () => {
         resp.ok()
     );
 
-    await newItemInput.press("Enter");
+    // Small delay to ensure response waiter is set up
+    await authenticatedPage.waitForTimeout(100);
+    await newItemInput.blur();
     await addItemResponse;
 
     const updatedNote = await testPrisma.note.findUnique({
@@ -226,7 +228,7 @@ test.describe("Add Task Button", () => {
     await expect(addTaskButton).toBeVisible();
     await addTaskButton.click();
 
-    const newItemInput = authenticatedPage.getByTestId("new-item").getByRole("textbox");
+    const newItemInput = authenticatedPage.getByTestId("new-item");
     await expect(newItemInput).toBeVisible();
     await expect(addTaskButton).toBeVisible();
   });
