@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -94,6 +94,7 @@ export function Note({
       (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
+  const newItemInputRef = useRef<HTMLInputElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -474,7 +475,6 @@ export function Note({
                   checked: false,
                   order: 0,
                 }}
-                onEdit={() => {}} // Let onStopEdit handle the item creation
                 onDelete={() => {
                   setAddingItem(false);
                   setNewItemContent("");
@@ -502,8 +502,14 @@ export function Note({
         {canEdit && (
           <Button
             variant="ghost"
-            onClick={() => setAddingItem(true)}
-            className="mt-2 !p-0 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+            onClick={() => {
+              if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                newItemInputRef.current.focus();
+              } else {
+                setAddingItem(true);
+              }
+            }}
+            className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
           >
             <Plus className="mr-2 h-4 w-4" />
             Add task
