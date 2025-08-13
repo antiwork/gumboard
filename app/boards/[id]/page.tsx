@@ -1017,6 +1017,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   setSelectedAuthor(authorId);
                   updateURL(undefined, undefined, authorId);
                 }}
+                setshowBoardDropdown={setShowBoardDropdown}
                 className="min-w-fit"
               />
             </div>
