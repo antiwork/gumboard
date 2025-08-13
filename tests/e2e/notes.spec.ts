@@ -917,9 +917,10 @@ test.describe("Note Management", () => {
       await page.waitForTimeout(500);
 
       // Add first item with content
-      const initialInput = page.locator("input.bg-transparent").first();
+      const initialInput = page.getByPlaceholder("Add new item...");
+      await expect(initialInput).toBeVisible({ timeout: 10000 });
       await initialInput.fill("First item content");
-      await initialInput.press("Enter");
+      await initialInput.press("Control+Enter");
       await page.waitForTimeout(500);
 
       // Wait for the item to be visible
@@ -927,9 +928,10 @@ test.describe("Note Management", () => {
 
       // Click at the beginning of the existing item
       await page.getByText("First item content").click();
+      await page.waitForTimeout(200); // Wait for edit mode to activate
 
-      // Get the input field for the existing item
-      const itemInput = page.locator('input[value="First item content"]');
+      // Get the textarea field for the existing item
+      const itemInput = page.locator('textarea').filter({ hasText: 'First item content' });
       await expect(itemInput).toBeVisible();
 
       // Position cursor at the start (position 0)
@@ -954,9 +956,10 @@ test.describe("Note Management", () => {
       await page.waitForTimeout(500);
 
       // Add first item with content
-      const initialInput = page.locator("input.bg-transparent").first();
+      const initialInput = page.getByPlaceholder("Add new item...");
+      await expect(initialInput).toBeVisible({ timeout: 10000 });
       await initialInput.fill("Last item content");
-      await initialInput.press("Enter");
+      await initialInput.press("Control+Enter");
       await page.waitForTimeout(500);
 
       // Wait for the item to be visible
@@ -964,9 +967,10 @@ test.describe("Note Management", () => {
 
       // Click on the existing item to edit it
       await page.getByText("Last item content").click();
+      await page.waitForTimeout(200); // Wait for edit mode to activate
 
-      // Get the input field for the existing item
-      const itemInput = page.locator('input[value="Last item content"]');
+      // Get the textarea field for the existing item
+      const itemInput = page.locator('textarea').filter({ hasText: 'Last item content' });
       await expect(itemInput).toBeVisible();
 
       // Position cursor at the end
