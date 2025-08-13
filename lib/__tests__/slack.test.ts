@@ -1,4 +1,4 @@
-import { hasValidContent } from "../slack";
+import { hasValidContent, shouldSendChecklistMessage } from "../slack";
 
 describe("hasValidContent", () => {
   it("should return false for null and undefined", () => {
@@ -48,5 +48,56 @@ describe("hasValidContent", () => {
     expect(hasValidContent("   a   ")).toBe(true);
     expect(hasValidContent("!!! Important !!!")).toBe(true);
     expect(hasValidContent("... loading ...")).toBe(true);
+  });
+});
+
+describe("shouldSendChecklistMessage", () => {
+  it("should allow first message for a checklist item", () => {
+    const checklistItemId = "test-item-1";
+    const action = "created";
+    const content = "Test checklist item";
+    
+    expect(shouldSendChecklistMessage(checklistItemId, action, content)).toBe(true);
+  });
+
+  it("should prevent duplicate messages within the deduplication window", () => {
+    const checklistItemId = "test-item-2";
+    const action = "updated";
+    const content = "Updated checklist item";
+    
+    // First call should return true
+    expect(shouldSendChecklistMessage(checklistItemId, action, content)).toBe(true);
+    
+    // Immediate second call should return false (duplicate prevention)
+    expect(shouldSendChecklistMessage(checklistItemId, action, content)).toBe(false);
+  });
+
+  it("should allow different actions for the same checklist item", () => {
+    const checklistItemId = "test-item-3";
+    const content = "Test item content";
+    
+    // Different actions should be allowed
+    expect(shouldSendChecklistMessage(checklistItemId, "created", content)).toBe(true);
+    expect(shouldSendChecklistMessage(checklistItemId, "checked", content)).toBe(true);
+    expect(shouldSendChecklistMessage(checklistItemId, "updated", content)).toBe(true);
+  });
+
+  it("should allow different content for the same checklist item", () => {
+    const checklistItemId = "test-item-4";
+    const action = "updated";
+    
+    // Different content should be allowed
+    expect(shouldSendChecklistMessage(checklistItemId, action, "Content A")).toBe(true);
+    expect(shouldSendChecklistMessage(checklistItemId, action, "Content B")).toBe(true);
+  });
+
+  it("should allow messages for different checklist items", () => {
+    const action = "created";
+    const content = "Same content";
+    
+    // Different items should be allowed
+    expect(shouldSendChecklistMessage("item-1", action, content)).toBe(true);
+    expect(shouldSendChecklistMessage("item-2", action, content)).toBe(true);
+    expect(shouldSendChecklistMessage("item-3", action, content)).toBe(true);
   });
 });

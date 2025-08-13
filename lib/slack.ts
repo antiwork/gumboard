@@ -2,7 +2,10 @@ interface SlackMessage {
   text: string;
   username?: string;
   icon_emoji?: string;
+  ts?: string;  // Message timestamp for updates
 }
+
+
 
 export function hasValidContent(content: string | null | undefined): boolean {
   if (!content) {
@@ -82,7 +85,8 @@ export async function sendSlackMessage(
       return null;
     }
 
-    return Date.now().toString();
+    // Generate a unique timestamp-based ID for tracking
+    return `gumboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   } catch (error) {
     console.error("Error sending Slack message:", error);
     return null;
@@ -117,6 +121,83 @@ export async function updateSlackMessage(
   }
 }
 
+// New function to send or update checklist item messages
+export async function sendOrUpdateChecklistMessage(
+  webhookUrl: string,
+  checklistItem: {
+    id: string;
+    content: string;
+    checked: boolean;
+    slackMessageId: string | null;
+  },
+  boardName: string,
+  userName: string,
+  action: "created" | "updated" | "checked" | "unchecked"
+): Promise<string | null> {
+  try {
+    const emoji = checklistItem.checked ? ":white_check_mark:" : ":heavy_plus_sign:";
+    const actionText = action === "created" ? "added" : 
+                     action === "checked" ? "completed" :
+                     action === "unchecked" ? "reopened" : "updated";
+    
+    const messageText = `${emoji} Checklist item ${actionText}: "${checklistItem.content}" by ${userName} in ${boardName}`;
+
+    // For webhook URLs, we can't update existing messages directly
+    // Instead, we'll post a new message and track it
+    const response = await fetch(webhookUrl, {
+      method: "POST", 
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        text: messageText,
+        username: "Gumboard",
+        icon_emoji: ":clipboard:",
+      }),
+    });
+
+    if (!response.ok) {
+      console.error("Failed to send checklist Slack message:", response.statusText);
+      return null;
+    }
+
+    return `gumboard_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  } catch (error) {
+    console.error("Error sending checklist Slack message:", error);
+    return null;
+  }
+}
+
+// Improved message tracking for preventing duplicates
+const recentMessages = new Map<string, { timestamp: number; messageId: string }>();
+const MESSAGE_DEDUPE_WINDOW = 30000; // 30 seconds
+
+export function shouldSendChecklistMessage(
+  checklistItemId: string,
+  action: string,
+  content: string
+): boolean {
+  const key = `${checklistItemId}_${action}_${content}`;
+  const now = Date.now();
+  const recent = recentMessages.get(key);
+
+  if (recent && now - recent.timestamp < MESSAGE_DEDUPE_WINDOW) {
+    console.log(`[Slack] Preventing duplicate checklist message for ${key}`);
+    return false;
+  }
+
+  recentMessages.set(key, { timestamp: now, messageId: "" });
+  
+  // Clean up old entries
+  for (const [msgKey, value] of recentMessages.entries()) {
+    if (now - value.timestamp > MESSAGE_DEDUPE_WINDOW) {
+      recentMessages.delete(msgKey);
+    }
+  }
+  
+  return true;
+}
+
 export function formatNoteForSlack(
   note: { content: string },
   boardName: string,
@@ -142,8 +223,15 @@ export async function sendTodoNotification(
   todoContent: string,
   boardName: string,
   userName: string,
-  action: "added" | "completed"
+  action: "added" | "completed",
+  checklistItemId?: string
 ): Promise<string | null> {
+  // Use deduplication if we have a checklist item ID
+  if (checklistItemId && !shouldSendChecklistMessage(checklistItemId, action, todoContent)) {
+    console.log(`[Slack] Skipping duplicate todo notification for ${checklistItemId}`);
+    return null;
+  }
+
   const message = formatTodoForSlack(todoContent, boardName, userName, action);
   return await sendSlackMessage(webhookUrl, {
     text: message,

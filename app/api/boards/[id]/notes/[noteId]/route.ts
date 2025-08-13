@@ -5,7 +5,9 @@ import {
   updateSlackMessage,
   formatNoteForSlack,
   sendSlackMessage,
-  sendTodoNotification,
+
+  sendOrUpdateChecklistMessage,
+  shouldSendChecklistMessage,
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";
@@ -238,6 +240,7 @@ export async function PUT(
       const boardName = updatedNote.board.name;
       const userName = user.name || user.email || "Unknown User";
 
+      // Handle created checklist items
       for (const item of checklistChanges.created) {
         if (
           hasValidContent(item.content) &&
@@ -246,36 +249,91 @@ export async function PUT(
             boardId,
             boardName,
             updatedNote.board.sendSlackUpdates
-          )
+          ) &&
+          shouldSendChecklistMessage(item.id, "created", item.content)
         ) {
-          await sendTodoNotification(
+          const messageId = await sendOrUpdateChecklistMessage(
             user.organization.slackWebhookUrl,
-            item.content,
+            {
+              id: item.id,
+              content: item.content,
+              checked: item.checked,
+              slackMessageId: null,
+            },
             boardName,
             userName,
-            "added"
+            "created"
           );
+
+          // Store the message ID for future updates
+          if (messageId) {
+            await db.checklistItem.update({
+              where: { id: item.id },
+              data: { slackMessageId: messageId },
+            });
+          }
         }
       }
 
+      // Handle updated checklist items
       for (const u of checklistChanges.updated) {
-        if (
-          !u.previous.checked &&
-          u.checked &&
-          shouldSendNotification(
-            session.user.id,
-            boardId,
-            boardName,
-            updatedNote.board.sendSlackUpdates
-          )
-        ) {
-          await sendTodoNotification(
-            user.organization.slackWebhookUrl,
-            u.content,
-            boardName,
-            userName,
-            "completed"
-          );
+        const shouldSendUpdate = shouldSendNotification(
+          session.user.id,
+          boardId,
+          boardName,
+          updatedNote.board.sendSlackUpdates
+        );
+
+        // Handle status changes (completed/uncompleted)
+        if (u.previous.checked !== u.checked && shouldSendUpdate) {
+          const action = u.checked ? "checked" : "unchecked";
+          
+          if (shouldSendChecklistMessage(u.id, action, u.content)) {
+            const messageId = await sendOrUpdateChecklistMessage(
+              user.organization.slackWebhookUrl,
+              {
+                id: u.id,
+                content: u.content,
+                checked: u.checked,
+                slackMessageId: null, // Will be updated below
+              },
+              boardName,
+              userName,
+              action
+            );
+
+            if (messageId) {
+              await db.checklistItem.update({
+                where: { id: u.id },
+                data: { slackMessageId: messageId },
+              });
+            }
+          }
+        }
+
+        // Handle content changes
+        if (u.previous.content !== u.content && shouldSendUpdate) {
+          if (shouldSendChecklistMessage(u.id, "updated", u.content)) {
+            const messageId = await sendOrUpdateChecklistMessage(
+              user.organization.slackWebhookUrl,
+              {
+                id: u.id,
+                content: u.content,
+                checked: u.checked,
+                slackMessageId: null,
+              },
+              boardName,
+              userName,
+              "updated"
+            );
+
+            if (messageId) {
+              await db.checklistItem.update({
+                where: { id: u.id },
+                data: { slackMessageId: messageId },
+              });
+            }
+          }
         }
       }
     }
