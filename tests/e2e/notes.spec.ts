@@ -495,13 +495,16 @@ test.describe("Note Management", () => {
       ).toBeVisible();
 
       // Wait a moment to ensure no delete call is made
-      await authenticatedPage.waitForResponse(
-        (resp) => resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) && 
-                 resp.request().method() === "DELETE",
-        { timeout: 500 }
-      ).catch(() => {
-        // Expected to timeout - no delete should happen
-      });
+      await authenticatedPage
+        .waitForResponse(
+          (resp) =>
+            resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
+            resp.request().method() === "DELETE",
+          { timeout: 500 }
+        )
+        .catch(() => {
+          // Expected to timeout - no delete should happen
+        });
       expect(deleteCalled).toBe(false);
     });
   });
@@ -556,9 +559,9 @@ test.describe("Note Management", () => {
       await authenticatedPage.keyboard.press("Home");
 
       await itemInput.press("Enter");
-      
+
       // Wait for any potential network activity to complete
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState("networkidle");
 
       const checklistItems = authenticatedPage.getByRole("checkbox");
       await expect(checklistItems).toHaveCount(1);
@@ -614,9 +617,9 @@ test.describe("Note Management", () => {
       await authenticatedPage.keyboard.press("End");
 
       await itemInput.press("Enter");
-      
+
       // Wait for any potential network activity to complete
-      await authenticatedPage.waitForLoadState('networkidle');
+      await authenticatedPage.waitForLoadState("networkidle");
 
       const checklistItems = authenticatedPage.getByRole("checkbox");
       await expect(checklistItems).toHaveCount(1);

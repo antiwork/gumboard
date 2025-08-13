@@ -79,84 +79,93 @@ export class TestContext {
   async cleanup() {
     // Use transaction for atomic cleanup
     try {
-      await this.prisma.$transaction(async (tx) => {
-        // Delete in dependency order to avoid foreign key violations
-        await tx.checklistItem.deleteMany({
-          where: {
-            note: {
+      await this.prisma.$transaction(
+        async (tx) => {
+          // Delete in dependency order to avoid foreign key violations
+          await tx.checklistItem.deleteMany({
+            where: {
+              note: {
+                board: {
+                  organizationId: this.organizationId,
+                },
+              },
+            },
+          });
+
+          await tx.note.deleteMany({
+            where: {
               board: {
-                organizationId: this.organizationId
-              }
-            }
-          }
-        });
+                organizationId: this.organizationId,
+              },
+            },
+          });
 
-        await tx.note.deleteMany({
-          where: { 
-            board: { 
-              organizationId: this.organizationId 
-            } 
-          },
-        });
+          await tx.board.deleteMany({
+            where: {
+              organizationId: this.organizationId,
+            },
+          });
 
-        await tx.board.deleteMany({
-          where: { 
-            organizationId: this.organizationId 
-          },
-        });
+          await tx.session.deleteMany({
+            where: {
+              userId: this.userId,
+            },
+          });
 
-        await tx.session.deleteMany({
-          where: { 
-            userId: this.userId 
-          },
-        });
+          await tx.user.deleteMany({
+            where: {
+              organizationId: this.organizationId,
+            },
+          });
 
-        await tx.user.deleteMany({
-          where: { 
-            organizationId: this.organizationId 
-          },
-        });
-
-        await tx.organization.deleteMany({
-          where: { 
-            id: this.organizationId 
-          },
-        });
-      }, {
-        timeout: 10000, // 10 second timeout for cleanup
-      });
+          await tx.organization.deleteMany({
+            where: {
+              id: this.organizationId,
+            },
+          });
+        },
+        {
+          timeout: 10000, // 10 second timeout for cleanup
+        }
+      );
     } catch (error) {
       // Log cleanup errors but don't throw - we want to continue test execution
       if (process.env.DEBUG_TESTS) {
         console.error(`Cleanup failed for test ${this.testId}:`, error);
       }
-      
+
       // Try individual cleanup as fallback
       const fallbackCleanup = [
-        () => this.prisma.checklistItem.deleteMany({
-          where: {
-            note: {
-              board: {
-                organizationId: this.organizationId
-              }
-            }
-          }
-        }),
-        () => this.prisma.note.deleteMany({
-          where: { board: { organizationId: this.organizationId } }
-        }),
-        () => this.prisma.board.deleteMany({
-          where: { organizationId: this.organizationId }
-        }),
-        () => this.prisma.session.deleteMany({
-          where: { userId: this.userId }
-        }),
-        () => this.prisma.user.deleteMany({
-          where: { organizationId: this.organizationId }
-        }),
-        () => this.prisma.organization.deleteMany({
-          where: { id: this.organizationId }
-        }),
+        () =>
+          this.prisma.checklistItem.deleteMany({
+            where: {
+              note: {
+                board: {
+                  organizationId: this.organizationId,
+                },
+              },
+            },
+          }),
+        () =>
+          this.prisma.note.deleteMany({
+            where: { board: { organizationId: this.organizationId } },
+          }),
+        () =>
+          this.prisma.board.deleteMany({
+            where: { organizationId: this.organizationId },
+          }),
+        () =>
+          this.prisma.session.deleteMany({
+            where: { userId: this.userId },
+          }),
+        () =>
+          this.prisma.user.deleteMany({
+            where: { organizationId: this.organizationId },
+          }),
+        () =>
+          this.prisma.organization.deleteMany({
+            where: { id: this.organizationId },
+          }),
       ];
 
       for (const cleanupFn of fallbackCleanup) {
@@ -223,7 +232,7 @@ export const test = base.extend<{
   authenticatedPage: async ({ page, testContext }, use) => {
     // Ensure auth is initialized before setting cookies
     await testContext.ensureAuthInitialized();
-    
+
     await page.context().addCookies([
       {
         name: "authjs.session-token",
