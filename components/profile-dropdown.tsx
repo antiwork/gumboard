@@ -1,16 +1,18 @@
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { LogOut, Settings } from "lucide-react";
+import { LogOut, Moon, Settings, Sun } from "lucide-react";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { User } from "./note";
+import { useTheme } from "next-themes";
 
 type Props = {
   user: User | null;
 };
 
 export function ProfileDropdown({ user }: Props) {
+  const { setTheme , theme } = useTheme()
   const handleSignOut = async () => {
     await signOut();
   };
@@ -47,7 +49,13 @@ export function ProfileDropdown({ user }: Props) {
             <Settings size={19} />
             Settings
           </Link>
-
+          <div
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="flex items-center mt-2 hover:bg-zinc-200 dark:hover:bg-zinc-800  pl-2 dark:hover:text-zinc-50 text-zinc-800 dark:text-zinc-400 rounded-md text-sm gap-2 py-2 cursor-pointer"
+          >
+            {theme === "dark" ? <Sun size={19} /> : <Moon size={19} />}
+            Toggle Theme
+          </div>
           <div
             onClick={handleSignOut}
             className="flex items-center mt-2 group hover:bg-zinc-200 dark:hover:bg-zinc-800 pl-2 text-red-700 dark:hover:text-red-500 rounded-md cursor-pointer text-sm gap-2 py-2"
