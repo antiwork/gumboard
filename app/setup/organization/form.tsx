@@ -111,7 +111,7 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
                       variant="destructive"
                       size="icon"
                       onClick={() => remove(index)}
-                      className="shrink-0 self-start active:scale-90"
+                      className="shrink-0 self-start bg-red-600 active:scale-90"
                     >
                       <X className="h-4 w-4" />
                     </Button>
