@@ -55,6 +55,7 @@ jobs:
 
       - name: Push Database Schema
         run: npm run db:push
+
       - name: Test
         run: npm test
 
@@ -70,11 +71,6 @@ jobs:
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium --only-shell
-
-      - name: Set up database for E2E tests
-        run: |
-          npx prisma migrate deploy
-          npx prisma generate
 
       - name: E2E Tests
         run: npm run test:e2e
