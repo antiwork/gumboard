@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 export async function GET() {
   try {
     const twelveWeeksAgo = new Date();
-    twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - (12 * 7));
+    twelveWeeksAgo.setDate(twelveWeeksAgo.getDate() - 12 * 7);
 
     const weeklyStats = await db.$queryRaw`
       WITH week_series AS (
@@ -72,17 +72,19 @@ export async function GET() {
       ORDER BY ws.week_start ASC
     `;
 
-    const formattedStats = (weeklyStats as Array<{
-      week_start: Date;
-      users_created: number;
-      orgs_created: number;
-      boards_created: number;
-      notes_created: number;
-      checklist_items_created: number;
-    }>).map(row => ({
-      week: new Date(row.week_start).toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric' 
+    const formattedStats = (
+      weeklyStats as Array<{
+        week_start: Date;
+        users_created: number;
+        orgs_created: number;
+        boards_created: number;
+        notes_created: number;
+        checklist_items_created: number;
+      }>
+    ).map((row) => ({
+      week: new Date(row.week_start).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
       }),
       weekStart: row.week_start,
       boardsCreated: Number(row.boards_created),
