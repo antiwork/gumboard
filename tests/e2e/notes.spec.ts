@@ -273,9 +273,13 @@ test.describe("Note Management", () => {
       // Test 3: Edit checklist item content
       const existingItem = page.locator("text=Test item").first();
       await expect(existingItem).toBeVisible();
-      await existingItem.dblclick();
-      const editInput = page.locator('textarea[value="Test item"]');
-      await editInput.isVisible();
+      await existingItem.click();
+      await page.waitForTimeout(500);
+      const editInput = page
+        .locator("textarea")
+        .filter({ hasText: "Test item" })
+        .or(page.locator('textarea[value*="Test item"]'));
+      await expect(editInput).toBeVisible();
       await editInput.fill("Edited test item");
       await page.getByText("Note Actual Board").click();
 
@@ -408,11 +412,14 @@ test.describe("Note Management", () => {
       await expect(page.getByText("#1 Task item")).toBeVisible();
 
       await page.getByText("#1 Task item").click();
-      const editInput = page.locator('textarea[value="#1 Task item"]');
+      const editInput = page
+        .locator("textarea")
+        .filter({ hasText: "#1 Task item" })
+        .or(page.locator('textarea[value*="#1 Task item"]'));
       await expect(editInput).toBeVisible();
       await editInput.focus();
       await editInput.fill("#1 Task item edited");
-      await page.locator('textarea[value="#1 Task item edited"]').press("Enter");
+      await editInput.blur();
       await page.waitForTimeout(500);
       await expect(page.getByText("#1 Task item edited")).toBeVisible();
     });

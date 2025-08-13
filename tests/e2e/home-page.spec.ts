@@ -41,10 +41,11 @@ test.describe("Home Page", () => {
 
     // Test 4: Edit existing checklist item content
     await page.getByText("Gumboard release by Friday").click();
-    const editInput = page.locator('input[value="Gumboard release by Friday"]');
-    await expect(editInput).toBeVisible();
+    await page.waitForTimeout(300);
+    const editInput = page.locator("textarea").first();
+    await expect(editInput).toBeVisible({ timeout: 10000 });
     await editInput.fill("Updated Gumboard release deadline");
-    await page.locator('input[value="Updated Gumboard release deadline"]').press("Enter");
+    await editInput.blur();
     await expect(page.getByText("Updated Gumboard release deadline")).toBeVisible();
 
     // Test 5: Delete a checklist item
@@ -63,7 +64,7 @@ test.describe("Home Page", () => {
     // Test 7: Split checklist item (Enter in middle of text)
     const itemToSplit = page.getByText("Helper Tix (Mon-Fri)");
     await itemToSplit.click();
-    const editSplitInput = page.locator('input[value="Helper Tix (Mon-Fri)"]');
+    const editSplitInput = page.locator('textarea[value="Helper Tix (Mon-Fri)"]');
     if (await editSplitInput.isVisible()) {
       await editSplitInput.click();
       await editSplitInput.press("ArrowLeft");

@@ -286,6 +286,10 @@ export function Note({
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();
 
+      if (firstHalf.length === 0 || secondHalf.length === 0) {
+        return;
+      }
+
       const updatedItems = note.checklistItems.map((item) =>
         item.id === itemId ? { ...item, content: firstHalf } : item
       );
