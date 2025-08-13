@@ -1,7 +1,7 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from '../fixtures/test-helpers';
 
 test.describe("Authentication Flow", () => {
-  test("should complete email authentication flow and verify database state", async ({ page }) => {
+  test("should complete email authentication flow and verify database state", async ({ page, testContext }) => {
     let emailSent = false;
     let authData: { email: string } | null = null;
 
@@ -35,50 +35,28 @@ test.describe("Authentication Flow", () => {
     expect(authData!.email).toBe("test@example.com");
   });
 
-  test("should authenticate user and access dashboard", async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            name: "Test User",
-            email: "test@example.com",
-          },
-        }),
-      });
+  test("should authenticate user and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+    // This test uses authenticatedPage which already handles authentication
+    // We just need to verify the user can access dashboard and see appropriate content
+    
+    // Ensure this user has no boards for the "No boards yet" test
+    const boardCount = await testPrisma.board.count({
+      where: { 
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId
+      }
     });
+    expect(boardCount).toBe(0);
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            name: "Test User",
-            email: "test@example.com",
-          },
-        }),
-      });
-    });
+    await authenticatedPage.goto("/dashboard");
 
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
-
-    await page.goto("/dashboard");
-
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should redirect unauthenticated users to signin", async ({ page }) => {
+  test("should redirect unauthenticated users to signin", async ({ page, testContext }) => {
+    // Use unauthenticated page to test redirect behavior
+    // Mock the user API to return 401 for this test
     await page.route("**/api/user", async (route) => {
       await route.fulfill({
         status: 401,
@@ -91,92 +69,72 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 5000 });
   });
 
-  test("should authenticate user via Google OAuth and access dashboard", async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "google-user",
-            name: "Google User",
-            email: "google@example.com",
-            image: "https://example.com/avatar.jpg",
-          },
-        }),
-      });
+  test("should authenticate user via Google OAuth and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+    // This test simulates a Google OAuth authenticated user accessing dashboard
+    // The authenticatedPage fixture already handles the authentication flow
+    
+    // Create a user that represents a Google OAuth user
+    const googleUser = await testPrisma.user.upsert({
+      where: { email: testContext.userEmail },
+      update: {
+        name: "Google User",
+        image: "https://example.com/avatar.jpg",
+      },
+      create: {
+        email: testContext.userEmail,
+        name: "Google User",
+        image: "https://example.com/avatar.jpg",
+        organizationId: testContext.organizationId,
+      }
     });
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "google-user",
-            name: "Google User",
-            email: "google@example.com",
-          },
-        }),
-      });
+    // Ensure no boards exist for this user
+    const boardCount = await testPrisma.board.count({
+      where: { 
+        createdBy: googleUser.id,
+        organizationId: testContext.organizationId
+      }
     });
+    expect(boardCount).toBe(0);
 
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
+    await authenticatedPage.goto("/dashboard");
 
-    await page.goto("/dashboard");
-
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should authenticate user via GitHub OAuth and access dashboard", async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user",
-            name: "GitHub User",
-            email: "github@example.com",
-            image: "https://avatars.githubusercontent.com/u/123?v=4",
-          },
-        }),
-      });
+  test("should authenticate user via GitHub OAuth and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+    // This test simulates a GitHub OAuth authenticated user accessing dashboard
+    // The authenticatedPage fixture already handles the authentication flow
+    
+    // Create a user that represents a GitHub OAuth user
+    const githubUser = await testPrisma.user.upsert({
+      where: { email: testContext.userEmail },
+      update: {
+        name: "GitHub User",
+        image: "https://avatars.githubusercontent.com/u/123?v=4",
+      },
+      create: {
+        email: testContext.userEmail,
+        name: "GitHub User",
+        image: "https://avatars.githubusercontent.com/u/123?v=4",
+        organizationId: testContext.organizationId,
+      }
     });
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user",
-            name: "GitHub User",
-            email: "github@example.com",
-          },
-        }),
-      });
+    // Ensure no boards exist for this user
+    const boardCount = await testPrisma.board.count({
+      where: { 
+        createdBy: githubUser.id,
+        organizationId: testContext.organizationId
+      }
     });
+    expect(boardCount).toBe(0);
 
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
+    await authenticatedPage.goto("/dashboard");
 
-    await page.goto("/dashboard");
-
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
   test("should link magic link and Google OAuth accounts when using same email", async ({

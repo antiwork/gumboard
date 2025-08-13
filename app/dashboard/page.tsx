@@ -425,7 +425,10 @@ export default function Dashboard() {
 
             {boards.map((board) => (
               <Link href={`/boards/${board.id}`} key={board.id}>
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
+                <Card 
+                  data-board-id={board.id}
+                  className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40"
+                >
                   <CardHeader className="flex flex-col h-full">
                     <div className="w-full">
                       <div className="flex items-center justify-between mb-1">
@@ -448,6 +451,7 @@ export default function Dashboard() {
                             title={
                               user?.id === board.createdBy ? "Edit board" : "Edit board (Admin)"
                             }
+                            aria-label="Edit"
                           >
                             <Edit3 className="w-4 h-4" />
                           </Button>
