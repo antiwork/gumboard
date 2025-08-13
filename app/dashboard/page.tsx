@@ -250,62 +250,72 @@ export default function Dashboard() {
         </Dialog>
 
         {boards.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-            <Link href="/boards/all-notes">
-              <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75 h-40">
-                <CardHeader>
-                  <div className="flex items-center space-x-2">
-                    <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                    <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
-                      All Notes
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-blue-700 dark:text-blue-300 text-sm">
-                    View notes from all boards
-                  </p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Archive Board */}
-            <Link href="/boards/archive">
-              <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
-                <CardHeader>
-                  <div className="flex items-center space-x-2">
-                    <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                    <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
-                      Archive
-                    </CardTitle>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-700 dark:text-gray-300 text-sm">View archived notes</p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {boards.map((board) => (
-              <Link href={`/boards/${board.id}`} key={board.id}>
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-50 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
+          <>
+            <div className="mb-8">
+              <h3 className="text-lg font-medium text-foreground dark:text-zinc-100 mb-2">
+                Your Boards
+              </h3>
+              <p className="text-muted-foreground dark:text-zinc-400">
+                Manage your tasks and notes across different boards
+              </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+              <Link href="/boards/all-notes">
+                <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75 h-40">
                   <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
-                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                        {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                      </span>
+                    <div className="flex items-center space-x-2">
+                      <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                      <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
+                        All Notes
+                      </CardTitle>
                     </div>
                   </CardHeader>
-                  {board.description && (
-                    <CardContent>
-                      <p className="text-sm dark:text-zinc-400">{board.description}</p>
-                    </CardContent>
-                  )}
+                  <CardContent>
+                    <p className="text-blue-700 dark:text-blue-300 text-sm">
+                      View notes from all boards
+                    </p>
+                  </CardContent>
                 </Card>
               </Link>
-            ))}
-          </div>
+
+              {/* Archive Board */}
+              <Link href="/boards/archive">
+                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
+                  <CardHeader>
+                    <div className="flex items-center space-x-2">
+                      <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
+                        Archive
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700 dark:text-gray-300 text-sm">View archived notes</p>
+                  </CardContent>
+                </Card>
+              </Link>
+
+              {boards.map((board) => (
+                <Link href={`/boards/${board.id}`} key={board.id}>
+                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-50 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                        </span>
+                      </div>
+                    </CardHeader>
+                    {board.description && (
+                      <CardContent>
+                        <p className="text-sm dark:text-zinc-400">{board.description}</p>
+                      </CardContent>
+                    )}
+                  </Card>
+                </Link>
+              ))}
+            </div>
+          </>
         )}
         {boards.length === 0 && (
           <div className="text-center py-12">
