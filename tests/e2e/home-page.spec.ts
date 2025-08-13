@@ -43,7 +43,7 @@ test.describe("Home Page", () => {
     await page.getByText("Gumboard release by Friday").click();
     await page.waitForTimeout(300); // Wait for edit mode to activate
     // Look for any textarea that appears after clicking
-    const editInput = page.locator('textarea').first();
+    const editInput = page.locator("textarea").first();
     await expect(editInput).toBeVisible({ timeout: 10000 });
     await editInput.fill("Updated Gumboard release deadline");
     await editInput.blur();
@@ -66,7 +66,7 @@ test.describe("Home Page", () => {
     const itemToSplit = page.getByText("Helper Tix (Mon-Fri)");
     await itemToSplit.click();
     await page.waitForTimeout(300); // Wait for edit mode to activate
-    const editSplitInput = page.locator('textarea').first();
+    const editSplitInput = page.locator("textarea").first();
     if (await editSplitInput.isVisible()) {
       await editSplitInput.click();
       await editSplitInput.press("ArrowLeft");

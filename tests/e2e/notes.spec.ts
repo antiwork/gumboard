@@ -275,7 +275,10 @@ test.describe("Note Management", () => {
       await expect(existingItem).toBeVisible();
       await existingItem.click();
       await page.waitForTimeout(200); // Wait for edit mode to activate
-      const editInput = page.locator('textarea').filter({ hasText: 'Test item' }).or(page.locator('textarea[value*="Test item"]'));
+      const editInput = page
+        .locator("textarea")
+        .filter({ hasText: "Test item" })
+        .or(page.locator('textarea[value*="Test item"]'));
       await expect(editInput).toBeVisible();
       await editInput.fill("Edited test item");
       await page.getByText("Note Actual Board").click();
@@ -306,7 +309,9 @@ test.describe("Note Management", () => {
       await page.click('button:has-text("Add task")');
       await page.waitForTimeout(500); // Wait for addingItem state to update
 
-      const newItemInput = page.getByPlaceholder("Add new item...").or(page.locator('textarea[placeholder="Add new item..."]'));
+      const newItemInput = page
+        .getByPlaceholder("Add new item...")
+        .or(page.locator('textarea[placeholder="Add new item..."]'));
       await expect(newItemInput).toBeVisible({ timeout: 10000 });
       await expect(newItemInput).toBeFocused();
 
@@ -413,7 +418,10 @@ test.describe("Note Management", () => {
 
       await page.getByText("#1 Task item").click();
       await page.waitForTimeout(200); // Wait for edit mode to activate
-      const editInput = page.locator('textarea').filter({ hasText: '#1 Task item' }).or(page.locator('textarea[value*="#1 Task item"]'));
+      const editInput = page
+        .locator("textarea")
+        .filter({ hasText: "#1 Task item" })
+        .or(page.locator('textarea[value*="#1 Task item"]'));
       await expect(editInput).toBeVisible();
       await editInput.focus();
       await editInput.fill("#1 Task item edited");
