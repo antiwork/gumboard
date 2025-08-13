@@ -926,8 +926,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   if (!board && boardId !== "all-notes" && boardId !== "archive") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
         <div className="text-lg">Board not found</div>
+        <Button asChild>
+          <Link href="/">Go to Gumboard home</Link>
+        </Button>
       </div>
     );
   }
