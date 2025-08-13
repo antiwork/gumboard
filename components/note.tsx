@@ -110,23 +110,31 @@ export function Note({
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
-
+  
       const updatedItems = note.checklistItems.map((item) =>
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
-
-      const sortedItems = [
-        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
-        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
-      ];
-
+  
+      const uncheckedItems = updatedItems
+        .filter((item) => !item.checked)
+        .sort((a, b) => a.order - b.order);
+      
+      const checkedItems = updatedItems
+        .filter((item) => item.checked)
+        .sort((a, b) => a.order - b.order);
+  
+      const sortedItems = [...uncheckedItems, ...checkedItems].map((item, index) => ({
+        ...item,
+        order: index, // Update the order to match new position
+      }));
+  
       const optimisticNote = {
         ...note,
         checklistItems: sortedItems,
       };
-
+  
       onUpdate?.(optimisticNote);
-
+  
       if (syncDB) {
         fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
           method: "PUT",
@@ -232,25 +240,33 @@ export function Note({
   const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItem[]) => {
     try {
       if (!note.checklistItems) return;
-      const allItemsChecked = newItems.every((item) => item.checked);
-      // Disallow unchecked items to be after checked items
-      const firstCheckedIndex = newItems.findIndex((element) => element.checked);
-      const lastUncheckedIndex = newItems.map((element) => element.checked).lastIndexOf(false);
-      if (
-        firstCheckedIndex !== -1 &&
-        lastUncheckedIndex !== -1 &&
-        lastUncheckedIndex > firstCheckedIndex
-      ) {
-        return;
+      
+      // First ensure no unchecked items are after checked items
+      const firstCheckedIndex = newItems.findIndex(item => item.checked);
+      const hasInvalidOrder = newItems.some(
+        (item, index) => !item.checked && index > firstCheckedIndex && firstCheckedIndex !== -1
+      );
+  
+      if (hasInvalidOrder) {
+        return; // Don't allow invalid ordering
       }
-
+  
+      // Update all order properties to match their new positions
+      const updatedItems = newItems.map((item, index) => ({
+        ...item,
+        order: index
+      }));
+  
+      const allItemsChecked = updatedItems.every(item => item.checked);
+  
       const optimisticNote = {
         ...note,
-        checklistItems: newItems.map((items, index) => ({ ...items, order: index })),
+        checklistItems: updatedItems,
+        archivedAt: allItemsChecked ? new Date().toISOString() : null
       };
-
+  
       onUpdate?.(optimisticNote);
-
+  
       if (syncDB) {
         const response = await fetch(`/api/boards/${note.boardId}/notes/${noteId}`, {
           method: "PUT",
@@ -258,11 +274,10 @@ export function Note({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: newItems,
-            archivedAt: allItemsChecked ? new Date().toISOString() : null,
+            checklistItems: updatedItems,
           }),
         });
-
+  
         if (response.ok) {
           const { note: updatedNote } = await response.json();
           onUpdate?.(updatedNote);
@@ -286,12 +301,11 @@ export function Note({
       const firstHalf = content.substring(0, cursorPosition).trim();
       const secondHalf = content.substring(cursorPosition).trim();
 
-      if (firstHalf.length === 0 || secondHalf.length === 0) {
-        return;
-      }
+      const cursorAtTheStart = firstHalf.length === 0;
 
+      // if cursor is at the start, don't update the item
       const updatedItems = note.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, content: firstHalf } : item
+        item.id === itemId && !cursorAtTheStart ? { ...item, content: firstHalf } : item
       );
 
       const currentItem = note.checklistItems.find((item) => item.id === itemId);
@@ -304,7 +318,12 @@ export function Note({
         order: currentOrder + 0.5,
       };
 
-      const allItems = [...updatedItems, newItem].sort((a, b) => a.order - b.order);
+      // Prevent creating empty items when splitting
+      const shouldCreateNewItem = newItem.content.trim() !== "" && !cursorAtTheStart;
+
+      const allItems = shouldCreateNewItem
+        ? [...updatedItems, newItem].sort((a, b) => a.order - b.order)
+        : updatedItems;
 
       const optimisticNote = {
         ...note,
@@ -543,7 +562,7 @@ export function Note({
           <Textarea
             value={editContent}
             onChange={(e) => setEditContent(e.target.value)}
-            className="w-full h-full resize-none p-2 bg-transparent border-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
+            className="w-full h-full resize-none p-2 bg-transparent border-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200 word-wrap overflow-wrap"
             placeholder="Enter note content..."
             onBlur={handleStopEdit}
             rows={1}
@@ -605,7 +624,7 @@ export function Note({
                       autoResizeTextarea(e.currentTarget)
                       setNewItemContent(e.target.value)
                     }}
-                    className="min-h-3 shadow-none border-none resize-none flex-1 bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                    className="min-h-3 shadow-none border-none resize-none flex-1 bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 word-wrap overflow-wrap"
                     placeholder="Add new item..."
                     onKeyDown={handleKeyDownNewItem}
                     onBlur={handleAddItem}

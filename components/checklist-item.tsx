@@ -75,7 +75,8 @@ export function ChecklistItem({
   const autoResizeTextarea = (textarea: HTMLTextAreaElement | null) => {
     if (textarea) {
       textarea.style.height = "auto";
-      textarea.style.height = `${textarea.scrollHeight}px`;
+      const newHeight = Math.max(28, textarea.scrollHeight); // Minimum height of ~28px for single line
+      textarea.style.height = `${newHeight}px`;
     }
   };
 
@@ -87,10 +88,20 @@ export function ChecklistItem({
     }
   }, [isEditing, editContent])
 
+  useEffect(() => {
+    if (isEditing && editItemInputRef.current) {
+      const textarea = editItemInputRef.current;
+      textarea.focus();
+      // Set cursor to end of text
+      const length = textarea.value.length;
+      textarea.setSelectionRange(length, length);
+    }
+  }, [isEditing]);
+
   return (
     <div
       className={cn(
-        "flex items-center group/item rounded gap-3 transition-all duration-200",
+        "flex items-start group/item rounded gap-3 transition-all duration-200",
         className
       )}
       // To avoid flaky test locators
@@ -100,7 +111,7 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
+        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1"
         disabled={readonly}
       />
 
@@ -110,7 +121,7 @@ export function ChecklistItem({
           ref={editItemInputRef}
           onChange={(e) => onEditContentChange?.(e.target.value)}
           className={cn(
-            "h-auto flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none break-words whitespace-pre-wrap word-wrap overflow-wrap",
+            "h-auto min-h-0 flex-1 border-none bg-transparent p-0 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none break-all overflow-wrap-anywhere whitespace-pre-wrap",
             item.checked && "text-slate-500 dark:text-zinc-500 line-through"
           )}
           onBlur={handleBlur}
@@ -121,7 +132,7 @@ export function ChecklistItem({
       ) : (
         <span
           className={cn(
-            "flex-1 text-sm leading-6 cursor-pointer select-none break-words whitespace-pre-wrap word-wrap overflow-wrap",
+            "flex-1 text-sm leading-6 cursor-pointer select-none break-all overflow-wrap-anywhere whitespace-pre-wrap",
             item.checked
               ? "line-through text-gray-500 dark:text-gray-400"
               : "text-gray-900 dark:text-gray-100",

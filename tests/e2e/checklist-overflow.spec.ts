@@ -125,7 +125,7 @@ test.describe("Checklist Item Overflow Behavior", () => {
     await expect(longTextElement).toHaveClass(/overflow-wrap/);
 
     const containerElement = page.locator("[data-testid='item-1']");
-    await expect(containerElement).toHaveClass(/items-center/);
+    await expect(containerElement).toHaveClass(/items-start/);
 
     await expect(longTextElement).toContainText(longText);
 
