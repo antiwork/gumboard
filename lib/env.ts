@@ -22,7 +22,7 @@ const schema = z.object({
   NEXT_PUBLIC_APP_URL: z.string().optional(),
 
   // NextAuth
-  AUTH_URL: z.string(),
+  AUTH_URL: z.string().optional(),
   AUTH_SECRET: z.string(),
 });
 

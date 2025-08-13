@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("GitHub Authentication Flow", () => {
   test("should display GitHub login button on signin page", async ({ page }) => {
@@ -38,57 +38,28 @@ test.describe("GitHub Authentication Flow", () => {
     expect(githubAuthInitiated).toBe(true);
   });
 
-  test("should handle GitHub OAuth callback and authenticate user", async ({ page }) => {
-    // Mock the session to simulate an authenticated user
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user-123",
-            name: "GitHub User",
-            email: "github@example.com",
-            image: "https://avatars.githubusercontent.com/u/123?v=4",
-          },
-        }),
-      });
+  test("should handle GitHub OAuth callback and authenticate user", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Ensure this user has no boards to verify "No boards yet" state
+    const boardCount = await testPrisma.board.count({
+      where: {
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
+    expect(boardCount).toBe(0);
 
-    // Mock user API
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user-123",
-            name: "GitHub User",
-            email: "github@example.com",
-            image: "https://avatars.githubusercontent.com/u/123?v=4",
-          },
-        }),
-      });
-    });
-
-    // Mock boards API
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
-
-    // Instead of trying to mock the callback, directly navigate to dashboard
-    // since we've already mocked the session to simulate successful auth
-    await page.goto("/dashboard");
+    // Navigate to dashboard with authenticated session
+    await authenticatedPage.goto("/dashboard");
 
     // Should be on dashboard
-    await expect(page).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
 
     // Verify user is authenticated
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
   test("should handle GitHub authentication errors gracefully", async ({ page }) => {
@@ -113,12 +84,15 @@ test.describe("GitHub Authentication Flow", () => {
     await expect(page).toHaveURL(/.*auth.*signin/);
   });
 
-  test("should link GitHub account with existing email account", async ({ page }) => {
-    const testEmail = "linked@example.com";
+  test("should link GitHub account with existing email account", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     let githubAuthInitiated = false;
 
     // Mock GitHub OAuth redirect
-    await page.route("**/github.com/login/oauth/authorize**", async (route) => {
+    await authenticatedPage.route("**/github.com/login/oauth/authorize**", async (route) => {
       githubAuthInitiated = true;
 
       await route.fulfill({
@@ -128,117 +102,57 @@ test.describe("GitHub Authentication Flow", () => {
       });
     });
 
-    // Mock session for linked account
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "linked-user-id",
-            name: "Linked User",
-            email: testEmail,
-            image: "https://avatars.githubusercontent.com/u/456?v=4",
-            providers: ["email", "github"],
-          },
-        }),
-      });
+    // Ensure this user has no boards to verify "No boards yet" state
+    const boardCount = await testPrisma.board.count({
+      where: {
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
+    expect(boardCount).toBe(0);
 
-    // Mock user API for linked account
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "linked-user-id",
-            name: "Linked User",
-            email: testEmail,
-            image: "https://avatars.githubusercontent.com/u/456?v=4",
-            providers: ["email", "github"],
-          },
-        }),
-      });
-    });
-
-    // Mock boards API
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
-
-    await page.goto("/auth/signin");
+    await authenticatedPage.goto("/auth/signin");
 
     // Click GitHub button
-    await page.click('button:has-text("Continue with GitHub")');
+    await authenticatedPage.click('button:has-text("Continue with GitHub")');
 
     // Wait for GitHub OAuth to be initiated
-    await page.waitForURL("**/github.com/login/oauth/authorize**");
+    await authenticatedPage.waitForURL("**/github.com/login/oauth/authorize**");
 
     // Verify GitHub auth was initiated
     expect(githubAuthInitiated).toBe(true);
 
     // Navigate to dashboard to verify linked account
-    await page.goto("/dashboard");
+    await authenticatedPage.goto("/dashboard");
 
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should maintain GitHub authentication state across page reloads", async ({ page }) => {
-    // Mock persistent session
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user-123",
-            name: "GitHub User",
-            email: "github@example.com",
-            image: "https://avatars.githubusercontent.com/u/123?v=4",
-          },
-        }),
-      });
+  test("should maintain GitHub authentication state across page reloads", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Ensure this user has no boards to verify "No boards yet" state
+    const boardCount = await testPrisma.board.count({
+      where: {
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
-
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user-123",
-            name: "GitHub User",
-            email: "github@example.com",
-            image: "https://avatars.githubusercontent.com/u/123?v=4",
-          },
-        }),
-      });
-    });
-
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
+    expect(boardCount).toBe(0);
 
     // First visit to dashboard
-    await page.goto("/dashboard");
-    await expect(page).toHaveURL(/.*dashboard/);
+    await authenticatedPage.goto("/dashboard");
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
 
     // Reload the page
-    await page.reload();
+    await authenticatedPage.reload();
 
     // Should still be authenticated
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
   test("should handle GitHub OAuth with missing email scope", async ({ page }) => {
