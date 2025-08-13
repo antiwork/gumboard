@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, boardId } = await request.json();
+    const { content, color, boardId, checklistItems } = await request.json();
 
     if (!boardId) {
       return NextResponse.json({ error: "Board ID is required" }, { status: 400 });
@@ -97,12 +97,35 @@ export async function POST(request: NextRequest) {
 
     const randomColor = color || NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)];
 
+    // If content is provided, convert it to a checklist item
+    const initialChecklistItems = [];
+    if (content && content.trim()) {
+      initialChecklistItems.push({
+        content: content.trim(),
+        checked: false,
+        order: 0,
+      });
+    }
+
+    // If checklistItems are provided, add them too
+    if (checklistItems && Array.isArray(checklistItems)) {
+      checklistItems.forEach((item, index) => {
+        initialChecklistItems.push({
+          content: item.content || "",
+          checked: item.checked || false,
+          order: item.order !== undefined ? item.order : initialChecklistItems.length,
+        });
+      });
+    }
+
     const note = await db.note.create({
       data: {
-        content,
         color: randomColor,
         boardId,
         createdBy: session.user.id,
+        checklistItems: initialChecklistItems.length > 0 ? {
+          create: initialChecklistItems,
+        } : undefined,
       },
       include: {
         user: {

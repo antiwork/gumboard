@@ -33,7 +33,6 @@ export interface Board {
 
 export interface Note {
   id: string;
-  content: string;
   color: string;
   archivedAt?: string | null;
   createdAt: string;
@@ -85,9 +84,9 @@ export function Note({
   syncDB = true,
   style,
 }: NoteProps) {
-  const [isEditing, setIsEditing] = useState(false);
+
   const { resolvedTheme } = useTheme();
-  const [editContent, setEditContent] = useState(note.content);
+
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [addingItem, setAddingItem] = useState(
@@ -384,19 +383,7 @@ export function Note({
     }
   };
 
-  const handleStartEdit = () => {
-    if (canEdit) {
-      setIsEditing(true);
-      setEditContent(note.content);
-    }
-  };
-
-  const handleStopEdit = () => {
-    setIsEditing(false);
-    if (onUpdate && editContent !== note.content) {
-      onUpdate({ ...note, content: editContent });
-    }
-  };
+  // Note: Direct content editing removed - all content is now in checklist items
 
   const handleStartEditItem = (itemId: string) => {
     const item = note.checklistItems?.find((i) => i.id === itemId);
@@ -623,15 +610,7 @@ export function Note({
                 </form>
               )}
 
-              {/* Content as text if no checklist items */}
-              {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
-                <div
-                  className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
-                  onClick={handleStartEdit}
-                >
-                  {note.content || ""}
-                </div>
-              )}
+              {/* All content is now handled via checklist items */}
             </DraggableRoot>
           </div>
 
