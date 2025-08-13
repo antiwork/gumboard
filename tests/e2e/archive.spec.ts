@@ -85,8 +85,12 @@ test.describe("Archive Functionality", () => {
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();
 
-    // Wait longer for the archive operation to complete
-    await authenticatedPage.waitForTimeout(2000);
+    const archiveResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
+    await archiveResponse;
 
     // Verify note was archived in database
     const archivedNote = await testPrisma.note.findUnique({
@@ -221,7 +225,12 @@ test.describe("Archive Functionality", () => {
     await expect(unarchiveButton).toBeVisible();
     await unarchiveButton.click();
 
-    await authenticatedPage.waitForTimeout(500);
+    const unarchiveResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
+    await unarchiveResponse;
     
     // Verify note was unarchived in database
     const unarchivedNote = await testPrisma.note.findUnique({
@@ -262,7 +271,12 @@ test.describe("Archive Functionality", () => {
     const archiveButton = authenticatedPage.locator('[title="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();
-    await authenticatedPage.waitForTimeout(500);
+    const archiveResponse2 = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
+    await archiveResponse2;
     
     // Verify note is no longer visible on board
     await expect(authenticatedPage.locator(`text=${testContext.prefix("Note for archive-unarchive workflow test")}`)).not.toBeVisible();

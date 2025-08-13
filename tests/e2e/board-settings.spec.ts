@@ -53,8 +53,12 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.click('button:has-text("Save settings")');
 
-    // Wait for settings to be saved
-    await authenticatedPage.waitForTimeout(500);
+    const saveSettingsResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
+    await saveSettingsResponse;
 
     // Verify in database
     const updatedBoard = await testPrisma.board.findUnique({
@@ -90,9 +94,13 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    // Create a note through the UI
     await authenticatedPage.click('button:has-text("Add Your First Note")');
-    await authenticatedPage.waitForTimeout(500);
+    const createNoteResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes`) &&
+      resp.request().method() === 'POST' &&
+      resp.status() === 201
+    );
+    await createNoteResponse;
 
     // Verify note was created in database
     const notes = await testPrisma.note.findMany({

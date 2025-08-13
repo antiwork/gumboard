@@ -1,7 +1,7 @@
 import { test, expect } from '../fixtures/test-helpers';
 
 test.describe("Authentication Flow", () => {
-  test("should complete email authentication flow and verify database state", async ({ page, testContext }) => {
+  test("should complete email authentication flow and verify database state", async ({ page }) => {
     let emailSent = false;
     let authData: { email: string } | null = null;
 
@@ -28,7 +28,11 @@ test.describe("Authentication Flow", () => {
       });
     });
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse((resp) =>
+      resp.url().includes('/api/auth/signin/email') &&
+      resp.request().method() === 'POST' &&
+      resp.ok()
+    );
 
     expect(emailSent).toBe(true);
     expect(authData).not.toBeNull();
@@ -54,7 +58,7 @@ test.describe("Authentication Flow", () => {
     await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should redirect unauthenticated users to signin", async ({ page, testContext }) => {
+  test("should redirect unauthenticated users to signin", async ({ page }) => {
     // Use unauthenticated page to test redirect behavior
     // Mock the user API to return 401 for this test
     await page.route("**/api/user", async (route) => {
@@ -216,7 +220,11 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse((resp) =>
+      resp.url().includes('/api/auth/signin/email') &&
+      resp.request().method() === 'POST' &&
+      resp.ok()
+    );
 
     expect(magicLinkAuthData).not.toBeNull();
     expect(magicLinkAuthData!.email).toBe(testEmail);
@@ -230,7 +238,11 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse((resp) =>
+      resp.url().includes('/api/auth/signin/google') &&
+      resp.request().method() === 'POST' &&
+      resp.ok()
+    );
 
     expect(googleAuthData).not.toBeNull();
     expect(googleAuthData!.email).toBe(testEmail);
@@ -322,7 +334,11 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse((resp) =>
+      resp.url().includes('/api/auth/signin/email') &&
+      resp.request().method() === 'POST' &&
+      resp.ok()
+    );
 
     expect(magicLinkAuthData).not.toBeNull();
     expect(magicLinkAuthData!.email).toBe(testEmail);
@@ -336,7 +352,11 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse((resp) =>
+      resp.url().includes('/api/auth/signin/github') &&
+      resp.request().method() === 'POST' &&
+      resp.ok()
+    );
 
     expect(githubAuthData).not.toBeNull();
     expect(githubAuthData!.email).toBe(testEmail);

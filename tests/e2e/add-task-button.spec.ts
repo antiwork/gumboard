@@ -156,8 +156,12 @@ test.describe("Add Task Button", () => {
     await newItemInput.fill(newTaskContent);
     await newItemInput.press("Enter");
 
-    // Wait for API call to complete
-    await authenticatedPage.waitForTimeout(500);
+    const addItemResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
+    await addItemResponse;
 
     // Verify in database
     const updatedNote = await testPrisma.note.findUnique({
@@ -261,8 +265,6 @@ test.describe("Add Task Button", () => {
       .locator(`[data-testid="note-${note.id}"]`)
       .or(authenticatedPage.locator(".note-background").first());
     await noteBackground.click({ position: { x: 50, y: 50 } });
-
-    await authenticatedPage.waitForTimeout(500);
 
     const newItemInput = authenticatedPage.locator('input[placeholder="Add new item..."]');
     await expect(newItemInput).not.toBeVisible();

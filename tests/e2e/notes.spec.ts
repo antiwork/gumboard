@@ -59,15 +59,25 @@ test.describe("Note Management", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     // Click "Add Your First Note"
+    const createNoteResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes`) &&
+      resp.request().method() === 'POST' &&
+      resp.status() === 201
+    );
     await authenticatedPage.click('button:has-text("Add Your First Note")');
-    await authenticatedPage.waitForTimeout(500);
+    await createNoteResponse;
 
     // Add a checklist item
     await authenticatedPage.getByRole("button", { name: "Add task" }).first().click();
     const testItemContent = testContext.prefix("Test checklist item");
+    const addItemResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
     await authenticatedPage.getByPlaceholder("Add new item...").fill(testItemContent);
     await authenticatedPage.getByPlaceholder("Add new item...").press("Enter");
-    await authenticatedPage.waitForTimeout(500);
+    await addItemResponse;
 
     // Verify the item appears
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
@@ -133,10 +143,15 @@ test.describe("Note Management", () => {
     const editInput = authenticatedPage.getByTestId(itemId).getByRole('textbox');
     await expect(editInput).toBeVisible();
     await expect(editInput).toHaveValue(originalContent);
+    const saveEditResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
     await editInput.fill(editedContent);
     // Click outside to trigger blur and save the edit
     await authenticatedPage.click('body');
-    await authenticatedPage.waitForTimeout(500);
+    await saveEditResponse;
 
     // Verify the change appears in UI
     await expect(authenticatedPage.getByText(editedContent)).toBeVisible();
@@ -192,8 +207,13 @@ test.describe("Note Management", () => {
     // Toggle the checkbox
     const checkbox = authenticatedPage.locator('[data-state="unchecked"]').first();
     await expect(checkbox).toBeVisible();
+    const toggleResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
     await checkbox.click();
-    await authenticatedPage.waitForTimeout(500);
+    await toggleResponse;
 
     // Verify in database
     const updatedNote = await testPrisma.note.findUnique({
@@ -244,8 +264,13 @@ test.describe("Note Management", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     // Delete the checklist item
+    const deleteItemResponse = authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === 'PUT' &&
+      resp.ok()
+    );
     await authenticatedPage.getByRole("button", { name: "Delete item", exact: true }).click();
-    await authenticatedPage.waitForTimeout(500);
+    await deleteItemResponse;
 
     // Verify item is gone from UI
     await expect(authenticatedPage.getByText(testContext.prefix("Item to delete"))).not.toBeVisible();
@@ -307,13 +332,18 @@ test.describe("Note Management", () => {
       const targetBox = await targetElement.boundingBox();
       if (!targetBox) throw new Error("Target element not found");
 
+      const reorderResponse = authenticatedPage.waitForResponse((resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === 'PUT' &&
+        resp.ok()
+      );
       await sourceElement.hover();
       await authenticatedPage.mouse.down();
       await targetElement.hover();
       await targetElement.hover();
       await authenticatedPage.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + 5);
       await authenticatedPage.mouse.up();
-      await authenticatedPage.waitForTimeout(500);
+      await reorderResponse;
 
       // Verify in database that order changed
       const updatedNote = await testPrisma.note.findUnique({
@@ -388,7 +418,6 @@ test.describe("Note Management", () => {
       await targetElement.hover();
       await authenticatedPage.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + 5);
       await authenticatedPage.mouse.up();
-      await authenticatedPage.waitForTimeout(500);
 
       // Verify items stayed in their original notes
       const updatedNote1 = await testPrisma.note.findUnique({
