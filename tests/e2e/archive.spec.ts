@@ -1,12 +1,7 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Archive Functionality", () => {
-  test("should display Archive board on dashboard", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // Create at least one board so dashboard shows properly
+  test("should display Archive board on dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
     await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board"),
@@ -22,12 +17,7 @@ test.describe("Archive Functionality", () => {
     await expect(archiveCard).toBeVisible();
   });
 
-  test("should navigate to Archive board from dashboard", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // Create a board
+  test("should navigate to Archive board from dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board"),
@@ -37,7 +27,6 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Create an archived note
     await testPrisma.note.create({
       data: {
         content: testContext.prefix("This is an archived note"),
@@ -58,12 +47,7 @@ test.describe("Archive Functionality", () => {
     ).toBeVisible();
   });
 
-  test("should archive a note and remove it from regular board", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // Create a board
+  test("should archive a note and remove it from regular board", async ({ authenticatedPage, testContext, testPrisma }) => {
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board"),
@@ -73,7 +57,6 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Create a note to archive
     const note = await testPrisma.note.create({
       data: {
         content: testContext.prefix("Test note to archive"),
@@ -106,7 +89,6 @@ test.describe("Archive Functionality", () => {
     );
     await archiveResponse;
 
-    // Verify note was archived in database
     const archivedNote = await testPrisma.note.findUnique({
       where: { id: note.id },
     });
@@ -118,12 +100,7 @@ test.describe("Archive Functionality", () => {
     ).not.toBeVisible();
   });
 
-  test("should not show archive button on Archive board", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // Create a board
+  test("should not show archive button on Archive board", async ({ authenticatedPage, testContext, testPrisma }) => {
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board"),
@@ -133,7 +110,6 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Create an archived note
     await testPrisma.note.create({
       data: {
         content: testContext.prefix("This is an archived note"),
@@ -159,7 +135,6 @@ test.describe("Archive Functionality", () => {
     testContext,
     testPrisma,
   }) => {
-    // Ensure no archived notes exist for this user
     const archivedNoteCount = await testPrisma.note.count({
       where: {
         createdBy: testContext.userId,
@@ -184,7 +159,6 @@ test.describe("Archive Functionality", () => {
     testContext,
     testPrisma,
   }) => {
-    // Create a board
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board"),
@@ -194,7 +168,6 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Create an archived note
     await testPrisma.note.create({
       data: {
         content: testContext.prefix("This is an archived note"),
@@ -217,12 +190,7 @@ test.describe("Archive Functionality", () => {
     await expect(archiveButton).not.toBeVisible();
   });
 
-  test("should unarchive a note and remove it from archive view", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // Create a board
+  test("should unarchive a note and remove it from archive view", async ({ authenticatedPage, testContext, testPrisma }) => {
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board"),
@@ -232,7 +200,6 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Create an archived note
     const archivedNote = await testPrisma.note.create({
       data: {
         content: testContext.prefix("Test note to unarchive"),
@@ -260,7 +227,6 @@ test.describe("Archive Functionality", () => {
     );
     await unarchiveResponse;
 
-    // Verify note was unarchived in database
     const unarchivedNote = await testPrisma.note.findUnique({
       where: { id: archivedNote.id },
     });
@@ -272,12 +238,7 @@ test.describe("Archive Functionality", () => {
     ).not.toBeVisible();
   });
 
-  test("should complete full archive-unarchive workflow", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // Create a board
+  test("should complete full archive-unarchive workflow", async ({ authenticatedPage, testContext, testPrisma }) => {
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board"),
@@ -287,7 +248,6 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Create a note for the workflow test
     const note = await testPrisma.note.create({
       data: {
         content: testContext.prefix("Note for archive-unarchive workflow test"),
@@ -317,13 +277,7 @@ test.describe("Archive Functionality", () => {
     await archiveResponse2;
 
     // Verify note is no longer visible on board
-    await expect(
-      authenticatedPage.locator(
-        `text=${testContext.prefix("Note for archive-unarchive workflow test")}`
-      )
-    ).not.toBeVisible();
-
-    // Verify note was archived in database
+    await expect(authenticatedPage.locator(`text=${testContext.prefix("Note for archive-unarchive workflow test")}`)).not.toBeVisible();
     const archivedNote = await testPrisma.note.findUnique({
       where: { id: note.id },
     });

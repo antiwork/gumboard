@@ -1,12 +1,7 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Checklist Backspace Behavior", () => {
-  test("should verify backspace behavior exists in checklist items", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // Create a board with real data
+  test("should verify backspace behavior exists in checklist items", async ({ authenticatedPage, testContext, testPrisma }) => {
     const boardName = testContext.getBoardName("Test Board");
     const board = await testPrisma.board.create({
       data: {
@@ -16,8 +11,6 @@ test.describe("Checklist Backspace Behavior", () => {
         organizationId: testContext.organizationId,
       },
     });
-
-    // Create a checklist note with test item
     await testPrisma.note.create({
       data: {
         content: "",

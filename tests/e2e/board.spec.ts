@@ -7,17 +7,12 @@ test.describe("Board Management", () => {
     testPrisma,
   }) => {
     await authenticatedPage.goto("/dashboard");
-
-    // Use unique names to avoid conflicts in parallel tests
     const boardName = testContext.getBoardName("Test Board");
     const boardDescription = "Test board description";
-
-    // Create board through UI
+    
     await authenticatedPage.click('button:has-text("Add Board")');
     await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
     await authenticatedPage.fill('input[placeholder*="board description"]', boardDescription);
-
-    // Wait for API response
     const responsePromise = authenticatedPage.waitForResponse(
       (resp) => resp.url().includes("/api/boards") && resp.status() === 201
     );
@@ -25,12 +20,7 @@ test.describe("Board Management", () => {
     await authenticatedPage.click('button:has-text("Create Board")');
     await responsePromise;
 
-    // Verify UI update
-    await expect(
-      authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)
-    ).toBeVisible();
-
-    // Verify database state
+    await expect(authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)).toBeVisible();
     const board = await testPrisma.board.findFirst({
       where: {
         name: boardName,
@@ -50,7 +40,6 @@ test.describe("Board Management", () => {
     testContext,
     testPrisma,
   }) => {
-    // Verify this test's user has no boards
     const boardCount = await testPrisma.board.count({
       where: {
         createdBy: testContext.userId,
@@ -74,26 +63,21 @@ test.describe("Board Management", () => {
 
     const nameInput = authenticatedPage.locator('input[placeholder*="board name"]');
     const createButton = authenticatedPage.getByRole("button", { name: "Create board" });
-
-    // Try to submit empty form
     await createButton.click();
     await expect(nameInput).toBeFocused();
-
-    // Fill in the form with unique name
     const boardName = testContext.getBoardName("Test Board");
     await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
     await expect(createButton).toBeEnabled();
   });
 
   test("should edit an existing board", async ({ authenticatedPage, testContext, testPrisma }) => {
-    // Create a board with organization reference
     const boardName = testContext.getBoardName("Original Board");
     const board = await testPrisma.board.create({
       data: {
         name: boardName,
         description: "Original description",
         createdBy: testContext.userId,
-        organizationId: testContext.organizationId, // Add this!
+        organizationId: testContext.organizationId,
       },
     });
 
@@ -121,14 +105,13 @@ test.describe("Board Management", () => {
   });
 
   test("should delete a board", async ({ authenticatedPage, testContext, testPrisma }) => {
-    // Create a board with organization reference
     const boardName = testContext.getBoardName("Board to Delete");
     const board = await testPrisma.board.create({
       data: {
         name: boardName,
         description: "Will be deleted",
         createdBy: testContext.userId,
-        organizationId: testContext.organizationId, // Add this!
+        organizationId: testContext.organizationId,
       },
     });
 

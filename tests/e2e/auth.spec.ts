@@ -40,15 +40,7 @@ test.describe("Authentication Flow", () => {
     expect(authData!.email).toBe("test@example.com");
   });
 
-  test("should authenticate user and access dashboard", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // This test uses authenticatedPage which already handles authentication
-    // We just need to verify the user can access dashboard and see appropriate content
-
-    // Ensure this user has no boards for the "No boards yet" test
+  test("should authenticate user and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
     const boardCount = await testPrisma.board.count({
       where: {
         createdBy: testContext.userId,
@@ -64,8 +56,6 @@ test.describe("Authentication Flow", () => {
   });
 
   test("should redirect unauthenticated users to signin", async ({ page }) => {
-    // Use unauthenticated page to test redirect behavior
-    // Mock the user API to return 401 for this test
     await page.route("**/api/user", async (route) => {
       await route.fulfill({
         status: 401,
@@ -78,15 +68,7 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 5000 });
   });
 
-  test("should authenticate user via Google OAuth and access dashboard", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // This test simulates a Google OAuth authenticated user accessing dashboard
-    // The authenticatedPage fixture already handles the authentication flow
-
-    // Create a user that represents a Google OAuth user
+  test("should authenticate user via Google OAuth and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
     const googleUser = await testPrisma.user.upsert({
       where: { email: testContext.userEmail },
       update: {
@@ -101,7 +83,6 @@ test.describe("Authentication Flow", () => {
       },
     });
 
-    // Ensure no boards exist for this user
     const boardCount = await testPrisma.board.count({
       where: {
         createdBy: googleUser.id,
@@ -116,15 +97,7 @@ test.describe("Authentication Flow", () => {
     await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should authenticate user via GitHub OAuth and access dashboard", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // This test simulates a GitHub OAuth authenticated user accessing dashboard
-    // The authenticatedPage fixture already handles the authentication flow
-
-    // Create a user that represents a GitHub OAuth user
+  test("should authenticate user via GitHub OAuth and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
     const githubUser = await testPrisma.user.upsert({
       where: { email: testContext.userEmail },
       update: {
@@ -139,7 +112,6 @@ test.describe("Authentication Flow", () => {
       },
     });
 
-    // Ensure no boards exist for this user
     const boardCount = await testPrisma.board.count({
       where: {
         createdBy: githubUser.id,
