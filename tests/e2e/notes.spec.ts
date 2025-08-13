@@ -892,4 +892,80 @@ test.describe("Note Management", () => {
       });
     });
   });
+
+  test.describe("Empty Note Prevention", () => {
+    test("should not create empty item when pressing Enter at start of item", async ({ page }) => {
+      await page.goto("/boards/test-board");
+
+      // Create a new note with initial checklist item
+      await page.click('button:has-text("Add Your First Note")');
+      await page.waitForTimeout(500);
+
+      // Add first item with content
+      const initialInput = page.locator("input.bg-transparent").first();
+      await initialInput.fill("First item content");
+      await initialInput.press("Enter");
+      await page.waitForTimeout(500);
+
+      // Wait for the item to be visible
+      await expect(page.getByText("First item content")).toBeVisible();
+
+      // Click at the beginning of the existing item
+      await page.getByText("First item content").click();
+
+      // Get the input field for the existing item
+      const itemInput = page.locator('input[value="First item content"]');
+      await expect(itemInput).toBeVisible();
+
+      // Position cursor at the start (position 0)
+      await itemInput.focus();
+      await page.keyboard.press("Home"); // Move cursor to start
+
+      // Press Enter - should NOT create a new empty item
+      await itemInput.press("Enter");
+      await page.waitForTimeout(500);
+
+      // Verify only one item exists and it still has the original content
+      const checklistItems = page.getByRole("checkbox");
+      await expect(checklistItems).toHaveCount(1);
+      await expect(page.getByText("First item content")).toBeVisible();
+    });
+
+    test("should not create empty item when pressing Enter at end of item", async ({ page }) => {
+      await page.goto("/boards/test-board");
+
+      // Create a new note with initial checklist item
+      await page.click('button:has-text("Add Your First Note")');
+      await page.waitForTimeout(500);
+
+      // Add first item with content
+      const initialInput = page.locator("input.bg-transparent").first();
+      await initialInput.fill("Last item content");
+      await initialInput.press("Enter");
+      await page.waitForTimeout(500);
+
+      // Wait for the item to be visible
+      await expect(page.getByText("Last item content")).toBeVisible();
+
+      // Click on the existing item to edit it
+      await page.getByText("Last item content").click();
+
+      // Get the input field for the existing item
+      const itemInput = page.locator('input[value="Last item content"]');
+      await expect(itemInput).toBeVisible();
+
+      // Position cursor at the end
+      await itemInput.focus();
+      await page.keyboard.press("End"); // Move cursor to end
+
+      // Press Enter - should NOT create a new empty item when cursor is at end
+      await itemInput.press("Enter");
+      await page.waitForTimeout(500);
+
+      // Verify only one item exists and it still has the original content
+      const checklistItems = page.getByRole("checkbox");
+      await expect(checklistItems).toHaveCount(1);
+      await expect(page.getByText("Last item content")).toBeVisible();
+    });
+  });
 });
