@@ -169,6 +169,7 @@ test.describe("Add Task Button", () => {
       },
     });
 
+    expect(updatedNote).not.toBeNull();
     expect(updatedNote?.checklistItems).toHaveLength(2);
     expect(
       updatedNote?.checklistItems.find((item) => item.content === newTaskContent)

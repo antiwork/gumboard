@@ -147,7 +147,9 @@ test.describe("Note Management", () => {
       },
     });
 
-    expect(updatedNote?.checklistItems[0].content).toBe(editedContent);
+    expect(updatedNote).not.toBeNull();
+    expect(updatedNote?.checklistItems).toHaveLength(1);
+    expect(updatedNote?.checklistItems[0]?.content).toBe(editedContent);
   });
 
   test("should toggle checklist item completion", async ({
@@ -207,7 +209,9 @@ test.describe("Note Management", () => {
       },
     });
 
-    expect(updatedNote?.checklistItems[0].checked).toBe(true);
+    expect(updatedNote).not.toBeNull();
+    expect(updatedNote?.checklistItems).toHaveLength(1);
+    expect(updatedNote?.checklistItems[0]?.checked).toBe(true);
   });
 
   test("should delete checklist item", async ({ authenticatedPage, testContext, testPrisma }) => {
@@ -263,6 +267,7 @@ test.describe("Note Management", () => {
       },
     });
 
+    expect(updatedNote).not.toBeNull();
     expect(updatedNote?.checklistItems).toHaveLength(0);
   });
 
@@ -336,6 +341,7 @@ test.describe("Note Management", () => {
         },
       });
 
+      expect(updatedNote).not.toBeNull();
       const checklistItems = updatedNote?.checklistItems || [];
       expect(checklistItems[0].content).toBe(testContext.prefix("Item A3"));
       expect(checklistItems[1].content).toBe(testContext.prefix("Item A1"));
@@ -488,7 +494,14 @@ test.describe("Note Management", () => {
         authenticatedPage.getByRole("button", { name: `Delete Note ${note.id}`, exact: true })
       ).toBeVisible();
 
-      await authenticatedPage.waitForTimeout(300);
+      // Wait a moment to ensure no delete call is made
+      await authenticatedPage.waitForResponse(
+        (resp) => resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) && 
+                 resp.request().method() === "DELETE",
+        { timeout: 500 }
+      ).catch(() => {
+        // Expected to timeout - no delete should happen
+      });
       expect(deleteCalled).toBe(false);
     });
   });
@@ -543,7 +556,9 @@ test.describe("Note Management", () => {
       await authenticatedPage.keyboard.press("Home");
 
       await itemInput.press("Enter");
-      await authenticatedPage.waitForTimeout(500);
+      
+      // Wait for any potential network activity to complete
+      await authenticatedPage.waitForLoadState('networkidle');
 
       const checklistItems = authenticatedPage.getByRole("checkbox");
       await expect(checklistItems).toHaveCount(1);
@@ -599,7 +614,9 @@ test.describe("Note Management", () => {
       await authenticatedPage.keyboard.press("End");
 
       await itemInput.press("Enter");
-      await authenticatedPage.waitForTimeout(500);
+      
+      // Wait for any potential network activity to complete
+      await authenticatedPage.waitForLoadState('networkidle');
 
       const checklistItems = authenticatedPage.getByRole("checkbox");
       await expect(checklistItems).toHaveCount(1);
