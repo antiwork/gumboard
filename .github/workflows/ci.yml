@@ -50,8 +50,10 @@ jobs:
 
       - run: npm ci
 
-      - name: Generate Prisma Client
-        run: npm run db:generate
+      - name: Set up database schema
+        run: |
+          npx prisma migrate deploy
+          npx prisma generate
 
       - name: Test
         run: npm test
