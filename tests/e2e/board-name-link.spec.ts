@@ -27,7 +27,6 @@ test.describe("Board Name Link Functionality", () => {
       data: {
         content: testContext.prefix("Note from Board 1"),
         color: "#fef3c7",
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board1.id,
       }
@@ -37,7 +36,6 @@ test.describe("Board Name Link Functionality", () => {
       data: {
         content: testContext.prefix("Note from Board 2"),
         color: "#dcfce7",
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board2.id,
       }
@@ -86,7 +84,6 @@ test.describe("Board Name Link Functionality", () => {
       data: {
         content: testContext.prefix("Note from Board 1"),
         color: "#fef3c7",
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board1.id,
       }
@@ -96,7 +93,6 @@ test.describe("Board Name Link Functionality", () => {
       data: {
         content: testContext.prefix("Note from Board 2"),
         color: "#dcfce7",
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board2.id,
       }
@@ -160,7 +156,6 @@ test.describe("Board Name Link Functionality", () => {
       data: {
         content: testContext.prefix("Note from Board 1"),
         color: "#fef3c7",
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board.id,
       }

@@ -5,6 +5,9 @@ interface ChecklistItem {
   content: string;
   checked: boolean;
   order: number;
+  noteId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 test.describe("Add Task Button", () => {
@@ -32,14 +35,16 @@ test.describe("Add Task Button", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: [
-          {
-            id: testContext.prefix("item-1"),
-            content: testContext.prefix("Existing task"),
-            checked: false,
-            order: 0,
-          },
-        ],
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Existing task"),
+              checked: false,
+              order: 0,
+            },
+          ]
+        },
       }
     });
 
@@ -48,7 +53,6 @@ test.describe("Add Task Button", () => {
       data: {
         content: testContext.prefix("Regular note content"),
         color: "#fef3c7",
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board.id,
       }
@@ -90,14 +94,16 @@ test.describe("Add Task Button", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: [
-          {
-            id: testContext.prefix("item-1"),
-            content: testContext.prefix("Existing task"),
-            checked: false,
-            order: 0,
-          },
-        ],
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Existing task"),
+              checked: false,
+              order: 0,
+            },
+          ]
+        },
       }
     });
 
@@ -129,14 +135,16 @@ test.describe("Add Task Button", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: [
-          {
-            id: testContext.prefix("item-1"),
-            content: testContext.prefix("Existing task"),
-            checked: false,
-            order: 0,
-          },
-        ],
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Existing task"),
+              checked: false,
+              order: 0,
+            },
+          ]
+        },
       }
     });
 
@@ -165,12 +173,14 @@ test.describe("Add Task Button", () => {
 
     // Verify in database
     const updatedNote = await testPrisma.note.findUnique({
-      where: { id: note.id }
+      where: { id: note.id },
+      include: {
+        checklistItems: true
+      }
     });
     
-    const checklistItems = updatedNote?.checklistItems as unknown as ChecklistItem[];
-    expect(checklistItems).toHaveLength(2);
-    expect(checklistItems.find(item => item.content === newTaskContent)).toBeTruthy();
+    expect(updatedNote?.checklistItems).toHaveLength(2);
+    expect(updatedNote?.checklistItems.find(item => item.content === newTaskContent)).toBeTruthy();
   });
 
   test('should keep "Add task" button visible when already adding a checklist item (everpresent)', async ({
@@ -196,14 +206,16 @@ test.describe("Add Task Button", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: [
-          {
-            id: testContext.prefix("item-1"),
-            content: testContext.prefix("Existing task"),
-            checked: false,
-            order: 0,
-          },
-        ],
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Existing task"),
+              checked: false,
+              order: 0,
+            },
+          ]
+        },
       }
     });
 
@@ -239,14 +251,16 @@ test.describe("Add Task Button", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: [
-          {
-            id: testContext.prefix("item-1"),
-            content: testContext.prefix("Existing task"),
-            checked: false,
-            order: 0,
-          },
-        ],
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Existing task"),
+              checked: false,
+              order: 0,
+            },
+          ]
+        },
       }
     });
 
@@ -256,10 +270,12 @@ test.describe("Add Task Button", () => {
 
     // Store initial checklist items count
     const initialNote = await testPrisma.note.findUnique({
-      where: { id: note.id }
+      where: { id: note.id },
+      include: {
+        checklistItems: true
+      }
     });
-    const initialChecklistItems = initialNote?.checklistItems as unknown as ChecklistItem[];
-    const initialCount = initialChecklistItems.length;
+    const initialCount = initialNote?.checklistItems.length || 0;
 
     const noteBackground = authenticatedPage
       .locator(`[data-testid="note-${note.id}"]`)
@@ -271,9 +287,11 @@ test.describe("Add Task Button", () => {
     
     // Verify no new items were added to database
     const finalNote = await testPrisma.note.findUnique({
-      where: { id: note.id }
+      where: { id: note.id },
+      include: {
+        checklistItems: true
+      }
     });
-    const finalChecklistItems = finalNote?.checklistItems as unknown as ChecklistItem[];
-    expect(finalChecklistItems.length).toBe(initialCount);
+    expect(finalNote?.checklistItems.length).toBe(initialCount);
   });
 });

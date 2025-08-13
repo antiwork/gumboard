@@ -19,14 +19,16 @@ test.describe("Single-Click Note Editing", () => {
       data: {
         content: "",
         color: "#fef3c7",
-        checklistItems: [
+        checklistItems: {
+          create: [
           {
             id: testContext.prefix("item-1"),
             content: testContext.prefix("Test checklist item"),
             checked: false,
             order: 0,
           },
-        ],
+          ]
+        },
         createdBy: testContext.userId,
         boardId: board.id,
       }
@@ -61,14 +63,16 @@ test.describe("Single-Click Note Editing", () => {
       data: {
         content: "",
         color: "#fef3c7",
-        checklistItems: [
+        checklistItems: {
+          create: [
           {
             id: testContext.prefix("item-1"),
             content: testContext.prefix("Test checklist item"),
             checked: false,
             order: 0,
           },
-        ],
+          ]
+        },
         createdBy: testContext.userId,
         boardId: board.id,
       }
@@ -118,14 +122,16 @@ test.describe("Single-Click Note Editing", () => {
       data: {
         content: "",
         color: "#fef3c7",
-        checklistItems: [
+        checklistItems: {
+          create: [
           {
             id: testContext.prefix("item-1"),
             content: testContext.prefix("Test checklist item"),
             checked: false,
             order: 0,
           },
-        ],
+          ]
+        },
         createdBy: testContext.userId, // Note owned by original user
         boardId: board.id,
       }
@@ -178,14 +184,16 @@ test.describe("Single-Click Note Editing", () => {
       data: {
         content: "",
         color: "#fef3c7",
-        checklistItems: [
+        checklistItems: {
+          create: [
           {
             id: testContext.prefix("item-1"),
             content: testContext.prefix("Original item content"),
             checked: false,
             order: 0,
           },
-        ],
+          ]
+        },
         createdBy: testContext.userId,
         boardId: board.id,
       }

@@ -36,7 +36,6 @@ test.describe("Archive Functionality", () => {
         content: testContext.prefix("This is an archived note"),
         color: "#fef3c7",
         archivedAt: new Date(),
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board.id,
       }
@@ -67,7 +66,6 @@ test.describe("Archive Functionality", () => {
         content: testContext.prefix("Test note to archive"),
         color: "#fef3c7",
         archivedAt: null,
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board.id,
       }
@@ -119,7 +117,6 @@ test.describe("Archive Functionality", () => {
         content: testContext.prefix("This is an archived note"),
         color: "#fef3c7",
         archivedAt: new Date(),
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board.id,
       }
@@ -179,7 +176,6 @@ test.describe("Archive Functionality", () => {
         content: testContext.prefix("This is an archived note"),
         color: "#fef3c7",
         archivedAt: new Date(),
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board.id,
       }
@@ -212,7 +208,6 @@ test.describe("Archive Functionality", () => {
         content: testContext.prefix("Test note to unarchive"),
         color: "#fef3c7",
         archivedAt: new Date(),
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board.id,
       }
@@ -259,7 +254,6 @@ test.describe("Archive Functionality", () => {
         content: testContext.prefix("Note for archive-unarchive workflow test"),
         color: "#fef3c7",
         archivedAt: null,
-        checklistItems: [],
         createdBy: testContext.userId,
         boardId: board.id,
       }

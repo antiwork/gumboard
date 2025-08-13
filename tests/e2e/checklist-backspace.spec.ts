@@ -21,14 +21,16 @@ test.describe("Checklist Backspace Behavior", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: [
-          {
-            id: testContext.prefix("item-1"),
-            content: testContext.prefix("Test item"),
-            checked: false,
-            order: 0,
-          },
-        ],
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Test item"),
+              checked: false,
+              order: 0,
+            },
+          ]
+        },
       }
     });
 
