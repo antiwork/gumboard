@@ -321,8 +321,6 @@ test.describe("Search Notes Checklist Items", () => {
     await searchInput.fill("#12345");
     await page.waitForTimeout(1000);
     await expect(page.locator("text=Order #12345")).toBeVisible();
-
-
   });
 
   test("should handle search with very long and very short queries", async ({ page }) => {
