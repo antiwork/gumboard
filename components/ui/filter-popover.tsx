@@ -34,7 +34,7 @@ function FilterPopover({
   onAuthorChange,
   className,
   disabled = false,
-  setshowBoardDropdown
+  setshowBoardDropdown,
 }: FilterPopoverProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -74,11 +74,11 @@ function FilterPopover({
     <div className={cn("relative", className)} ref={dropdownRef}>
       <Button
         onClick={() => {
-          setshowBoardDropdown?.(false)
-          if(!disabled){
-            setIsOpen(!isOpen)
-          }          
-        }}      
+          setshowBoardDropdown?.(false);
+          if (!disabled) {
+            setIsOpen(!isOpen);
+          }
+        }}
         disabled={disabled}
         className={cn(
           "flex items-center space-x-2 px-3 py-2 text-sm border border-gray-200 dark:border-zinc-800 rounded-md bg-card dark:bg-zinc-900 hover:bg-accent dark:hover:bg-zinc-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent transition-colors",
