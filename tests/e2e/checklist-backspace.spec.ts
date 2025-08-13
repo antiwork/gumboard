@@ -1,8 +1,11 @@
-import { test, expect } from '../fixtures/test-helpers';
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Checklist Backspace Behavior", () => {
-
-  test("should verify backspace behavior exists in checklist items", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should verify backspace behavior exists in checklist items", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Create a board with real data
     const boardName = testContext.getBoardName("Test Board");
     const board = await testPrisma.board.create({
@@ -11,7 +14,7 @@ test.describe("Checklist Backspace Behavior", () => {
         description: testContext.prefix("A test board"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Create a checklist note with test item
@@ -29,14 +32,16 @@ test.describe("Checklist Backspace Behavior", () => {
               checked: false,
               order: 0,
             },
-          ]
+          ],
         },
-      }
+      },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Test item")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test item")}`)
+    ).toBeVisible();
 
     const checklistItemElement = authenticatedPage
       .locator("span.flex-1.text-sm.leading-6.cursor-pointer")

@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/test-helpers';
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Authentication Flow", () => {
   test("should complete email authentication flow and verify database state", async ({ page }) => {
@@ -28,10 +28,11 @@ test.describe("Authentication Flow", () => {
       });
     });
 
-    await page.waitForResponse((resp) =>
-      resp.url().includes('/api/auth/signin/email') &&
-      resp.request().method() === 'POST' &&
-      resp.ok()
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/email") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
     );
 
     expect(emailSent).toBe(true);
@@ -39,16 +40,20 @@ test.describe("Authentication Flow", () => {
     expect(authData!.email).toBe("test@example.com");
   });
 
-  test("should authenticate user and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should authenticate user and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // This test uses authenticatedPage which already handles authentication
     // We just need to verify the user can access dashboard and see appropriate content
-    
+
     // Ensure this user has no boards for the "No boards yet" test
     const boardCount = await testPrisma.board.count({
-      where: { 
+      where: {
         createdBy: testContext.userId,
-        organizationId: testContext.organizationId
-      }
+        organizationId: testContext.organizationId,
+      },
     });
     expect(boardCount).toBe(0);
 
@@ -73,10 +78,14 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 5000 });
   });
 
-  test("should authenticate user via Google OAuth and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should authenticate user via Google OAuth and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // This test simulates a Google OAuth authenticated user accessing dashboard
     // The authenticatedPage fixture already handles the authentication flow
-    
+
     // Create a user that represents a Google OAuth user
     const googleUser = await testPrisma.user.upsert({
       where: { email: testContext.userEmail },
@@ -89,15 +98,15 @@ test.describe("Authentication Flow", () => {
         name: "Google User",
         image: "https://example.com/avatar.jpg",
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Ensure no boards exist for this user
     const boardCount = await testPrisma.board.count({
-      where: { 
+      where: {
         createdBy: googleUser.id,
-        organizationId: testContext.organizationId
-      }
+        organizationId: testContext.organizationId,
+      },
     });
     expect(boardCount).toBe(0);
 
@@ -107,10 +116,14 @@ test.describe("Authentication Flow", () => {
     await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should authenticate user via GitHub OAuth and access dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should authenticate user via GitHub OAuth and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // This test simulates a GitHub OAuth authenticated user accessing dashboard
     // The authenticatedPage fixture already handles the authentication flow
-    
+
     // Create a user that represents a GitHub OAuth user
     const githubUser = await testPrisma.user.upsert({
       where: { email: testContext.userEmail },
@@ -123,15 +136,15 @@ test.describe("Authentication Flow", () => {
         name: "GitHub User",
         image: "https://avatars.githubusercontent.com/u/123?v=4",
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Ensure no boards exist for this user
     const boardCount = await testPrisma.board.count({
-      where: { 
+      where: {
         createdBy: githubUser.id,
-        organizationId: testContext.organizationId
-      }
+        organizationId: testContext.organizationId,
+      },
     });
     expect(boardCount).toBe(0);
 
@@ -220,10 +233,11 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForResponse((resp) =>
-      resp.url().includes('/api/auth/signin/email') &&
-      resp.request().method() === 'POST' &&
-      resp.ok()
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/email") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
     );
 
     expect(magicLinkAuthData).not.toBeNull();
@@ -238,10 +252,11 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForResponse((resp) =>
-      resp.url().includes('/api/auth/signin/google') &&
-      resp.request().method() === 'POST' &&
-      resp.ok()
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/google") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
     );
 
     expect(googleAuthData).not.toBeNull();
@@ -334,10 +349,11 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForResponse((resp) =>
-      resp.url().includes('/api/auth/signin/email') &&
-      resp.request().method() === 'POST' &&
-      resp.ok()
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/email") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
     );
 
     expect(magicLinkAuthData).not.toBeNull();
@@ -352,10 +368,11 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForResponse((resp) =>
-      resp.url().includes('/api/auth/signin/github') &&
-      resp.request().method() === 'POST' &&
-      resp.ok()
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/github") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
     );
 
     expect(githubAuthData).not.toBeNull();

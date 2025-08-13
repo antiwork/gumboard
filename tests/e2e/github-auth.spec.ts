@@ -1,4 +1,4 @@
-import { test, expect } from '../fixtures/test-helpers';
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("GitHub Authentication Flow", () => {
   test("should display GitHub login button on signin page", async ({ page }) => {
@@ -38,13 +38,17 @@ test.describe("GitHub Authentication Flow", () => {
     expect(githubAuthInitiated).toBe(true);
   });
 
-  test("should handle GitHub OAuth callback and authenticate user", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should handle GitHub OAuth callback and authenticate user", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Ensure this user has no boards to verify "No boards yet" state
     const boardCount = await testPrisma.board.count({
-      where: { 
+      where: {
         createdBy: testContext.userId,
-        organizationId: testContext.organizationId
-      }
+        organizationId: testContext.organizationId,
+      },
     });
     expect(boardCount).toBe(0);
 
@@ -80,7 +84,11 @@ test.describe("GitHub Authentication Flow", () => {
     await expect(page).toHaveURL(/.*auth.*signin/);
   });
 
-  test("should link GitHub account with existing email account", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should link GitHub account with existing email account", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     let githubAuthInitiated = false;
 
     // Mock GitHub OAuth redirect
@@ -96,10 +104,10 @@ test.describe("GitHub Authentication Flow", () => {
 
     // Ensure this user has no boards to verify "No boards yet" state
     const boardCount = await testPrisma.board.count({
-      where: { 
+      where: {
         createdBy: testContext.userId,
-        organizationId: testContext.organizationId
-      }
+        organizationId: testContext.organizationId,
+      },
     });
     expect(boardCount).toBe(0);
 
@@ -121,13 +129,17 @@ test.describe("GitHub Authentication Flow", () => {
     await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should maintain GitHub authentication state across page reloads", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should maintain GitHub authentication state across page reloads", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Ensure this user has no boards to verify "No boards yet" state
     const boardCount = await testPrisma.board.count({
-      where: { 
+      where: {
         createdBy: testContext.userId,
-        organizationId: testContext.organizationId
-      }
+        organizationId: testContext.organizationId,
+      },
     });
     expect(boardCount).toBe(0);
 

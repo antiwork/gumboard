@@ -1,8 +1,11 @@
-import { test, expect } from '../fixtures/test-helpers';
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Archive Functionality", () => {
-
-  test("should display Archive board on dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should display Archive board on dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Create at least one board so dashboard shows properly
     await testPrisma.board.create({
       data: {
@@ -10,7 +13,7 @@ test.describe("Archive Functionality", () => {
         description: testContext.prefix("A test board"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     await authenticatedPage.goto("/dashboard");
@@ -19,7 +22,11 @@ test.describe("Archive Functionality", () => {
     await expect(archiveCard).toBeVisible();
   });
 
-  test("should navigate to Archive board from dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should navigate to Archive board from dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Create a board
     const board = await testPrisma.board.create({
       data: {
@@ -27,7 +34,7 @@ test.describe("Archive Functionality", () => {
         description: testContext.prefix("A test board"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Create an archived note
@@ -38,7 +45,7 @@ test.describe("Archive Functionality", () => {
         archivedAt: new Date(),
         createdBy: testContext.userId,
         boardId: board.id,
-      }
+      },
     });
 
     await authenticatedPage.goto("/dashboard");
@@ -46,10 +53,16 @@ test.describe("Archive Functionality", () => {
     await authenticatedPage.click('[href="/boards/archive"]');
 
     await expect(authenticatedPage).toHaveURL("/boards/archive");
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)
+    ).toBeVisible();
   });
 
-  test("should archive a note and remove it from regular board", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should archive a note and remove it from regular board", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Create a board
     const board = await testPrisma.board.create({
       data: {
@@ -57,7 +70,7 @@ test.describe("Archive Functionality", () => {
         description: testContext.prefix("A test board"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Create a note to archive
@@ -68,39 +81,48 @@ test.describe("Archive Functionality", () => {
         archivedAt: null,
         createdBy: testContext.userId,
         boardId: board.id,
-      }
+      },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Test note to archive")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test note to archive")}`)
+    ).toBeVisible();
 
     // Hover over the note to reveal the archive button
     await authenticatedPage.locator(`text=${testContext.prefix("Test note to archive")}`).hover();
-    
+
     // Find the archive button - it should be visible after hover
     const archiveButton = authenticatedPage.locator('[title="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();
 
-    const archiveResponse = authenticatedPage.waitForResponse((resp) =>
-      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-      resp.request().method() === 'PUT' &&
-      resp.ok()
+    const archiveResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
     );
     await archiveResponse;
 
     // Verify note was archived in database
     const archivedNote = await testPrisma.note.findUnique({
-      where: { id: note.id }
+      where: { id: note.id },
     });
     expect(archivedNote?.archivedAt).toBeTruthy();
 
     // Verify note is no longer visible on board
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Test note to archive")}`)).not.toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test note to archive")}`)
+    ).not.toBeVisible();
   });
 
-  test("should not show archive button on Archive board", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should not show archive button on Archive board", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Create a board
     const board = await testPrisma.board.create({
       data: {
@@ -108,7 +130,7 @@ test.describe("Archive Functionality", () => {
         description: testContext.prefix("A test board"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Create an archived note
@@ -119,12 +141,14 @@ test.describe("Archive Functionality", () => {
         archivedAt: new Date(),
         createdBy: testContext.userId,
         boardId: board.id,
-      }
+      },
     });
 
     await authenticatedPage.goto("/boards/archive");
 
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)
+    ).toBeVisible();
 
     const archiveButton = authenticatedPage.locator('[title="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
@@ -139,8 +163,8 @@ test.describe("Archive Functionality", () => {
     const archivedNoteCount = await testPrisma.note.count({
       where: {
         createdBy: testContext.userId,
-        archivedAt: { not: null }
-      }
+        archivedAt: { not: null },
+      },
     });
     expect(archivedNoteCount).toBe(0);
 
@@ -167,7 +191,7 @@ test.describe("Archive Functionality", () => {
         description: testContext.prefix("A test board"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Create an archived note
@@ -178,11 +202,13 @@ test.describe("Archive Functionality", () => {
         archivedAt: new Date(),
         createdBy: testContext.userId,
         boardId: board.id,
-      }
+      },
     });
 
     await authenticatedPage.goto("/boards/archive");
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)
+    ).toBeVisible();
 
     const unarchiveButton = authenticatedPage.locator('[title="Unarchive note"]');
     await expect(unarchiveButton).toBeVisible();
@@ -191,7 +217,11 @@ test.describe("Archive Functionality", () => {
     await expect(archiveButton).not.toBeVisible();
   });
 
-  test("should unarchive a note and remove it from archive view", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should unarchive a note and remove it from archive view", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Create a board
     const board = await testPrisma.board.create({
       data: {
@@ -199,7 +229,7 @@ test.describe("Archive Functionality", () => {
         description: testContext.prefix("A test board"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Create an archived note
@@ -210,34 +240,43 @@ test.describe("Archive Functionality", () => {
         archivedAt: new Date(),
         createdBy: testContext.userId,
         boardId: board.id,
-      }
+      },
     });
 
     await authenticatedPage.goto("/boards/archive");
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)
+    ).toBeVisible();
 
     const unarchiveButton = authenticatedPage.locator('[title="Unarchive note"]');
     await expect(unarchiveButton).toBeVisible();
     await unarchiveButton.click();
 
-    const unarchiveResponse = authenticatedPage.waitForResponse((resp) =>
-      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-      resp.request().method() === 'PUT' &&
-      resp.ok()
+    const unarchiveResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
     );
     await unarchiveResponse;
-    
+
     // Verify note was unarchived in database
     const unarchivedNote = await testPrisma.note.findUnique({
-      where: { id: archivedNote.id }
+      where: { id: archivedNote.id },
     });
     expect(unarchivedNote?.archivedAt).toBe(null);
 
     // Verify note is no longer visible in archive view
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)).not.toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)
+    ).not.toBeVisible();
   });
 
-  test("should complete full archive-unarchive workflow", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should complete full archive-unarchive workflow", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Create a board
     const board = await testPrisma.board.create({
       data: {
@@ -245,7 +284,7 @@ test.describe("Archive Functionality", () => {
         description: testContext.prefix("A test board"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     // Create a note for the workflow test
@@ -256,28 +295,37 @@ test.describe("Archive Functionality", () => {
         archivedAt: null,
         createdBy: testContext.userId,
         boardId: board.id,
-      }
+      },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Note for archive-unarchive workflow test")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(
+        `text=${testContext.prefix("Note for archive-unarchive workflow test")}`
+      )
+    ).toBeVisible();
 
     const archiveButton = authenticatedPage.locator('[title="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();
-    const archiveResponse2 = authenticatedPage.waitForResponse((resp) =>
-      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-      resp.request().method() === 'PUT' &&
-      resp.ok()
+    const archiveResponse2 = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
     );
     await archiveResponse2;
-    
+
     // Verify note is no longer visible on board
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Note for archive-unarchive workflow test")}`)).not.toBeVisible();
-    
+    await expect(
+      authenticatedPage.locator(
+        `text=${testContext.prefix("Note for archive-unarchive workflow test")}`
+      )
+    ).not.toBeVisible();
+
     // Verify note was archived in database
     const archivedNote = await testPrisma.note.findUnique({
-      where: { id: note.id }
+      where: { id: note.id },
     });
     expect(archivedNote?.archivedAt).toBeTruthy();
   });

@@ -245,7 +245,7 @@ export function Note({
       }
 
       const updatedItems = newItems.map((item, index) => ({ ...item, order: index }));
-      
+
       const optimisticNote = {
         ...note,
         checklistItems: updatedItems,
