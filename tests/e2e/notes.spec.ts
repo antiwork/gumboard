@@ -216,119 +216,119 @@ test.describe("Note Management", () => {
 
     await page.goto("/boards/all-notes");
 
-      // Check for all the actions for notes & checklistitem
+    // Check for all the actions for notes & checklistitem
 
-      // Test 1: Toggle checklist item
-      const checkbox = page.locator('[data-state="unchecked"]').first();
-      await expect(checkbox).toBeVisible();
-      await checkbox.click();
+    // Test 1: Toggle checklist item
+    const checkbox = page.locator('[data-state="unchecked"]').first();
+    await expect(checkbox).toBeVisible();
+    await checkbox.click();
 
-      // Test 2: Add a new checklist item
-      const addTaskButton = page.locator('button:has-text("Add task")');
-      await expect(addTaskButton).toBeVisible();
-      await addTaskButton.click();
-      const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
-      await expect(newItemInput).toBeVisible();
-      await newItemInput.fill("New test item");
-      await newItemInput.press("Enter");
+    // Test 2: Add a new checklist item
+    const addTaskButton = page.locator('button:has-text("Add task")');
+    await expect(addTaskButton).toBeVisible();
+    await addTaskButton.click();
+    const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
+    await expect(newItemInput).toBeVisible();
+    await newItemInput.fill("New test item");
+    await newItemInput.press("Enter");
 
-      // Test 3: Edit checklist item content
-      const existingItem = page.locator("text=Test item").first();
-      await expect(existingItem).toBeVisible();
-      await existingItem.dblclick();
-      const editInput = page.locator('textarea').filter({ hasText: "Test item" });
-      await editInput.isVisible();
-      await editInput.fill("Edited test item");
-      await page.getByText("Note Actual Board").click();
+    // Test 3: Edit checklist item content
+    const existingItem = page.locator("text=Test item").first();
+    await expect(existingItem).toBeVisible();
+    await existingItem.dblclick();
+    const editInput = page.locator("textarea").filter({ hasText: "Test item" });
+    await editInput.isVisible();
+    await editInput.fill("Edited test item");
+    await page.getByText("Note Actual Board").click();
 
-      // Test 4: Delete checklist item
-      await page.getByRole("button", { name: "Delete item", exact: true }).click();
+    // Test 4: Delete checklist item
+    await page.getByRole("button", { name: "Delete item", exact: true }).click();
 
-      expect(apiCallsMade.filter((call) => call.method === "PUT").length).toBe(4);
-      expect(apiCallsMade.length).toBe(4);
+    expect(apiCallsMade.filter((call) => call.method === "PUT").length).toBe(4);
+    expect(apiCallsMade.length).toBe(4);
 
-      apiCallsMade.forEach((call) => {
-        expect(call.url).toContain("api/boards/note-actual-board-id/notes/test-note-123");
-      });
+    apiCallsMade.forEach((call) => {
+      expect(call.url).toContain("api/boards/note-actual-board-id/notes/test-note-123");
     });
+  });
 
-    test("should autofocus new checklist item input when Add task is clicked", async ({ page }) => {
-      await page.goto("/boards/test-board");
+  test("should autofocus new checklist item input when Add task is clicked", async ({ page }) => {
+    await page.goto("/boards/test-board");
 
-      await page.click('button:has-text("Add Your First Note")');
-      await page.waitForTimeout(500);
+    await page.click('button:has-text("Add Your First Note")');
+    await page.waitForTimeout(500);
 
-      const initialInput = page.locator("textarea.bg-transparent").first();
-      await initialInput.fill("First item");
-      await initialInput.press("Enter");
-      await page.waitForTimeout(300);
+    const initialInput = page.locator("textarea.bg-transparent").first();
+    await initialInput.fill("First item");
+    await initialInput.press("Enter");
+    await page.waitForTimeout(300);
 
-      await page.click('button:has-text("Add task")');
+    await page.click('button:has-text("Add task")');
 
-      const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
-      await expect(newItemInput).toBeVisible();
-      await expect(newItemInput).toBeFocused();
+    const newItemInput = page.locator('textarea[placeholder="Add new item..."]');
+    await expect(newItemInput).toBeVisible();
+    await expect(newItemInput).toBeFocused();
 
-      await newItemInput.blur();
-      await page.waitForTimeout(100);
+    await newItemInput.blur();
+    await page.waitForTimeout(100);
 
-      await page.click('button:has-text("Add task")');
-      await expect(newItemInput).toBeFocused();
-    });
+    await page.click('button:has-text("Add task")');
+    await expect(newItemInput).toBeFocused();
+  });
 
-    test("should create a checklist note and verify database state", async ({ page }) => {
-      let noteCreated = false;
-      let noteData: any = null;
+  test("should create a checklist note and verify database state", async ({ page }) => {
+    let noteCreated = false;
+    let noteData: any = null;
 
-      await page.route("**/api/boards/test-board/notes", async (route) => {
-        if (route.request().method() === "GET") {
-          await route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({ notes: [] }),
-          });
-        } else if (route.request().method() === "POST") {
-          noteCreated = true;
-          const postData = await route.request().postDataJSON();
-          noteData = postData;
+    await page.route("**/api/boards/test-board/notes", async (route) => {
+      if (route.request().method() === "GET") {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ notes: [] }),
+        });
+      } else if (route.request().method() === "POST") {
+        noteCreated = true;
+        const postData = await route.request().postDataJSON();
+        noteData = postData;
 
-          await route.fulfill({
-            status: 201,
-            contentType: "application/json",
-            body: JSON.stringify({
-              note: {
-                id: "new-note-id",
-                content: "",
-                color: "#fef3c7",
-                archivedAt: null,
-                checklistItems: postData.checklistItems || [
-                  {
-                    id: `item-${Date.now()}`,
-                    content: "",
-                    checked: false,
-                    order: 0,
-                  },
-                ],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                board: {
-                  id: "test-board-id",
-                  name: "Test Board",
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({
+            note: {
+              id: "new-note-id",
+              content: "",
+              color: "#fef3c7",
+              archivedAt: null,
+              checklistItems: postData.checklistItems || [
+                {
+                  id: `item-${Date.now()}`,
+                  content: "",
+                  checked: false,
+                  order: 0,
                 },
-                boardId: "test-board-id",
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
+              ],
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              board: {
+                id: "test-board-id",
+                name: "Test Board",
               },
-            }),
-          });
-        }
-      });
-
-      await page.goto("/boards/test-board");
+              boardId: "test-board-id",
+              user: {
+                id: "test-user",
+                name: "Test User",
+                email: "test@example.com",
+              },
+            },
+          }),
+        });
+      }
     });
+
+    await page.goto("/boards/test-board");
+  });
 
   test("should edit checklist item content", async ({
     authenticatedPage,
