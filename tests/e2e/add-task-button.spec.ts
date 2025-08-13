@@ -18,7 +18,6 @@ test.describe("Add Task Button", () => {
 
     await testPrisma.note.create({
       data: {
-
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -88,7 +87,6 @@ test.describe("Add Task Button", () => {
 
     await testPrisma.note.create({
       data: {
-
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -127,7 +125,6 @@ test.describe("Add Task Button", () => {
 
     const note = await testPrisma.note.create({
       data: {
-
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -201,7 +198,6 @@ test.describe("Add Task Button", () => {
 
     await testPrisma.note.create({
       data: {
-
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -250,7 +246,6 @@ test.describe("Add Task Button", () => {
 
     const note = await testPrisma.note.create({
       data: {
-
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
