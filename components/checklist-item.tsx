@@ -138,7 +138,11 @@ export function ChecklistItem({
           variant="ghost"
           size="icon"
           className="h-6 w-6 opacity-50 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
-          onClick={() => onDelete?.(item.id)}
+          onMouseDown={() => {
+            // onClick will not work here, we need to use onMouseDown to avoid the blur handler interfering
+            // onMouseDown fires before onBlur, so the delete action happens before the blur handler can interfere
+            onDelete?.(item.id);
+          }}
         >
           <Trash2 className="h-3 w-3" />
           <span className="sr-only">Delete item</span>
