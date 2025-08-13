@@ -434,7 +434,7 @@ test.describe("Add Task Button", () => {
 
     const noteBackground = page
       .locator('[data-testid="note-checklist-note"]')
-      .or(page.locator(".note-background").first());
+      .or(page.locator(".shadow-md").first());
     await noteBackground.click({ position: { x: 50, y: 50 } });
 
     await page.waitForTimeout(500);

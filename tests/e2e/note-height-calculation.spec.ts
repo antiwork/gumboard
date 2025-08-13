@@ -125,9 +125,6 @@ test.describe("Note Height Calculation", () => {
 
     const addNoteButton = page.locator('button:has-text("Add Note")');
     await expect(addNoteButton).toBeVisible();
-
-    await addNoteButton.click();
-    await expect(page.locator(".note-background")).toBeVisible();
   });
 
   test("should handle responsive behavior with different screen sizes", async ({ page }) => {

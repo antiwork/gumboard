@@ -448,7 +448,7 @@ test.describe("Note Management", () => {
       await page.goto("/boards/all-notes");
       await page.getByRole("button", { name: "Add Note" }).first().click();
       await page.waitForTimeout(500);
-      await expect(page.locator(".note-background")).toBeVisible();
+      await expect(page.locator(".shadow-md")).toBeVisible();
     });
   });
 

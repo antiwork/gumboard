@@ -1158,7 +1158,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
               onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="note-background"
+              className="shadow-md shadow-black/10"
               style={{
                 position: "absolute",
                 left: note.x,
