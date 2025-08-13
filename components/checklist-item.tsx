@@ -67,25 +67,13 @@ export function ChecklistItem({
   }, [isEditing]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
+    if (e.key === "Enter") {
       e.preventDefault();
-
-      if (editContent === item.content) {
-        onStopEdit?.();
-        return;
-      }
-
-      if (onEdit && editContent !== undefined) {
-        onEdit(item.id, editContent);
-        onStopEdit?.();
-        return;
-      }
 
       const target = e.target as HTMLTextAreaElement;
       const cursorPosition = target.selectionStart || 0;
-      if (onSplit && editContent !== undefined && editContent !== item.content) {
+      if (onSplit && editContent !== undefined) {
         onSplit(item.id, editContent, cursorPosition);
-        onStopEdit?.();
       }
     }
     if (e.key === "Escape") {

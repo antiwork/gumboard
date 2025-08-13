@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -629,25 +629,24 @@ export function Note({
                   {note.content || ""}
                 </div>
               )}
-
-              {canEdit && (
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
-                      newItemInputRef.current.focus();
-                    } else {
-                      setAddingItem(true);
-                    }
-                  }}
-                  className="justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
-                >
-                  <Plus className="mr-2 h-4 w-4" />
-                  Add task
-                </Button>
-              )}
             </DraggableRoot>
           </div>
+          {canEdit && (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                  newItemInputRef.current.focus();
+                } else {
+                  setAddingItem(true);
+                }
+              }}
+              className="justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add task
+            </Button>
+          )}
         </div>
       )}
     </div>
