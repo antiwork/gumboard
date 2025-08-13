@@ -18,7 +18,6 @@ interface ChecklistItemProps {
   onToggle?: (itemId: string) => void;
   onEdit?: (itemId: string, content: string) => void;
   onDelete?: (itemId: string) => void;
-  onSplit?: (itemId: string, content: string, cursorPosition: number) => void;
   isEditing?: boolean;
   editContent?: string;
   onEditContentChange?: (content: string) => void;
@@ -34,7 +33,6 @@ export function ChecklistItem({
   onToggle,
   onEdit,
   onDelete,
-  onSplit,
   isEditing,
   editContent,
   onEditContentChange,
@@ -62,14 +60,7 @@ export function ChecklistItem({
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       const target = e.target as HTMLTextAreaElement;
-      const cursorPosition = target.selectionStart || 0;
-      const content = editContent || "";
-
-      if (cursorPosition >= content.length) {
-        target.blur();
-      } else if (onSplit && editContent !== undefined) {
-        onSplit(item.id, editContent, cursorPosition);
-      }
+      target.blur();
     }
     if (e.key === "Enter" && e.shiftKey) {
       const target = e.target as HTMLTextAreaElement;
@@ -113,7 +104,7 @@ export function ChecklistItem({
         value={editContent ?? item.content}
         onChange={(e) => onEditContentChange?.(e.target.value)}
         className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 resize-none overflow-hidden",
+          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
           item.checked && "text-slate-500 dark:text-zinc-500 line-through"
         )}
         onBlur={handleBlur}

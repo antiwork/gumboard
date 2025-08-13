@@ -84,9 +84,8 @@ export function Note({
   syncDB = true,
   style,
 }: NoteProps) {
-  const [isEditing, setIsEditing] = useState(false);
   const { resolvedTheme } = useTheme();
-  const [editContent, setEditContent] = useState(note.content);
+
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [addingItem, setAddingItem] = useState(
@@ -275,69 +274,6 @@ export function Note({
     }
   };
 
-  const handleSplitChecklistItem = async (
-    itemId: string,
-    content: string,
-    cursorPosition: number
-  ) => {
-    try {
-      if (!note.checklistItems) return;
-
-      const firstHalf = content.substring(0, cursorPosition).trim();
-      const secondHalf = content.substring(cursorPosition).trim();
-
-      const cursorAtTheStart = firstHalf.length === 0;
-
-      // if cursor is at the start, don't update the item
-      const updatedItems = note.checklistItems.map((item) =>
-        item.id === itemId && !cursorAtTheStart ? { ...item, content: firstHalf } : item
-      );
-
-      const currentItem = note.checklistItems.find((item) => item.id === itemId);
-      const currentOrder = currentItem?.order || 0;
-
-      const newItem = {
-        id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        content: secondHalf,
-        checked: false,
-        order: currentOrder + 0.5,
-      };
-
-      // Prevent creating empty items when splitting
-      const shouldCreateNewItem = newItem.content.trim() !== "" && !cursorAtTheStart;
-
-      const allItems = shouldCreateNewItem
-        ? [...updatedItems, newItem].sort((a, b) => a.order - b.order)
-        : updatedItems;
-
-      const optimisticNote = {
-        ...note,
-        checklistItems: allItems,
-      };
-
-      onUpdate?.(optimisticNote);
-
-      if (syncDB) {
-        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            checklistItems: allItems,
-          }),
-        });
-
-        if (response.ok) {
-          const { note: updatedNote } = await response.json();
-          onUpdate?.(updatedNote);
-        } else {
-          onUpdate?.(note);
-        }
-      }
-    } catch (error) {
-      console.error("Error splitting checklist item:", error);
-    }
-  };
-
   const handleAddChecklistItem = async (content: string) => {
     try {
       const newItem = {
@@ -382,20 +318,6 @@ export function Note({
     }
   };
 
-  const handleStartEdit = () => {
-    if (canEdit) {
-      setIsEditing(true);
-      setEditContent(note.content);
-    }
-  };
-
-  const handleStopEdit = () => {
-    setIsEditing(false);
-    if (onUpdate && editContent !== note.content) {
-      onUpdate({ ...note, content: editContent });
-    }
-  };
-
   const handleStartEditItem = (itemId: string) => {
     const item = note.checklistItems?.find((i) => i.id === itemId);
     if (item && canEdit) {
@@ -416,11 +338,6 @@ export function Note({
 
   const handleDeleteItem = (itemId: string) => {
     handleDeleteChecklistItem(itemId);
-    handleStopEditItem();
-  };
-
-  const handleSplitItem = (itemId: string, content: string, cursorPosition: number) => {
-    handleSplitChecklistItem(itemId, content, cursorPosition);
     handleStopEditItem();
   };
 
@@ -537,7 +454,6 @@ export function Note({
                     onToggle={handleToggleChecklistItem}
                     onEdit={handleEditItem}
                     onDelete={handleDeleteItem}
-                    onSplit={handleSplitItem}
                     isEditing={editingItem === item.id}
                     editContent={editingItem === item.id ? editingItemContent : undefined}
                     onEditContentChange={setEditingItemContent}
@@ -562,13 +478,6 @@ export function Note({
                 onDelete={() => {
                   setAddingItem(false);
                   setNewItemContent("");
-                }}
-                onSplit={(itemId, content) => {
-                  if (content.trim()) {
-                    handleAddChecklistItem(content.trim());
-                    setNewItemContent("");
-                    setAddingItem(false);
-                  }
                 }}
                 isEditing={true}
                 editContent={newItemContent}
