@@ -22,7 +22,7 @@ interface FilterPopoverProps {
 
   className?: string;
   disabled?: boolean;
-  setshowBoardDropdown: React.Dispatch<React.SetStateAction<boolean>>;
+  setshowBoardDropdown?: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 function FilterPopover({
@@ -74,7 +74,7 @@ function FilterPopover({
     <div className={cn("relative", className)} ref={dropdownRef}>
       <Button
         onClick={() => {
-          setshowBoardDropdown(false)
+          setshowBoardDropdown?.(false)
           if(!disabled) setIsOpen(!isOpen)
         }}
           // !disabled && setIsOpen(!isOpen)}
