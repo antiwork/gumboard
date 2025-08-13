@@ -476,9 +476,27 @@ test.describe("Note Management", () => {
 
       await testPrisma.checklistItem.createMany({
         data: [
-          { id: itemA1Id, content: testContext.prefix("Item A1"), checked: false, order: 0, noteId: note.id },
-          { id: itemA2Id, content: testContext.prefix("Item A2"), checked: false, order: 1, noteId: note.id },
-          { id: itemA3Id, content: testContext.prefix("Item A3"), checked: false, order: 2, noteId: note.id },
+          {
+            id: itemA1Id,
+            content: testContext.prefix("Item A1"),
+            checked: false,
+            order: 0,
+            noteId: note.id,
+          },
+          {
+            id: itemA2Id,
+            content: testContext.prefix("Item A2"),
+            checked: false,
+            order: 1,
+            noteId: note.id,
+          },
+          {
+            id: itemA3Id,
+            content: testContext.prefix("Item A3"),
+            checked: false,
+            order: 2,
+            noteId: note.id,
+          },
         ],
       });
 

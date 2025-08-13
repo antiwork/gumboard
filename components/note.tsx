@@ -349,7 +349,6 @@ export function Note({
     }
   };
 
-
   return (
     <div
       className={cn(
