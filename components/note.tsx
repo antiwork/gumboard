@@ -115,17 +115,12 @@ export function Note({
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
 
-      const uncheckedItems = updatedItems
-        .filter((item) => !item.checked)
-        .sort((a, b) => a.order - b.order);
-
-      const checkedItems = updatedItems
-        .filter((item) => item.checked)
-        .sort((a, b) => a.order - b.order);
-
-      const sortedItems = [...uncheckedItems, ...checkedItems].map((item, index) => ({
+      const sortedItems = [
+        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
+        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
+      ].map((item, index) => ({
         ...item,
-        order: index, // Update the order to match new position
+        order: index,
       }));
 
       const optimisticNote = {
@@ -262,7 +257,6 @@ export function Note({
       const optimisticNote = {
         ...note,
         checklistItems: updatedItems,
-        archivedAt: allItemsChecked ? new Date().toISOString() : null,
       };
 
       onUpdate?.(optimisticNote);
@@ -275,6 +269,7 @@ export function Note({
           },
           body: JSON.stringify({
             checklistItems: updatedItems,
+            archivedAt: allItemsChecked ? new Date().toISOString() : null,
           }),
         });
 
