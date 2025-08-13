@@ -164,7 +164,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background dark:bg-zinc-950">
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950">
       <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
         <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center">
@@ -297,7 +297,7 @@ export default function Dashboard() {
 
               {boards.map((board) => (
                 <Link href={`/boards/${board.id}`} key={board.id}>
-                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-50 dark:border-zinc-800 dark:hover:bg-zinc-900/75 h-40">
+                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 h-40">
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
@@ -308,7 +308,9 @@ export default function Dashboard() {
                     </CardHeader>
                     {board.description && (
                       <CardContent>
-                        <p className="text-sm dark:text-zinc-400">{board.description}</p>
+                        <p className="text-slate-600 dark:text-zinc-300 text-sm">
+                          {board.description}
+                        </p>
                       </CardContent>
                     )}
                   </Card>
