@@ -100,9 +100,7 @@ test.describe("Archive Functionality", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(
-      authenticatedPage.locator(`text=${noteContent}`)
-    ).toBeVisible();
+    await expect(authenticatedPage.locator(`text=${noteContent}`)).toBeVisible();
 
     // Hover over the note to reveal the archive button
     await authenticatedPage.locator(`text=${noteContent}`).hover();

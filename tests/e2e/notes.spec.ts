@@ -58,19 +58,19 @@ test.describe("Note Management", () => {
 
     // Since the note is empty, it should show the new-item input automatically
     const testItemContent = testContext.prefix("Test checklist item");
-    
+
     // Look for any textarea in the note (the initial empty item input)
     const initialTextarea = authenticatedPage.locator("textarea").first();
     await expect(initialTextarea).toBeVisible({ timeout: 10000 });
-    
+
     await initialTextarea.fill(testItemContent);
-    
+
     // Use Tab key to move focus away and trigger blur
     await initialTextarea.press("Tab");
-    
+
     // Wait for the content to appear in the UI (this means at least one submission worked)
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
-    
+
     // Add a small delay to ensure all async operations complete
     await authenticatedPage.waitForTimeout(1000);
 
@@ -236,7 +236,9 @@ test.describe("Note Management", () => {
     const existingItem = authenticatedPage.locator(`text=${testItemContent}`).first();
     await expect(existingItem).toBeVisible();
     await existingItem.dblclick();
-    const editInput = authenticatedPage.getByTestId(testContext.prefix("item-1")).locator("textarea");
+    const editInput = authenticatedPage
+      .getByTestId(testContext.prefix("item-1"))
+      .locator("textarea");
     await expect(editInput).toBeVisible();
     const editedContent = testContext.prefix("Edited test item");
     const editResponse = authenticatedPage.waitForResponse(
@@ -262,7 +264,10 @@ test.describe("Note Management", () => {
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    await authenticatedPage.getByTestId(testContext.prefix("item-1")).getByRole("button", { name: "Delete item" }).click();
+    await authenticatedPage
+      .getByTestId(testContext.prefix("item-1"))
+      .getByRole("button", { name: "Delete item" })
+      .click();
     await deleteResponse;
 
     // Verify deletion in database
@@ -696,7 +701,9 @@ test.describe("Note Management", () => {
       await authenticatedPage.goto(`/boards/${board.id}`);
 
       await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
-      await expect(authenticatedPage.locator('button:has-text("Add Your First Note")')).toBeVisible();
+      await expect(
+        authenticatedPage.locator('button:has-text("Add Your First Note")')
+      ).toBeVisible();
     });
 
     test("should create a note in the all notes view", async ({
@@ -716,7 +723,7 @@ test.describe("Note Management", () => {
       });
 
       await authenticatedPage.goto("/boards/all-notes");
-      
+
       const createNoteResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/`) &&
@@ -726,7 +733,7 @@ test.describe("Note Management", () => {
       );
       await authenticatedPage.getByRole("button", { name: "Add Note" }).first().click();
       await createNoteResponse;
-      
+
       await expect(authenticatedPage.locator(".shadow-md")).toBeVisible();
 
       // Verify note was created in database (could be on any board)
@@ -736,7 +743,7 @@ test.describe("Note Management", () => {
           deletedAt: null,
         },
         orderBy: {
-          createdAt: 'desc',
+          createdAt: "desc",
         },
       });
       expect(createdNote).toBeTruthy();
@@ -837,11 +844,11 @@ test.describe("Note Management", () => {
 
       // When a note is created empty, it automatically shows the new item input
       const testItemContent = testContext.prefix("First item content");
-      
+
       // Look for any textarea in the newly created note
       const newItemInput = authenticatedPage.locator("textarea").first();
       await expect(newItemInput).toBeVisible({ timeout: 10000 });
-      
+
       const addItemResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&
@@ -900,11 +907,11 @@ test.describe("Note Management", () => {
 
       // When a note is created empty, it automatically shows the new item input
       const testItemContent = testContext.prefix("Last item content");
-      
+
       // Look for any textarea in the newly created note
       const newItemInput = authenticatedPage.locator("textarea").first();
       await expect(newItemInput).toBeVisible({ timeout: 10000 });
-      
+
       const addItemResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&

@@ -158,14 +158,14 @@ test.describe("Add Task Button", () => {
     const newTaskContent = testContext.prefix("New task from button");
 
     await newItemInput.fill(newTaskContent);
-    
+
     const addItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    
+
     // Small delay to ensure response waiter is set up
     await authenticatedPage.waitForTimeout(100);
     await newItemInput.blur();

@@ -16,7 +16,7 @@ test.describe("Home Page", () => {
       },
     });
 
-    // Create some demo notes with checklist items 
+    // Create some demo notes with checklist items
     const note1 = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -31,7 +31,7 @@ test.describe("Home Page", () => {
               order: 0,
             },
             {
-              id: testContext.prefix("102"), 
+              id: testContext.prefix("102"),
               content: testContext.prefix("Helper Tix (Mon-Fri)"),
               checked: false,
               order: 1,
@@ -66,7 +66,9 @@ test.describe("Home Page", () => {
     });
 
     await authenticatedPage.goto(`/boards/${demoBoard.id}`);
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Finance update by Friday")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Finance update by Friday")}`)
+    ).toBeVisible();
     let initialNotes = await authenticatedPage.getByRole("button", { name: "Add task" }).count();
 
     // Test 1: Add a new note
@@ -91,9 +93,13 @@ test.describe("Home Page", () => {
     expect(notesAfterAdd).toBe(3); // 2 original + 1 new
 
     // Test 2: Toggle checklist item (check/uncheck)
-    const initialCheckedCount = await authenticatedPage.getByRole("checkbox", { checked: true }).count();
-    const uncheckedCheckbox = authenticatedPage.getByTestId(testContext.prefix("102")).getByRole("checkbox");
-    
+    const initialCheckedCount = await authenticatedPage
+      .getByRole("checkbox", { checked: true })
+      .count();
+    const uncheckedCheckbox = authenticatedPage
+      .getByTestId(testContext.prefix("102"))
+      .getByRole("checkbox");
+
     const toggleResponse1 = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
@@ -102,17 +108,17 @@ test.describe("Home Page", () => {
     );
     await uncheckedCheckbox.click();
     await toggleResponse1;
-    
+
     await expect(await authenticatedPage.getByRole("checkbox", { checked: true })).toHaveCount(
       initialCheckedCount + 1
     );
-    
+
     // Verify checkbox state in database
     const toggledItem = await testPrisma.checklistItem.findFirst({
       where: { id: testContext.prefix("102") },
     });
     expect(toggledItem?.checked).toBe(true);
-    
+
     const toggleResponse2 = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
@@ -121,9 +127,11 @@ test.describe("Home Page", () => {
     );
     await uncheckedCheckbox.click();
     await toggleResponse2;
-    
-    await expect(authenticatedPage.getByRole("checkbox", { checked: true })).toHaveCount(initialCheckedCount);
-    
+
+    await expect(authenticatedPage.getByRole("checkbox", { checked: true })).toHaveCount(
+      initialCheckedCount
+    );
+
     // Verify checkbox state in database
     const untoggledItem = await testPrisma.checklistItem.findFirst({
       where: { id: testContext.prefix("102") },
@@ -184,7 +192,10 @@ test.describe("Home Page", () => {
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    await authenticatedPage.getByTestId(testContext.prefix("101")).getByRole("button", { name: "Delete item", exact: true }).click();
+    await authenticatedPage
+      .getByTestId(testContext.prefix("101"))
+      .getByRole("button", { name: "Delete item", exact: true })
+      .click();
     await deleteItemResponse;
     await expect(authenticatedPage.getByTestId(testContext.prefix("101"))).not.toBeAttached();
 
@@ -195,8 +206,11 @@ test.describe("Home Page", () => {
     expect(deletedItem).toBeNull();
 
     // Test 6: Delete entire note
-    const deleteNoteButton = authenticatedPage.getByRole("button", { name: `Delete Note ${note1.id}`, exact: true });
-    
+    const deleteNoteButton = authenticatedPage.getByRole("button", {
+      name: `Delete Note ${note1.id}`,
+      exact: true,
+    });
+
     // Wait for the DELETE request to be made
     const deleteResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -205,10 +219,10 @@ test.describe("Home Page", () => {
         resp.ok(),
       { timeout: 10000 } // Give it 10 seconds to complete
     );
-    
+
     // Click delete button (triggers optimistic UI update with undo feature)
     await deleteNoteButton.click();
-    
+
     // Verify UI updates immediately (optimistic update)
     await expect(deleteNoteButton).not.toBeAttached();
     await expect(await authenticatedPage.getByRole("button", { name: "Add task" }).count()).toBe(
@@ -245,7 +259,7 @@ test.describe("Home Page", () => {
     await authenticatedPage.getByText(splitTestContent).click();
     const splitInput = authenticatedPage.locator("textarea").filter({ hasText: splitTestContent });
     await expect(splitInput).toBeVisible();
-    
+
     const splitResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
@@ -259,7 +273,7 @@ test.describe("Home Page", () => {
     }
     await splitInput.press("Enter");
     await splitResponse;
-    
+
     // Verify the split created two items
     await expect(authenticatedPage.getByText("Split this")).toBeVisible();
     await expect(authenticatedPage.getByText("item here")).toBeVisible();
@@ -273,8 +287,14 @@ test.describe("Home Page", () => {
     const sourceTestId = testContext.prefix("301");
     const targetTestId = testContext.prefix("302");
 
-    await expect(authenticatedPage.getByTestId(sourceTestId)).toHaveAttribute("data-testorder", "0");
-    await expect(authenticatedPage.getByTestId(targetTestId)).toHaveAttribute("data-testorder", "1");
+    await expect(authenticatedPage.getByTestId(sourceTestId)).toHaveAttribute(
+      "data-testorder",
+      "0"
+    );
+    await expect(authenticatedPage.getByTestId(targetTestId)).toHaveAttribute(
+      "data-testorder",
+      "1"
+    );
 
     await expect(sourceElement).toBeVisible();
 
@@ -295,8 +315,14 @@ test.describe("Home Page", () => {
     await authenticatedPage.mouse.up();
     await reorderResponse;
 
-    await expect(authenticatedPage.getByTestId(targetTestId)).toHaveAttribute("data-testorder", "0");
-    await expect(authenticatedPage.getByTestId(sourceTestId)).toHaveAttribute("data-testorder", "1");
+    await expect(authenticatedPage.getByTestId(targetTestId)).toHaveAttribute(
+      "data-testorder",
+      "0"
+    );
+    await expect(authenticatedPage.getByTestId(sourceTestId)).toHaveAttribute(
+      "data-testorder",
+      "1"
+    );
 
     // Verify reorder was saved to database
     const reorderedItems = await testPrisma.checklistItem.findMany({
