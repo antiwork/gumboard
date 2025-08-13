@@ -18,6 +18,8 @@ export class TestContext {
   userEmail: string;
   organizationId: string;
   sessionToken: string;
+  private _isAuthInitialized: boolean = false;
+  private prisma: PrismaClient;
 
   constructor(testTitle?: string) {
     // Create a short, unique identifier
@@ -33,56 +35,141 @@ export class TestContext {
     this.userEmail = `test-${this.testId}@example.com`;
     this.organizationId = `org_${this.testId}`;
     this.sessionToken = `sess_${this.testId}_${randomBytes(16).toString("hex")}`;
+    this.prisma = getTestPrismaClient();
   }
 
   async setup() {
-    const prisma = getTestPrismaClient();
+    // Minimal setup - auth will be initialized lazily when needed
+  }
 
-    await prisma.organization.create({
-      data: {
-        id: this.organizationId,
-        name: `Test Org ${this.testId}`,
-      },
+  async ensureAuthInitialized() {
+    if (this._isAuthInitialized) {
+      return;
+    }
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.organization.create({
+        data: {
+          id: this.organizationId,
+          name: `Test Org ${this.testId}`,
+        },
+      });
+
+      await tx.user.create({
+        data: {
+          id: this.userId,
+          email: this.userEmail,
+          name: `Test User ${this.testId}`,
+          organizationId: this.organizationId,
+        },
+      });
+
+      await tx.session.create({
+        data: {
+          sessionToken: this.sessionToken,
+          userId: this.userId,
+          expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+        },
+      });
     });
 
-    await prisma.user.create({
-      data: {
-        id: this.userId,
-        email: this.userEmail,
-        name: `Test User ${this.testId}`,
-        organizationId: this.organizationId,
-      },
-    });
-
-    await prisma.session.create({
-      data: {
-        sessionToken: this.sessionToken,
-        userId: this.userId,
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-      },
-    });
+    this._isAuthInitialized = true;
   }
 
   async cleanup() {
-    const prisma = getTestPrismaClient();
+    // Use transaction for atomic cleanup
+    try {
+      await this.prisma.$transaction(async (tx) => {
+        // Delete in dependency order to avoid foreign key violations
+        await tx.checklistItem.deleteMany({
+          where: {
+            note: {
+              board: {
+                organizationId: this.organizationId
+              }
+            }
+          }
+        });
 
-    await prisma.$transaction([
-      prisma.session.deleteMany({
-        where: { userId: this.userId },
-      }),
-      prisma.note.deleteMany({
-        where: { board: { organizationId: this.organizationId } },
-      }),
-      prisma.board.deleteMany({
-        where: { organizationId: this.organizationId },
-      }),
-      prisma.user.deleteMany({
-        where: { organizationId: this.organizationId },
-      }),
-      prisma.organization.deleteMany({
-        where: { id: this.organizationId },
-      }),
-    ]);
+        await tx.note.deleteMany({
+          where: { 
+            board: { 
+              organizationId: this.organizationId 
+            } 
+          },
+        });
+
+        await tx.board.deleteMany({
+          where: { 
+            organizationId: this.organizationId 
+          },
+        });
+
+        await tx.session.deleteMany({
+          where: { 
+            userId: this.userId 
+          },
+        });
+
+        await tx.user.deleteMany({
+          where: { 
+            organizationId: this.organizationId 
+          },
+        });
+
+        await tx.organization.deleteMany({
+          where: { 
+            id: this.organizationId 
+          },
+        });
+      }, {
+        timeout: 10000, // 10 second timeout for cleanup
+      });
+    } catch (error) {
+      // Log cleanup errors but don't throw - we want to continue test execution
+      if (process.env.DEBUG_TESTS) {
+        console.error(`Cleanup failed for test ${this.testId}:`, error);
+      }
+      
+      // Try individual cleanup as fallback
+      const fallbackCleanup = [
+        () => this.prisma.checklistItem.deleteMany({
+          where: {
+            note: {
+              board: {
+                organizationId: this.organizationId
+              }
+            }
+          }
+        }),
+        () => this.prisma.note.deleteMany({
+          where: { board: { organizationId: this.organizationId } }
+        }),
+        () => this.prisma.board.deleteMany({
+          where: { organizationId: this.organizationId }
+        }),
+        () => this.prisma.session.deleteMany({
+          where: { userId: this.userId }
+        }),
+        () => this.prisma.user.deleteMany({
+          where: { organizationId: this.organizationId }
+        }),
+        () => this.prisma.organization.deleteMany({
+          where: { id: this.organizationId }
+        }),
+      ];
+
+      for (const cleanupFn of fallbackCleanup) {
+        try {
+          await cleanupFn();
+        } catch (fallbackError) {
+          // Log but continue with other cleanup operations
+          if (process.env.DEBUG_TESTS) {
+            console.error(`Fallback cleanup step failed:`, fallbackError);
+          }
+        }
+      }
+    }
   }
 
   // Simple prefixing methods for test data
@@ -125,12 +212,18 @@ export const test = base.extend<{
     }
   },
 
-  testPrisma: async ({}, use) => {
+  testPrisma: async ({ testContext }, use) => {
+    // Ensure auth is initialized if test is using testPrisma
+    // This ensures user/org exist for foreign key constraints
+    await testContext.ensureAuthInitialized();
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(getTestPrismaClient());
   },
 
   authenticatedPage: async ({ page, testContext }, use) => {
+    // Ensure auth is initialized before setting cookies
+    await testContext.ensureAuthInitialized();
+    
     await page.context().addCookies([
       {
         name: "authjs.session-token",
