@@ -352,7 +352,7 @@ export function Note({
   return (
     <div
       className={cn(
-        "rounded-lg shadow-sm select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
         className
       )}
       style={{
