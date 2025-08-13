@@ -483,9 +483,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const search = searchTerm.toLowerCase();
       filteredNotes = filteredNotes.filter((note) => {
         const authorName = (note.user.name || note.user.email).toLowerCase();
-        const checklistMatch = note.checklistItems.some((item) =>
+        const checklistMatch = note.checklistItems?.some((item) =>
           item.content.toLowerCase().includes(search)
-        );
+        ) ?? false;
         return authorName.includes(search) || checklistMatch;
 
       });
