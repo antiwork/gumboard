@@ -140,24 +140,6 @@ export const test = base.extend<{
       secure: false,
       sameSite: 'Lax'
     }]);
-
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          id: testContext.userId,
-          email: testContext.userEmail,
-          name: `Test User ${testContext.testId}`,
-          isAdmin: true,
-          organization: {
-            id: testContext.organizationId,
-            name: `Test Org ${testContext.testId}`,
-            members: [],
-          },
-        }),
-      });
-    });
     
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(page);
