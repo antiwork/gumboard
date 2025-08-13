@@ -487,6 +487,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           item.content.toLowerCase().includes(search)
         );
         return authorName.includes(search) || checklistMatch;
+
       });
     }
 
