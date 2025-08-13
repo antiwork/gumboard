@@ -1,217 +1,105 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Board Settings", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            email: "test@example.com",
-            name: "Test User",
-          },
-          expires: new Date(Date.now() + 86400000).toISOString(),
-        }),
-      });
+  test("should open board settings dialog and display current settings", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a board with Slack updates enabled
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        sendSlackUpdates: true,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          id: "test-user",
-          email: "test@example.com",
-          name: "Test User",
-          isAdmin: true,
-          organization: {
-            id: "test-org",
-            name: "Test Organization",
-            slackWebhookUrl: "https://hooks.slack.com/test-webhook",
-            members: [],
-          },
-        }),
-      });
-    });
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await page.route("**/api/boards/test-board", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            board: {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
-              sendSlackUpdates: true,
-            },
-          }),
-        });
-      }
-    });
+    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
+    await authenticatedPage.click('button:has-text("Board settings")');
 
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [],
-          }),
-        });
-      }
-    });
+    await expect(authenticatedPage.locator("text=Board settings")).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=Configure settings for "${board.name}" board.`)
+    ).toBeVisible();
+    await expect(
+      authenticatedPage.locator('label:has-text("Send updates to Slack")')
+    ).toBeVisible();
 
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          boards: [
-            {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
-              sendSlackUpdates: true,
-            },
-          ],
-        }),
-      });
-    });
-  });
-
-  test("should open board settings dialog and display current settings", async ({ page }) => {
-    await page.goto("/boards/test-board");
-
-    await page.click('button:has(div:has-text("Test Board"))');
-    await page.click('button:has-text("Board settings")');
-
-    await expect(page.locator("text=Board settings")).toBeVisible();
-    await expect(page.locator('text=Configure settings for "Test Board" board.')).toBeVisible();
-    await expect(page.locator('label:has-text("Send updates to Slack")')).toBeVisible();
-
-    const checkbox = page.locator("#sendSlackUpdates");
+    const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeVisible();
     await expect(checkbox).toBeChecked();
   });
 
-  test("should toggle Slack updates setting and save changes", async ({ page }) => {
-    let boardUpdateCalled = false;
-    let updatedSettings: any = null;
-
-    await page.route("**/api/boards/test-board", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            board: {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
-              sendSlackUpdates: true,
-            },
-          }),
-        });
-      } else if (route.request().method() === "PUT") {
-        boardUpdateCalled = true;
-        updatedSettings = await route.request().postDataJSON();
-
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            board: {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
-              sendSlackUpdates: updatedSettings.sendSlackUpdates,
-            },
-          }),
-        });
-      }
+  test("should toggle Slack updates setting and save changes", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a board with Slack updates enabled
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        sendSlackUpdates: true,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.goto("/boards/test-board");
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await page.click('button:has(div:has-text("Test Board"))');
-    await page.click('button:has-text("Board settings")');
+    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
+    await authenticatedPage.click('button:has-text("Board settings")');
 
-    const checkbox = page.locator("#sendSlackUpdates");
+    const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeChecked();
 
     await checkbox.uncheck();
     await expect(checkbox).not.toBeChecked();
 
-    await page.click('button:has-text("Save settings")');
+    await authenticatedPage.click('button:has-text("Save settings")');
 
-    expect(boardUpdateCalled).toBe(true);
-    expect(updatedSettings).not.toBeNull();
-    expect(updatedSettings.sendSlackUpdates).toBe(false);
+    const saveSettingsResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await saveSettingsResponse;
 
-    await expect(page.locator("text=Board settings")).not.toBeVisible();
+    // Verify in database
+    const updatedBoard = await testPrisma.board.findUnique({
+      where: { id: board.id },
+    });
+    expect(updatedBoard?.sendSlackUpdates).toBe(false);
+
+    await expect(authenticatedPage.locator("text=Board settings")).not.toBeVisible();
   });
 
-  test("should respect Slack updates setting when creating notes", async ({ page }) => {
+  test("should respect Slack updates setting when creating notes", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a board with Slack updates disabled
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        sendSlackUpdates: false,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    // Mock Slack webhook to detect if notifications are sent
     let slackNotificationSent = false;
-    let noteCreated = false;
-
-    await page.route("**/api/boards/test-board", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            board: {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
-              sendSlackUpdates: false,
-            },
-          }),
-        });
-      }
-    });
-
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [],
-          }),
-        });
-      } else if (route.request().method() === "POST") {
-        noteCreated = true;
-        const postData = await route.request().postDataJSON();
-
-        await route.fulfill({
-          status: 201,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "new-note-id",
-              content: postData.content,
-              color: "#fef3c7",
-              archivedAt: null,
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
-            },
-          }),
-        });
-      }
-    });
-
-    await page.route("https://hooks.slack.com/test-webhook", async (route) => {
+    await authenticatedPage.route("https://hooks.slack.com/**", async (route) => {
       slackNotificationSent = true;
       await route.fulfill({
         status: 200,
@@ -220,74 +108,98 @@ test.describe("Board Settings", () => {
       });
     });
 
-    await page.goto("/boards/test-board");
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await page.evaluate(() => {
-      fetch("/api/boards/test-board/notes", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: "Test note content",
-          color: "#fef3c7",
-        }),
-      });
+    await authenticatedPage.click('button:has-text("Add Your First Note")');
+    const createNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
+    );
+    await createNoteResponse;
+
+    // Verify note was created in database
+    const notes = await testPrisma.note.findMany({
+      where: { boardId: board.id },
     });
+    expect(notes).toHaveLength(1);
 
-    await page.waitForTimeout(100);
-
-    expect(noteCreated).toBe(true);
+    // Verify no Slack notification was sent (since sendSlackUpdates is false)
     expect(slackNotificationSent).toBe(false);
   });
 
-  test("should display correct board settings state", async ({ page }) => {
-    await page.route("**/api/boards/test-board", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            board: {
-              id: "test-board",
-              name: "Demo Board",
-              description: "A demo board",
-              sendSlackUpdates: true,
-            },
-          }),
-        });
-      }
+  test("should display correct board settings state", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a board with Slack updates enabled
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Demo Board"),
+        description: testContext.prefix("A demo board"),
+        sendSlackUpdates: true,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.goto("/boards/test-board");
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await page.click('button:has(div:has-text("Demo Board"))');
-    await page.click('button:has-text("Board settings")');
+    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
+    await authenticatedPage.click('button:has-text("Board settings")');
 
-    await expect(page.locator("text=Board settings")).toBeVisible();
-    await expect(page.locator('label:has-text("Send updates to Slack")')).toBeVisible();
+    await expect(authenticatedPage.locator("text=Board settings")).toBeVisible();
+    await expect(
+      authenticatedPage.locator('label:has-text("Send updates to Slack")')
+    ).toBeVisible();
 
-    const checkbox = page.locator("#sendSlackUpdates");
+    const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeVisible();
     await expect(checkbox).toBeChecked();
   });
 
-  test("should cancel board settings changes", async ({ page }) => {
-    await page.goto("/boards/test-board");
+  test("should cancel board settings changes", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a board with Slack updates enabled
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        sendSlackUpdates: true,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
 
-    await page.click('button:has(div:has-text("Test Board"))');
-    await page.click('button:has-text("Board settings")');
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const checkbox = page.locator("#sendSlackUpdates");
+    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
+    await authenticatedPage.click('button:has-text("Board settings")');
+
+    const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeChecked();
 
     await checkbox.uncheck();
     await expect(checkbox).not.toBeChecked();
 
-    await page.click('button:has-text("Cancel")');
+    await authenticatedPage.click('button:has-text("Cancel")');
 
-    await expect(page.locator("text=Board settings")).not.toBeVisible();
+    await expect(authenticatedPage.locator("text=Board settings")).not.toBeVisible();
 
-    await page.click('button:has(div:has-text("Test Board"))');
-    await page.click('button:has-text("Board settings")');
+    // Verify settings were not saved in database
+    const unchangedBoard = await testPrisma.board.findUnique({
+      where: { id: board.id },
+    });
+    expect(unchangedBoard?.sendSlackUpdates).toBe(true);
+
+    // Reopen settings to verify UI reflects unchanged state
+    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
+    await authenticatedPage.click('button:has-text("Board settings")');
 
     await expect(checkbox).toBeChecked();
   });
