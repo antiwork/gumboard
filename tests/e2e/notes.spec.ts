@@ -1,17 +1,29 @@
 import { ChecklistItem } from "@/components";
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Note Management", () => {
-  test.beforeEach(async ({ page }) => {
+  let testBoard: { id: string; name: string; description: string | null };
+
+  test.beforeEach(async ({ page, testUser, testOrganization, prisma }) => {
+    testBoard = await prisma.board.create({
+      data: {
+        id: "test-board-" + Math.random().toString(36).substring(7),
+        name: "Test Board",
+        description: "A test board",
+        organizationId: testOrganization.id,
+        createdBy: testUser.id,
+      },
+    });
+
     await page.route("**/api/auth/session", async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
           user: {
-            id: "test-user",
-            email: "test@example.com",
-            name: "Test User",
+            id: testUser.id,
+            email: testUser.email,
+            name: testUser.name,
           },
         }),
       });
@@ -22,28 +34,22 @@ test.describe("Note Management", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          id: "test-user",
-          email: "test@example.com",
-          name: "Test User",
+          id: testUser.id,
+          email: testUser.email,
+          name: testUser.name,
           isAdmin: true,
-          organization: {
-            id: "test-org",
-            name: "Test Organization",
-          },
+          organizationId: testOrganization.id,
+          organization: testOrganization,
         }),
       });
     });
 
-    await page.route("**/api/boards/test-board", async (route) => {
+    await page.route(`**/api/boards/${testBoard.id}`, async (route) => {
       await route.fulfill({
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          board: {
-            id: "test-board",
-            name: "Test Board",
-            description: "A test board",
-          },
+          board: testBoard,
         }),
       });
     });
@@ -53,97 +59,97 @@ test.describe("Note Management", () => {
         status: 200,
         contentType: "application/json",
         body: JSON.stringify({
-          boards: [
-            {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
-            },
-          ],
+          boards: [testBoard],
         }),
       });
     });
 
-    await page.route("**/api/boards/test-board/notes", async (route) => {
+    await page.route(`**/api/boards/${testBoard.id}/notes`, async (route) => {
       if (route.request().method() === "GET") {
+        const notes = await prisma.note.findMany({
+          where: { boardId: testBoard.id },
+          include: { 
+            checklistItems: { orderBy: { order: 'asc' } },
+            user: true,
+            board: true 
+          },
+        });
+        
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({
-            notes: [],
-          }),
+          body: JSON.stringify({ notes }),
         });
       } else if (route.request().method() === "POST") {
         const postData = await route.request().postDataJSON();
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "new-note-id",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              checklistItems: postData.checklistItems || [
-                {
-                  id: `item-${Date.now()}`,
+        
+        const newNote = await prisma.note.create({
+          data: {
+            id: "note-" + Math.random().toString(36).substring(7),
+            content: postData.content || "",
+            color: postData.color || "#fef3c7",
+            boardId: testBoard.id,
+            createdBy: testUser.id,
+            checklistItems: {
+              create: postData.checklistItems?.map((item: any, index: number) => ({
+                id: "item-" + Math.random().toString(36).substring(7),
+                content: item.content || "",
+                checked: item.checked || false,
+                order: index,
+              })) || [{
+                id: "item-" + Math.random().toString(36).substring(7),
                   content: "",
                   checked: false,
                   order: 0,
-                },
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
-              board: {
-                id: "test-board",
-                name: "Target Board",
-              },
-              boardId: "test-board",
-            },
-          }),
+              }]
+            }
+          },
+          include: {
+            checklistItems: { orderBy: { order: 'asc' } },
+            user: true,
+            board: true,
+          },
+        });
+
+        await route.fulfill({
+          status: 201,
+          contentType: "application/json",
+          body: JSON.stringify({ note: newNote }),
         });
       }
     });
 
-    await page.route("**/api/boards/test-board/notes/new-note-id", async (route) => {
+    await page.route(`**/api/boards/${testBoard.id}/notes/*`, async (route) => {
       if (route.request().method() === "PUT") {
         const postData = await route.request().postDataJSON();
+        const noteId = route.request().url().split('/').pop();
+        
+        const updatedNote = await prisma.note.update({
+          where: { id: noteId },
+          data: {
+            content: postData.content,
+            color: postData.color,
+            checklistItems: postData.checklistItems ? {
+              deleteMany: {},
+              create: postData.checklistItems.map((item: any, index: number) => ({
+                id: item.id || "item-" + Math.random().toString(36).substring(7),
+                content: item.content || "",
+                checked: item.checked || false,
+                order: index,
+              }))
+            } : undefined
+          },
+          include: {
+            checklistItems: { orderBy: { order: 'asc' } },
+            user: true,
+            board: true,
+          },
+        });
+
         await route.fulfill({
           status: 200,
           contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "new-note-id",
-              content: "",
-              color: "#fef3c7",
-              archivedAt: null,
-              checklistItems: postData.checklistItems || [
-                {
-                  id: `item-${Date.now()}`,
-                  content: "",
-                  checked: false,
-                  order: 0,
-                },
-              ],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
-              board: {
-                id: "test-board",
-                name: "Target Board",
-              },
-              boardId: "test-board",
-            },
-          }),
+          body: JSON.stringify({ note: updatedNote }),
         });
       }
     });
@@ -290,8 +296,8 @@ test.describe("Note Management", () => {
       });
     });
 
-    test("should autofocus new checklist item input when Add task is clicked", async ({ page }) => {
-      await page.goto("/boards/test-board");
+    test("should autofocus new checklist item input when Add task is clicked", async ({ page, testUser }) => {
+      await page.goto(`/boards/${testBoard.id}`);
 
       await page.click('button:has-text("Add Your First Note")');
       await page.waitForTimeout(500);
@@ -314,97 +320,92 @@ test.describe("Note Management", () => {
       await expect(newItemInput).toBeFocused();
     });
 
-    test("should create a checklist note and verify database state", async ({ page }) => {
-      let noteCreated = false;
-      let noteData: any = null;
-
-      await page.route("**/api/boards/test-board/notes", async (route) => {
-        if (route.request().method() === "GET") {
-          await route.fulfill({
-            status: 200,
-            contentType: "application/json",
-            body: JSON.stringify({ notes: [] }),
-          });
-        } else if (route.request().method() === "POST") {
-          noteCreated = true;
-          const postData = await route.request().postDataJSON();
-          noteData = postData;
-
-          await route.fulfill({
-            status: 201,
-            contentType: "application/json",
-            body: JSON.stringify({
-              note: {
-                id: "new-note-id",
-                content: "",
-                color: "#fef3c7",
-                archivedAt: null,
-                checklistItems: postData.checklistItems || [
-                  {
-                    id: `item-${Date.now()}`,
-                    content: "",
-                    checked: false,
-                    order: 0,
-                  },
-                ],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                board: {
-                  id: "test-board-id",
-                  name: "Test Board",
-                },
-                boardId: "test-board-id",
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
-              },
-            }),
-          });
-        }
+    test("should create a checklist note and verify database state", async ({ 
+      page, 
+      prisma, 
+      testUser 
+    }) => {
+      const notesCountBefore = await prisma.note.count({
+        where: { boardId: testBoard.id },
       });
 
-      await page.goto("/boards/test-board");
+      await page.goto(`/boards/${testBoard.id}`);
 
-      await page.evaluate(() => {
+      await page.evaluate((boardId) => {
         const mockNoteData = {
-          content: "",
+          content: "Test Note Content",
+          color: "#fef3c7",
           checklistItems: [
             {
-              id: `item-${Date.now()}`,
-              content: "",
+              content: "Test checklist item",
               checked: false,
               order: 0,
             },
           ],
         };
-        fetch("/api/boards/test-board/notes", {
+        fetch(`/api/boards/${boardId}/notes`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(mockNoteData),
         });
+      }, testBoard.id);
+
+      await page.waitForTimeout(500);
+
+      const notesCountAfter = await prisma.note.count({
+        where: { boardId: testBoard.id },
       });
 
-      await page.waitForTimeout(100);
+      const createdNote = await prisma.note.findFirst({
+        where: { 
+          boardId: testBoard.id,
+          createdBy: testUser.id,
+        },
+        include: { 
+          checklistItems: { orderBy: { order: 'asc' } },
+          user: true,
+          board: true,
+        },
+      });
 
-      expect(noteCreated).toBe(true);
-      expect(noteData).not.toBeNull();
-      expect(noteData!.checklistItems).toBeDefined();
-      expect(Array.isArray(noteData!.checklistItems)).toBe(true);
+      expect(notesCountAfter).toBe(notesCountBefore + 1);
+      expect(createdNote).toBeTruthy();
+      expect(createdNote?.content).toBe("Test Note Content");
+      expect(createdNote?.color).toBe("#fef3c7");
+      expect(createdNote?.boardId).toBe(testBoard.id);
+      expect(createdNote?.createdBy).toBe(testUser.id);
+      expect(createdNote?.checklistItems).toBeDefined();
+      expect(createdNote?.checklistItems.length).toBeGreaterThan(0);
+      expect(createdNote?.checklistItems[0].content).toBe("Test checklist item");
     });
 
-    test("should handle checklist item editing", async ({ page }) => {
-      await page.goto("/boards/test-board");
+    test("should handle checklist item editing", async ({ page, testUser, prisma }) => {
+      const testNote = await prisma.note.create({
+        data: {
+          id: "edit-note-" + Math.random().toString(36).substring(7),
+          content: "Test Note for Editing",
+          color: "#fef3c7",
+          boardId: testBoard.id,
+          createdBy: testUser.id,
+          checklistItems: {
+            create: [{
+              id: "edit-item-" + Math.random().toString(36).substring(7),
+              content: "#1 Task item",
+              checked: false,
+              order: 0,
+            }]
+          }
+        },
+        include: {
+          checklistItems: { orderBy: { order: 'asc' } },
+          user: true,
+          board: true,
+        },
+      });
 
-      await page.click('button:has-text("Add Your First Note")');
+      await page.goto(`/boards/${testBoard.id}`);
+      await page.waitForTimeout(1000);
 
-      await page.waitForTimeout(500);
-
-      await page.getByRole("button", { name: "Add task" }).first().click();
-      await page.getByPlaceholder("Add new item...").fill("#1 Task item");
-      await page.getByPlaceholder("Add new item...").press("Enter");
-      await page.waitForTimeout(500);
       await expect(page.getByText("#1 Task item")).toBeVisible();
 
       await page.getByText("#1 Task item").click();
@@ -415,19 +416,41 @@ test.describe("Note Management", () => {
       await page.locator('input[value="#1 Task item edited"]').press("Enter");
       await page.waitForTimeout(500);
       await expect(page.getByText("#1 Task item edited")).toBeVisible();
+
+      const updatedNote = await prisma.note.findUnique({
+        where: { id: testNote.id },
+        include: { checklistItems: true },
+      });
+      expect(updatedNote?.checklistItems[0].content).toBe("#1 Task item edited");
     });
 
-    test("should handle creating multiple checklist items", async ({ page }) => {
-      await page.goto("/boards/test-board");
+    test("should handle creating multiple checklist items", async ({ page, testUser, prisma }) => {
+      const testNote = await prisma.note.create({
+        data: {
+          id: "multi-note-" + Math.random().toString(36).substring(7),
+          content: "Test Note for Multiple Items",
+          color: "#fef3c7",
+          boardId: testBoard.id,
+          createdBy: testUser.id,
+          checklistItems: {
+            create: [{
+              id: "multi-item-1-" + Math.random().toString(36).substring(7),
+              content: "#1 Task item",
+              checked: false,
+              order: 0,
+            }]
+          }
+        },
+        include: {
+          checklistItems: { orderBy: { order: 'asc' } },
+          user: true,
+          board: true,
+        },
+      });
 
-      await page.click('button:has-text("Add Your First Note")');
+      await page.goto(`/boards/${testBoard.id}`);
+      await page.waitForTimeout(1000);
 
-      await page.waitForTimeout(500);
-
-      await page.getByRole("button", { name: "Add task" }).first().click();
-      await page.getByPlaceholder("Add new item...").fill("#1 Task item");
-      await page.getByPlaceholder("Add new item...").press("Enter");
-      await page.waitForTimeout(500);
       await expect(page.getByText("#1 Task item")).toBeVisible();
 
       await page.getByRole("button", { name: "Add task" }).first().click();
@@ -435,10 +458,17 @@ test.describe("Note Management", () => {
       await page.getByPlaceholder("Add new item...").press("Enter");
       await page.waitForTimeout(500);
       await expect(page.getByText("#2 Task item")).toBeVisible();
+
+      const updatedNote = await prisma.note.findUnique({
+        where: { id: testNote.id },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
+      expect(updatedNote?.checklistItems.length).toBe(2);
+      expect(updatedNote?.checklistItems[1].content).toBe("#2 Task item");
     });
 
-    test("should display empty state when no notes exist", async ({ page }) => {
-      await page.goto("/boards/test-board");
+    test("should display empty state when no notes exist", async ({ page, testUser }) => {
+      await page.goto(`/boards/${testBoard.id}`);
 
       await expect(page.locator("text=No notes yet")).toBeVisible();
       await expect(page.locator('button:has-text("Add Your First Note")')).toBeVisible();
@@ -455,15 +485,16 @@ test.describe("Note Management", () => {
   test.describe("Delete with Undo (toasts)", () => {
     test("should show Undo toast and restore note without issuing DELETE when undone", async ({
       page,
+      testUser,
     }) => {
       let deleteCalled = false;
 
-      await page.route("**/api/boards/test-board", async (route) => {
+      await page.route(`**/api/boards/${testBoard.id}`, async (route) => {
         await route.fulfill({
           status: 200,
           contentType: "application/json",
           body: JSON.stringify({
-            board: { id: "test-board", name: "Test Board", description: "A test board" },
+            board: testBoard,
           }),
         });
       });
@@ -486,12 +517,12 @@ test.describe("Note Management", () => {
         checklistItems: [],
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        user: { id: "test-user", name: "Test User", email: "test@example.com" },
-        board: { id: "test-board", name: "Test Board" },
-        boardId: "test-board",
+        user: testUser,
+        board: testBoard,
+        boardId: testBoard.id,
       };
 
-      await page.route("**/api/boards/test-board/notes", async (route) => {
+      await page.route(`**/api/boards/${testBoard.id}/notes`, async (route) => {
         if (route.request().method() === "GET") {
           await route.fulfill({
             status: 200,
@@ -501,7 +532,7 @@ test.describe("Note Management", () => {
         }
       });
 
-      await page.route("**/api/boards/test-board/notes/note-to-delete", async (route) => {
+      await page.route(`**/api/boards/${testBoard.id}/notes/note-to-delete`, async (route) => {
         if (route.request().method() === "DELETE") {
           deleteCalled = true;
           await route.fulfill({
@@ -512,7 +543,7 @@ test.describe("Note Management", () => {
         }
       });
 
-      await page.goto("/boards/test-board");
+      await page.goto(`/boards/${testBoard.id}`);
       await page.getByRole("button", { name: "Delete Note note-to-delete", exact: true }).click();
       await expect(page.getByText("Note deleted")).toBeVisible();
       await page.getByRole("button", { name: "Undo" }).click();
@@ -547,12 +578,12 @@ test.describe("Note Management", () => {
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       user: testUser,
-      boardId: "test-board",
+      boardId: testBoard.id,
       board: testBoard,
     });
 
     const setupNotesRoute = (page: any, notes: any[]) => {
-      return page.route("**/api/boards/test-board/notes", async (route: any) => {
+      return page.route(`**/api/boards/${testBoard.id}/notes`, async (route: any) => {
         if (route.request().method() === "GET") {
           await route.fulfill({
             status: 200,
@@ -598,7 +629,7 @@ test.describe("Note Management", () => {
       noteId: string,
       didCallUpdateApi: { value: boolean } | null = null
     ) => {
-      return page.route(`**/api/boards/test-board/notes/${noteId}`, async (route: any) => {
+      return page.route(`**/api/boards/${testBoard.id}/notes/${noteId}`, async (route: any) => {
         if (route.request().method() === "PUT") {
           if (didCallUpdateApi !== null) didCallUpdateApi.value = true;
 
@@ -676,7 +707,7 @@ test.describe("Note Management", () => {
 
       await setupNotesRoute(page, defaultNotes);
 
-      await page.route("**/api/boards/test-board/notes/new-note-id", async (route) => {
+      await page.route(`**/api/boards/${testBoard.id}/notes/new-note-id`, async (route) => {
         if (route.request().method() === "PUT") {
           const postData = await route.request().postDataJSON();
           await route.fulfill({
@@ -747,11 +778,88 @@ test.describe("Note Management", () => {
       });
     });
 
-    test("should disallow DnD for checklist items across notes", async ({ page }) => {
-      const didCallUpdateApi = { value: false };
-      await setupNoteUpdateRoute(page, "note-1", didCallUpdateApi);
+    test("should disallow DnD for checklist items across notes", async ({ page, testUser, prisma, testOrganization }) => {
+      const dragTestBoard = await prisma.board.create({
+        data: {
+          id: "drag-test-board-" + Math.random().toString(36).substring(7),
+          name: "Drag Test Board",
+          description: "A test board for drag and drop",
+          organizationId: testOrganization.id,
+          createdBy: testUser.id,
+        },
+      });
 
-      await page.goto("/boards/test-board");
+      const note1 = await prisma.note.create({
+        data: {
+          id: "note-1",
+          content: "Note A",
+          color: "#fef3c7",
+          boardId: dragTestBoard.id,
+          createdBy: testUser.id,
+          checklistItems: {
+            create: [
+              { id: "item-a1", content: "Item A1", checked: false, order: 0 },
+              { id: "item-a2", content: "Item A2", checked: false, order: 1 },
+              { id: "item-a3", content: "Item A3", checked: false, order: 2 },
+              { id: "item-a4", content: "Item A4", checked: false, order: 3 },
+            ]
+          }
+        },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
+
+      const note2 = await prisma.note.create({
+        data: {
+          id: "note-2",
+          content: "Note B",
+          color: "#fef3c7",
+          boardId: dragTestBoard.id,
+          createdBy: testUser.id,
+          checklistItems: {
+            create: [
+              { id: "item-b1", content: "Item B1", checked: false, order: 0 },
+              { id: "item-b2", content: "Item B2", checked: false, order: 1 },
+              { id: "item-b3", content: "Item B3", checked: false, order: 2 },
+              { id: "item-b4", content: "Item B4", checked: false, order: 3 },
+            ]
+          }
+        },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ board: dragTestBoard }),
+        });
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}/notes`, async (route) => {
+        if (route.request().method() === "GET") {
+          const notes = await prisma.note.findMany({
+            where: { boardId: dragTestBoard.id },
+            include: { 
+              checklistItems: { orderBy: { order: 'asc' } },
+              user: true,
+              board: true 
+            },
+          });
+          
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ notes }),
+          });
+        }
+      });
+
+      await page.goto(`/boards/${dragTestBoard.id}`);
+      await page.waitForTimeout(1000);
+
+      await expect(page.locator("text=Item A1")).toBeVisible();
+      await expect(page.locator("text=Item B1")).toBeVisible();
+
       await performDragDrop(page, "text=Item A1", "text=Item B1");
 
       await expectItemOrder(page, {
@@ -765,30 +873,81 @@ test.describe("Note Management", () => {
         "item-b4": 3,
       });
 
-      expect(didCallUpdateApi.value).toBeFalsy();
+      const note1After = await prisma.note.findUnique({
+        where: { id: note1.id },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
+      expect(note1After?.checklistItems[0].content).toBe("Item A1");
     });
 
     test("should not update state when an unchecked checklist item is dropped after checked", async ({
       page,
+      testUser,
+      prisma,
+      testOrganization,
     }) => {
-      const didCallUpdateApi = { value: false };
-      const notes = [
-        createNote(
-          "note-1",
-          [
-            createChecklistItem("item-a1", "Item A1", false, 0),
-            createChecklistItem("item-a2", "Item A2", false, 1),
-            createChecklistItem("item-a3", "Item A3", true, 2),
-            createChecklistItem("item-a4", "Item A4", true, 3),
-          ],
-          "Test Note with Checklist"
-        ),
-      ];
+      const dragTestBoard = await prisma.board.create({
+        data: {
+          id: "drag-test-board-2-" + Math.random().toString(36).substring(7),
+          name: "Drag Test Board 2",
+          description: "A test board for drag and drop",
+          organizationId: testOrganization.id,
+          createdBy: testUser.id,
+        },
+      });
 
-      await setupNotesRoute(page, notes);
-      await setupNoteUpdateRoute(page, "note-1", didCallUpdateApi);
+      const note1 = await prisma.note.create({
+        data: {
+          id: "note-1",
+          content: "Test Note with Checklist",
+          color: "#fef3c7",
+          boardId: dragTestBoard.id,
+          createdBy: testUser.id,
+          checklistItems: {
+            create: [
+              { id: "item-a1", content: "Item A1", checked: false, order: 0 },
+              { id: "item-a2", content: "Item A2", checked: false, order: 1 },
+              { id: "item-a3", content: "Item A3", checked: true, order: 2 },
+              { id: "item-a4", content: "Item A4", checked: true, order: 3 },
+            ]
+          }
+        },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
 
-      await page.goto("/boards/test-board");
+      await page.route(`**/api/boards/${dragTestBoard.id}`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ board: dragTestBoard }),
+        });
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}/notes`, async (route) => {
+        if (route.request().method() === "GET") {
+          const notes = await prisma.note.findMany({
+            where: { boardId: dragTestBoard.id },
+            include: { 
+              checklistItems: { orderBy: { order: 'asc' } },
+              user: true,
+              board: true 
+            },
+          });
+          
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ notes }),
+          });
+        }
+      });
+
+      await page.goto(`/boards/${dragTestBoard.id}`);
+      await page.waitForTimeout(1000);
+
+      await expect(page.locator("text=Item A1")).toBeVisible();
+      await expect(page.locator("text=Item A3")).toBeVisible();
+
       await performDragDrop(page, "text=Item A1", "text=Item A3");
 
       await expectItemOrder(page, {
@@ -798,27 +957,113 @@ test.describe("Note Management", () => {
         "item-a4": 3,
       });
 
-      expect(didCallUpdateApi.value).toBeFalsy();
+      const noteAfter = await prisma.note.findUnique({
+        where: { id: note1.id },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
+      expect(noteAfter?.checklistItems[0].content).toBe("Item A1");
     });
 
-    test("should re-order checklist items within a note", async ({ page }) => {
-      const notes = [
-        createNote(
-          "note-1",
-          [
-            createChecklistItem("item-a1", "Item A1", false, 0),
-            createChecklistItem("item-a2", "Item A2", false, 1),
-            createChecklistItem("item-a3", "Item A3", false, 2),
-            createChecklistItem("item-a4", "Item A4", false, 3),
-          ],
-          "Test Note with Checklist"
-        ),
-      ];
+    test("should re-order checklist items within a note", async ({ page, testUser, prisma, testOrganization }) => {
+      const dragTestBoard = await prisma.board.create({
+        data: {
+          id: "drag-test-board-3-" + Math.random().toString(36).substring(7),
+          name: "Drag Test Board 3",
+          description: "A test board for drag and drop",
+          organizationId: testOrganization.id,
+          createdBy: testUser.id,
+        },
+      });
 
-      await setupNotesRoute(page, notes);
-      await setupNoteUpdateRoute(page, "note-1");
+      const note1 = await prisma.note.create({
+        data: {
+          id: "note-1",
+          content: "Test Note with Checklist",
+          color: "#fef3c7",
+          boardId: dragTestBoard.id,
+          createdBy: testUser.id,
+          checklistItems: {
+            create: [
+              { id: "item-a1", content: "Item A1", checked: false, order: 0 },
+              { id: "item-a2", content: "Item A2", checked: false, order: 1 },
+              { id: "item-a3", content: "Item A3", checked: false, order: 2 },
+              { id: "item-a4", content: "Item A4", checked: false, order: 3 },
+            ]
+          }
+        },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
 
-      await page.goto("/boards/test-board");
+      await page.route(`**/api/boards/${dragTestBoard.id}`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ board: dragTestBoard }),
+        });
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}/notes`, async (route) => {
+        if (route.request().method() === "GET") {
+          const notes = await prisma.note.findMany({
+            where: { boardId: dragTestBoard.id },
+            include: { 
+              checklistItems: { orderBy: { order: 'asc' } },
+              user: true,
+              board: true 
+            },
+          });
+          
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ notes }),
+          });
+        }
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}/notes/note-1`, async (route) => {
+        if (route.request().method() === "PUT") {
+          const postData = await route.request().postDataJSON();
+
+          if (postData.checklistItems) {
+            await prisma.checklistItem.deleteMany({
+              where: { noteId: "note-1" }
+            });
+
+            await prisma.checklistItem.createMany({
+              data: postData.checklistItems.map((item: any, index: number) => ({
+                id: item.id,
+                content: item.content || "",
+                checked: item.checked || false,
+                order: index,
+                noteId: "note-1",
+              }))
+            });
+          }
+
+          const updatedNote = await prisma.note.findUnique({
+            where: { id: "note-1" },
+            include: {
+              checklistItems: { orderBy: { order: 'asc' } },
+              user: true,
+              board: true,
+            },
+          });
+
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ note: updatedNote }),
+          });
+        }
+      });
+
+      await page.goto(`/boards/${dragTestBoard.id}`);
+      await page.waitForTimeout(1000);
+
+      await expect(page.locator("text=Item A3")).toBeVisible();
+      await expect(page.locator("text=Item A1")).toBeVisible();
+
       await performDragDrop(page, "text=Item A3", "text=Item A1");
       await page.waitForTimeout(200);
 
@@ -828,27 +1073,115 @@ test.describe("Note Management", () => {
         "item-a2": 2,
         "item-a4": 3,
       });
+
+      const noteAfter = await prisma.note.findUnique({
+        where: { id: note1.id },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
+      expect(noteAfter?.checklistItems.length).toBe(4);
     });
 
-    test("should re-order checked items within checked group area", async ({ page }) => {
-      const notes = [
-        createNote(
-          "note-1",
-          [
-            createChecklistItem("item-a1", "Item A1", false, 0),
-            createChecklistItem("item-a2", "Item A2", false, 1),
-            createChecklistItem("item-a3", "Item A3", true, 2),
-            createChecklistItem("item-a4", "Item A4", true, 3),
-            createChecklistItem("item-a5", "Item A5", true, 4),
-          ],
-          "Test Note with Checklist"
-        ),
-      ];
+    test("should re-order checked items within checked group area", async ({ page, testUser, prisma, testOrganization }) => {
+      const dragTestBoard = await prisma.board.create({
+        data: {
+          id: "drag-test-board-4-" + Math.random().toString(36).substring(7),
+          name: "Drag Test Board 4",
+          description: "A test board for drag and drop",
+          organizationId: testOrganization.id,
+          createdBy: testUser.id,
+        },
+      });
 
-      await setupNotesRoute(page, notes);
-      await setupNoteUpdateRoute(page, "note-1");
+      const note1 = await prisma.note.create({
+        data: {
+          id: "note-1",
+          content: "Test Note with Checklist",
+          color: "#fef3c7",
+          boardId: dragTestBoard.id,
+          createdBy: testUser.id,
+          checklistItems: {
+            create: [
+              { id: "item-a1", content: "Item A1", checked: false, order: 0 },
+              { id: "item-a2", content: "Item A2", checked: false, order: 1 },
+              { id: "item-a3", content: "Item A3", checked: true, order: 2 },
+              { id: "item-a4", content: "Item A4", checked: true, order: 3 },
+              { id: "item-a5", content: "Item A5", checked: true, order: 4 },
+            ]
+          }
+        },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
 
-      await page.goto("/boards/test-board");
+      await page.route(`**/api/boards/${dragTestBoard.id}`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ board: dragTestBoard }),
+        });
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}/notes`, async (route) => {
+        if (route.request().method() === "GET") {
+          const notes = await prisma.note.findMany({
+            where: { boardId: dragTestBoard.id },
+            include: { 
+              checklistItems: { orderBy: { order: 'asc' } },
+              user: true,
+              board: true 
+            },
+          });
+          
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ notes }),
+          });
+        }
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}/notes/note-1`, async (route) => {
+        if (route.request().method() === "PUT") {
+          const postData = await route.request().postDataJSON();
+
+          if (postData.checklistItems) {
+            await prisma.checklistItem.deleteMany({
+              where: { noteId: "note-1" }
+            });
+
+            await prisma.checklistItem.createMany({
+              data: postData.checklistItems.map((item: any, index: number) => ({
+                id: item.id,
+                content: item.content || "",
+                checked: item.checked || false,
+                order: index,
+                noteId: "note-1",
+              }))
+            });
+          }
+
+          const updatedNote = await prisma.note.findUnique({
+            where: { id: "note-1" },
+            include: {
+              checklistItems: { orderBy: { order: 'asc' } },
+              user: true,
+              board: true,
+            },
+          });
+
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ note: updatedNote }),
+          });
+        }
+      });
+
+      await page.goto(`/boards/${dragTestBoard.id}`);
+      await page.waitForTimeout(1000);
+
+      await expect(page.locator("text=Item A5")).toBeVisible();
+      await expect(page.locator("text=Item A3")).toBeVisible();
+
       await performDragDrop(page, "text=Item A5", "text=Item A3");
       await page.waitForTimeout(200);
 
@@ -859,27 +1192,115 @@ test.describe("Note Management", () => {
         "item-a3": 3,
         "item-a4": 4,
       });
+
+      const noteAfter = await prisma.note.findUnique({
+        where: { id: note1.id },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
+      expect(noteAfter?.checklistItems.length).toBe(5);
     });
 
-    test("should re-order unchecked items within unchecked group area", async ({ page }) => {
-      const notes = [
-        createNote(
-          "note-1",
-          [
-            createChecklistItem("item-a1", "Item A1", false, 0),
-            createChecklistItem("item-a2", "Item A2", false, 1),
-            createChecklistItem("item-a3", "Item A3", false, 2),
-            createChecklistItem("item-a4", "Item A4", true, 3),
-            createChecklistItem("item-a5", "Item A5", true, 4),
-          ],
-          "Test Note with Checklist"
-        ),
-      ];
+    test("should re-order unchecked items within unchecked group area", async ({ page, testUser, prisma, testOrganization }) => {
+      const dragTestBoard = await prisma.board.create({
+        data: {
+          id: "drag-test-board-5-" + Math.random().toString(36).substring(7),
+          name: "Drag Test Board 5",
+          description: "A test board for drag and drop",
+          organizationId: testOrganization.id,
+          createdBy: testUser.id,
+        },
+      });
 
-      await setupNotesRoute(page, notes);
-      await setupNoteUpdateRoute(page, "note-1");
+      const note1 = await prisma.note.create({
+        data: {
+          id: "note-1",
+          content: "Test Note with Checklist",
+          color: "#fef3c7",
+          boardId: dragTestBoard.id,
+          createdBy: testUser.id,
+          checklistItems: {
+            create: [
+              { id: "item-a1", content: "Item A1", checked: false, order: 0 },
+              { id: "item-a2", content: "Item A2", checked: false, order: 1 },
+              { id: "item-a3", content: "Item A3", checked: false, order: 2 },
+              { id: "item-a4", content: "Item A4", checked: true, order: 3 },
+              { id: "item-a5", content: "Item A5", checked: true, order: 4 },
+            ]
+          }
+        },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
 
-      await page.goto("/boards/test-board");
+      await page.route(`**/api/boards/${dragTestBoard.id}`, async (route) => {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({ board: dragTestBoard }),
+        });
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}/notes`, async (route) => {
+        if (route.request().method() === "GET") {
+          const notes = await prisma.note.findMany({
+            where: { boardId: dragTestBoard.id },
+            include: { 
+              checklistItems: { orderBy: { order: 'asc' } },
+              user: true,
+              board: true 
+            },
+          });
+          
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ notes }),
+          });
+        }
+      });
+
+      await page.route(`**/api/boards/${dragTestBoard.id}/notes/note-1`, async (route) => {
+        if (route.request().method() === "PUT") {
+          const postData = await route.request().postDataJSON();
+
+          if (postData.checklistItems) {
+            await prisma.checklistItem.deleteMany({
+              where: { noteId: "note-1" }
+            });
+
+            await prisma.checklistItem.createMany({
+              data: postData.checklistItems.map((item: any, index: number) => ({
+                id: item.id,
+                content: item.content || "",
+                checked: item.checked || false,
+                order: index,
+                noteId: "note-1",
+              }))
+            });
+          }
+
+          const updatedNote = await prisma.note.findUnique({
+            where: { id: "note-1" },
+            include: {
+              checklistItems: { orderBy: { order: 'asc' } },
+              user: true,
+              board: true,
+            },
+          });
+
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({ note: updatedNote }),
+          });
+        }
+      });
+
+      await page.goto(`/boards/${dragTestBoard.id}`);
+      await page.waitForTimeout(1000);
+
+      await expect(page.locator("text=Item A2")).toBeVisible();
+      await expect(page.locator("text=Item A1")).toBeVisible();
+
       await performDragDrop(page, "text=Item A2", "text=Item A1");
       await page.waitForTimeout(200);
 
@@ -890,12 +1311,18 @@ test.describe("Note Management", () => {
         "item-a4": 3,
         "item-a5": 4,
       });
+
+      const noteAfter = await prisma.note.findUnique({
+        where: { id: note1.id },
+        include: { checklistItems: { orderBy: { order: 'asc' } } },
+      });
+      expect(noteAfter?.checklistItems.length).toBe(5);
     });
   });
 
   test.describe("Empty Note Prevention", () => {
-    test("should not create empty item when pressing Enter at start of item", async ({ page }) => {
-      await page.goto("/boards/test-board");
+    test("should not create empty item when pressing Enter at start of item", async ({ page, testUser }) => {
+      await page.goto(`/boards/${testBoard.id}`);
 
       // Create a new note with initial checklist item
       await page.click('button:has-text("Add Your First Note")');
@@ -931,8 +1358,8 @@ test.describe("Note Management", () => {
       await expect(page.getByText("First item content")).toBeVisible();
     });
 
-    test("should not create empty item when pressing Enter at end of item", async ({ page }) => {
-      await page.goto("/boards/test-board");
+    test("should not create empty item when pressing Enter at end of item", async ({ page, testUser }) => {
+      await page.goto(`/boards/${testBoard.id}`);
 
       // Create a new note with initial checklist item
       await page.click('button:has-text("Add Your First Note")');
