@@ -17,7 +17,7 @@ const schema = z.object({
   GITHUB_CLIENT_SECRET: z.string().optional(),
 
   // NextAuth
-  AUTH_URL: z.string(),
+  AUTH_URL: z.string().optional(),
   AUTH_SECRET: z.string(),
 });
 
