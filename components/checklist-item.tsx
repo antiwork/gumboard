@@ -83,10 +83,10 @@ export function ChecklistItem({
   const editItemInputRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if(editItemInputRef.current) {
-      autoResizeTextarea(editItemInputRef.current)
+    if (editItemInputRef.current) {
+      autoResizeTextarea(editItemInputRef.current);
     }
-  }, [isEditing, editContent])
+  }, [isEditing, editContent]);
 
   useEffect(() => {
     if (isEditing && editItemInputRef.current) {

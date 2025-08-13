@@ -110,31 +110,31 @@ export function Note({
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
-  
+
       const updatedItems = note.checklistItems.map((item) =>
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
-  
+
       const uncheckedItems = updatedItems
         .filter((item) => !item.checked)
         .sort((a, b) => a.order - b.order);
-      
+
       const checkedItems = updatedItems
         .filter((item) => item.checked)
         .sort((a, b) => a.order - b.order);
-  
+
       const sortedItems = [...uncheckedItems, ...checkedItems].map((item, index) => ({
         ...item,
         order: index, // Update the order to match new position
       }));
-  
+
       const optimisticNote = {
         ...note,
         checklistItems: sortedItems,
       };
-  
+
       onUpdate?.(optimisticNote);
-  
+
       if (syncDB) {
         fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
           method: "PUT",
@@ -240,33 +240,33 @@ export function Note({
   const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItem[]) => {
     try {
       if (!note.checklistItems) return;
-      
+
       // First ensure no unchecked items are after checked items
-      const firstCheckedIndex = newItems.findIndex(item => item.checked);
+      const firstCheckedIndex = newItems.findIndex((item) => item.checked);
       const hasInvalidOrder = newItems.some(
         (item, index) => !item.checked && index > firstCheckedIndex && firstCheckedIndex !== -1
       );
-  
+
       if (hasInvalidOrder) {
         return; // Don't allow invalid ordering
       }
-  
+
       // Update all order properties to match their new positions
       const updatedItems = newItems.map((item, index) => ({
         ...item,
-        order: index
+        order: index,
       }));
-  
-      const allItemsChecked = updatedItems.every(item => item.checked);
-  
+
+      const allItemsChecked = updatedItems.every((item) => item.checked);
+
       const optimisticNote = {
         ...note,
         checklistItems: updatedItems,
-        archivedAt: allItemsChecked ? new Date().toISOString() : null
+        archivedAt: allItemsChecked ? new Date().toISOString() : null,
       };
-  
+
       onUpdate?.(optimisticNote);
-  
+
       if (syncDB) {
         const response = await fetch(`/api/boards/${note.boardId}/notes/${noteId}`, {
           method: "PUT",
@@ -277,7 +277,7 @@ export function Note({
             checklistItems: updatedItems,
           }),
         });
-  
+
         if (response.ok) {
           const { note: updatedNote } = await response.json();
           onUpdate?.(updatedNote);
@@ -621,8 +621,8 @@ export function Note({
                     ref={newItemInputRef}
                     value={newItemContent}
                     onChange={(e) => {
-                      autoResizeTextarea(e.currentTarget)
-                      setNewItemContent(e.target.value)
+                      autoResizeTextarea(e.currentTarget);
+                      setNewItemContent(e.target.value);
                     }}
                     className="min-h-3 shadow-none border-none resize-none flex-1 bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0 word-wrap overflow-wrap"
                     placeholder="Add new item..."
