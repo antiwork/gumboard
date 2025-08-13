@@ -210,10 +210,9 @@ export async function notifySlackForNoteChanges(
 
   const wasEmpty = !hasValidContent(prevContent);
   const hasContent = hasValidContent(nextContent);
-  const isArchived = nextContent.includes("[ARCHIVED]"); // Simple check - adjust based on your archive logic
+  const isArchived = nextContent.includes("[ARCHIVED]");
 
   if (wasEmpty && hasContent && !noteSlackMessageId) {
-    // Create new note message
     if (shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
       const messageText = formatNoteForSlack({ content: nextContent }, boardName, userName);
       const ts = await sendSlackApiMessage(orgToken, {
@@ -227,7 +226,6 @@ export async function notifySlackForNoteChanges(
       }
     }
   } else if (noteSlackMessageId && hasContent) {
-    // Update existing note message
     const messageText = isArchived
       ? `:package: [ARCHIVED] ${nextContent} by ${userName} in ${boardName}`
       : formatNoteForSlack({ content: nextContent }, boardName, userName);
@@ -237,11 +235,9 @@ export async function notifySlackForNoteChanges(
     });
   }
 
-  // Handle checklist item changes
   if (itemChanges) {
     const itemMessageIds: Record<string, string> = { ...existingMessageIds };
 
-    // Only post once for the first created item to avoid spam
     if (itemChanges.created.length > 0) {
       const firstItem = itemChanges.created[0];
       if (
@@ -261,7 +257,6 @@ export async function notifySlackForNoteChanges(
       }
     }
 
-    // Handle checked/unchecked toggles
     for (const item of itemChanges.updated) {
       const checkedToggle = item.previous.checked !== item.checked;
 
@@ -271,12 +266,10 @@ export async function notifySlackForNoteChanges(
 
         const existingTs = itemMessageIds[item.id];
         if (existingTs) {
-          // Update existing message
           await updateSlackApiMessage(orgToken, orgChannelId, existingTs, {
             text: messageText,
           });
         } else {
-          // Create new message
           const ts = await sendSlackApiMessage(orgToken, {
             channel: orgChannelId,
             text: messageText,

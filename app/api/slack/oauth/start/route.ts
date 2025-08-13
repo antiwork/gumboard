@@ -12,7 +12,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is admin
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -35,22 +34,19 @@ export async function GET(request: NextRequest) {
 
     const state = `${crypto.randomUUID()}-${user.id}`;
 
-    // Store state in httpOnly cookie
     const cookieStore = await cookies();
     cookieStore.set("slack_oauth_state", state, {
       httpOnly: true,
       secure: env.NODE_ENV === "production",
       sameSite: "lax",
-      maxAge: 600, // 10 minutes
+      maxAge: 600,
       path: "/",
       domain: env.NODE_ENV === "production" ? undefined : undefined,
     });
 
-    // Build redirect URI
     const baseUrl = env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
     const redirectUri = `${baseUrl}/api/slack/oauth/callback`;
 
-    // Build Slack authorization URL
     const slackAuthUrl = new URL("https://slack.com/oauth/v2/authorize");
     slackAuthUrl.searchParams.set("client_id", env.SLACK_CLIENT_ID);
     slackAuthUrl.searchParams.set(

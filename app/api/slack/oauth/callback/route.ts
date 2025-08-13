@@ -57,10 +57,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Clear the state cookie
     cookieStore.delete("slack_oauth_state");
 
-    // Verify user exists and is admin
     const user = await db.user.findUnique({
       where: { id: userId },
       select: {
@@ -83,10 +81,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Build redirect URI
     const redirectUri = `${baseUrl}/api/slack/oauth/callback`;
 
-    // Exchange code for access token
     const tokenResponse = await fetch("https://slack.com/api/oauth.v2.access", {
       method: "POST",
       headers: {
@@ -121,7 +117,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Update organization with Slack credentials
     await db.organization.update({
       where: { id: user.organizationId },
       data: {

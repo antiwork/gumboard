@@ -26,7 +26,6 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is admin and get organization Slack token
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -52,7 +51,6 @@ export async function GET() {
       return NextResponse.json({ error: "Slack is not connected" }, { status: 400 });
     }
 
-    // Fetch public channels
     const channelsResponse = await fetch("https://slack.com/api/conversations.list", {
       method: "GET",
       headers: {
@@ -76,7 +74,6 @@ export async function GET() {
       );
     }
 
-    // Filter and format channels
     const availableChannels = (channelsData.channels || [])
       .filter(
         (channel) =>
@@ -91,7 +88,6 @@ export async function GET() {
         isMember: channel.is_member,
       }))
       .sort((a, b) => {
-        // Sort by membership first, then alphabetically
         if (a.isMember && !b.isMember) return -1;
         if (!a.isMember && b.isMember) return 1;
         return a.name.localeCompare(b.name);

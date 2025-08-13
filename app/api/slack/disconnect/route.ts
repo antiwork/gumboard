@@ -10,7 +10,6 @@ export async function POST() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is admin
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -27,7 +26,6 @@ export async function POST() {
       );
     }
 
-    // Clear all Slack-related fields from the organization
     await db.organization.update({
       where: { id: user.organizationId },
       data: {

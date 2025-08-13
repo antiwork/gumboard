@@ -213,7 +213,6 @@ test.describe("Board Settings", () => {
       }
     });
 
-    // Mock Slack Web API endpoint
     await page.route("https://slack.com/api/chat.postMessage", async (route) => {
       slackNotificationSent = true;
       await route.fulfill({

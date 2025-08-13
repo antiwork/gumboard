@@ -156,7 +156,6 @@ export default function OrganizationSettingsPage() {
     fetchSelfServeInvites();
   }, [fetchUserData]);
 
-  // Fetch Slack channels when user data is loaded and Slack is configured
   useEffect(() => {
     if (user?.organization?.hasSlackConfigured && user.isAdmin) {
       fetchSlackChannels();
@@ -176,7 +175,6 @@ export default function OrganizationSettingsPage() {
         variant: "success",
       });
       fetchUserData();
-      // Fetch available channels after connection
       setTimeout(() => fetchSlackChannels(), 1000);
     } else if (slackStatus === "error") {
       setErrorDialog({
@@ -704,7 +702,7 @@ export default function OrganizationSettingsPage() {
                               ) : (
                                 <Hash className="w-4 h-4 text-zinc-500" />
                               )}
-                              <span>
+                              <span className="text-zinc-900 dark:text-zinc-100">
                                 #{slackChannels.find((ch) => ch.id === slackChannelId)?.name}
                               </span>
                             </div>
@@ -713,14 +711,20 @@ export default function OrganizationSettingsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         {slackChannels.map((channel) => (
-                          <SelectItem key={channel.id} value={channel.id}>
+                          <SelectItem
+                            key={channel.id}
+                            value={channel.id}
+                            className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-b border-zinc-100 dark:border-zinc-700 focus:bg-blue-50 dark:focus:bg-blue-900/40"
+                          >
                             <div className="flex items-center space-x-2">
                               {channel.type === "private" ? (
                                 <Lock className="w-4 h-4 text-zinc-500" />
                               ) : (
                                 <Hash className="w-4 h-4 text-zinc-500" />
                               )}
-                              <span>#{channel.name}</span>
+                              <span className="text-zinc-900 dark:text-zinc-100">
+                                #{channel.name}
+                              </span>
                               {!channel.isMember && (
                                 <span className="text-xs text-zinc-500">(not a member)</span>
                               )}
