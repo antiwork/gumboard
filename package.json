@@ -56,6 +56,7 @@
     "react-hook-form": "^7.59.0",
     "resend": "^4.6.0",
     "server-only": "^0.0.1",
+    "sonner": "^2.0.7",
     "tailwind-merge": "^3.3.1",
     "zod": "^3.25.67"
   },

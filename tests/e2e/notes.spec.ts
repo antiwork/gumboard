@@ -1,12 +1,4 @@
 import { test, expect } from '../fixtures/test-helpers';
-import { Prisma } from '@prisma/client';
-
-interface ChecklistItem {
-  id: string;
-  content: string;
-  checked: boolean;
-  order: number;
-}
 
 test.describe("Note Management", () => {
   test("should display empty state when no notes exist", async ({ 
@@ -86,13 +78,15 @@ test.describe("Note Management", () => {
     const notes = await testPrisma.note.findMany({
       where: { 
         boardId: board.id 
+      },
+      include: {
+        checklistItems: true
       }
     });
 
     expect(notes).toHaveLength(1);
-    const checklistItems = notes[0].checklistItems as unknown as ChecklistItem[];
-    expect(checklistItems).toHaveLength(1);
-    expect(checklistItems[0].content).toBe(testItemContent);
+    expect(notes[0].checklistItems).toHaveLength(1);
+    expect(notes[0].checklistItems[0].content).toBe(testItemContent);
   });
 
   test("should edit checklist item content", async ({ 
@@ -113,14 +107,7 @@ test.describe("Note Management", () => {
 
     // Create a note with a checklist item
     const itemId = testContext.prefix("item-1");
-    const checklistItemsData: ChecklistItem[] = [
-      {
-        id: itemId,
-        content: testContext.prefix("Original item"),
-        checked: false,
-        order: 0,
-      }
-    ];
+    const originalContent = testContext.prefix("Original item");
 
     const note = await testPrisma.note.create({
       data: {
@@ -128,13 +115,21 @@ test.describe("Note Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: checklistItemsData as unknown as Prisma.InputJsonValue,
+        checklistItems: {
+          create: [
+            {
+              id: itemId,
+              content: originalContent,
+              checked: false,
+              order: 0,
+            }
+          ]
+        }
       }
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const originalContent = testContext.prefix("Original item");
     const editedContent = testContext.prefix("Edited item");
     
     // Edit the checklist item
@@ -158,11 +153,13 @@ test.describe("Note Management", () => {
 
     // Verify in database
     const updatedNote = await testPrisma.note.findUnique({
-      where: { id: note.id }
+      where: { id: note.id },
+      include: {
+        checklistItems: true
+      }
     });
 
-    const checklistItems = updatedNote?.checklistItems as unknown as ChecklistItem[];
-    expect(checklistItems[0].content).toBe(editedContent);
+    expect(updatedNote?.checklistItems[0].content).toBe(editedContent);
   });
 
   test("should toggle checklist item completion", async ({ 
@@ -183,14 +180,7 @@ test.describe("Note Management", () => {
 
     // Create a note with a checklist item
     const toggleItemId = testContext.prefix("toggle-item-1");
-    const testItemsData: ChecklistItem[] = [
-      {
-        id: toggleItemId,
-        content: testContext.prefix("Test item"),
-        checked: false,
-        order: 0,
-      }
-    ];
+    const testItemContent = testContext.prefix("Test item");
 
     const note = await testPrisma.note.create({
       data: {
@@ -198,7 +188,16 @@ test.describe("Note Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: testItemsData as unknown as Prisma.InputJsonValue,
+        checklistItems: {
+          create: [
+            {
+              id: toggleItemId,
+              content: testItemContent,
+              checked: false,
+              order: 0,
+            }
+          ]
+        }
       }
     });
 
@@ -217,11 +216,13 @@ test.describe("Note Management", () => {
 
     // Verify in database
     const updatedNote = await testPrisma.note.findUnique({
-      where: { id: note.id }
+      where: { id: note.id },
+      include: {
+        checklistItems: true
+      }
     });
 
-    const checklistItems = updatedNote?.checklistItems as unknown as ChecklistItem[];
-    expect(checklistItems[0].checked).toBe(true);
+    expect(updatedNote?.checklistItems[0].checked).toBe(true);
   });
 
   test("should delete checklist item", async ({ 
@@ -242,14 +243,7 @@ test.describe("Note Management", () => {
 
     // Create a note with a checklist item
     const deleteItemId = testContext.prefix("delete-item-1");
-    const deleteItemsData: ChecklistItem[] = [
-      {
-        id: deleteItemId,
-        content: testContext.prefix("Item to delete"),
-        checked: false,
-        order: 0,
-      }
-    ];
+    const itemToDeleteContent = testContext.prefix("Item to delete");
 
     const note = await testPrisma.note.create({
       data: {
@@ -257,7 +251,16 @@ test.describe("Note Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: deleteItemsData as unknown as Prisma.InputJsonValue,
+        checklistItems: {
+          create: [
+            {
+              id: deleteItemId,
+              content: itemToDeleteContent,
+              checked: false,
+              order: 0,
+            }
+          ]
+        }
       }
     });
 
@@ -273,15 +276,17 @@ test.describe("Note Management", () => {
     await deleteItemResponse;
 
     // Verify item is gone from UI
-    await expect(authenticatedPage.getByText(testContext.prefix("Item to delete"))).not.toBeVisible();
+    await expect(authenticatedPage.getByText(itemToDeleteContent)).not.toBeVisible();
 
     // Verify in database
     const updatedNote = await testPrisma.note.findUnique({
-      where: { id: note.id }
+      where: { id: note.id },
+      include: {
+        checklistItems: true
+      }
     });
 
-    const checklistItems = updatedNote?.checklistItems as unknown as ChecklistItem[];
-    expect(checklistItems).toHaveLength(0);
+    expect(updatedNote?.checklistItems).toHaveLength(0);
   });
 
   test.describe("Drag and Drop", () => {
@@ -312,11 +317,13 @@ test.describe("Note Management", () => {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
-          checklistItems: [
-            { id: itemA1Id, content: testContext.prefix("Item A1"), checked: false, order: 0 },
-            { id: itemA2Id, content: testContext.prefix("Item A2"), checked: false, order: 1 },
-            { id: itemA3Id, content: testContext.prefix("Item A3"), checked: false, order: 2 },
-          ]
+          checklistItems: {
+            create: [
+              { id: itemA1Id, content: testContext.prefix("Item A1"), checked: false, order: 0 },
+              { id: itemA2Id, content: testContext.prefix("Item A2"), checked: false, order: 1 },
+              { id: itemA3Id, content: testContext.prefix("Item A3"), checked: false, order: 2 },
+            ]
+          }
         }
       });
 
@@ -347,10 +354,15 @@ test.describe("Note Management", () => {
 
       // Verify in database that order changed
       const updatedNote = await testPrisma.note.findUnique({
-        where: { id: note.id }
+        where: { id: note.id },
+        include: {
+          checklistItems: {
+            orderBy: { order: 'asc' }
+          }
+        }
       });
 
-      const checklistItems = (updatedNote?.checklistItems as unknown as ChecklistItem[])?.sort((a, b) => a.order - b.order);
+      const checklistItems = updatedNote?.checklistItems || [];
       expect(checklistItems[0].content).toBe(testContext.prefix("Item A3"));
       expect(checklistItems[1].content).toBe(testContext.prefix("Item A1"));
       expect(checklistItems[2].content).toBe(testContext.prefix("Item A2"));
@@ -382,9 +394,11 @@ test.describe("Note Management", () => {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
-          checklistItems: [
-            { id: note1ItemId, content: testContext.prefix("Note1 Item"), checked: false, order: 0 },
-          ]
+          checklistItems: {
+            create: [
+              { id: note1ItemId, content: testContext.prefix("Note1 Item"), checked: false, order: 0 },
+            ]
+          }
         }
       });
 
@@ -394,9 +408,11 @@ test.describe("Note Management", () => {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
-          checklistItems: [
-            { id: note2ItemId, content: testContext.prefix("Note2 Item"), checked: false, order: 0 },
-          ]
+          checklistItems: {
+            create: [
+              { id: note2ItemId, content: testContext.prefix("Note2 Item"), checked: false, order: 0 },
+            ]
+          }
         }
       });
 
@@ -421,20 +437,208 @@ test.describe("Note Management", () => {
 
       // Verify items stayed in their original notes
       const updatedNote1 = await testPrisma.note.findUnique({
-        where: { id: note1.id }
+        where: { id: note1.id },
+        include: {
+          checklistItems: true
+        }
       });
 
       const updatedNote2 = await testPrisma.note.findUnique({
-        where: { id: note2.id }
+        where: { id: note2.id },
+        include: {
+          checklistItems: true
+        }
+      });
+      
+      expect(updatedNote1?.checklistItems).toHaveLength(1);
+      expect(updatedNote1?.checklistItems[0].content).toBe(testContext.prefix("Note1 Item"));
+      expect(updatedNote2?.checklistItems).toHaveLength(1);
+      expect(updatedNote2?.checklistItems[0].content).toBe(testContext.prefix("Note2 Item"));
+    });
+  });
+
+  test.describe("Delete with Undo (toasts)", () => {
+    test("should show Undo toast and restore note without issuing DELETE when undone", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma
+    }) => {
+      // Create a board for this test
+      const boardName = testContext.getBoardName("Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board description"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        }
       });
 
-      const checklistItems1 = updatedNote1?.checklistItems as unknown as ChecklistItem[];
-      const checklistItems2 = updatedNote2?.checklistItems as unknown as ChecklistItem[];
-      
-      expect(checklistItems1).toHaveLength(1);
-      expect(checklistItems1[0].content).toBe(testContext.prefix("Note1 Item"));
-      expect(checklistItems2).toHaveLength(1);
-      expect(checklistItems2[0].content).toBe(testContext.prefix("Note2 Item"));
+      // Create a note to be deleted
+      const note = await testPrisma.note.create({
+        data: {
+          content: "",
+          color: "#fef3c7",
+          boardId: board.id,
+          createdBy: testContext.userId,
+        }
+      });
+
+      let deleteCalled = false;
+
+      // Intercept DELETE request to track if it's called
+      await authenticatedPage.route(`**/api/boards/${board.id}/notes/${note.id}`, async (route) => {
+        if (route.request().method() === "DELETE") {
+          deleteCalled = true;
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({}),
+          });
+        } else {
+          await route.continue();
+        }
+      });
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+      await authenticatedPage.getByRole("button", { name: `Delete Note ${note.id}`, exact: true }).click();
+      await expect(authenticatedPage.getByText("Note deleted")).toBeVisible();
+      await authenticatedPage.getByRole("button", { name: "Undo" }).click();
+
+      await expect(
+        authenticatedPage.getByRole("button", { name: `Delete Note ${note.id}`, exact: true })
+      ).toBeVisible();
+
+      await authenticatedPage.waitForTimeout(300);
+      expect(deleteCalled).toBe(false);
+    });
+  });
+
+  test.describe("Empty Note Prevention", () => {
+    test("should not create empty item when pressing Enter at start of item", async ({ 
+      authenticatedPage,
+      testContext,
+      testPrisma
+    }) => {
+      // Create a board for this test
+      const boardName = testContext.getBoardName("Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board description"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        }
+      });
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+
+      // Create a new note with initial checklist item
+      const createNoteResponse = authenticatedPage.waitForResponse((resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === 'POST' &&
+        resp.status() === 201
+      );
+      await authenticatedPage.click('button:has-text("Add Your First Note")');
+      await createNoteResponse;
+
+      // Add first item with content
+      await authenticatedPage.getByRole("button", { name: "Add task" }).first().click();
+      const testItemContent = testContext.prefix("First item content");
+      const addItemResponse = authenticatedPage.waitForResponse((resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === 'PUT' &&
+        resp.ok()
+      );
+      await authenticatedPage.getByPlaceholder("Add new item...").fill(testItemContent);
+      await authenticatedPage.getByPlaceholder("Add new item...").press("Enter");
+      await addItemResponse;
+
+      // Wait for the item to be visible
+      await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
+
+      // Click at the beginning of the existing item
+      await authenticatedPage.getByText(testItemContent).click();
+
+      // Get the input field for the existing item
+      const itemInput = authenticatedPage.locator(`input[value="${testItemContent}"]`);
+      await expect(itemInput).toBeVisible();
+
+      // Position cursor at the start (position 0)
+      await itemInput.focus();
+      await authenticatedPage.keyboard.press("Home"); // Move cursor to start
+
+      // Press Enter - should NOT create a new empty item
+      await itemInput.press("Enter");
+      await authenticatedPage.waitForTimeout(500);
+
+      // Verify only one item exists and it still has the original content
+      const checklistItems = authenticatedPage.getByRole("checkbox");
+      await expect(checklistItems).toHaveCount(1);
+      await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
+    });
+
+    test("should not create empty item when pressing Enter at end of item", async ({ 
+      authenticatedPage,
+      testContext,
+      testPrisma
+    }) => {
+      // Create a board for this test
+      const boardName = testContext.getBoardName("Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board description"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        }
+      });
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+
+      // Create a new note with initial checklist item
+      const createNoteResponse = authenticatedPage.waitForResponse((resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === 'POST' &&
+        resp.status() === 201
+      );
+      await authenticatedPage.click('button:has-text("Add Your First Note")');
+      await createNoteResponse;
+
+      // Add first item with content
+      await authenticatedPage.getByRole("button", { name: "Add task" }).first().click();
+      const testItemContent = testContext.prefix("Last item content");
+      const addItemResponse = authenticatedPage.waitForResponse((resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === 'PUT' &&
+        resp.ok()
+      );
+      await authenticatedPage.getByPlaceholder("Add new item...").fill(testItemContent);
+      await authenticatedPage.getByPlaceholder("Add new item...").press("Enter");
+      await addItemResponse;
+
+      // Wait for the item to be visible
+      await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
+
+      // Click on the existing item to edit it
+      await authenticatedPage.getByText(testItemContent).click();
+
+      // Get the input field for the existing item
+      const itemInput = authenticatedPage.locator(`input[value="${testItemContent}"]`);
+      await expect(itemInput).toBeVisible();
+
+      // Position cursor at the end
+      await itemInput.focus();
+      await authenticatedPage.keyboard.press("End"); // Move cursor to end
+
+      // Press Enter - should NOT create a new empty item when cursor is at end
+      await itemInput.press("Enter");
+      await authenticatedPage.waitForTimeout(500);
+
+      // Verify only one item exists and it still has the original content
+      const checklistItems = authenticatedPage.getByRole("checkbox");
+      await expect(checklistItems).toHaveCount(1);
+      await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
     });
   });
 });
