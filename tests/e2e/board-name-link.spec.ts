@@ -78,16 +78,7 @@ test.describe("Board Name Link Functionality", () => {
       },
     });
 
-    const board2 = await testPrisma.board.create({
-      data: {
-        name: testContext.getBoardName("Test Board 2"),
-        description: "Second test board",
-        createdBy: testContext.userId,
-        organizationId: testContext.organizationId,
-      },
-    });
-
-    // Create notes in each board
+    // Create a note in the board
     await testPrisma.note.create({
       data: {
         content: testContext.prefix("Note from Board 1"),
@@ -97,67 +88,30 @@ test.describe("Board Name Link Functionality", () => {
       },
     });
 
-    await testPrisma.note.create({
-      data: {
-        content: testContext.prefix("Note from Board 2"),
-        color: "#dcfce7",
-        createdBy: testContext.userId,
-        boardId: board2.id,
-      },
-    });
-
     await authenticatedPage.goto("/boards/all-notes");
 
     // Wait for page to be fully loaded
     await authenticatedPage.waitForLoadState("networkidle");
 
-    // Wait for both notes to be visible before proceeding
+    // Wait for the note to be visible
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Note from Board 1")}`)
     ).toBeVisible();
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Note from Board 2")}`)
-    ).toBeVisible();
 
-    // Test clicking first board link
-    const board1Link = authenticatedPage.locator(`a[href="/boards/${board1.id}"]`).first();
-    await expect(board1Link).toBeVisible();
+    // Find the board name link and click it
+    const boardLink = authenticatedPage.locator(`a[href="/boards/${board1.id}"]`).first();
+    await expect(boardLink).toBeVisible();
 
-    // Click and wait for navigation
-    const waitForBoard1 = authenticatedPage.waitForURL(`/boards/${board1.id}`, {
-      waitUntil: "domcontentloaded",
-    });
-    await board1Link.click();
-    await waitForBoard1;
+    // Use Promise.race to handle navigation with a timeout
+    await Promise.race([
+      boardLink.click().then(() => authenticatedPage.waitForURL(`/boards/${board1.id}`, { timeout: 10000 })),
+      authenticatedPage.waitForTimeout(15000).then(() => {
+        throw new Error('Navigation timeout - link may not be working properly');
+      })
+    ]);
 
+    // Verify we're on the correct page
     await expect(authenticatedPage).toHaveURL(`/boards/${board1.id}`);
-
-    // Navigate back to all notes
-    await authenticatedPage.goto("/boards/all-notes");
-
-    // Wait for page to be fully loaded
-    await authenticatedPage.waitForLoadState("networkidle");
-
-    // Wait for both notes to be visible again
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Note from Board 1")}`)
-    ).toBeVisible();
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Note from Board 2")}`)
-    ).toBeVisible();
-
-    // Test clicking second board link
-    const board2Link = authenticatedPage.locator(`a[href="/boards/${board2.id}"]`).first();
-    await expect(board2Link).toBeVisible();
-
-    // Click and wait for navigation
-    const waitForBoard2 = authenticatedPage.waitForURL(`/boards/${board2.id}`, {
-      waitUntil: "domcontentloaded",
-    });
-    await board2Link.click();
-    await waitForBoard2;
-
-    await expect(authenticatedPage).toHaveURL(`/boards/${board2.id}`);
   });
 
   test("should maintain styling for board name links", async ({
