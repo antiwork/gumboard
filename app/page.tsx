@@ -65,7 +65,7 @@ export default async function HomePage() {
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
               <Card className="text-center dark:bg-zinc-900 dark:border-zinc-800">
-                <CardContent className="pt-6">
+                <CardContent>
                   <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-lg flex items-center justify-center dark:bg-blue-900/30">
                     <StickyNote className="h-6 w-6 text-blue-600 dark:text-blue-400" />
                   </div>
@@ -78,7 +78,7 @@ export default async function HomePage() {
               </Card>
 
               <Card className="text-center dark:bg-zinc-900 dark:border-zinc-800">
-                <CardContent className="pt-6">
+                <CardContent>
                   <div className="w-12 h-12 mx-auto mb-4 bg-green-100 rounded-lg flex items-center justify-center dark:bg-green-900/30">
                     <Users className="h-6 w-6 text-green-600 dark:text-green-400" />
                   </div>
@@ -91,7 +91,7 @@ export default async function HomePage() {
               </Card>
 
               <Card className="text-center dark:bg-zinc-900 dark:border-zinc-800">
-                <CardContent className="pt-6">
+                <CardContent>
                   <div className="w-12 h-12 mx-auto mb-4 bg-purple-100 rounded-lg flex items-center justify-center dark:bg-purple-900/30">
                     <Building2 className="h-6 w-6 text-purple-600 dark:text-purple-400" />
                   </div>

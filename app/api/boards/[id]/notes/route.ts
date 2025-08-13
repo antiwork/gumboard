@@ -35,7 +35,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             createdAt: true,
             updatedAt: true,
             archivedAt: true,
-            checklistItems: true,
             user: {
               select: {
                 id: true,
@@ -43,6 +42,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 email: true,
               },
             },
+            checklistItems: { orderBy: { order: "asc" } },
           },
           orderBy: { createdAt: "desc" },
         },
@@ -91,7 +91,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, checklistItems } = await request.json();
+    const { content, color } = await request.json();
     const boardId = (await params).id;
 
     // Verify user has access to this board (same organization)
@@ -139,7 +139,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         color: randomColor,
         boardId,
         createdBy: session.user.id,
-        ...(checklistItems !== undefined && { checklistItems }),
       },
       include: {
         user: {
@@ -149,6 +148,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             email: true,
           },
         },
+        checklistItems: { orderBy: { order: "asc" } },
       },
     });
 

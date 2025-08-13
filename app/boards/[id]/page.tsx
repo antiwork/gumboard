@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Plus, ChevronDown, Settings, Search } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, ChevronDown, Settings, Search, Copy, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -26,6 +27,7 @@ import {
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import { toast } from "sonner";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -53,19 +55,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
   // Per-item edit and animations are handled inside Note component now
-  const [deleteNoteDialog, setDeleteNoteDialog] = useState<{
-    open: boolean;
-    noteId: string;
-  }>({ open: false, noteId: "" });
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
     title: string;
     description: string;
   }>({ open: false, title: "", description: "" });
+  const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
   const [boardSettings, setBoardSettings] = useState({
+    name: "",
+    description: "",
+    isPublic: false,
     sendSlackUpdates: true,
   });
+  const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -623,6 +627,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         const { board } = await boardResponse.json();
         setBoard(board);
         setBoardSettings({
+          name: board.name,
+          description: board.description || "",
+          isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
           sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
         });
       }
@@ -697,43 +704,55 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   };
 
   const handleDeleteNote = (noteId: string) => {
-    setDeleteNoteDialog({
-      open: true,
-      noteId,
-    });
-  };
+    const noteToDelete = notes.find((n) => n.id === noteId);
+    if (!noteToDelete) return;
 
-  const confirmDeleteNote = async () => {
-    try {
-      // Find the note to get its board ID for all notes view
-      const currentNote = notes.find((n) => n.id === deleteNoteDialog.noteId);
-      const targetBoardId = currentNote?.board?.id ?? currentNote?.boardId;
+    const targetBoardId = noteToDelete.board?.id ?? noteToDelete.boardId;
 
-      const response = await fetch(
-        `/api/boards/${targetBoardId}/notes/${deleteNoteDialog.noteId}`,
-        {
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
           method: "DELETE",
+        });
+        if (!response.ok) {
+          setNotes((prev) => [noteToDelete, ...prev]);
+          const errorData = await response.json().catch(() => null);
+          setErrorDialog({
+            open: true,
+            title: "Failed to delete note",
+            description: errorData?.error || "Failed to delete note",
+          });
         }
-      );
-
-      if (response.ok) {
-        setNotes(notes.filter((n) => n.id !== deleteNoteDialog.noteId));
-      } else {
-        const errorData = await response.json();
+      } catch (error) {
+        console.error("Error deleting note:", error);
+        setNotes((prev) => [noteToDelete, ...prev]);
         setErrorDialog({
           open: true,
           title: "Failed to delete note",
-          description: errorData.error || "Failed to delete note",
+          description: "Failed to delete note",
         });
+      } finally {
+        delete pendingDeleteTimeoutsRef.current[noteId];
       }
-    } catch (error) {
-      console.error("Error deleting note:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to delete note",
-        description: "Failed to delete note",
-      });
-    }
+    }, 4000);
+    pendingDeleteTimeoutsRef.current[noteId] = timeoutId;
+
+    toast("Note deleted", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const t = pendingDeleteTimeoutsRef.current[noteId];
+          if (t) {
+            clearTimeout(t);
+            delete pendingDeleteTimeoutsRef.current[noteId];
+          }
+          setNotes((prev) => [noteToDelete, ...prev]);
+        },
+      },
+      duration: 4000,
+    });
   };
 
   const handleArchiveNote = async (noteId: string) => {
@@ -835,7 +854,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  const handleUpdateBoardSettings = async (settings: { sendSlackUpdates: boolean }) => {
+  const handleUpdateBoardSettings = async (settings: {
+    name?: string;
+    description?: string;
+    isPublic?: boolean;
+    sendSlackUpdates: boolean;
+  }) => {
     try {
       const response = await fetch(`/api/boards/${boardId}`, {
         method: "PUT",
@@ -846,12 +870,55 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { board } = await response.json();
         setBoard(board);
-        setBoardSettings({ sendSlackUpdates: board.sendSlackUpdates });
+        setBoardSettings({
+          name: board.name,
+          description: board.description || "",
+          isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+          sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+        });
         setBoardSettingsDialog(false);
       }
     } catch (error) {
       console.error("Error updating board settings:", error);
     }
+  };
+
+  const handleCopyPublicUrl = async () => {
+    const publicUrl = `${window.location.origin}/public/boards/${boardId}`;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiedPublicUrl(true);
+      setTimeout(() => setCopiedPublicUrl(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy URL:", error);
+    }
+  };
+
+  const handleDeleteBoard = async () => {
+    try {
+      const response = await fetch(`/api/boards/${boardId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        router.push("/dashboard");
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete board",
+          description: errorData.error || "Failed to delete board",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting board:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete board",
+        description: "Failed to delete board",
+      });
+    }
+    setDeleteConfirmDialog(false);
   };
 
   if (loading) {
@@ -975,6 +1042,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       <Button
                         onClick={() => {
                           setBoardSettings({
+                            name: board?.name || "",
+                            description: board?.description || "",
+                            isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
                             sendSlackUpdates:
                               (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
                           });
@@ -1239,33 +1309,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       )}
 
       <AlertDialog
-        open={deleteNoteDialog.open}
-        onOpenChange={(open) => setDeleteNoteDialog({ open, noteId: "" })}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              Delete note
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete this note? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDeleteNote}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              Delete note
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
         open={errorDialog.open}
         onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
       >
@@ -1300,13 +1343,95 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="py-4">
+          <div className="py-4 space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                Board name
+              </label>
+              <Input
+                type="text"
+                value={boardSettings.name}
+                onChange={(e) => setBoardSettings((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter board name"
+                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                Description (optional)
+              </label>
+              <Input
+                type="text"
+                value={boardSettings.description}
+                onChange={(e) =>
+                  setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
+                }
+                placeholder="Enter board description"
+                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+              />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isPublic"
+                  checked={boardSettings.isPublic}
+                  onCheckedChange={(checked) =>
+                    setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))
+                  }
+                />
+                <label
+                  htmlFor="isPublic"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
+                >
+                  Make board public
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
+                When enabled, anyone with the link can view this board
+              </p>
+
+              {boardSettings.isPublic && (
+                <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground dark:text-zinc-100">
+                        Public link
+                      </p>
+                      <p className="text-xs text-muted-foreground dark:text-zinc-400 break-all">
+                        {typeof window !== "undefined"
+                          ? `${window.location.origin}/public/boards/${boardId}`
+                          : ""}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleCopyPublicUrl}
+                      size="sm"
+                      variant="outline"
+                      className="ml-3 flex items-center space-x-1"
+                    >
+                      {copiedPublicUrl ? (
+                        <>
+                          <span className="text-xs">✓</span>
+                          <span className="text-xs">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span className="text-xs">Copy</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center space-x-2">
               <Checkbox
                 id="sendSlackUpdates"
                 checked={boardSettings.sendSlackUpdates}
                 onCheckedChange={(checked) =>
-                  setBoardSettings({ sendSlackUpdates: checked as boolean })
+                  setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
                 }
               />
               <label
@@ -1321,10 +1446,46 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </p>
           </div>
 
+          <AlertDialogFooter className="flex justify-between">
+            <Button
+              onClick={() => setDeleteConfirmDialog(true)}
+              variant="destructive"
+              className="mr-auto"
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Board
+            </Button>
+            <div className="flex space-x-2">
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>
+                Save settings
+              </AlertDialogAction>
+            </div>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              Delete Board
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Are you sure you want to delete &quot;{board?.name}&quot;? This action cannot be
+              undone and will permanently delete all notes in this board.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>
-              Save settings
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBoard}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              Delete Board
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
