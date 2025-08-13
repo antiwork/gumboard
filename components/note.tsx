@@ -485,38 +485,32 @@ export function Note({
 
             {/* Add New Item Input */}
             {addingItem && canEdit && (
-              <form onSubmit={handleSubmitNewItem} className="flex items-center gap-3">
-                <Checkbox
-                  disabled
-                  className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
-                />
-                <Input
-                  ref={newItemInputRef}
-                  type="text"
-                  value={newItemContent}
-                  onChange={(e) => setNewItemContent(e.target.value)}
-                  className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
-                  placeholder="Add new item..."
-                  onKeyDown={handleKeyDownNewItem}
-                  onBlur={handleAddItem}
-                  autoFocus
-                />
-                <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                  <Button
-                    type="button"
-                    aria-label={`Delete New Item`}
-                    onMouseDown={() => {
-                      setAddingItem(false);
-                      setNewItemContent("");
-                    }}
-                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
-                    variant="ghost"
-                    size="icon"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </form>
+              <ChecklistItemComponent
+                item={{
+                  id: "new-item",
+                  content: newItemContent,
+                  checked: false,
+                  order: 0,
+                }}
+                onDelete={() => {
+                  setAddingItem(false);
+                  setNewItemContent("");
+                }}
+                isEditing={true}
+                editContent={newItemContent}
+                onEditContentChange={setNewItemContent}
+                onStopEdit={() => {
+                  if (newItemContent.trim()) {
+                    handleAddItem();
+                  } else {
+                    setAddingItem(false);
+                    setNewItemContent("");
+                  }
+                }}
+                readonly={false}
+                showDeleteButton={true}
+                className="gap-3"
+              />
             )}
           </DraggableRoot>
         </div>
