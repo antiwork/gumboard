@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Authentication Flow", () => {
   test("should complete email authentication flow and verify database state", async ({ page }) => {
@@ -28,54 +28,35 @@ test.describe("Authentication Flow", () => {
       });
     });
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/email") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
+    );
 
     expect(emailSent).toBe(true);
     expect(authData).not.toBeNull();
     expect(authData!.email).toBe("test@example.com");
   });
 
-  test("should authenticate user and access dashboard", async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            name: "Test User",
-            email: "test@example.com",
-          },
-        }),
-      });
+  test("should authenticate user and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardCount = await testPrisma.board.count({
+      where: {
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
+    expect(boardCount).toBe(0);
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            name: "Test User",
-            email: "test@example.com",
-          },
-        }),
-      });
-    });
+    await authenticatedPage.goto("/dashboard");
 
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
-
-    await page.goto("/dashboard");
-
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
   test("should redirect unauthenticated users to signin", async ({ page }) => {
@@ -91,92 +72,70 @@ test.describe("Authentication Flow", () => {
     await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 5000 });
   });
 
-  test("should authenticate user via Google OAuth and access dashboard", async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "google-user",
-            name: "Google User",
-            email: "google@example.com",
-            image: "https://example.com/avatar.jpg",
-          },
-        }),
-      });
+  test("should authenticate user via Google OAuth and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const googleUser = await testPrisma.user.upsert({
+      where: { email: testContext.userEmail },
+      update: {
+        name: "Google User",
+        image: "https://example.com/avatar.jpg",
+      },
+      create: {
+        email: testContext.userEmail,
+        name: "Google User",
+        image: "https://example.com/avatar.jpg",
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "google-user",
-            name: "Google User",
-            email: "google@example.com",
-          },
-        }),
-      });
+    const boardCount = await testPrisma.board.count({
+      where: {
+        createdBy: googleUser.id,
+        organizationId: testContext.organizationId,
+      },
     });
+    expect(boardCount).toBe(0);
 
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
+    await authenticatedPage.goto("/dashboard");
 
-    await page.goto("/dashboard");
-
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should authenticate user via GitHub OAuth and access dashboard", async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user",
-            name: "GitHub User",
-            email: "github@example.com",
-            image: "https://avatars.githubusercontent.com/u/123?v=4",
-          },
-        }),
-      });
+  test("should authenticate user via GitHub OAuth and access dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const githubUser = await testPrisma.user.upsert({
+      where: { email: testContext.userEmail },
+      update: {
+        name: "GitHub User",
+        image: "https://avatars.githubusercontent.com/u/123?v=4",
+      },
+      create: {
+        email: testContext.userEmail,
+        name: "GitHub User",
+        image: "https://avatars.githubusercontent.com/u/123?v=4",
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "github-user",
-            name: "GitHub User",
-            email: "github@example.com",
-          },
-        }),
-      });
+    const boardCount = await testPrisma.board.count({
+      where: {
+        createdBy: githubUser.id,
+        organizationId: testContext.organizationId,
+      },
     });
+    expect(boardCount).toBe(0);
 
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({ boards: [] }),
-      });
-    });
+    await authenticatedPage.goto("/dashboard");
 
-    await page.goto("/dashboard");
-
-    await expect(page).toHaveURL(/.*dashboard/);
-    await expect(page.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
   test("should link magic link and Google OAuth accounts when using same email", async ({
@@ -258,7 +217,12 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/email") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
+    );
 
     expect(magicLinkAuthData).not.toBeNull();
     expect(magicLinkAuthData!.email).toBe(testEmail);
@@ -272,7 +236,12 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/google") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
+    );
 
     expect(googleAuthData).not.toBeNull();
     expect(googleAuthData!.email).toBe(testEmail);
@@ -364,7 +333,12 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/email") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
+    );
 
     expect(magicLinkAuthData).not.toBeNull();
     expect(magicLinkAuthData!.email).toBe(testEmail);
@@ -378,7 +352,12 @@ test.describe("Authentication Flow", () => {
       });
     }, testEmail);
 
-    await page.waitForTimeout(100);
+    await page.waitForResponse(
+      (resp) =>
+        resp.url().includes("/api/auth/signin/github") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
+    );
 
     expect(githubAuthData).not.toBeNull();
     expect(githubAuthData!.email).toBe(testEmail);

@@ -297,7 +297,10 @@ export default function Dashboard() {
 
               {boards.map((board) => (
                 <Link href={`/boards/${board.id}`} key={board.id}>
-                  <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
+                  <Card
+                    data-board-id={board.id}
+                    className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
+                  >
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
