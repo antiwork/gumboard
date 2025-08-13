@@ -6,7 +6,8 @@ import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
@@ -97,7 +98,7 @@ export function Note({
       (!note.checklistItems || note.checklistItems.length === 0)
   );
   const [newItemContent, setNewItemContent] = useState("");
-  const newItemInputRef = useRef<HTMLInputElement>(null);
+  const newItemInputRef = useRef<HTMLTextAreaElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -118,7 +119,7 @@ export function Note({
       const sortedItems = [
         ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
         ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
-      ];
+      ].map((item, index) => ({ ...item, order: index }));
 
       const optimisticNote = {
         ...note,
@@ -437,7 +438,7 @@ export function Note({
     handleAddItem();
   };
 
-  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDownNewItem = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Escape") {
       setAddingItem(false);
       setNewItemContent("");
@@ -445,9 +446,9 @@ export function Note({
   };
 
   return (
-    <div
+    <Card
       className={cn(
-        "rounded-lg shadow-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "rounded-lg shadow-lg break-inside-avoid select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
         className
       )}
       style={{
@@ -455,203 +456,207 @@ export function Note({
         ...style,
       }}
     >
-      <div className="flex items-start justify-between mb-2 flex-shrink-0">
-        <div className="flex items-center space-x-2">
-          <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
-            <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
-              {note.user.name
-                ? note.user.name.charAt(0).toUpperCase()
-                : note.user.email.charAt(0).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate max-w-20">
-              {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
-            </span>
+      <CardHeader>
+        <div className="flex items-start justify-between mb-2 flex-shrink-0">
+          <div className="flex items-center space-x-2">
+            <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
+              <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
+                {note.user.name
+                  ? note.user.name.charAt(0).toUpperCase()
+                  : note.user.email.charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
             <div className="flex flex-col">
-              {showBoardName && note.board && (
-                <Link
-                  href={`/boards/${note.board.id}`}
-                  className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
-                >
-                  {note.board.name}
-                </Link>
-              )}
+              <span className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate max-w-20">
+                {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
+              </span>
+              <div className="flex flex-col">
+                {showBoardName && note.board && (
+                  <Link
+                    href={`/boards/${note.board.id}`}
+                    className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
+                  >
+                    {note.board.name}
+                  </Link>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          {canEdit && (
-            <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-              <Button
-                aria-label={`Delete Note ${note.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete?.(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
-                variant="ghost"
-                size="icon"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-          {canEdit && onArchive && (
-            <div className="flex items-center">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onArchive(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
-                variant="ghost"
-                size="icon"
-                title="Archive note"
-              >
-                <Archive className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-          {canEdit && onUnarchive && (
-            <div className="flex items-center">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUnarchive(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
-                variant="ghost"
-                size="icon"
-                title="Unarchive note"
-              >
-                <ArchiveRestore className="w-3 h-3" />
-              </Button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {isEditing ? (
-        <div className="min-h-0">
-          <textarea
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            className="w-full h-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
-            placeholder="Enter note content..."
-            onBlur={handleStopEdit}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && e.ctrlKey) {
-                handleStopEdit();
-              }
-              if (e.key === "Escape") {
-                setIsEditing(false);
-                setEditContent(note.content);
-              }
-            }}
-            autoFocus
-          />
-        </div>
-      ) : (
-        <div className="flex flex-col">
-          <div className="overflow-y-auto space-y-1">
-            {/* Checklist Items */}
-            <DraggableRoot
-              items={note.checklistItems ?? []}
-              onItemsChange={(newItems) => {
-                handleReorderChecklistItems(note.id, newItems);
-              }}
-            >
-              <DraggableContainer className="space-y-1">
-                {note.checklistItems?.map((item) => (
-                  <DraggableItem key={item.id} id={item.id}>
-                    <ChecklistItemComponent
-                      item={item}
-                      onToggle={handleToggleChecklistItem}
-                      onEdit={handleEditItem}
-                      onDelete={handleDeleteItem}
-                      onSplit={handleSplitItem}
-                      isEditing={editingItem === item.id}
-                      editContent={editingItem === item.id ? editingItemContent : undefined}
-                      onEditContentChange={setEditingItemContent}
-                      onStartEdit={handleStartEditItem}
-                      onStopEdit={handleStopEditItem}
-                      readonly={readonly}
-                      showDeleteButton={canEdit}
-                    />
-                  </DraggableItem>
-                ))}
-              </DraggableContainer>
-
-              {/* Add New Item Input */}
-              {addingItem && canEdit && (
-                <form onSubmit={handleSubmitNewItem} className="flex items-center gap-3">
-                  <Checkbox
-                    disabled
-                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600"
-                  />
-                  <Input
-                    ref={newItemInputRef}
-                    type="text"
-                    value={newItemContent}
-                    onChange={(e) => setNewItemContent(e.target.value)}
-                    className="h-auto shadow-none flex-1 border-none bg-transparent px-1 py-0.5 text-sm text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
-                    placeholder="Add new item..."
-                    onKeyDown={handleKeyDownNewItem}
-                    onBlur={handleAddItem}
-                    autoFocus
-                  />
-                  <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-                    <Button
-                      type="button"
-                      aria-label={`Delete New Item`}
-                      onMouseDown={() => {
-                        // onMouseDown fires before onBlur, so the delete action happens before the blur handler can interfere
-
-                        setAddingItem(false);
-                        setNewItemContent("");
-                      }}
-                      className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
-                      variant="ghost"
-                      size="icon"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </div>
-                </form>
-              )}
-
-              {/* Content as text if no checklist items */}
-              {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
-                <div
-                  className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
-                  onClick={handleStartEdit}
+          <div className="flex items-center space-x-2">
+            {canEdit && (
+              <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                <Button
+                  aria-label={`Delete Note ${note.id}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete?.(note.id);
+                  }}
+                  className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                  variant="ghost"
+                  size="icon"
                 >
-                  {note.content || ""}
-                </div>
-              )}
-            </DraggableRoot>
+                  <Trash2 className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+            {canEdit && onArchive && (
+              <div className="flex items-center">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onArchive(note.id);
+                  }}
+                  className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                  variant="ghost"
+                  size="icon"
+                  title="Archive note"
+                >
+                  <Archive className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
+            {canEdit && onUnarchive && (
+              <div className="flex items-center">
+                <Button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onUnarchive(note.id);
+                  }}
+                  className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
+                  variant="ghost"
+                  size="icon"
+                  title="Unarchive note"
+                >
+                  <ArchiveRestore className="w-3 h-3" />
+                </Button>
+              </div>
+            )}
           </div>
+        </div>
+      </CardHeader>
 
-          {/* Add Item Button */}
-          {canEdit && (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
-                  newItemInputRef.current.focus();
-                } else {
-                  setAddingItem(true);
+      <CardContent>
+        {isEditing ? (
+          <div className="min-h-0">
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full h-full p-2 bg-transparent border-none resize-none focus:outline-none text-base leading-7 text-gray-800 dark:text-gray-200"
+              placeholder="Enter note content..."
+              onBlur={handleStopEdit}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.ctrlKey) {
+                  handleStopEdit();
+                }
+                if (e.key === "Escape") {
+                  setIsEditing(false);
+                  setEditContent(note.content);
                 }
               }}
-              className="mt-3 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add task
-            </Button>
-          )}
-        </div>
-      )}
-    </div>
+              autoFocus
+            />
+          </div>
+        ) : (
+          <div className="flex flex-col">
+            <div className="overflow-y-auto space-y-1">
+              {/* Checklist Items */}
+              <DraggableRoot
+                items={note.checklistItems ?? []}
+                onItemsChange={(newItems) => {
+                  handleReorderChecklistItems(note.id, newItems);
+                }}
+              >
+                <DraggableContainer className="space-y-1">
+                  {note.checklistItems?.map((item) => (
+                    <DraggableItem key={item.id} id={item.id}>
+                      <ChecklistItemComponent
+                        item={item}
+                        onToggle={handleToggleChecklistItem}
+                        onEdit={handleEditItem}
+                        onDelete={handleDeleteItem}
+                        onSplit={handleSplitItem}
+                        isEditing={editingItem === item.id}
+                        editContent={editingItem === item.id ? editingItemContent : undefined}
+                        onEditContentChange={setEditingItemContent}
+                        onStartEdit={handleStartEditItem}
+                        onStopEdit={handleStopEditItem}
+                        readonly={readonly}
+                        showDeleteButton={canEdit}
+                      />
+                    </DraggableItem>
+                  ))}
+                </DraggableContainer>
+
+                {/* Add New Item Input */}
+                {addingItem && canEdit && (
+                  <form onSubmit={handleSubmitNewItem} className="flex items-start gap-3">
+                    <Checkbox
+                      disabled
+                      className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1"
+                    />
+                    <Textarea
+                      ref={newItemInputRef}
+                      typeof="text"
+                      value={newItemContent}
+                      onChange={(e) => setNewItemContent(e.target.value)}
+                      className="h-auto shadow-none min-h-3 flex-1 border-none bg-transparent px-1 py-0.5 text-sm resize-none text-zinc-900 dark:text-zinc-100 focus-visible:ring-0 focus-visible:ring-offset-0"
+                      placeholder="Add new item..."
+                      onKeyDown={handleKeyDownNewItem}
+                      onBlur={handleAddItem}
+                      autoFocus
+                    />
+                    <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <Button
+                        type="button"
+                        aria-label={`Delete New Item`}
+                        onMouseDown={() => {
+                          // onMouseDown fires before onBlur, so the delete action happens before the blur handler can interfere
+
+                          setAddingItem(false);
+                          setNewItemContent("");
+                        }}
+                        className="text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded size-5"
+                        variant="ghost"
+                        size="icon"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </form>
+                )}
+
+                {/* Content as text if no checklist items */}
+                {(!note.checklistItems || note.checklistItems.length === 0) && !isEditing && (
+                  <div
+                    className="text-sm text-gray-900 dark:text-gray-100 whitespace-pre-wrap leading-relaxed cursor-pointer"
+                    onClick={handleStartEdit}
+                  >
+                    {note.content || ""}
+                  </div>
+                )}
+              </DraggableRoot>
+            </div>
+
+            {/* Add Item Button */}
+            {canEdit && (
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  if (addingItem && newItemInputRef.current && newItemContent.length === 0) {
+                    newItemInputRef.current.focus();
+                  } else {
+                    setAddingItem(true);
+                  }
+                }}
+                className="mt-3 has-[>svg]:px-0 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Add task
+              </Button>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }

@@ -1085,7 +1085,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         }}
       >
         {/* Notes */}
-        <div className="relative w-full h-full">
+        <div className="relative p-3 columns-1 min-h-fit md:columns-2 lg:columns-4 gap-3 space-y-3">
           {layoutNotes.map((note) => (
             <NoteCard
               key={note.id}
@@ -1098,15 +1098,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="note-background"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
             />
           ))}
         </div>
