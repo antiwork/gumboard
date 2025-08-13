@@ -29,6 +29,7 @@ test.describe("Board Name Link Functionality", () => {
         color: "#fef3c7",
         createdBy: testContext.userId,
         boardId: board1.id,
+        content: "",
       },
     });
 
@@ -46,6 +47,7 @@ test.describe("Board Name Link Functionality", () => {
         color: "#dcfce7",
         createdBy: testContext.userId,
         boardId: board2.id,
+        content: "",
       },
     });
 
@@ -100,6 +102,7 @@ test.describe("Board Name Link Functionality", () => {
         color: "#fef3c7",
         createdBy: testContext.userId,
         boardId: board1.id,
+        content: "",
       },
     });
 
@@ -161,6 +164,7 @@ test.describe("Board Name Link Functionality", () => {
         color: "#fef3c7",
         createdBy: testContext.userId,
         boardId: board.id,
+        content: "",
       },
     });
 
