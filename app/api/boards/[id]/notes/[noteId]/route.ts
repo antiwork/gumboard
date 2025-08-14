@@ -199,7 +199,8 @@ export async function PUT(
         userId: session.user.id,
         userName: user.name || user.email || "Unknown User",
         prevContent: note.checklistItems?.[0]?.content || "",
-        nextContent: checklistChanges?.created?.[0]?.content || note.checklistItems?.[0]?.content || "",
+        nextContent:
+          checklistChanges?.created?.[0]?.content || note.checklistItems?.[0]?.content || "",
         noteSlackMessageId: note.slackMessageId,
         itemChanges: checklistChanges,
         existingMessageIds,

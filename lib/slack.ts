@@ -222,7 +222,11 @@ export async function notifySlackForNoteChanges(
   if (!itemChanges) {
     if (wasEmpty && hasContent && !noteSlackMessageId) {
       if (shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
-        const messageText = formatNoteForSlack({ checklistItems: [{ content: nextContent }] }, boardName, userName);
+        const messageText = formatNoteForSlack(
+          { checklistItems: [{ content: nextContent }] },
+          boardName,
+          userName
+        );
         const ts = await sendSlackApiMessage(orgToken, {
           channel: orgChannelId,
           text: messageText,
@@ -277,7 +281,7 @@ export async function notifySlackForNoteChanges(
         } else {
           action = "updated";
         }
-        
+
         const messageText = formatTodoForSlack(item.content, boardName, userName, action);
 
         const existingTs = itemMessageIds[item.id];
