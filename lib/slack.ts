@@ -5,28 +5,10 @@ interface SlackMessage {
 }
 
 export function hasValidContent(content: string | null | undefined): boolean {
-  if (!content) {
-    console.log(`[Slack] hasValidContent check: "${content}" -> false (null/undefined)`);
-    return false;
-  }
-
+  if (!content) return false;
   const trimmed = content.trim();
-
-  if (trimmed.length === 0) {
-    console.log(`[Slack] hasValidContent check: "${content}" -> false (empty after trim)`);
-    return false;
-  }
-
-  const hasSubstantiveContent =
-    /[a-zA-Z0-9\u00C0-\u017F\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/.test(trimmed);
-
-  if (!hasSubstantiveContent) {
-    console.log(`[Slack] hasValidContent check: "${content}" -> false (no substantive content)`);
-    return false;
-  }
-
-  console.log(`[Slack] hasValidContent check: "${content}" -> true`);
-  return true;
+  if (trimmed.length === 0) return false;
+  return /[a-zA-Z0-9\u00C0-\u017F\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/.test(trimmed);
 }
 
 const notificationDebounce = new Map<string, number>();
