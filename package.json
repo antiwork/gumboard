@@ -70,6 +70,7 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "eslint": "^9.33.0",
     "jest": "^30.0.5",
     "prettier": "^3.3.3",
     "prisma": "^6.10.1",
