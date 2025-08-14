@@ -145,7 +145,8 @@ test.describe("Home Page", () => {
     const addItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
+        resp.url().includes(`/items`) &&
+        resp.request().method() === "POST" &&
         resp.ok(),
       { timeout: 15000 }
     );

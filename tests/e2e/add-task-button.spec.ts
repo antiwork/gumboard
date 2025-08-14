@@ -153,8 +153,8 @@ test.describe("Add Task Button", () => {
 
     const addItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
-        resp.request().method() === "PUT" &&
+        resp.url().includes(`/api/boards/${board.id}/notes/${note.id}/items`) &&
+        resp.request().method() === "POST" &&
         resp.ok(),
       { timeout: 15000 }
     );

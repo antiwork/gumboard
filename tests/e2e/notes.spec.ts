@@ -105,6 +105,7 @@ test.describe("Note Management", () => {
     const saveEditResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.url().includes(`/items/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
@@ -168,6 +169,7 @@ test.describe("Note Management", () => {
     const toggleResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.url().includes(`/items/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
@@ -187,7 +189,8 @@ test.describe("Note Management", () => {
     const addItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
+        resp.url().includes(`/items`) &&
+        resp.request().method() === "POST" &&
         resp.ok(),
       { timeout: 15000 }
     );
@@ -213,6 +216,7 @@ test.describe("Note Management", () => {
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.url().includes(`/items/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
@@ -230,7 +234,8 @@ test.describe("Note Management", () => {
     const deleteResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
+        resp.url().includes(`/items/`) &&
+        resp.request().method() === "DELETE" &&
         resp.ok()
     );
     await authenticatedPage
@@ -277,7 +282,8 @@ test.describe("Note Management", () => {
     const addFirstItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
+        resp.url().includes(`/items`) &&
+        resp.request().method() === "POST" &&
         resp.ok()
     );
     await initialInput.fill(firstItemContent);
@@ -382,6 +388,7 @@ test.describe("Note Management", () => {
     const toggleResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.url().includes(`/items/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
@@ -437,7 +444,8 @@ test.describe("Note Management", () => {
     const deleteItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
+        resp.url().includes(`/items/`) &&
+        resp.request().method() === "DELETE" &&
         resp.ok()
     );
     await authenticatedPage.getByRole("button", { name: "Delete item", exact: true }).click();
@@ -524,6 +532,7 @@ test.describe("Note Management", () => {
       const reorderResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+          resp.url().includes(`/items/reorder`) &&
           resp.request().method() === "PUT" &&
           resp.ok()
       );
@@ -818,7 +827,8 @@ test.describe("Note Management", () => {
       const addItemResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-          resp.request().method() === "PUT" &&
+          resp.url().includes(`/items`) &&
+          resp.request().method() === "POST" &&
           resp.ok(),
         { timeout: 15000 }
       );
@@ -884,7 +894,8 @@ test.describe("Note Management", () => {
       const addItemResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-          resp.request().method() === "PUT" &&
+          resp.url().includes(`/items`) &&
+          resp.request().method() === "POST" &&
           resp.ok(),
         { timeout: 15000 }
       );
