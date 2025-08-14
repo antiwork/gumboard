@@ -118,11 +118,16 @@ export async function updateSlackMessage(
 }
 
 export function formatNoteForSlack(
-  note: { content: string },
+  note: { checklistItems?: Array<{ content: string }> },
   boardName: string,
   userName: string
 ): string {
-  return `:heavy_plus_sign: ${note.content} by ${userName} in ${boardName}`;
+  // Get content from first checklist item
+  const content =
+    note.checklistItems && note.checklistItems.length > 0
+      ? note.checklistItems[0].content
+      : "New note";
+  return `:heavy_plus_sign: ${content} by ${userName} in ${boardName}`;
 }
 
 export function formatTodoForSlack(

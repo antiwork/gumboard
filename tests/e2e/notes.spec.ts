@@ -104,7 +104,6 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -172,7 +171,6 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -230,7 +228,6 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -293,7 +290,6 @@ test.describe("Note Management", () => {
 
       const note = await testPrisma.note.create({
         data: {
-          content: "",
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
@@ -368,7 +364,6 @@ test.describe("Note Management", () => {
 
       const note1 = await testPrisma.note.create({
         data: {
-          content: "",
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
@@ -387,7 +382,6 @@ test.describe("Note Management", () => {
 
       const note2 = await testPrisma.note.create({
         data: {
-          content: "",
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
@@ -461,7 +455,6 @@ test.describe("Note Management", () => {
 
       const note = await testPrisma.note.create({
         data: {
-          content: "",
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
