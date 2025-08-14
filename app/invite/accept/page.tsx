@@ -92,8 +92,8 @@ async function autoVerifyAndCreateSession(email: string, token: string) {
           emailVerified: new Date(), // Auto-verify since they clicked the invite link
         },
       });
-    } else if (!user.emailVerified) {
-      // If user exists but isn't verified, verify them
+    } else if (!user.emailVerified && !user.passwordHash) {
+      // If user exists but isn't verified and doesn't have password, verify them
       user = await db.user.update({
         where: { id: user.id },
         data: { emailVerified: new Date() },

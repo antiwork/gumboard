@@ -9,11 +9,13 @@ import { Mail } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import { useUser } from "@/app/contexts/UserContext";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export default function ProfileSettingsPage() {
   const { user, loading, refreshUser } = useUser();
   const [saving, setSaving] = useState(false);
-  const [profileName, setProfileName] = useState(user?.name || "");
+  const [profileName, setProfileName] = useState("");
+  const [newPassword, setNewPassword] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -44,9 +46,52 @@ export default function ProfileSettingsPage() {
       if (response.ok) {
         await refreshUser();
         setProfileName(profileName.trim());
+        toast.success("Profile updated successfully");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Failed to update profile");
       }
     } catch (error) {
       console.error("Error updating profile:", error);
+      toast.error("An error occurred while updating profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    if (!newPassword) {
+      toast.error("Password is required");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error("Password must be at least 8 characters long");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const response = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          newPassword,
+        }),
+      });
+
+      if (response.ok) {
+        toast.success("Password updated successfully");
+        setNewPassword("");
+      } else {
+        const error = await response.json();
+        toast.error(error.error || "Failed to update password");
+      }
+    } catch (error) {
+      console.error("Error updating password:", error);
+      toast.error("An error occurred while updating password");
     } finally {
       setSaving(false);
     }
@@ -114,8 +159,36 @@ export default function ProfileSettingsPage() {
             }
             className="bg-black hover:bg-zinc-900 text-white dark:bg-zinc-900 dark:hover:bg-zinc-800"
           >
-            {saving ? "Saving..." : "Save Changes"}
+            {saving ? "Saving..." : "Save changes"}
           </Button>
+        </div>
+
+        <div className="pt-6 border-t border-gray-200 dark:border-zinc-800">
+          <h3 className="text-lg font-medium text-foreground dark:text-zinc-100 mb-4">Password</h3>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="newPassword" className="text-foreground dark:text-zinc-200">
+                New Password
+              </Label>
+              <Input
+                id="newPassword"
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="Enter your new password (min 8 characters)"
+                className="mt-1 bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100"
+              />
+            </div>
+            <div>
+              <Button
+                onClick={handleUpdatePassword}
+                disabled={saving || !newPassword}
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700"
+              >
+                {saving ? "Updating..." : "Update password"}
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </Card>

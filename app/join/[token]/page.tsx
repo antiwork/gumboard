@@ -123,8 +123,8 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
       throw new Error("You are already a member of another organization");
     }
 
-    // Verify email if not already verified
-    if (!user.emailVerified) {
+    // Verify email if not already verified and user doesn't have password
+    if (!user.emailVerified && !user.passwordHash) {
       await db.user.update({
         where: { id: user.id },
         data: { emailVerified: new Date() },
