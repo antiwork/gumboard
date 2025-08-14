@@ -22,7 +22,7 @@ export function filterAndSortNotes(
   searchTerm: string,
   dateRange: { startDate: Date | null; endDate: Date | null },
   authorId: string | null,
-  currentUser?: User | null
+  currentUser: User | null
 ): Note[] {
   let filteredNotes = notes;
 
