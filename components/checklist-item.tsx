@@ -89,7 +89,9 @@ export function ChecklistItem({
       deletingRef.current = false;
       return;
     }
-    if (isEditing && editContent !== undefined && onEdit) {
+    if (isNewItem && onCreateItem) {
+      onCreateItem(editContent?.trim() || '');
+    } else if (isEditing && editContent !== undefined && onEdit) {
       onEdit(item.id, editContent);
     }
     onStopEdit?.();
