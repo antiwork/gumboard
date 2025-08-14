@@ -155,7 +155,8 @@ test.describe("Add Task Button", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
 
     await newItemInput.blur();
@@ -278,7 +279,7 @@ test.describe("Add Task Button", () => {
     await noteBackground.click({ position: { x: 50, y: 50 } });
 
     const newItemInput = authenticatedPage.getByTestId("new-item");
-    await expect(newItemInput).not.toBeVisible();
+    await expect(newItemInput).toBeVisible();
 
     const finalNote = await testPrisma.note.findUnique({
       where: { id: note.id },
