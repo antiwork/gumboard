@@ -413,8 +413,13 @@ describe("Slack Web API Functions", () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it("should not post for text-only changes without checked toggle", async () => {
-      await notifySlackForNoteChanges({
+    it("should post for text-only changes without checked toggle", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ok: true, ts: "text123.456" }),
+      } as Response);
+
+      const result = await notifySlackForNoteChanges({
         orgToken: "xoxb-token",
         orgChannelId: "C1234567890",
         boardId: `board_${Date.now()}`,
@@ -439,7 +444,15 @@ describe("Slack Web API Functions", () => {
         },
       });
 
-      expect(mockFetch).not.toHaveBeenCalled();
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://slack.com/api/chat.postMessage",
+        expect.objectContaining({
+          body: expect.stringContaining(
+            ":pencil2: Updated content by John Doe in Production Board"
+          ),
+        })
+      );
+      expect(result.itemMessageIds).toEqual({ item1: "text123.456" });
     });
   });
 
