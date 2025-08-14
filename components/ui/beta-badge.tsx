@@ -7,7 +7,7 @@ interface BetaBadgeProps {
 export function BetaBadge({ className }: BetaBadgeProps) {
   return (
     <span
-      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700 dark:bg-blue-800/50 dark:text-blue-400 ${className || ""}`}
+      className={`inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-400 ${className || ""}`}
     >
       Beta
     </span>

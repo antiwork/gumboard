@@ -903,23 +903,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-900 bg-dots">
+    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
         <div className="mx-2 flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="bg-white dark:bg-zinc-950 shadow-sm border border-zinc-200 rounded-lg dark:border-zinc-900 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto">
             {/* Company Name */}
             <Link href="/dashboard" className="flex-shrink-0 pl-1">
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-3">
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
                 Gumboard
                 <BetaBadge />
               </h1>
             </Link>
-            <div className="h-6 w-px m-1.5 bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
             {/* Board Selector Dropdown */}
             <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className={`flex items-center justify-between ${showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-900/50" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"} text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 rounded-md px-2 py-2 cursor-pointer w-full sm:w-auto`}
+                className={`flex items-center justify-between ${showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"} text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
               >
                 <div>
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
@@ -936,77 +936,69 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </Button>
 
               {showBoardDropdown && (
-                <div className="fixed sm:absolute left-0 mt-2 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-gray-200 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
-                  <div className="py-1">
+                <div className="fixed sm:absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
+                  <div className="p-2 flex flex-col gap-1">
+                    {/* Boards */}
+                    {allBoards.map((b) => (
+                      <Link
+                        key={b.id}
+                        href={`/boards/${b.id}`}
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${
+                          b.id === boardId
+                            ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
+                            : "text-foreground dark:text-zinc-100"
+                        }`}
+                        onClick={() => setShowBoardDropdown(false)}
+                      >
+                        <div>{b.name}</div>
+                      </Link>
+                    ))}
+
+                    {allBoards.length > 0 && (
+                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                    )}
+
                     {/* All Notes Option */}
                     <Link
                       href="/boards/all-notes"
-                      className={`block px-4 py-2 text-sm hover:bg-accent dark:hover:bg-zinc-800 ${
+                      className={`rounded-lg font-mediumblock px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
                         boardId === "all-notes"
-                          ? "bg-blue-50 dark:bg-zinc-900/70 text-blue-700 dark:text-blue-300"
-                          : "text-foreground dark:text-zinc-100"
+                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                          : "text-foreground dark:text-white"
                       }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
-                      <div className="font-medium">All notes</div>
-                      <div className="text-xs text-muted-foreground dark:text-zinc-400 mt-1">
-                        Notes from all boards
-                      </div>
+                      <div>All notes</div>
                     </Link>
 
                     {/* Archive Option */}
                     <Link
                       href="/boards/archive"
-                      className={`block px-4 py-2 text-sm hover:bg-accent dark:hover:bg-zinc-800 ${
+                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
                         boardId === "archive"
-                          ? "bg-blue-50 dark:bg-zinc-900/70 text-blue-700 dark:text-blue-300"
-                          : "text-foreground dark:text-zinc-100"
+                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                          : "text-foreground dark:text-white"
                       }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
-                      <div className="font-medium">Archive</div>
-                      <div className="text-xs text-muted-foreground dark:text-zinc-400 mt-1">
-                        Archived notes from all boards
-                      </div>
+                      <div>All archived</div>
                     </Link>
-
-                    {allBoards.length > 0 && (
-                      <div className="border-t border-gray-200 dark:border-zinc-800 my-1"></div>
-                    )}
-                    {allBoards.map((b) => (
-                      <Link
-                        key={b.id}
-                        href={`/boards/${b.id}`}
-                        className={`block px-4 py-2 text-sm hover:bg-accent dark:hover:bg-zinc-800 ${
-                          b.id === boardId
-                            ? "bg-blue-50 dark:bg-zinc-900/70 text-blue-700 dark:text-blue-300"
-                            : "text-foreground dark:text-zinc-100"
-                        }`}
-                        onClick={() => setShowBoardDropdown(false)}
-                      >
-                        <div className="font-medium">{b.name}</div>
-                        {b.description && (
-                          <div className="text-xs text-muted-foreground dark:text-zinc-400 mt-1">
-                            {b.description}
-                          </div>
-                        )}
-                      </Link>
-                    ))}
-                    {allBoards.length > 0 && (
-                      <div className="border-t border-gray-200 dark:border-zinc-800 my-1"></div>
-                    )}
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
                     <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => {
                         setShowAddBoard(true);
                         setShowBoardDropdown(false);
                       }}
-                      className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                      className="flex items-center w-full px-4 py-2"
                     >
-                      <Plus className="w-4 h-4 mr-2" />
                       <span className="font-medium">Create new board</span>
                     </Button>
                     {boardId !== "all-notes" && boardId !== "archive" && (
                       <Button
+                        variant="outline"
+                        size="sm"
                         onClick={() => {
                           setBoardSettings({
                             name: board?.name || "",
@@ -1018,7 +1010,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                           setBoardSettingsDialog(true);
                           setShowBoardDropdown(false);
                         }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                        className="flex items-center w-full px-4 py-2"
                       >
                         <Settings className="w-4 h-4 mr-2" />
                         <span className="font-medium">Board settings</span>
@@ -1028,7 +1020,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </div>
               )}
             </div>
-            <div className="h-6 w-px m-1.5 bg-zinc-200 dark:bg-zinc-800" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
 
             {/* Filter Popover */}
             <div className="relative board-dropdown mr-0 flex-1 sm:flex-none">
@@ -1090,7 +1082,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
-              className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
+              className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-zinc-100 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Note</span>
@@ -1239,7 +1231,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
+                  className="bg-blue-600 hover:bg-blue-700 text-zinc-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
                 >
                   Create board
                 </Button>
