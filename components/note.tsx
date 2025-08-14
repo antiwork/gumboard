@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -42,6 +42,7 @@ export interface Note {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
   };
   board?: {
     id: string;
@@ -353,9 +354,10 @@ export function Note({
                 ? note.user.name.charAt(0).toUpperCase()
                 : note.user.email.charAt(0).toUpperCase()}
             </AvatarFallback>
+            <AvatarImage src={note.user.image || ""} alt={note.user.name || ""} />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate max-w-20">
+            <span className="text-sm font-bold text-gray-700 truncate max-w-20">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
