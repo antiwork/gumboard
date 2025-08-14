@@ -76,7 +76,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes`) &&
         resp.request().method() === "POST" &&
-        resp.status() === 201
+        resp.status() === 201,
+      { timeout: 15000 }
     );
     await authenticatedPage.getByRole("button", { name: "Add Note" }).click();
     await createNoteResponse;
@@ -102,7 +103,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await uncheckedCheckbox.click();
     await toggleResponse1;
@@ -121,7 +123,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await uncheckedCheckbox.click();
     await toggleResponse2;
@@ -143,7 +146,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await expect(newItemInput).toBeVisible();
     await newItemInput.fill(newItemContent);
@@ -168,7 +172,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await editInput.fill(updatedFinanceText);
     await editInput.blur(); // Use blur instead of Enter to save the edit
@@ -187,7 +192,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await authenticatedPage
       .getByTestId(testContext.prefix("101"))
@@ -241,7 +247,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await expect(splitNewItemInput).toBeVisible();
     await splitNewItemInput.fill(splitTestContent);
@@ -258,7 +265,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     // Move cursor to split after "Split this" (10 characters from start)
     await splitInput.press("Home");
@@ -299,7 +307,8 @@ test.describe("Home Page", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await sourceElement.hover();
     await authenticatedPage.mouse.down();

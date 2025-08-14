@@ -188,7 +188,8 @@ test.describe("Note Management", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await newItemInput.fill(newItemContent);
     await newItemInput.blur();

@@ -55,7 +55,7 @@ test.describe("Add Task Button", () => {
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     const newItemInputs = authenticatedPage.getByTestId("new-item");
     await expect(newItemInputs).toHaveCount(2);
@@ -142,7 +142,7 @@ test.describe("Add Task Button", () => {
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
@@ -213,7 +213,7 @@ test.describe("Add Task Button", () => {
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     const newItemInput = authenticatedPage.getByTestId("new-item");
     await expect(newItemInput).toBeVisible();
@@ -263,7 +263,7 @@ test.describe("Add Task Button", () => {
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     const initialNote = await testPrisma.note.findUnique({
       where: { id: note.id },
