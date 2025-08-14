@@ -81,9 +81,7 @@ test.describe("Home Page", () => {
     await authenticatedPage.getByRole("button", { name: "Add Note" }).click();
     await createNoteResponse;
     // New notes are created empty, verify we have one more new item input
-    await expect(await authenticatedPage.getByTestId("new-item").count()).toBe(
-      initialNotes + 1
-    );
+    await expect(await authenticatedPage.getByTestId("new-item").count()).toBe(initialNotes + 1);
     initialNotes += 1;
 
     // Verify new note was created in database
@@ -224,9 +222,7 @@ test.describe("Home Page", () => {
 
     // Verify UI updates immediately (optimistic update)
     await expect(deleteNoteButton).not.toBeAttached();
-    await expect(await authenticatedPage.getByTestId("new-item").count()).toBe(
-      initialNotes - 1
-    );
+    await expect(await authenticatedPage.getByTestId("new-item").count()).toBe(initialNotes - 1);
     initialNotes -= 1;
 
     // Wait for the actual DELETE request to complete

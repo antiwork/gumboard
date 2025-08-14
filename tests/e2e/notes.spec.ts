@@ -285,7 +285,7 @@ test.describe("Note Management", () => {
 
     const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
-    
+
     await newItemInput.click();
     await expect(newItemInput).toBeFocused();
 

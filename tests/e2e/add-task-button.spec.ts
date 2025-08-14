@@ -1,7 +1,7 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Add Task Button", () => {
-  test('should display new item input for all notes when user is authorized', async ({
+  test("should display new item input for all notes when user is authorized", async ({
     authenticatedPage,
     testContext,
     testPrisma,
@@ -67,7 +67,7 @@ test.describe("Add Task Button", () => {
     await expect(secondNewItemInput).toBeVisible();
   });
 
-  test('should not display new item input when user is not authorized', async ({
+  test("should not display new item input when user is not authorized", async ({
     page,
     testContext,
     testPrisma,
@@ -105,7 +105,7 @@ test.describe("Add Task Button", () => {
     await expect(newItemInput).not.toBeVisible();
   });
 
-  test('should create new checklist item when new item input is used', async ({
+  test("should create new checklist item when new item input is used", async ({
     authenticatedPage,
     testContext,
     testPrisma,
@@ -175,7 +175,7 @@ test.describe("Add Task Button", () => {
     ).toBeTruthy();
   });
 
-  test('should keep new item input always visible (everpresent)', async ({
+  test("should keep new item input always visible (everpresent)", async ({
     authenticatedPage,
     testContext,
     testPrisma,
@@ -220,7 +220,7 @@ test.describe("Add Task Button", () => {
     const textarea = newItemInput.locator("textarea");
     await textarea.fill("Test content");
     await expect(newItemInput).toBeVisible();
-    
+
     await textarea.blur();
     await expect(newItemInput).toBeVisible();
   });
