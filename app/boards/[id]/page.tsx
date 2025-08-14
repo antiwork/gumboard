@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Plus, ChevronDown, Search, Copy, Trash2, Settings, X } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
