@@ -69,7 +69,7 @@ test.describe("Home Page", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Finance update by Friday")}`)
     ).toBeVisible();
-    let initialNotes = await authenticatedPage.getByRole("button", { name: "Add task" }).count();
+    let initialNotes = await authenticatedPage.getByTestId("new-item").count();
 
     // Test 1: Add a new note
     const createNoteResponse = authenticatedPage.waitForResponse(
@@ -80,8 +80,8 @@ test.describe("Home Page", () => {
     );
     await authenticatedPage.getByRole("button", { name: "Add Note" }).click();
     await createNoteResponse;
-    // New notes are created empty, verify we have one more "Add task" button
-    await expect(await authenticatedPage.getByRole("button", { name: "Add task" }).count()).toBe(
+    // New notes are created empty, verify we have one more new item input
+    await expect(await authenticatedPage.getByTestId("new-item").count()).toBe(
       initialNotes + 1
     );
     initialNotes += 1;
@@ -138,8 +138,8 @@ test.describe("Home Page", () => {
     });
     expect(untoggledItem?.checked).toBe(false);
 
-    // Test 3: Add a new checklist item
-    await authenticatedPage.getByRole("button", { name: "Add task" }).first().click();
+    // Test 3: Add a new checklist item using always-available input
+    const newItemInput = authenticatedPage.getByTestId("new-item").first().locator("textarea");
     const newItemContent = testContext.prefix("Brand new task item");
     const addItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -147,7 +147,6 @@ test.describe("Home Page", () => {
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
     await newItemInput.fill(newItemContent);
     await newItemInput.blur();
@@ -225,7 +224,7 @@ test.describe("Home Page", () => {
 
     // Verify UI updates immediately (optimistic update)
     await expect(deleteNoteButton).not.toBeAttached();
-    await expect(await authenticatedPage.getByRole("button", { name: "Add task" }).count()).toBe(
+    await expect(await authenticatedPage.getByTestId("new-item").count()).toBe(
       initialNotes - 1
     );
     initialNotes -= 1;
@@ -240,7 +239,7 @@ test.describe("Home Page", () => {
     expect(notesAfterDelete).toBe(2); // 3 - 1 deleted
 
     // Test 7: Split checklist item (Enter in middle of text) - use the third note we created
-    await authenticatedPage.getByRole("button", { name: "Add task" }).first().click();
+    const splitNewItemInput = authenticatedPage.getByTestId("new-item").first().locator("textarea");
     const splitTestContent = testContext.prefix("Split this item here");
     const addSplitItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -248,7 +247,6 @@ test.describe("Home Page", () => {
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    const splitNewItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(splitNewItemInput).toBeVisible();
     await splitNewItemInput.fill(splitTestContent);
     await splitNewItemInput.blur();

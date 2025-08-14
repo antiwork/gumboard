@@ -180,10 +180,7 @@ test.describe("Note Management", () => {
     });
     expect(toggledItem?.checked).toBe(true);
 
-    // Test 2: Add a new checklist item
-    const addTaskButton = authenticatedPage.locator('button:has-text("Add task")');
-    await expect(addTaskButton).toBeVisible();
-    await addTaskButton.click();
+    // Test 2: Add a new checklist item using always-available input
     const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
     const newItemContent = testContext.prefix("New test item");
@@ -286,15 +283,15 @@ test.describe("Note Management", () => {
     await initialInput.blur();
     await addFirstItemResponse;
 
-    await authenticatedPage.click('button:has-text("Add task")');
-
     const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
+    
+    await newItemInput.click();
     await expect(newItemInput).toBeFocused();
 
     await newItemInput.blur();
 
-    await authenticatedPage.click('button:has-text("Add task")');
+    await newItemInput.click();
     await expect(newItemInput).toBeFocused();
   });
 
