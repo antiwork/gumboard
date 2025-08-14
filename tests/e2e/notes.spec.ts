@@ -40,12 +40,12 @@ test.describe("Note Management", () => {
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    
+
     await initialTextarea.fill(testItemContent);
 
     // Use Tab key to move focus away and trigger blur
     await initialTextarea.press("Tab");
-    
+
     // Wait for the API response to complete
     await addItemResponse;
 
