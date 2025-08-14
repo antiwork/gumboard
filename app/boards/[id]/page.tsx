@@ -28,14 +28,15 @@ import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
+import { useUser } from "@/app/contexts/UserContext";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [notesloading, setNotesLoading] = useState(true);
+  const { user, loading: userLoading } = useUser();
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
@@ -73,6 +74,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    if (!userLoading && !user) {
+      router.push("/auth/signin");
+    }
+  }, [user, userLoading, router]);
 
   // Update URL with current filter state
   const updateURL = (
@@ -539,18 +546,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const fetchBoardData = async () => {
     try {
-      // Get user info first to check authentication
-      const userResponse = await fetch("/api/user");
-      if (userResponse.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (userResponse.ok) {
-        const userData = await userResponse.json();
-        setUser(userData);
-      }
-
       // Fetch all boards for the dropdown
       let allBoardsResponse: Response;
       let notesResponse: Response | undefined;
@@ -619,7 +614,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     } catch (error) {
       console.error("Error fetching board data:", error);
     } finally {
-      setLoading(false);
+      setNotesLoading(false);
     }
   };
 
@@ -890,7 +885,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setDeleteConfirmDialog(false);
   };
 
-  if (loading) {
+  if (userLoading || notesloading) {
     return <FullPageLoader message="Loading board..." />;
   }
 

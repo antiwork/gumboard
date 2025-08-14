@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -29,22 +28,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import type { User } from "@/components/note";
-
-// Settings-specific extended types
-export type UserWithOrganization = User & {
-  organization: {
-    id: string;
-    name: string;
-    slackWebhookUrl?: string | null;
-    members: {
-      id: string;
-      name: string | null;
-      email: string;
-      isAdmin: boolean;
-    }[];
-  } | null;
-};
+import { useUser } from "@/app/contexts/UserContext";
+import { useRouter } from "next/navigation";
 
 interface OrganizationInvite {
   id: string;
@@ -69,8 +54,8 @@ interface SelfServeInvite {
 }
 
 export default function OrganizationSettingsPage() {
-  const [user, setUser] = useState<UserWithOrganization | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, refreshUser } = useUser();
+  const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
@@ -102,38 +87,30 @@ export default function OrganizationSettingsPage() {
     variant?: "default" | "success" | "error";
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
-  const router = useRouter();
-
-  const fetchUserData = useCallback(async () => {
-    try {
-      const response = await fetch("/api/user");
-      if (response.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        const orgNameValue = userData.organization?.name || "";
-        const slackWebhookValue = userData.organization?.slackWebhookUrl || "";
-        setOrgName(orgNameValue);
-        setOriginalOrgName(orgNameValue);
-        setSlackWebhookUrl(slackWebhookValue);
-        setOriginalSlackWebhookUrl(slackWebhookValue);
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
-    }
-  }, [router]);
 
   useEffect(() => {
-    fetchUserData();
-    fetchInvites();
-    fetchSelfServeInvites();
-  }, [fetchUserData]);
+    if (user?.organization) {
+      const orgNameValue = user.organization.name || "";
+      const slackWebhookValue = user.organization.slackWebhookUrl || "";
+      setOrgName(orgNameValue);
+      setOriginalOrgName(orgNameValue);
+      setSlackWebhookUrl(slackWebhookValue);
+      setOriginalSlackWebhookUrl(slackWebhookValue);
+    }
+  }, [user?.organization?.name, user?.organization?.slackWebhookUrl]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push("/auth/signin");
+    }
+  }, [user, loading, router]);
+
+  useEffect(() => {
+    if (user?.organization) {
+      fetchInvites();
+      fetchSelfServeInvites();
+    }
+  }, [user?.organization]);
 
   const fetchInvites = async () => {
     try {
@@ -174,11 +151,10 @@ export default function OrganizationSettingsPage() {
       });
 
       if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser);
         // Update the original values to reflect the saved state
         setOriginalOrgName(orgName);
         setOriginalSlackWebhookUrl(slackWebhookUrl);
+        refreshUser();
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -253,7 +229,7 @@ export default function OrganizationSettingsPage() {
       });
 
       if (response.ok) {
-        fetchUserData();
+        await refreshUser();
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -299,7 +275,7 @@ export default function OrganizationSettingsPage() {
       });
 
       if (response.ok) {
-        fetchUserData(); // Refresh the data to show updated admin status
+        await refreshUser();
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -558,72 +534,70 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="space-y-3">
-            {user?.organization?.members?.map(
-              (member: { id: string; name: string | null; email: string; isAdmin: boolean }) => (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div
-                      className={`w-10 h-10 ${member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700"} rounded-full flex items-center justify-center`}
-                    >
-                      <span className="text-white font-medium">
-                        {member.name
-                          ? member.name.charAt(0).toUpperCase()
-                          : member.email.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div>
-                      <div className="flex items-center space-x-2">
-                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                          {member.name || "Unnamed User"}
-                        </p>
-                        {member.isAdmin && (
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                            <ShieldCheck className="w-3 h-3 mr-1" />
-                            Admin
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
-                    </div>
+            {user?.organization?.members?.map((member) => (
+              <div
+                key={member.id}
+                className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
+              >
+                <div className="flex items-center space-x-3">
+                  <div
+                    className={`w-10 h-10 ${member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700"} rounded-full flex items-center justify-center`}
+                  >
+                    <span className="text-white font-medium">
+                      {member.name
+                        ? member.name.charAt(0).toUpperCase()
+                        : member.email.charAt(0).toUpperCase()}
+                    </span>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    {/* Only show admin toggle to current admins and not for yourself */}
-                    {user?.isAdmin && member.id !== user.id && (
-                      <Button
-                        onClick={() => handleToggleAdmin(member.id, member.isAdmin)}
-                        variant="outline"
-                        size="sm"
-                        className={`${
-                          member.isAdmin
-                            ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                            : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                        }`}
-                        title={member.isAdmin ? "Remove admin role" : "Make admin"}
-                      >
-                        {member.isAdmin ? (
-                          <ShieldCheck className="w-4 h-4" />
-                        ) : (
-                          <Shield className="w-4 h-4" />
-                        )}
-                      </Button>
-                    )}
-                    {user?.isAdmin && member.id !== user.id && (
-                      <Button
-                        onClick={() => handleRemoveMember(member.id, member.name || member.email)}
-                        variant="outline"
-                        size="sm"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
+                  <div>
+                    <div className="flex items-center space-x-2">
+                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                        {member.name || "Unnamed User"}
+                      </p>
+                      {member.isAdmin && (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                          <ShieldCheck className="w-3 h-3 mr-1" />
+                          Admin
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
                   </div>
                 </div>
-              )
-            )}
+                <div className="flex items-center space-x-2">
+                  {/* Only show admin toggle to current admins and not for yourself */}
+                  {user?.isAdmin && member.id !== user.id && (
+                    <Button
+                      onClick={() => handleToggleAdmin(member.id, !!member.isAdmin)}
+                      variant="outline"
+                      size="sm"
+                      className={`${
+                        member.isAdmin
+                          ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                          : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                      }`}
+                      title={member.isAdmin ? "Remove admin role" : "Make admin"}
+                    >
+                      {member.isAdmin ? (
+                        <ShieldCheck className="w-4 h-4" />
+                      ) : (
+                        <Shield className="w-4 h-4" />
+                      )}
+                    </Button>
+                  )}
+                  {user?.isAdmin && member.id !== user.id && (
+                    <Button
+                      onClick={() => handleRemoveMember(member.id, member.name || member.email)}
+                      variant="outline"
+                      size="sm"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </Card>

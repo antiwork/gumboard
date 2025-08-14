@@ -5,15 +5,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { X, Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useUser } from "@/app/contexts/UserContext";
 
 interface OrganizationSetupFormProps {
-  onSubmit: (orgName: string, teamEmails: string[]) => Promise<void>;
+  onSubmit: (
+    orgName: string,
+    teamEmails: string[]
+  ) => Promise<{ success: boolean; organization?: unknown }>;
 }
 
 export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFormProps) {
   const [orgName, setOrgName] = useState("");
   const [teamEmails, setTeamEmails] = useState<string[]>([""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const { refreshUser } = useUser();
 
   const addEmailField = () => {
     setTeamEmails([...teamEmails, ""]);
@@ -42,7 +49,11 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
     setIsSubmitting(true);
     try {
       const validEmails = teamEmails.filter((email) => email.trim() && email.includes("@"));
-      await onSubmit(orgName.trim(), validEmails);
+      const result = await onSubmit(orgName.trim(), validEmails);
+      if (result?.success) {
+        await refreshUser();
+        router.push("/dashboard");
+      }
     } catch (error) {
       console.error("Error creating organization:", error);
       setIsSubmitting(false);
