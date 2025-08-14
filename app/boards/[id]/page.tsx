@@ -5,13 +5,14 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Plus, ChevronDown, Settings, Search } from "lucide-react";
+import { Plus, ChevronDown, Settings, Search, AlertCircle, Home, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
 
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -869,8 +870,40 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   if (!board && boardId !== "all-notes" && boardId !== "archive") {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Board not found</div>
+      <div className="min-h-screen flex items-center justify-center bg-background dark:bg-zinc-950 p-4">
+        <Card className="w-full max-w-md bg-white dark:bg-zinc-900 dark:border-zinc-800">
+          <CardHeader className="text-center space-y-4">
+            <div className="mx-auto w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl text-zinc-900 dark:text-zinc-100">
+                Board Not Found
+              </CardTitle>
+              <CardDescription className="text-zinc-600 dark:text-zinc-400 mt-2">
+                This board doesn't exist or you don't have access to it.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            <div className="flex flex-col space-y-3">
+              <Link href="/dashboard" className="w-full">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                  <Home className="w-4 h-4 mr-2" />
+                  View All Boards
+                </Button>
+              </Link>
+              
+              <Link href="/" className="w-full">
+                <Button variant="outline" className="w-full">
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Home
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

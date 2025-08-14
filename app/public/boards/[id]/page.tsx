@@ -3,11 +3,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
+import { Search, AlertCircle, Home, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { Note, Board } from "@/components/note";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -371,16 +372,38 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
 
   if (!board) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Board not found</h1>
-          <p className="text-muted-foreground mb-4">
-            This board doesn&apos;t exist or is not publicly accessible.
-          </p>
-          <Link href="/">
-            <Button>Go to Gumboard</Button>
-          </Link>
-        </div>
+      <div className="min-h-screen flex items-center justify-center bg-background dark:bg-zinc-950 p-4">
+        <Card className="w-full max-w-md bg-white dark:bg-zinc-900 dark:border-zinc-800">
+          <CardHeader className="text-center space-y-4">
+            <div className="mx-auto w-16 h-16 bg-orange-100 dark:bg-orange-900/20 rounded-full flex items-center justify-center">
+              <AlertCircle className="w-8 h-8 text-orange-600 dark:text-orange-400" />
+            </div>
+            <div>
+              <CardTitle className="text-2xl text-zinc-900 dark:text-zinc-100">
+                Board Not Found
+              </CardTitle>
+              <CardDescription className="text-zinc-600 dark:text-zinc-400 mt-2">
+                This board doesn't exist or is not publicly accessible.
+              </CardDescription>
+            </div>
+          </CardHeader>
+          
+          <CardContent className="space-y-4">
+            <div className="flex flex-col space-y-3">
+              <Link href="/" className="w-full">
+                <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white">
+                  <Home className="w-4 h-4 mr-2" />
+                  Go to Gumboard
+                </Button>
+              </Link>
+              
+              <Button variant="outline" className="w-full" onClick={() => window.history.back()}>
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Go Back
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
