@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Plus, ChevronDown, Settings, Search, Copy, Trash2 } from "lucide-react";
+import { Plus, ChevronDown, Search, Copy, Trash2, Settings } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -903,23 +903,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-900 bg-dots">
-      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:space-x-3 w-full sm:w-auto">
+    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-900 bg-dots">
+      <div>
+        <div className="mx-2 flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
+          <div className="bg-white dark:bg-zinc-950 shadow-sm border border-zinc-200 rounded-lg dark:border-zinc-900 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto">
             {/* Company Name */}
-            <Link href="/dashboard" className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4">
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+            <Link href="/dashboard" className="flex-shrink-0 pl-1">
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-white flex items-center gap-3">
                 Gumboard
                 <BetaBadge />
               </h1>
             </Link>
-
+            <div className="h-6 w-px m-1.5 bg-zinc-200 dark:bg-zinc-800" />
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown flex-1 sm:flex-none">
+            <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center justify-between border border-gray-200 dark:border-zinc-800 space-x-2 text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 rounded-md px-3 py-2 cursor-pointer w-full sm:w-auto"
+                className={`flex items-center justify-between ${showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-900/50" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"} text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 rounded-md px-2 py-2 cursor-pointer w-full sm:w-auto`}
               >
                 <div>
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
@@ -931,9 +931,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   </div>
                 </div>
                 <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform ${
-                    showBoardDropdown ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform }`}
                 />
               </Button>
 
@@ -1030,9 +1028,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </div>
               )}
             </div>
+            <div className="h-6 w-px m-1.5 bg-zinc-200 dark:bg-zinc-800" />
 
             {/* Filter Popover */}
-            <div className="relative board-dropdown flex-1 sm:flex-none">
+            <div className="relative board-dropdown mr-0 flex-1 sm:flex-none">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
@@ -1179,33 +1178,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </Button>
             </div>
           )}
-
-        {notes.length === 0 && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-500 dark:text-gray-400">
-            <div className="text-xl mb-2">No notes yet</div>
-            <div className="text-sm mb-4">Click &ldquo;Add Note&rdquo; to get started</div>
-            <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else if (boardId === "archive") {
-                  setErrorDialog({
-                    open: true,
-                    title: "Cannot Add Note",
-                    description:
-                      "You cannot add notes directly to the archive. Notes are archived from other boards.",
-                  });
-                } else {
-                  handleAddNote();
-                }
-              }}
-              className="flex items-center space-x-2 cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Add Your First Note</span>
-            </Button>
-          </div>
-        )}
       </div>
 
       {showAddBoard && (
