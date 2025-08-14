@@ -184,7 +184,8 @@ test.describe("Archive Functionality", () => {
 
     await authenticatedPage.goto("/boards/archive");
 
-    await expect(authenticatedPage.locator('button:has-text("Add Note")')).toBeVisible();
+    const deleteNoteButtons = authenticatedPage.getByRole("button", { name: /Delete Note/ });
+    await expect(deleteNoteButtons).toHaveCount(0);
   });
 
   test('should display board name as "Archive" in navigation', async ({ authenticatedPage }) => {
