@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -12,7 +12,7 @@ import {
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
-import { Trash2, Plus, Archive, ArchiveRestore } from "lucide-react";
+import { Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
 
 // Core domain types
@@ -58,7 +58,6 @@ interface NoteProps {
   note: Note;
   syncDB?: boolean;
   currentUser?: User;
-  addingChecklistItem?: string | null;
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
@@ -72,7 +71,6 @@ interface NoteProps {
 export function Note({
   note,
   currentUser,
-  addingChecklistItem,
   onUpdate,
   onDelete,
   onArchive,
@@ -87,21 +85,10 @@ export function Note({
 
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
-  const [addingItem, setAddingItem] = useState(
-    !readonly &&
-      currentUser &&
-      (currentUser.id === note.user.id || currentUser.isAdmin) &&
-      (!note.checklistItems || note.checklistItems.length === 0)
-  );
   const [newItemContent, setNewItemContent] = useState("");
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
-  useEffect(() => {
-    if (addingChecklistItem === note.id && canEdit) {
-      setAddingItem(true);
-    }
-  }, [addingChecklistItem, note.id, canEdit]);
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
@@ -340,11 +327,10 @@ export function Note({
     handleStopEditItem();
   };
 
-  const handleAddItem = () => {
-    if (newItemContent.trim()) {
-      handleAddChecklistItem(newItemContent.trim());
+  const handleCreateNewItem = (content: string) => {
+    if (content.trim()) {
+      handleAddChecklistItem(content.trim());
       setNewItemContent("");
-      setAddingItem(false);
     }
   };
 
@@ -465,8 +451,8 @@ export function Note({
               ))}
             </DraggableContainer>
 
-            {/* Add New Item Input */}
-            {addingItem && canEdit && (
+            {/* Always-available New Item Input */}
+            {canEdit && (
               <ChecklistItemComponent
                 item={{
                   id: "new-item",
@@ -474,41 +460,28 @@ export function Note({
                   checked: false,
                   order: 0,
                 }}
-                onEdit={() => {}} // Let onStopEdit handle the item creation
+                onEdit={() => {}}
                 onDelete={() => {
-                  setAddingItem(false);
                   setNewItemContent("");
                 }}
                 isEditing={true}
                 editContent={newItemContent}
                 onEditContentChange={setNewItemContent}
                 onStopEdit={() => {
-                  if (newItemContent.trim()) {
-                    handleAddItem();
-                  } else {
-                    setAddingItem(false);
+                  if (!newItemContent.trim()) {
                     setNewItemContent("");
                   }
                 }}
+                isNewItem={true}
+                onCreateItem={handleCreateNewItem}
                 readonly={false}
-                showDeleteButton={true}
+                showDeleteButton={false}
                 className="gap-3"
               />
             )}
           </DraggableRoot>
         </div>
 
-        {/* Add Item Button */}
-        {canEdit && (
-          <Button
-            variant="ghost"
-            onClick={() => setAddingItem(true)}
-            className="mt-2 !p-0 justify-start text-slate-600 dark:text-zinc-300 hover:text-slate-900 dark:hover:text-zinc-100"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Add task
-          </Button>
-        )}
       </div>
     </div>
   );

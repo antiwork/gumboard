@@ -1121,7 +1121,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               key={note.id}
               note={note as Note}
               currentUser={user as User}
-              addingChecklistItem={addingChecklistItem}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}

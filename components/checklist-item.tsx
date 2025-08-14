@@ -26,6 +26,8 @@ interface ChecklistItemProps {
   readonly?: boolean;
   showDeleteButton?: boolean;
   className?: string;
+  isNewItem?: boolean;
+  onCreateItem?: (content: string) => void;
 }
 
 export function ChecklistItem({
@@ -41,6 +43,8 @@ export function ChecklistItem({
   readonly = false,
   showDeleteButton = true,
   className,
+  isNewItem = false,
+  onCreateItem,
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
@@ -60,8 +64,12 @@ export function ChecklistItem({
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      const target = e.target as HTMLTextAreaElement;
-      target.blur();
+      if (isNewItem && editContent?.trim() && onCreateItem) {
+        onCreateItem(editContent.trim());
+      } else {
+        const target = e.target as HTMLTextAreaElement;
+        target.blur();
+      }
     }
     if (e.key === "Enter" && e.shiftKey) {
       const target = e.target as HTMLTextAreaElement;
