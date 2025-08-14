@@ -18,9 +18,9 @@ export function ProfileDropdown({ user }: Props) {
     <Popover>
       <PopoverTrigger asChild>
         <Avatar className="w-9 h-9 cursor-pointer">
-          <div className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700 transition-colors ">
+          <div className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors ">
             <AvatarImage
-              className="w-7 h-7 rounded-full"
+              className="w-8.5 h-8.5 rounded-full"
               src={user?.image || ""}
               alt={user?.name || ""}
             />

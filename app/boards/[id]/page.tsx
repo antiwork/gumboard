@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { Plus, ChevronDown, Search, Copy, Trash2, Settings } from "lucide-react";
+import { Plus, ChevronDown, Search, Copy, Trash2, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -1044,7 +1044,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto">
             {/* Search Box */}
             <div className="relative flex-1 sm:flex-none min-w-[150px]">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -1058,7 +1058,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                 }}
-                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-gray-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
               {searchTerm && (
                 <Button
@@ -1069,7 +1069,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
                 >
-                  ×
+                  <X className="h-4 w-4" />
                 </Button>
               )}
             </div>
@@ -1082,16 +1082,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
-              className="flex items-center justify-center w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-zinc-100 shadow-lg hover:shadow-xl transition-all duration-200 cursor-pointer font-medium"
+              className="flex items-center justify-center text-white w-10 h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
             >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Note</span>
+              <span className="hidden sm:inline">Add note</span>
             </Button>
 
             {/* User Dropdown */}
-            <div className="mr-3">
-              <ProfileDropdown user={user} />
-            </div>
+            <ProfileDropdown user={user} />
           </div>
         </div>
       </div>
