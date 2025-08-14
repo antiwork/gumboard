@@ -110,31 +110,30 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: sortedItems,
-          }),
-        })
-          .then(async (response) => {
-            if (!response.ok) {
-              console.error("Server error, reverting optimistic update");
-              onUpdate?.(note);
-            } else {
-              const { note: updatedNote } = await response.json();
-              onUpdate?.(updatedNote);
-            }
-          })
-          .catch((error) => {
-            console.error("Error toggling checklist item:", error);
-            onUpdate?.(note);
-          });
+        const targetItem = updatedItems.find((item) => item.id === itemId);
+        if (!targetItem) return;
+
+        const response = await fetch(
+          `/api/boards/${note.boardId}/notes/${note.id}/items/${itemId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              checked: targetItem.checked,
+            }),
+          }
+        );
+
+        if (!response.ok) {
+          console.error("Server error, reverting optimistic update");
+          onUpdate?.(note);
+        }
       }
     } catch (error) {
       console.error("Error toggling checklist item:", error);
+      onUpdate?.(note);
     }
   };
 
@@ -151,25 +150,23 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-          }),
-        });
+        const response = await fetch(
+          `/api/boards/${note.boardId}/notes/${note.id}/items/${itemId}`,
+          {
+            method: "DELETE",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
-        if (response.ok) {
-          const { note: updatedNote } = await response.json();
-          onUpdate?.(updatedNote);
-        } else {
+        if (!response.ok) {
           onUpdate?.(note);
         }
       }
     } catch (error) {
       console.error("Error deleting checklist item:", error);
+      onUpdate?.(note);
     }
   };
 
@@ -189,32 +186,32 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-          }),
-        });
+        const response = await fetch(
+          `/api/boards/${note.boardId}/notes/${note.id}/items/${itemId}`,
+          {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              content,
+            }),
+          }
+        );
 
-        if (response.ok) {
-          const { note: updatedNote } = await response.json();
-          onUpdate?.(updatedNote);
-        } else {
+        if (!response.ok) {
           onUpdate?.(note);
         }
       }
     } catch (error) {
       console.error("Error editing checklist item:", error);
+      onUpdate?.(note);
     }
   };
 
   const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItem[]) => {
     try {
       if (!note.checklistItems) return;
-      const allItemsChecked = newItems.every((item) => item.checked);
       // Disallow unchecked items to be after checked items
       const firstCheckedIndex = newItems.findIndex((element) => element.checked);
       const lastUncheckedIndex = newItems.map((element) => element.checked).lastIndexOf(false);
@@ -236,21 +233,22 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(`/api/boards/${note.boardId}/notes/${noteId}`, {
+        const updatedItemsForReorder = updatedItems.map((item) => ({
+          id: item.id,
+          order: item.order,
+        }));
+
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${noteId}/items/reorder`, {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: updatedItems,
-            archivedAt: allItemsChecked ? new Date().toISOString() : null,
+            items: updatedItemsForReorder,
           }),
         });
 
-        if (response.ok) {
-          const { note: updatedNote } = await response.json();
-          onUpdate?.(updatedNote);
-        } else {
+        if (!response.ok) {
           onUpdate?.(note);
         }
       }
@@ -261,39 +259,42 @@ export function Note({
 
   const handleAddChecklistItem = async (content: string) => {
     try {
+      const tempId = `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       const newItem = {
-        id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: tempId,
         content,
         checked: false,
         order: note.checklistItems?.length ?? 0,
       };
 
-      const allItemsChecked = [...(note.checklistItems || []), newItem].every(
-        (item) => item.checked
-      );
-
       const optimisticNote = {
         ...note,
         checklistItems: [...(note.checklistItems || []), newItem],
-        archivedAt: allItemsChecked ? new Date().toISOString() : null,
       };
 
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
-          method: "PUT",
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}/items`, {
+          method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: [...(note.checklistItems || []), newItem],
+            content,
           }),
         });
 
         if (response.ok) {
-          const { note: updatedNote } = await response.json();
-          onUpdate?.(updatedNote);
+          const { item: createdItem } = await response.json();
+          const updatedItems = optimisticNote.checklistItems?.map((item) =>
+            item.id === tempId ? createdItem : item
+          );
+          const finalNote = {
+            ...optimisticNote,
+            checklistItems: updatedItems,
+          };
+          onUpdate?.(finalNote);
         } else {
           onUpdate?.(note);
         }
