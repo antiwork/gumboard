@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
     branches: [main]
 
@@ -19,19 +18,18 @@ jobs:
 
     services:
       postgres:
-        image: postgres:15
+        image: postgres:16-alpine
         env:
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_USER: postgres
           POSTGRES_DB: gumboard_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-        ports:
-          - 5432:5432
-
     env:
       GITHUB_CLIENT_ID: dummy-client-id
       GITHUB_CLIENT_SECRET: dummy-client-secret
@@ -71,11 +69,6 @@ jobs:
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install chromium --only-shell
-
-      - name: Set up database for E2E tests
-        run: |
-          npx prisma migrate deploy
-          npx prisma generate
 
       - name: E2E Tests
         run: npm run test:e2e

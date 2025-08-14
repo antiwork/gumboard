@@ -357,9 +357,10 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
           <p className="text-muted-foreground mb-4">
             This board doesn&apos;t exist or is not publicly accessible.
           </p>
-          <Link href="/">
-            <Button>Go to Gumboard</Button>
-          </Link>
+
+          <Button asChild>
+            <Link href="/">Go to Gumboard</Link>
+          </Button>
         </div>
       </div>
     );

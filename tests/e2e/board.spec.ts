@@ -71,4 +71,57 @@ test.describe("Board Management", () => {
     await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
     await expect(createButton).toBeEnabled();
   });
+
+  test.describe("Board Not Found", () => {
+    test("should display not found page for invalid board ID", async ({ authenticatedPage }) => {
+      const invalidBoardId = "invalid-board-id";
+
+      await authenticatedPage.goto(`/boards/${invalidBoardId}`);
+
+      // Should show the not found message
+      await expect(authenticatedPage.locator("text=Board not found")).toBeVisible();
+
+      // Should show the "Go to Gumboard" button
+      const homeButton = authenticatedPage.getByRole("link", { name: "Go to Gumboard" });
+      await expect(homeButton).toBeVisible();
+
+      // Verify the button links to home page
+      await expect(homeButton).toHaveAttribute("href", "/");
+    });
+
+    test("should not show not found for special board IDs", async ({ authenticatedPage }) => {
+      // Test that special board IDs like "all-notes" and "archive" don't show not found
+      await authenticatedPage.goto("/boards/all-notes");
+
+      // Should not show the not found message
+      await expect(authenticatedPage.locator("text=Board not found")).not.toBeVisible();
+
+      // Navigate to archive
+      await authenticatedPage.goto("/boards/archive");
+
+      // Should not show the not found message
+      await expect(authenticatedPage.locator("text=Board not found")).not.toBeVisible();
+    });
+
+    test("should show not found page for invalid public board", async ({ page }) => {
+      await page.goto(`/public/boards/non-existent-board`);
+
+      // Verify we're on the not found page
+      await expect(page.locator("text=Board not found")).toBeVisible();
+      // Should show the descriptive message for inaccessible boards
+      await expect(
+        page.locator("text=This board doesn't exist or is not publicly accessible.")
+      ).toBeVisible();
+
+      // Click the "Go to Gumboard" button
+      const homeButton = page.getByRole("link", { name: "Go to Gumboard" });
+      await homeButton.click();
+
+      // Wait for navigation to complete
+      await page.waitForURL("/");
+
+      // Should navigate to the home page
+      await expect(page).toHaveURL("/");
+    });
+  });
 });

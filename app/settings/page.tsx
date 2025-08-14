@@ -1,45 +1,32 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
-import type { User } from "@/components/note";
+import { useUser } from "@/app/contexts/UserContext";
+import { useRouter } from "next/navigation";
 
 export default function ProfileSettingsPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, refreshUser } = useUser();
   const [saving, setSaving] = useState(false);
-  const [profileName, setProfileName] = useState("");
+  const [profileName, setProfileName] = useState(user?.name || "");
   const router = useRouter();
 
-  const fetchUserData = useCallback(async () => {
-    try {
-      const response = await fetch("/api/user");
-      if (response.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setProfileName(userData.name || "");
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || "");
     }
-  }, [router]);
+  }, [user]);
 
   useEffect(() => {
-    fetchUserData();
-  }, [fetchUserData]);
+    if (!loading && !user) {
+      router.push("/auth/signin");
+    }
+  }, [user, loading, router]);
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -55,9 +42,8 @@ export default function ProfileSettingsPage() {
       });
 
       if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser);
-        setProfileName((updatedUser.name || "").trim());
+        await refreshUser();
+        setProfileName(profileName.trim());
       }
     } catch (error) {
       console.error("Error updating profile:", error);

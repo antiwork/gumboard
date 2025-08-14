@@ -35,21 +35,21 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    const archivedNote1 = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
         color: "#fef3c7",
         archivedAt: new Date(),
         createdBy: testContext.userId,
         boardId: board.id,
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("This is an archived note"),
-        checked: false,
-        order: 0,
-        noteId: archivedNote1.id,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("This is an archived note"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
       },
     });
 
@@ -58,8 +58,9 @@ test.describe("Archive Functionality", () => {
     await authenticatedPage.click('[href="/boards/archive"]');
 
     await expect(authenticatedPage).toHaveURL("/boards/archive");
+
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)
+      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
     ).toBeVisible();
   });
 
@@ -77,36 +78,44 @@ test.describe("Archive Functionality", () => {
       },
     });
 
+    const noteContent = testContext.prefix("Test note to archive");
     const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
         archivedAt: null,
         createdBy: testContext.userId,
         boardId: board.id,
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("Test note to archive"),
-        checked: false,
-        order: 0,
-        noteId: note.id,
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("archive-item-1"),
+              content: noteContent,
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
       },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Test note to archive")}`)
-    ).toBeVisible();
+    await expect(authenticatedPage.locator(`text=${noteContent}`)).toBeVisible();
 
     // Hover over the note to reveal the archive button
-    await authenticatedPage.locator(`text=${testContext.prefix("Test note to archive")}`).hover();
+    await authenticatedPage.locator(`text=${noteContent}`).hover();
 
-    // Find the archive button - it should be visible after hover
-    const archiveButton = authenticatedPage.locator('[title="Archive note"]').first();
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
+
+    // Hover over the archive button to show tooltip
+    await archiveButton.hover();
+
+    // Check if the tooltip is visible
+    await expect(
+      authenticatedPage.getByRole("tooltip", { name: "Archive note" }).getByRole("paragraph")
+    ).toBeVisible();
+
     await archiveButton.click();
 
     const archiveResponse = authenticatedPage.waitForResponse(
@@ -122,9 +131,8 @@ test.describe("Archive Functionality", () => {
     });
     expect(archivedNote?.archivedAt).toBeTruthy();
 
-    // Verify note is no longer visible on board
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Test note to archive")}`)
+      authenticatedPage.getByText(testContext.prefix("Test note to archive"))
     ).not.toBeVisible();
   });
 
@@ -142,31 +150,31 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    const archivedNote2 = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
         color: "#fef3c7",
         archivedAt: new Date(),
         createdBy: testContext.userId,
         boardId: board.id,
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("This is an archived note"),
-        checked: false,
-        order: 0,
-        noteId: archivedNote2.id,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("This is an archived note"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
       },
     });
 
     await authenticatedPage.goto("/boards/archive");
 
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)
+      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
     ).toBeVisible();
 
-    const archiveButton = authenticatedPage.locator('[title="Archive note"]');
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 
@@ -185,13 +193,14 @@ test.describe("Archive Functionality", () => {
 
     await authenticatedPage.goto("/boards/archive");
 
-    await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
+    const deleteNoteButtons = authenticatedPage.getByRole("button", { name: /Delete Note/ });
+    await expect(deleteNoteButtons).toHaveCount(0);
   });
 
   test('should display board name as "Archive" in navigation', async ({ authenticatedPage }) => {
     await authenticatedPage.goto("/boards/archive");
 
-    await expect(authenticatedPage.locator("text=Archive")).toBeVisible();
+    await expect(authenticatedPage.getByText("Archive")).toBeVisible();
   });
 
   test("should show unarchive button instead of archive button on Archive board", async ({
@@ -208,33 +217,41 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    const archivedNote3 = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
         color: "#fef3c7",
         archivedAt: new Date(),
         createdBy: testContext.userId,
         boardId: board.id,
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("This is an archived note"),
-        checked: false,
-        order: 0,
-        noteId: archivedNote3.id,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("This is an archived note"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
       },
     });
 
     await authenticatedPage.goto("/boards/archive");
+
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("This is an archived note")}`)
+      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
     ).toBeVisible();
 
-    const unarchiveButton = authenticatedPage.locator('[title="Unarchive note"]');
+    const unarchiveButton = authenticatedPage.getByRole("button", { name: "Unarchive note" });
     await expect(unarchiveButton).toBeVisible();
 
-    const archiveButton = authenticatedPage.locator('[title="Archive note"]');
+    // Hover over the button and verify tooltip
+    await unarchiveButton.hover();
+
+    await expect(
+      authenticatedPage.getByRole("tooltip", { name: "Unarchive note" }).getByRole("paragraph")
+    ).toBeVisible();
+
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 
@@ -258,24 +275,25 @@ test.describe("Archive Functionality", () => {
         archivedAt: new Date(),
         createdBy: testContext.userId,
         boardId: board.id,
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("Test note to unarchive"),
-        checked: false,
-        order: 0,
-        noteId: archivedNote.id,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("Test note to unarchive"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
       },
     });
 
     await authenticatedPage.goto("/boards/archive");
+
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)
+      authenticatedPage.getByText(testContext.prefix("Test note to unarchive"))
     ).toBeVisible();
 
-    const unarchiveButton = authenticatedPage.locator('[title="Unarchive note"]');
+    const unarchiveButton = authenticatedPage.locator('[aria-label="Unarchive note"]');
     await expect(unarchiveButton).toBeVisible();
     await unarchiveButton.click();
 
@@ -292,9 +310,8 @@ test.describe("Archive Functionality", () => {
     });
     expect(unarchivedNote?.archivedAt).toBe(null);
 
-    // Verify note is no longer visible in archive view
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)
+      authenticatedPage.getByText(testContext.prefix("Test note to unarchive"))
     ).not.toBeVisible();
   });
 
@@ -318,26 +335,24 @@ test.describe("Archive Functionality", () => {
         archivedAt: null,
         createdBy: testContext.userId,
         boardId: board.id,
-      },
-    });
-
-    await testPrisma.checklistItem.create({
-      data: {
-        content: testContext.prefix("Note for archive-unarchive workflow test"),
-        checked: false,
-        order: 0,
-        noteId: note.id,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("Note for archive-unarchive workflow test"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
       },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
     await expect(
-      authenticatedPage.locator(
-        `text=${testContext.prefix("Note for archive-unarchive workflow test")}`
-      )
+      authenticatedPage.getByText(testContext.prefix("Note for archive-unarchive workflow test"))
     ).toBeVisible();
 
-    const archiveButton = authenticatedPage.locator('[title="Archive note"]').first();
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();
     const archiveResponse2 = authenticatedPage.waitForResponse(
@@ -348,11 +363,8 @@ test.describe("Archive Functionality", () => {
     );
     await archiveResponse2;
 
-    // Verify note is no longer visible on board
     await expect(
-      authenticatedPage.locator(
-        `text=${testContext.prefix("Note for archive-unarchive workflow test")}`
-      )
+      authenticatedPage.getByText(testContext.prefix("Note for archive-unarchive workflow test"))
     ).not.toBeVisible();
     const archivedNote = await testPrisma.note.findUnique({
       where: { id: note.id },
