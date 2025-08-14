@@ -930,7 +930,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Board not found</h1>
           <Button asChild>
-            <Link href="/">Go to Gumboard home</Link>
+            <Link href="/">Go to Gumboard</Link>
           </Button>
         </div>
       </div>

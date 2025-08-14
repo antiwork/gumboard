@@ -379,7 +379,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
           </p>
 
           <Button asChild>
-            <Link href="/">Go to Gumboard home</Link>
+            <Link href="/">Go to Gumboard</Link>
           </Button>
         </div>
       </div>

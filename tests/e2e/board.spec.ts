@@ -81,8 +81,8 @@ test.describe("Board Management", () => {
       // Should show the not found message
       await expect(authenticatedPage.locator("text=Board not found")).toBeVisible();
 
-      // Should show the "Go to Gumboard home" button
-      const homeButton = authenticatedPage.getByRole("link", { name: "Go to Gumboard home" });
+      // Should show the "Go to Gumboard" button
+      const homeButton = authenticatedPage.getByRole("link", { name: "Go to Gumboard" });
       await expect(homeButton).toBeVisible();
 
       // Verify the button links to home page
@@ -113,8 +113,8 @@ test.describe("Board Management", () => {
         page.locator("text=This board doesn't exist or is not publicly accessible.")
       ).toBeVisible();
 
-      // Click the "Go to Gumboard home" button
-      const homeButton = page.getByRole("link", { name: "Go to Gumboard home" });
+      // Click the "Go to Gumboard" button
+      const homeButton = page.getByRole("link", { name: "Go to Gumboard" });
       await homeButton.click();
 
       // Wait for navigation to complete

@@ -7,7 +7,7 @@ export default function NotFound() {
       <div className="text-center">
         <h1 className="text-2xl font-bold mb-2">Page not found</h1>
         <Button asChild>
-          <Link href="/">Go to Gumboard home</Link>
+          <Link href="/">Go to Gumboard</Link>
         </Button>
       </div>
     </div>
