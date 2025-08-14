@@ -110,7 +110,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click('button:has-text("Add Your First Note")');
+    await authenticatedPage.click('button:has-text("Add Note")');
     const createNoteResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes`) &&
