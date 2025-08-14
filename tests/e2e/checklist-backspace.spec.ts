@@ -15,21 +15,21 @@ test.describe("Checklist Backspace Behavior", () => {
         organizationId: testContext.organizationId,
       },
     });
-    await testPrisma.note.create({
+    const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: {
-          create: [
-            {
-              id: testContext.prefix("item-1"),
-              content: testContext.prefix("Test item"),
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: testContext.prefix("item-1"),
+        content: testContext.prefix("Test item"),
+        checked: false,
+        order: 0,
+        noteId: note.id,
       },
     });
 
@@ -40,7 +40,7 @@ test.describe("Checklist Backspace Behavior", () => {
     ).toBeVisible();
 
     const checklistItemElement = authenticatedPage
-      .locator("span.flex-1.text-sm.leading-6.cursor-pointer")
+      .locator("textarea")
       .filter({ hasText: testContext.prefix("Test item") });
     await expect(checklistItemElement).toBeVisible();
   });

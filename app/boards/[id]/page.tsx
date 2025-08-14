@@ -207,7 +207,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const minContentHeight = 60; // Minimum content area
 
     // All notes now use checklist items - calculate height based on number of items
-    const itemHeight = 28; // Each checklist item is about 28px tall (more accurate)
+    const itemHeight = 32; // Use 32px for textarea-based items (slightly larger than main's 28px)
     const itemSpacing = 4; // Space between items (space-y-1 = 4px)
     const checklistItemsCount = note.checklistItems?.length || 0;
     const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
@@ -897,7 +897,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   if (!board && boardId !== "all-notes" && boardId !== "archive") {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Board not found</div>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2">Board not found</h1>
+          <Button asChild>
+            <Link href="/">Go to Gumboard</Link>
+          </Button>
+        </div>
       </div>
     );
   }
@@ -1109,13 +1114,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               key={note.id}
               note={note as Note}
               currentUser={user as User}
-              addingChecklistItem={addingChecklistItem}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
               onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="note-background"
+              className="shadow-md shadow-black/10"
               style={{
                 position: "absolute",
                 left: note.x,
