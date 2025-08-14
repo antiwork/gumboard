@@ -30,7 +30,6 @@ export async function GET() {
       },
       select: {
         id: true,
-        content: true,
         color: true,
         boardId: true,
         createdBy: true,

@@ -20,7 +20,6 @@ test.describe("Single-Click Note Editing", () => {
     // Create a checklist note with test item
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         checklistItems: {
           create: [
@@ -72,7 +71,6 @@ test.describe("Single-Click Note Editing", () => {
     // Create a checklist note with test item
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         checklistItems: {
           create: [
@@ -139,7 +137,6 @@ test.describe("Single-Click Note Editing", () => {
     // Create a note owned by original user
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         checklistItems: {
           create: [
@@ -209,7 +206,6 @@ test.describe("Single-Click Note Editing", () => {
     // Create a checklist note with test item
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         checklistItems: {
           create: [

@@ -97,11 +97,16 @@ export function shouldSendNotification(
 }
 
 export function formatNoteForSlack(
-  note: { content: string },
+  note: { checklistItems?: Array<{ content: string }> },
   boardName: string,
   userName: string
 ): string {
-  return `:heavy_plus_sign: ${note.content} by ${userName} in ${boardName}`;
+  // Get content from first checklist item
+  const content =
+    note.checklistItems && note.checklistItems.length > 0
+      ? note.checklistItems[0].content
+      : "New note";
+  return `:heavy_plus_sign: ${content} by ${userName} in ${boardName}`;
 }
 
 export async function sendSlackApiMessage(
@@ -178,12 +183,14 @@ export function formatTodoForSlack(
   todoContent: string,
   boardName: string,
   userName: string,
-  action: "added" | "completed" | "reopened"
+  action: "added" | "completed" | "reopened" | "updated"
 ): string {
   if (action === "completed") {
     return `:white_check_mark: ${todoContent} by ${userName} in ${boardName}`;
   } else if (action === "reopened") {
     return `:recycle: ${todoContent} by ${userName} in ${boardName}`;
+  } else if (action === "updated") {
+    return `:pencil2: ${todoContent} by ${userName} in ${boardName}`;
   }
   return `:heavy_plus_sign: ${todoContent} by ${userName} in ${boardName}`;
 }
@@ -212,27 +219,29 @@ export async function notifySlackForNoteChanges(
   const hasContent = hasValidContent(nextContent);
   const isArchived = nextContent.includes("[ARCHIVED]");
 
-  if (wasEmpty && hasContent && !noteSlackMessageId) {
-    if (shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
-      const messageText = formatNoteForSlack({ content: nextContent }, boardName, userName);
-      const ts = await sendSlackApiMessage(orgToken, {
-        channel: orgChannelId,
-        text: messageText,
-        username: "Gumboard",
-        icon_emoji: ":clipboard:",
-      });
-      if (ts) {
-        result.noteMessageId = ts;
+  if (!itemChanges) {
+    if (wasEmpty && hasContent && !noteSlackMessageId) {
+      if (shouldSendNotification(userId, boardId, boardName, sendSlackUpdates)) {
+        const messageText = formatNoteForSlack({ checklistItems: [{ content: nextContent }] }, boardName, userName);
+        const ts = await sendSlackApiMessage(orgToken, {
+          channel: orgChannelId,
+          text: messageText,
+          username: "Gumboard",
+          icon_emoji: ":clipboard:",
+        });
+        if (ts) {
+          result.noteMessageId = ts;
+        }
       }
-    }
-  } else if (noteSlackMessageId && hasContent) {
-    const messageText = isArchived
-      ? `:package: [ARCHIVED] ${nextContent} by ${userName} in ${boardName}`
-      : formatNoteForSlack({ content: nextContent }, boardName, userName);
+    } else if (noteSlackMessageId && hasContent) {
+      const messageText = isArchived
+        ? `:package: [ARCHIVED] ${nextContent} by ${userName} in ${boardName}`
+        : formatNoteForSlack({ checklistItems: [{ content: nextContent }] }, boardName, userName);
 
-    await updateSlackApiMessage(orgToken, orgChannelId, noteSlackMessageId, {
-      text: messageText,
-    });
+      await updateSlackApiMessage(orgToken, orgChannelId, noteSlackMessageId, {
+        text: messageText,
+      });
+    }
   }
 
   if (itemChanges) {
@@ -259,9 +268,16 @@ export async function notifySlackForNoteChanges(
 
     for (const item of itemChanges.updated) {
       const checkedToggle = item.previous.checked !== item.checked;
+      const contentChanged = item.previous.content !== item.content;
 
-      if (checkedToggle) {
-        const action = item.checked ? "completed" : "reopened";
+      if (checkedToggle || contentChanged) {
+        let action: "added" | "completed" | "reopened" | "updated";
+        if (checkedToggle) {
+          action = item.checked ? "completed" : "reopened";
+        } else {
+          action = "updated";
+        }
+        
         const messageText = formatTodoForSlack(item.content, boardName, userName, action);
 
         const existingTs = itemMessageIds[item.id];

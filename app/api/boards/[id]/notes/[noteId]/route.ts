@@ -14,7 +14,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, archivedAt, checklistItems } = await request.json();
+    const { color, archivedAt, checklistItems } = await request.json();
     const { id: boardId, noteId } = await params;
 
     // Verify user has access to this board (same organization)
@@ -169,7 +169,6 @@ export async function PUT(
       return tx.note.update({
         where: { id: noteId },
         data: {
-          ...(content !== undefined && { content }),
           ...(color !== undefined && { color }),
           ...(archivedAt !== undefined && { archivedAt }),
         },
@@ -199,8 +198,8 @@ export async function PUT(
         sendSlackUpdates: updatedNote.board.sendSlackUpdates,
         userId: session.user.id,
         userName: user.name || user.email || "Unknown User",
-        prevContent: note.content,
-        nextContent: content ?? note.content,
+        prevContent: note.checklistItems?.[0]?.content || "",
+        nextContent: checklistChanges?.created?.[0]?.content || note.checklistItems?.[0]?.content || "",
         noteSlackMessageId: note.slackMessageId,
         itemChanges: checklistChanges,
         existingMessageIds,

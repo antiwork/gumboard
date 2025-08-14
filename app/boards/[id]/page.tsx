@@ -201,56 +201,25 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
     const config = getResponsiveConfig();
     const actualNotePadding = notePadding || config.notePadding;
-    const actualNoteWidth = noteWidth || config.noteWidth;
 
     const headerHeight = 60; // User info header + margins
     const paddingHeight = actualNotePadding * 2; // Top and bottom padding
     const minContentHeight = 60; // Minimum content area
 
-    if (note.checklistItems) {
-      // For checklist items, calculate height based on number of items
-      const itemHeight = 28; // Each checklist item is about 28px tall (more accurate)
-      const itemSpacing = 4; // Space between items (space-y-1 = 4px)
-      const checklistItemsCount = note.checklistItems.length;
-      const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
-      const addTaskButtonHeight = 36; // Height for the "Add task" button including margin
+    // All notes now use checklist items - calculate height based on number of items
+    const itemHeight = 28; // Each checklist item is about 28px tall (more accurate)
+    const itemSpacing = 4; // Space between items (space-y-1 = 4px)
+    const checklistItemsCount = note.checklistItems?.length || 0;
+    const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
+    const addTaskButtonHeight = 36; // Height for the "Add task" button including margin
 
-      const checklistHeight =
-        checklistItemsCount * itemHeight +
-        (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
-        addingItemHeight;
-      const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
+    const checklistHeight =
+      checklistItemsCount * itemHeight +
+      (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
+      addingItemHeight;
+    const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
 
-      return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
-    } else {
-      // Original logic for regular notes
-      const lines = note.content.split("\n");
-
-      // Estimate character width and calculate text wrapping
-      const avgCharWidth = 9; // Average character width in pixels
-      const contentWidth = actualNoteWidth - actualNotePadding * 2 - 16; // Note width minus padding and margins
-      const charsPerLine = Math.floor(contentWidth / avgCharWidth);
-
-      // Calculate total lines including wrapped text
-      let totalLines = 0;
-      lines.forEach((line) => {
-        if (line.length === 0) {
-          totalLines += 1; // Empty line
-        } else {
-          const wrappedLines = Math.ceil(line.length / charsPerLine);
-          totalLines += Math.max(1, wrappedLines);
-        }
-      });
-
-      // Ensure minimum content
-      totalLines = Math.max(3, totalLines);
-
-      // Calculate based on actual text content with wrapping
-      const lineHeight = 28; // Line height for readability (leading-7)
-      const contentHeight = totalLines * lineHeight;
-
-      return headerHeight + paddingHeight + Math.max(minContentHeight, contentHeight);
-    }
+    return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
   };
 
   // Helper function to calculate bin-packed layout for desktop
@@ -489,8 +458,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const search = searchTerm.toLowerCase();
       filteredNotes = filteredNotes.filter((note) => {
         const authorName = (note.user.name || note.user.email).toLowerCase();
-        const noteContent = note.content.toLowerCase();
-        return authorName.includes(search) || noteContent.includes(search);
+        // Search in checklist items content
+        const checklistContent =
+          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
+        return authorName.includes(search) || checklistContent.includes(search);
       });
     }
 
@@ -685,7 +656,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            content: "",
             checklistItems: [],
             ...(isAllNotesView && { boardId: targetBoardId }),
           }),

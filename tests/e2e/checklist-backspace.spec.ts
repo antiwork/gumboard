@@ -17,7 +17,6 @@ test.describe("Checklist Backspace Behavior", () => {
     });
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,

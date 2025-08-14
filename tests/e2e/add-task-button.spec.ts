@@ -18,7 +18,6 @@ test.describe("Add Task Button", () => {
 
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -35,12 +34,20 @@ test.describe("Add Task Button", () => {
       },
     });
 
-    await testPrisma.note.create({
+    const regularNote = await testPrisma.note.create({
       data: {
-        content: testContext.prefix("Regular note content"),
         color: "#fef3c7",
         createdBy: testContext.userId,
         boardId: board.id,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        content: testContext.prefix("Regular note content"),
+        checked: false,
+        order: 0,
+        noteId: regularNote.id,
       },
     });
 
@@ -80,7 +87,6 @@ test.describe("Add Task Button", () => {
 
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -119,7 +125,6 @@ test.describe("Add Task Button", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -193,7 +198,6 @@ test.describe("Add Task Button", () => {
 
     await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
@@ -242,7 +246,6 @@ test.describe("Add Task Button", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        content: "",
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
