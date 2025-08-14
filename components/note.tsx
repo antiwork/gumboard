@@ -406,7 +406,7 @@ export function Note({
                     className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
                     variant="ghost"
                     size="icon"
-                    title="Archive note"
+                    aria-label="Archive note"
                   >
                     <Archive className="w-3 h-3" />
                   </Button>
@@ -419,18 +419,25 @@ export function Note({
           )}
           {canEdit && onUnarchive && (
             <div className="flex items-center">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUnarchive(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
-                variant="ghost"
-                size="icon"
-                title="Unarchive note"
-              >
-                <ArchiveRestore className="w-3 h-3" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUnarchive(note.id);
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Unarchive note"
+                  >
+                    <ArchiveRestore className="w-3 h-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Unarchive note</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
         </div>

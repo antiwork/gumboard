@@ -105,8 +105,17 @@ test.describe("Archive Functionality", () => {
     // Hover over the note to reveal the archive button
     await authenticatedPage.locator(`text=${noteContent}`).hover();
 
-    const archiveButton = authenticatedPage.locator('[title="Archive note"]').first();
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
+
+    // Hover over the archive button to show tooltip
+    await archiveButton.hover();
+
+    // Check if the tooltip is visible
+    await expect(
+      authenticatedPage.getByRole("tooltip", { name: "Archive note" }).getByRole("paragraph")
+    ).toBeVisible();
+
     await archiveButton.click();
 
     const archiveResponse = authenticatedPage.waitForResponse(
@@ -165,7 +174,7 @@ test.describe("Archive Functionality", () => {
       authenticatedPage.getByText(testContext.prefix("This is an archived note"))
     ).toBeVisible();
 
-    const archiveButton = authenticatedPage.locator('[title="Archive note"]');
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 
@@ -232,10 +241,17 @@ test.describe("Archive Functionality", () => {
       authenticatedPage.getByText(testContext.prefix("This is an archived note"))
     ).toBeVisible();
 
-    const unarchiveButton = authenticatedPage.locator('[title="Unarchive note"]');
+    const unarchiveButton = authenticatedPage.getByRole("button", { name: "Unarchive note" });
     await expect(unarchiveButton).toBeVisible();
 
-    const archiveButton = authenticatedPage.locator('[title="Archive note"]');
+    // Hover over the button and verify tooltip
+    await unarchiveButton.hover();
+
+    await expect(
+      authenticatedPage.getByRole("tooltip", { name: "Unarchive note" }).getByRole("paragraph")
+    ).toBeVisible();
+
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 
@@ -277,7 +293,7 @@ test.describe("Archive Functionality", () => {
       authenticatedPage.getByText(testContext.prefix("Test note to unarchive"))
     ).toBeVisible();
 
-    const unarchiveButton = authenticatedPage.locator('[title="Unarchive note"]');
+    const unarchiveButton = authenticatedPage.locator('[aria-label="Unarchive note"]');
     await expect(unarchiveButton).toBeVisible();
     await unarchiveButton.click();
 
@@ -336,7 +352,7 @@ test.describe("Archive Functionality", () => {
       authenticatedPage.getByText(testContext.prefix("Note for archive-unarchive workflow test"))
     ).toBeVisible();
 
-    const archiveButton = authenticatedPage.locator('[title="Archive note"]').first();
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();
     const archiveResponse2 = authenticatedPage.waitForResponse(
