@@ -903,7 +903,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
+    <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-900 bg-dots">
       <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
         <div className="flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
           <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:space-x-3 w-full sm:w-auto">
@@ -1108,7 +1108,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       {/* Board Area */}
       <div
         ref={boardRef}
-        className="relative w-full bg-gray-50 dark:bg-zinc-950"
+        className="relative w-full"
         style={{
           height: boardHeight,
           minHeight: "calc(100vh - 64px)", // Account for header height
