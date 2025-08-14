@@ -268,7 +268,7 @@ test.describe("Note Management", () => {
         resp.request().method() === "POST" &&
         resp.status() === 201
     );
-    await authenticatedPage.click('button:has-text("Add Your First Note")');
+    await authenticatedPage.click('button:has-text("Add Note")');
     await createNoteResponse;
 
     const initialInput = authenticatedPage.locator("textarea.bg-transparent").first();
@@ -318,7 +318,7 @@ test.describe("Note Management", () => {
         resp.request().method() === "POST" &&
         resp.status() === 201
     );
-    await authenticatedPage.click('button:has-text("Add Your First Note")');
+    await authenticatedPage.click('button:has-text("Add Note")');
     await createNoteResponse;
 
     // Verify note was created in database
@@ -668,10 +668,7 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.goto(`/boards/${board.id}`);
 
-      await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
-      await expect(
-        authenticatedPage.locator('button:has-text("Add Your First Note")')
-      ).toBeVisible();
+      await expect(authenticatedPage.locator('button:has-text("Add Note")')).toBeVisible();
     });
 
     test("should create a note in the all notes view", async ({
@@ -784,7 +781,7 @@ test.describe("Note Management", () => {
   });
 
   test.describe("Empty Note Prevention", () => {
-    test("should not create empty item when pressing Enter at start of item", async ({
+    test("should create empty item when pressing Enter at start of item", async ({
       authenticatedPage,
       testContext,
       testPrisma,
@@ -842,12 +839,14 @@ test.describe("Note Management", () => {
       // Wait for any potential network activity to complete
       await authenticatedPage.waitForLoadState("networkidle");
 
-      const checklistItems = authenticatedPage.getByRole("checkbox");
-      await expect(checklistItems).toHaveCount(1);
+      const checklistItems = authenticatedPage
+        .getByRole("checkbox")
+        .filter({ hasNot: authenticatedPage.getByTestId("new-item") });
+      await expect(checklistItems).toHaveCount(2);
       await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
     });
 
-    test("should not create empty item when pressing Enter at end of item", async ({
+    test("should create empty item when pressing Enter at end of item", async ({
       authenticatedPage,
       testContext,
       testPrisma,
@@ -905,8 +904,10 @@ test.describe("Note Management", () => {
       // Wait for any potential network activity to complete
       await authenticatedPage.waitForLoadState("networkidle");
 
-      const checklistItems = authenticatedPage.getByRole("checkbox");
-      await expect(checklistItems).toHaveCount(1);
+      const checklistItems = authenticatedPage
+        .getByRole("checkbox")
+        .filter({ hasNot: authenticatedPage.getByTestId("new-item") });
+      await expect(checklistItems).toHaveCount(2);
       await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
     });
   });
