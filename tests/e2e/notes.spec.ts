@@ -1,5 +1,4 @@
 import { test, expect } from "../fixtures/test-helpers";
-import type { Prisma } from "@prisma/client";
 
 test.describe("Note Management", () => {
   test("should create a note and add checklist items", async ({
@@ -89,7 +88,7 @@ test.describe("Note Management", () => {
             },
           ],
         },
-      } as Prisma.NoteCreateInput,
+      },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
@@ -156,7 +155,7 @@ test.describe("Note Management", () => {
             },
           ],
         },
-      } as Prisma.NoteCreateInput,
+      },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
@@ -213,7 +212,7 @@ test.describe("Note Management", () => {
             },
           ],
         },
-      } as Prisma.NoteCreateInput,
+      },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
@@ -272,7 +271,7 @@ test.describe("Note Management", () => {
               { id: itemA3Id, content: testContext.prefix("Item A3"), checked: false, order: 2 },
             ],
           },
-        } as Prisma.NoteCreateInput,
+        },
       });
 
       await authenticatedPage.goto(`/boards/${board.id}`);
@@ -349,7 +348,7 @@ test.describe("Note Management", () => {
               },
             ],
           },
-        } as Prisma.NoteCreateInput,
+        },
       });
 
       const note2 = await testPrisma.note.create({
@@ -367,7 +366,7 @@ test.describe("Note Management", () => {
               },
             ],
           },
-        } as Prisma.NoteCreateInput,
+        },
       });
 
       await authenticatedPage.goto(`/boards/${board.id}`);
@@ -430,7 +429,7 @@ test.describe("Note Management", () => {
           color: "#fef3c7",
           boardId: board.id,
           createdBy: testContext.userId,
-        } as Prisma.NoteCreateInput,
+        },
       });
 
       let deleteCalled = false;
