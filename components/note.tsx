@@ -89,7 +89,6 @@ export function Note({
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
-
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
@@ -481,7 +480,6 @@ export function Note({
             )}
           </DraggableRoot>
         </div>
-
       </div>
     </div>
   );
