@@ -9,6 +9,7 @@ import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import type { Note, Board } from "@/components/note";
+import { getUniqueAuthors, filterAndSortNotes } from "@/lib/note-utils";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -98,72 +99,9 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     return headerHeight + paddingHeight + totalChecklistHeight + 40;
   };
 
-  const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
 
-    notes.forEach((note) => {
-      if (!authorsMap.has(note.user.id)) {
-        authorsMap.set(note.user.id, {
-          id: note.user.id,
-          name: note.user.name || note.user.email.split("@")[0],
-          email: note.user.email,
-        });
-      }
-    });
 
-    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  };
 
-  const filterAndSortNotes = (
-    notes: Note[],
-    searchTerm: string,
-    dateRange: { startDate: Date | null; endDate: Date | null },
-    authorId: string | null
-  ): Note[] => {
-    let filteredNotes = notes;
-
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      filteredNotes = filteredNotes.filter((note) => {
-        const authorName = (note.user.name || note.user.email).toLowerCase();
-        // Search in checklist items content
-        const checklistContent =
-          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
-        return authorName.includes(search) || checklistContent.includes(search);
-      });
-    }
-
-    if (authorId) {
-      filteredNotes = filteredNotes.filter((note) => note.user.id === authorId);
-    }
-
-    if (dateRange.startDate || dateRange.endDate) {
-      filteredNotes = filteredNotes.filter((note) => {
-        const noteDate = new Date(note.createdAt);
-        const startOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const endOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-
-        if (dateRange.startDate && dateRange.endDate) {
-          return (
-            noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate)
-          );
-        } else if (dateRange.startDate) {
-          return noteDate >= startOfDay(dateRange.startDate);
-        } else if (dateRange.endDate) {
-          return noteDate <= endOfDay(dateRange.endDate);
-        }
-        return true;
-      });
-    }
-
-    filteredNotes.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return filteredNotes;
-  };
 
   const calculateGridLayout = () => {
     if (typeof window === "undefined") return [];

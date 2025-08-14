@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
+import { getUniqueAuthors, filterAndSortNotes } from "@/lib/note-utils";
 import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
@@ -433,93 +434,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Get unique authors from notes
-  const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
 
-    notes.forEach((note) => {
-      if (!authorsMap.has(note.user.id)) {
-        authorsMap.set(note.user.id, {
-          id: note.user.id,
-          name: note.user.name || note.user.email.split("@")[0],
-          email: note.user.email,
-        });
-      }
-    });
 
-    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  };
 
-  // Filter notes based on search term, date range, and author
-  const filterAndSortNotes = (
-    notes: Note[],
-    searchTerm: string,
-    dateRange: { startDate: Date | null; endDate: Date | null },
-    authorId: string | null,
-    currentUser: User | null
-  ): Note[] => {
-    let filteredNotes = notes;
-
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      filteredNotes = filteredNotes.filter((note) => {
-        const authorName = (note.user.name || note.user.email).toLowerCase();
-        // Search in checklist items content
-        const checklistContent =
-          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
-        return authorName.includes(search) || checklistContent.includes(search);
-      });
-    }
-
-    // Filter by author
-    if (authorId) {
-      filteredNotes = filteredNotes.filter((note) => note.user.id === authorId);
-    }
-
-    // Filter by date range
-    if (dateRange.startDate || dateRange.endDate) {
-      filteredNotes = filteredNotes.filter((note) => {
-        const noteDate = new Date(note.createdAt);
-        const startOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const endOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-
-        if (dateRange.startDate && dateRange.endDate) {
-          return (
-            noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate)
-          );
-        } else if (dateRange.startDate) {
-          return noteDate >= startOfDay(dateRange.startDate);
-        } else if (dateRange.endDate) {
-          return noteDate <= endOfDay(dateRange.endDate);
-        }
-        return true;
-      });
-    }
-
-    // Sort notes with user priority (current user's notes first) and then by creation date (newest first)
-    filteredNotes.sort((a, b) => {
-      // First priority: logged-in user's notes come first
-      if (currentUser) {
-        const aIsCurrentUser = a.user.id === currentUser.id;
-        const bIsCurrentUser = b.user.id === currentUser.id;
-
-        if (aIsCurrentUser && !bIsCurrentUser) {
-          return -1; // a (current user's note) comes first
-        }
-        if (!aIsCurrentUser && bIsCurrentUser) {
-          return 1; // b (current user's note) comes first
-        }
-      }
-
-      // Third priority: newest first
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return filteredNotes;
-  };
 
   // Get unique authors for dropdown
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
