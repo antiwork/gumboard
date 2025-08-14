@@ -184,7 +184,7 @@ test.describe("Archive Functionality", () => {
 
     await authenticatedPage.goto("/boards/archive");
 
-    await expect(authenticatedPage.getByText("No notes yet")).toBeVisible();
+    await expect(authenticatedPage.locator('button:has-text("Add Note")')).toBeVisible();
   });
 
   test('should display board name as "Archive" in navigation', async ({ authenticatedPage }) => {
