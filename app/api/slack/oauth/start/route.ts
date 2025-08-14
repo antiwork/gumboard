@@ -1,0 +1,68 @@
+import { auth } from "@/auth";
+import { NextRequest, NextResponse } from "next/server";
+import { db } from "@/lib/db";
+import { env } from "@/lib/env";
+import { cookies } from "next/headers";
+import { getAppUrl } from "@/lib/utils";
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        isAdmin: true,
+        organizationId: true,
+      },
+    });
+
+    if (!user?.organizationId || !user.isAdmin) {
+      return NextResponse.json(
+        { error: "Only organization admins can connect Slack" },
+        { status: 403 }
+      );
+    }
+
+    if (!env.SLACK_CLIENT_ID) {
+      return NextResponse.json({ error: "Slack OAuth is not configured" }, { status: 500 });
+    }
+
+    const state = `${crypto.randomUUID()}-${user.id}`;
+
+    const cookieStore = await cookies();
+    cookieStore.set("slack_oauth_state", state, {
+      httpOnly: true,
+      secure: env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 600,
+      path: "/",
+      domain: env.NODE_ENV === "production" ? undefined : undefined,
+    });
+
+    const baseUrl = getAppUrl(request);
+    const redirectUri = `${baseUrl}/api/slack/oauth/callback`;
+
+    const slackAuthUrl = new URL("https://slack.com/oauth/v2/authorize");
+    slackAuthUrl.searchParams.set("client_id", env.SLACK_CLIENT_ID);
+    slackAuthUrl.searchParams.set(
+      "scope",
+      "chat:write,chat:write.public,channels:read,groups:read"
+    );
+    slackAuthUrl.searchParams.set("redirect_uri", redirectUri);
+    slackAuthUrl.searchParams.set("state", state);
+
+    console.log(`[Slack OAuth] Starting OAuth flow with redirect_uri: ${redirectUri}`);
+    console.log(`[Slack OAuth] Full auth URL: ${slackAuthUrl.toString()}`);
+
+    return NextResponse.redirect(slackAuthUrl.toString());
+  } catch (error) {
+    console.error("Error starting Slack OAuth:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

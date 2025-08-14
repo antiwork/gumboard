@@ -10,7 +10,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, slackWebhookUrl } = await request.json();
+    const { name, slackChannelId } = await request.json();
 
     if (!name || typeof name !== "string") {
       return NextResponse.json({ error: "Organization name is required" }, { status: 400 });
@@ -41,12 +41,11 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update organization name and Slack webhook URL
     await db.organization.update({
       where: { id: user.organizationId },
       data: {
         name: name.trim(),
-        ...(slackWebhookUrl !== undefined && { slackWebhookUrl: slackWebhookUrl?.trim() || null }),
+        ...(slackChannelId !== undefined && { slackChannelId: slackChannelId?.trim() || null }),
       },
     });
 
@@ -78,7 +77,11 @@ export async function PUT(request: NextRequest) {
         ? {
             id: updatedUser!.organization.id,
             name: updatedUser!.organization.name,
-            slackWebhookUrl: updatedUser!.organization.slackWebhookUrl,
+            hasSlackConfigured: !!(
+              updatedUser!.organization.slackApiToken && updatedUser!.organization.slackTeamId
+            ),
+            slackTeamName: updatedUser!.organization.slackTeamName,
+            slackChannelId: updatedUser!.organization.slackChannelId,
             members: updatedUser!.organization.members,
           }
         : null,

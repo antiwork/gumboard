@@ -26,10 +26,6 @@ test.describe("Board Settings", () => {
     await expect(
       authenticatedPage.locator(`text=Configure settings for "${board.name}" board.`)
     ).toBeVisible();
-    await expect(
-      authenticatedPage.locator('label:has-text("Send updates to Slack")')
-    ).toBeVisible();
-
     const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeVisible();
     await expect(checkbox).toBeChecked();
@@ -103,8 +99,11 @@ test.describe("Board Settings", () => {
       slackNotificationSent = true;
       await route.fulfill({
         status: 200,
-        contentType: "text/plain",
-        body: "ok",
+        contentType: "application/json",
+        body: JSON.stringify({
+          ok: true,
+          ts: "1234.5678",
+        }),
       });
     });
 

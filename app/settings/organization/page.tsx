@@ -1,11 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Trash2,
   UserPlus,
@@ -15,7 +22,8 @@ import {
   Copy,
   Calendar,
   Users,
-  ExternalLink,
+  Hash,
+  Lock,
 } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
@@ -36,7 +44,9 @@ export type UserWithOrganization = User & {
   organization: {
     id: string;
     name: string;
-    slackWebhookUrl?: string | null;
+    hasSlackConfigured?: boolean;
+    slackTeamName?: string | null;
+    slackChannelId?: string | null;
     members: {
       id: string;
       name: string | null;
@@ -74,8 +84,18 @@ export default function OrganizationSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
-  const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
-  const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
+
+  const [slackChannelId, setSlackChannelId] = useState("");
+  const [originalSlackChannelId, setOriginalSlackChannelId] = useState("");
+  const [slackChannels, setSlackChannels] = useState<
+    Array<{
+      id: string;
+      name: string;
+      type: "public" | "private";
+      isMember: boolean;
+    }>
+  >([]);
+  const [loadingChannels, setLoadingChannels] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -103,6 +123,7 @@ export default function OrganizationSettingsPage() {
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -116,11 +137,11 @@ export default function OrganizationSettingsPage() {
         const userData = await response.json();
         setUser(userData);
         const orgNameValue = userData.organization?.name || "";
-        const slackWebhookValue = userData.organization?.slackWebhookUrl || "";
+        const slackChannelIdValue = userData.organization?.slackChannelId || "";
         setOrgName(orgNameValue);
         setOriginalOrgName(orgNameValue);
-        setSlackWebhookUrl(slackWebhookValue);
-        setOriginalSlackWebhookUrl(slackWebhookValue);
+        setSlackChannelId(slackChannelIdValue);
+        setOriginalSlackChannelId(slackChannelIdValue);
       }
     } catch (error) {
       console.error("Error fetching user data:", error);
@@ -134,6 +155,41 @@ export default function OrganizationSettingsPage() {
     fetchInvites();
     fetchSelfServeInvites();
   }, [fetchUserData]);
+
+  useEffect(() => {
+    if (user?.organization?.hasSlackConfigured && user.isAdmin) {
+      fetchSlackChannels();
+    }
+  }, [user?.organization?.hasSlackConfigured, user?.isAdmin]);
+
+  useEffect(() => {
+    const slackStatus = searchParams?.get("slack");
+    const message = searchParams?.get("message");
+    if (!slackStatus) return;
+
+    if (slackStatus === "connected") {
+      setErrorDialog({
+        open: true,
+        title: "Slack Connected",
+        description: "Your Slack workspace is now connected successfully.",
+        variant: "success",
+      });
+      fetchUserData();
+      setTimeout(() => fetchSlackChannels(), 1000);
+    } else if (slackStatus === "error") {
+      setErrorDialog({
+        open: true,
+        title: "Slack Connection Failed",
+        description: message || "Failed to connect to Slack. Please try again.",
+        variant: "error",
+      });
+    }
+
+    const url = new URL(window.location.href);
+    url.searchParams.delete("slack");
+    url.searchParams.delete("message");
+    window.history.replaceState({}, "", url.toString());
+  }, [searchParams, fetchUserData]);
 
   const fetchInvites = async () => {
     try {
@@ -159,6 +215,25 @@ export default function OrganizationSettingsPage() {
     }
   };
 
+  const fetchSlackChannels = async () => {
+    if (!user?.organization?.hasSlackConfigured || !user.isAdmin) return;
+
+    setLoadingChannels(true);
+    try {
+      const response = await fetch("/api/slack/channels");
+      if (response.ok) {
+        const data = await response.json();
+        setSlackChannels(data.channels || []);
+      } else {
+        console.error("Failed to fetch Slack channels");
+      }
+    } catch (error) {
+      console.error("Error fetching Slack channels:", error);
+    } finally {
+      setLoadingChannels(false);
+    }
+  };
+
   const handleSaveOrganization = async () => {
     setSaving(true);
     try {
@@ -169,7 +244,7 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           name: orgName,
-          slackWebhookUrl: slackWebhookUrl,
+          slackChannelId: slackChannelId,
         }),
       });
 
@@ -178,7 +253,7 @@ export default function OrganizationSettingsPage() {
         setUser(updatedUser);
         // Update the original values to reflect the saved state
         setOriginalOrgName(orgName);
-        setOriginalSlackWebhookUrl(slackWebhookUrl);
+        setOriginalSlackChannelId(slackChannelId);
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -480,7 +555,11 @@ export default function OrganizationSettingsPage() {
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
               onClick={handleSaveOrganization}
-              disabled={saving || orgName === originalOrgName || !user?.isAdmin}
+              disabled={
+                saving ||
+                (orgName === originalOrgName && slackChannelId === originalSlackChannelId) ||
+                !user?.isAdmin
+              }
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
@@ -498,48 +577,202 @@ export default function OrganizationSettingsPage() {
               Slack Integration
             </h3>
             <p className="text-zinc-600 dark:text-zinc-400">
-              Configure Slack notifications for notes and todos.
+              Connect your Slack workspace to receive notifications for notes and todos.
             </p>
           </div>
 
-          <div>
-            <Label htmlFor="slackWebhookUrl" className="text-zinc-800 dark:text-zinc-200">
-              Slack Webhook URL
-            </Label>
-            <Input
-              id="slackWebhookUrl"
-              type="url"
-              value={slackWebhookUrl}
-              onChange={(e) => setSlackWebhookUrl(e.target.value)}
-              placeholder="https://hooks.slack.com/services/..."
-              className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              disabled={!user?.isAdmin}
-            />
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              Create a webhook URL in your Slack workspace to receive notifications when notes and
-              todos are created or completed.{" "}
-              <a
-                href="https://api.slack.com/apps"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-              >
-                Create Slack App
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </a>
-            </p>
-          </div>
+          {user?.organization?.hasSlackConfigured ? (
+            <div className="space-y-4 p-4 bg-green-50 dark:bg-green-950/20 rounded-lg border border-green-200 dark:border-green-800">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-1">
+                    Connected to {user.organization.slackTeamName || "Slack"}
+                  </h4>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                    Your organization is connected to Slack and can send notifications.
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  {user?.isAdmin && (
+                    <>
+                      <Button
+                        onClick={() => window.open("/api/slack/oauth/start", "_self")}
+                        variant="outline"
+                        size="sm"
+                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-blue-900"
+                      >
+                        Re-connect
+                      </Button>
+                      <Button
+                        onClick={async () => {
+                          try {
+                            const response = await fetch("/api/slack/disconnect", {
+                              method: "POST",
+                            });
+                            if (response.ok) {
+                              fetchUserData();
+                            } else {
+                              setErrorDialog({
+                                open: true,
+                                title: "Failed to Disconnect Slack",
+                                description: "Failed to disconnect Slack integration",
+                              });
+                            }
+                          } catch (error) {
+                            console.error("Error disconnecting Slack:", error);
+                            setErrorDialog({
+                              open: true,
+                              title: "Failed to Disconnect Slack",
+                              description: "Failed to disconnect Slack integration",
+                            });
+                          }
+                        }}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                      >
+                        Disconnect
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 p-4 bg-blue-50 dark:bg-blue-950/20 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div>
+                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">Connect Slack</h4>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                  Connect your Slack workspace to automatically send notifications when notes and
+                  todos are created or updated.
+                </p>
+              </div>
 
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <Button
-              onClick={handleSaveOrganization}
-              disabled={saving || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
-            >
-              {saving ? "Saving..." : "Save changes"}
-            </Button>
-          </div>
+              {user?.isAdmin ? (
+                <Button
+                  onClick={() => window.open("/api/slack/oauth/start", "_self")}
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
+                >
+                  Connect Slack
+                </Button>
+              ) : (
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Only organization admins can connect Slack integration.
+                </p>
+              )}
+            </div>
+          )}
+
+          {user?.organization?.hasSlackConfigured && (
+            <div className="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700">
+              <div>
+                <h4 className="font-medium text-zinc-900 dark:text-zinc-100 mb-2">
+                  Channel Configuration
+                </h4>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-4">
+                  Choose which Slack channel notifications will be sent to.
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="slackChannel" className="text-zinc-800 dark:text-zinc-200">
+                  Slack Channel
+                </Label>
+                <div className="mt-1">
+                  {loadingChannels ? (
+                    <div className="flex items-center space-x-2 p-3 border rounded-md bg-white dark:bg-zinc-800">
+                      <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                      <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                        Loading channels...
+                      </span>
+                    </div>
+                  ) : slackChannels.length > 0 ? (
+                    <Select
+                      value={slackChannelId}
+                      onValueChange={setSlackChannelId}
+                      disabled={!user?.isAdmin}
+                    >
+                      <SelectTrigger className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100">
+                        <SelectValue placeholder="Select a channel">
+                          {slackChannels.find((ch) => ch.id === slackChannelId) && (
+                            <div className="flex items-center space-x-2">
+                              {slackChannels.find((ch) => ch.id === slackChannelId)?.type ===
+                              "private" ? (
+                                <Lock className="w-4 h-4 text-zinc-500" />
+                              ) : (
+                                <Hash className="w-4 h-4 text-zinc-500" />
+                              )}
+                              <span className="text-zinc-900 dark:text-zinc-100">
+                                #{slackChannels.find((ch) => ch.id === slackChannelId)?.name}
+                              </span>
+                            </div>
+                          )}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {slackChannels.map((channel) => (
+                          <SelectItem
+                            key={channel.id}
+                            value={channel.id}
+                            className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-b border-zinc-100 dark:border-zinc-700 focus:bg-blue-50 dark:focus:bg-blue-900/40"
+                          >
+                            <div className="flex items-center space-x-2">
+                              {channel.type === "private" ? (
+                                <Lock className="w-4 h-4 text-zinc-500" />
+                              ) : (
+                                <Hash className="w-4 h-4 text-zinc-500" />
+                              )}
+                              <span className="text-zinc-900 dark:text-zinc-100">
+                                #{channel.name}
+                              </span>
+                              {!channel.isMember && (
+                                <span className="text-xs text-zinc-500">(not a member)</span>
+                              )}
+                            </div>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="p-3 border rounded-md bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800">
+                      <p className="text-sm text-yellow-800 dark:text-yellow-200 mb-2">
+                        No channels available. This could be because:
+                      </p>
+                      <ul className="text-xs text-yellow-700 dark:text-yellow-300 list-disc list-inside space-y-1">
+                        <li>The bot needs to be invited to channels</li>
+                        <li>You may need additional permissions</li>
+                        <li>Try re-connecting Slack</li>
+                      </ul>
+                      <Button
+                        onClick={fetchSlackChannels}
+                        variant="outline"
+                        size="sm"
+                        className="mt-2 text-yellow-800 border-yellow-300 hover:bg-yellow-100 dark:text-yellow-200 dark:border-yellow-600 dark:hover:bg-yellow-800"
+                      >
+                        Refresh Channels
+                      </Button>
+                    </div>
+                  )}
+                </div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+                  Select the channel where Gumboard notifications will be posted.
+                </p>
+              </div>
+
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <Button
+                  onClick={handleSaveOrganization}
+                  disabled={saving || slackChannelId === originalSlackChannelId || !user?.isAdmin}
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+                  title={
+                    !user?.isAdmin ? "Only admins can update organization settings" : undefined
+                  }
+                >
+                  {saving ? "Saving..." : "Save Channel"}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       </Card>
 

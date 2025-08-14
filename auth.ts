@@ -28,17 +28,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     verifyRequest: "/auth/verify-request",
     error: "/auth/error",
   },
+  trustHost: true,
   callbacks: {
     async signIn() {
       return true;
     },
     async redirect({ url, baseUrl }) {
+      // Handle ngrok URLs properly
+      const appUrl = env.NEXT_PUBLIC_APP_URL || baseUrl;
+
       if (url.includes("/invite/accept")) {
-        return url.startsWith("/") ? `${baseUrl}${url}` : url;
+        return url.startsWith("/") ? `${appUrl}${url}` : url;
       }
-      if (url.startsWith("/")) return `${baseUrl}/dashboard`;
-      else if (new URL(url).origin === baseUrl) return url;
-      return `${baseUrl}/dashboard`;
+      if (url.startsWith("/")) return `${appUrl}/dashboard`;
+      else if (new URL(url).origin === baseUrl || new URL(url).origin === appUrl) return url;
+      return `${appUrl}/dashboard`;
     },
   },
 });
