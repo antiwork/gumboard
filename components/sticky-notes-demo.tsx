@@ -83,7 +83,7 @@ const initialNotes: Note[] = [
 
 const noteColors = ["bg-yellow-200/70", "bg-teal-200/70", "bg-orange-200/70"];
 const sampleNames = ["Alex", "Sarah", "Mike", "Emma", "David", "Lisa", "John", "Ana"];
-const authors = sampleNames.map(name => ({ name, initial: name[0] }));
+const authors = sampleNames.map((name) => ({ name, initial: name[0] }));
 
 const containerVariants = {
   hidden: { opacity: 0 },

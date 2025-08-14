@@ -99,10 +99,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     return headerHeight + paddingHeight + totalChecklistHeight + 40;
   };
 
-
-
-
-
   const calculateGridLayout = () => {
     if (typeof window === "undefined") return [];
 

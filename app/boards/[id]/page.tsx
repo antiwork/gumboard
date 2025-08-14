@@ -434,10 +434,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-
-
-
-
   // Get unique authors for dropdown
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
