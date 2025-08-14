@@ -69,7 +69,9 @@ test.describe("Home Page", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Finance update by Friday")}`)
     ).toBeVisible();
+    
     let initialNotes = await authenticatedPage.getByTestId("new-item").count();
+    const initialCheckedCount = await authenticatedPage.getByRole("checkbox", { checked: true }).count();
 
     // Test 1: Add a new note
     const createNoteResponse = authenticatedPage.waitForResponse(
@@ -92,9 +94,6 @@ test.describe("Home Page", () => {
     expect(notesAfterAdd).toBe(3); // 2 original + 1 new
 
     // Test 2: Toggle checklist item (check/uncheck)
-    const initialCheckedCount = await authenticatedPage
-      .getByRole("checkbox", { checked: true })
-      .count();
     const uncheckedCheckbox = authenticatedPage
       .getByTestId(testContext.prefix("102"))
       .getByRole("checkbox");
@@ -102,6 +101,7 @@ test.describe("Home Page", () => {
     const toggleResponse1 = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
+        resp.url().includes(`/items/`) &&
         resp.request().method() === "PUT" &&
         resp.ok(),
       { timeout: 15000 }
@@ -122,6 +122,7 @@ test.describe("Home Page", () => {
     const toggleResponse2 = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
+        resp.url().includes(`/items/`) &&
         resp.request().method() === "PUT" &&
         resp.ok(),
       { timeout: 15000 }
@@ -166,12 +167,24 @@ test.describe("Home Page", () => {
     // Test 4: Edit existing checklist item content
     const originalFinanceText = testContext.prefix("Finance update by Friday");
     const updatedFinanceText = testContext.prefix("Updated Finance deadline");
-    await authenticatedPage.getByText(originalFinanceText).click();
-    const editInput = authenticatedPage.locator("textarea").first();
+    
+    // Click specifically on the item with ID "101" to edit it
+    const itemToEdit = authenticatedPage.getByTestId(testContext.prefix("101"));
+    await expect(itemToEdit).toBeVisible();
+    
+    // Click on the textarea within the specific item
+    const itemTextarea = itemToEdit.locator("textarea");
+    await expect(itemTextarea).toBeVisible();
+    await itemTextarea.click();
+    
+    // Use the specific item's textarea for editing
+    const editInput = itemTextarea;
     await expect(editInput).toBeVisible();
+    
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
+        resp.url().includes(`/items/`) &&
         resp.request().method() === "PUT" &&
         resp.ok(),
       { timeout: 15000 }
@@ -192,7 +205,8 @@ test.describe("Home Page", () => {
     const deleteItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
+        resp.url().includes(`/items/`) &&
+        resp.request().method() === "DELETE" &&
         resp.ok(),
       { timeout: 15000 }
     );
@@ -247,7 +261,8 @@ test.describe("Home Page", () => {
     const addSplitItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
+        resp.url().includes(`/items`) &&
+        resp.request().method() === "POST" &&
         resp.ok(),
       { timeout: 15000 }
     );
@@ -307,6 +322,7 @@ test.describe("Home Page", () => {
     const reorderResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
+        resp.url().includes(`/items/reorder`) &&
         resp.request().method() === "PUT" &&
         resp.ok(),
       { timeout: 15000 }
