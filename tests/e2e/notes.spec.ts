@@ -1,35 +1,6 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Note Management", () => {
-  test("should display empty state when no notes exist", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    const boardName = testContext.getBoardName("Test Board");
-    const board = await testPrisma.board.create({
-      data: {
-        name: boardName,
-        description: testContext.prefix("Test board description"),
-        createdBy: testContext.userId,
-        organizationId: testContext.organizationId,
-      },
-    });
-
-    const noteCount = await testPrisma.note.count({
-      where: {
-        boardId: board.id,
-        archivedAt: null,
-      },
-    });
-    expect(noteCount).toBe(0);
-
-    await authenticatedPage.goto(`/boards/${board.id}`);
-
-    await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
-    await expect(authenticatedPage.locator('button:has-text("Add Your First Note")')).toBeVisible();
-  });
-
   test("should create a note and add checklist items", async ({
     authenticatedPage,
     testContext,
@@ -53,7 +24,7 @@ test.describe("Note Management", () => {
         resp.request().method() === "POST" &&
         resp.status() === 201
     );
-    await authenticatedPage.click('button:has-text("Add Your First Note")');
+    await authenticatedPage.click('button:has-text("Add Note")');
     await createNoteResponse;
 
     await authenticatedPage.getByRole("button", { name: "Add task" }).first().click();
@@ -526,7 +497,7 @@ test.describe("Note Management", () => {
           resp.request().method() === "POST" &&
           resp.status() === 201
       );
-      await authenticatedPage.click('button:has-text("Add Your First Note")');
+      await authenticatedPage.click('button:has-text("Add Note")');
       await createNoteResponse;
 
       await authenticatedPage.getByRole("button", { name: "Add task" }).first().click();
@@ -584,7 +555,7 @@ test.describe("Note Management", () => {
           resp.request().method() === "POST" &&
           resp.status() === 201
       );
-      await authenticatedPage.click('button:has-text("Add Your First Note")');
+      await authenticatedPage.click('button:has-text("Add Note")');
       await createNoteResponse;
 
       await authenticatedPage.getByRole("button", { name: "Add task" }).first().click();

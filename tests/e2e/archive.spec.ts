@@ -185,7 +185,7 @@ test.describe("Archive Functionality", () => {
 
     await authenticatedPage.goto("/boards/archive");
 
-    await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
+    await expect(authenticatedPage.getByRole("checkbox")).toHaveCount(0);
   });
 
   test('should display board name as "Archive" in navigation', async ({ authenticatedPage }) => {
