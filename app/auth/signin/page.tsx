@@ -108,7 +108,7 @@ function SignInContent() {
             <div className="space-y-2">
               <Button
                 variant="outline"
-                className="w-full justify-between bg-white border-gray-200 text-gray-900 hover:bg-gray-50 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-colors active:scale-95"
+                className="w-full justify-between bg-white border-gray-200 text-gray-900 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-colors active:scale-95"
                 onClick={() => window.open("https://mail.google.com", "_blank")}
               >
                 Open Gmail
@@ -116,7 +116,7 @@ function SignInContent() {
               </Button>
               <Button
                 variant="outline"
-                className="w-full justify-between bg-white border-gray-200 text-gray-900 hover:bg-gray-50 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-colors active:scale-95"
+                className="w-full justify-between bg-white border-gray-200 text-gray-900 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-colors active:scale-95"
                 onClick={() => window.open("https://outlook.live.com", "_blank")}
               >
                 Open Outlook
@@ -127,7 +127,7 @@ function SignInContent() {
           <CardFooter>
             <Button
               variant="outline"
-              className="w-full bg-white border-gray-200 text-gray-900 hover:bg-gray-50 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              className="w-full bg-white border-gray-200 text-gray-900 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
               onClick={handleResendEmail}
               disabled={isResending}
               aria-busy={isResending}
@@ -229,7 +229,7 @@ function SignInContent() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 hover:bg-gray-50 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
+                className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
                 onClick={() => signIn("google", { callbackUrl: "/" })}
               >
                 <svg
@@ -262,7 +262,7 @@ function SignInContent() {
               <Button
                 type="button"
                 variant="outline"
-                className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 hover:bg-gray-50 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
+                className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
                 onClick={() => signIn("github", { callbackUrl: "/" })}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
