@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { cookies } from "next/headers";
+import { getAppUrl } from "@/lib/utils";
 
 export async function GET(request: NextRequest) {
   try {
@@ -44,7 +45,7 @@ export async function GET(request: NextRequest) {
       domain: env.NODE_ENV === "production" ? undefined : undefined,
     });
 
-    const baseUrl = env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    const baseUrl = getAppUrl(request);
     const redirectUri = `${baseUrl}/api/slack/oauth/callback`;
 
     const slackAuthUrl = new URL("https://slack.com/oauth/v2/authorize");

@@ -152,13 +152,20 @@ In your `.env.local` file, add:
 ```env
 SLACK_CLIENT_ID=your_slack_client_id
 SLACK_CLIENT_SECRET=your_slack_client_secret
-NEXT_PUBLIC_APP_URL=http://localhost:3000
+# NEXT_PUBLIC_APP_URL=http://localhost:3000  # Optional - see below
 ```
 
 **Where to find these values:**
 - **Client ID**: Found on the **Basic Information** page of your Slack app
 - **Client Secret**: Found on the **Basic Information** page of your Slack app
-- **App URL**: Your application's base URL (use your ngrok/production URL when deploying)
+
+**About NEXT_PUBLIC_APP_URL (Optional):**
+- This variable is **optional** and only needed for custom deployments
+- **When not set:**
+  - Development: automatically uses `http://localhost:3000`  
+  - Production: automatically uses `https://gumboard.com`
+- **When to set it:** Only if you're deploying to a custom domain or using a different setup
+- **For ngrok/custom development:** Set it to your ngrok URL or custom local URL
 
 ### 5. Install the App to Your Workspace
 
@@ -180,7 +187,11 @@ npm install -g ngrok
 ngrok http 3000
 ```
 
-Then update your Slack app's redirect URL and `NEXT_PUBLIC_APP_URL` to use the ngrok URL.
+Then update your Slack app's redirect URL and optionally set `NEXT_PUBLIC_APP_URL` to use the ngrok URL:
+
+```env
+NEXT_PUBLIC_APP_URL=https://your-ngrok-url.ngrok.io
+```
 
 ### 7. Invite Bot to Channels
 

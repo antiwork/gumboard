@@ -19,3 +19,19 @@ export function getBaseUrl(requestOrHeaders?: Request | Headers): string {
 
   return process.env.AUTH_URL || "http://localhost:3000";
 }
+
+export function getAppUrl(request?: Request): string {
+  if (process.env.NEXT_PUBLIC_APP_URL) {
+    return process.env.NEXT_PUBLIC_APP_URL;
+  }
+
+  if (request) {
+    return getBaseUrl(request);
+  }
+
+  if (process.env.NODE_ENV === "production") {
+    return "https://gumboard.com";
+  }
+
+  return "http://localhost:3000";
+}

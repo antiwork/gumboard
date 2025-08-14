@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { cookies } from "next/headers";
+import { getAppUrl } from "@/lib/utils";
 
 interface SlackOAuthResponse {
   ok: boolean;
@@ -20,7 +21,7 @@ interface SlackOAuthResponse {
 
 export async function GET(request: NextRequest) {
   try {
-    const baseUrl = env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    const baseUrl = getAppUrl(request);
 
     const { searchParams } = request.nextUrl;
     const code = searchParams.get("code");
@@ -130,7 +131,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL("/settings/organization?slack=connected", baseUrl));
   } catch (error) {
     console.error("Error in Slack OAuth callback:", error);
-    const baseUrl = env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
+    const baseUrl = getAppUrl(request);
     return NextResponse.redirect(
       new URL("/settings/organization?slack=error&message=internal_error", baseUrl)
     );
