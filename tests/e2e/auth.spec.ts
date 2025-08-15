@@ -369,4 +369,27 @@ test.describe("Authentication Flow", () => {
 
     expect(magicLinkAuthData!.email).toBe(githubAuthData!.email);
   });
+
+  test("should redirect to dashboard if already a member of the organization (join link)", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const invite = await testPrisma.organizationSelfServeInvite.create({
+      data: {
+        name: `Test Invite ${testContext.testId}`,
+        organizationId: testContext.organizationId,
+        createdBy: testContext.userId,
+        isActive: true,
+        usageLimit: 5,
+        usageCount: 0,
+        token: `token_${testContext.testId}`,
+      },
+    });
+
+    await authenticatedPage.goto(`/join/${invite.token}`);
+
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
+  });
 });
