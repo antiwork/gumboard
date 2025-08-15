@@ -35,10 +35,20 @@ test.describe("Note Management", () => {
     const initialTextarea = authenticatedPage.locator("textarea").first();
     await expect(initialTextarea).toBeVisible();
 
+    const addItemResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+
     await initialTextarea.fill(testItemContent);
 
     // Use Tab key to move focus away and trigger blur
     await initialTextarea.press("Tab");
+
+    // Wait for the API response to complete
+    await addItemResponse;
 
     // Wait for the content to appear in the UI (this means at least one submission worked)
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
