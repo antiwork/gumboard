@@ -1385,8 +1385,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               Delete Board
             </Button>
             <div className="flex space-x-2">
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>
+              <AlertDialogCancel>Cancel11</AlertDialogCancel>
+              <AlertDialogAction
+                className="bg-blue-600 hover:bg-blue-700 text-zinc-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
+                onClick={() => handleUpdateBoardSettings(boardSettings)}
+              >
                 Save settings
               </AlertDialogAction>
             </div>
