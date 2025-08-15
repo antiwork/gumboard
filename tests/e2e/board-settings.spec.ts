@@ -203,4 +203,50 @@ test.describe("Board Settings", () => {
 
     await expect(checkbox).toBeChecked();
   });
+
+  test("should update board color in settings", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Color Test Board"),
+        description: testContext.prefix("A board for color testing"),
+        sendSlackUpdates: true,
+        color: "",
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
+    await authenticatedPage.click('button:has-text("Board settings")');
+
+    await expect(authenticatedPage.locator("text=Board settings")).toBeVisible();
+    await expect(authenticatedPage.locator('label:has-text("Board Color")')).toBeVisible();
+
+    await authenticatedPage.click('[data-testid="color-picker-trigger"]');
+    await authenticatedPage.click('[data-testid="color-option-0"]'); // First color
+
+    const saveSettingsResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+
+    await authenticatedPage.click('button:has-text("Save settings")');
+    await saveSettingsResponse;
+
+    const updatedBoard = await testPrisma.board.findUnique({
+      where: { id: board.id },
+    });
+    expect(updatedBoard?.color).toBeTruthy();
+    expect(updatedBoard?.color).toBe("#3b82f6"); // First color in predefined list
+
+    await expect(authenticatedPage.locator("text=Board settings")).not.toBeVisible();
+  });
 });
