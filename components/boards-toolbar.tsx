@@ -107,14 +107,14 @@ export function BoardsToolbar({
       {/* Tag Filter */}
       {availableTags.length > 0 && (
         <div className="flex items-center gap-2">
-          <Label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+          <Label className="text-sm font-medium text-muted-foreground whitespace-nowrap dark:text-white">
             Tags
           </Label>
           <Popover open={isTagsOpen} onOpenChange={setIsTagsOpen}>
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="justify-between min-w-[140px]"
+                className="justify-between min-w-[140px] bg-blue-600 text-white hover:bg-blue-700 dark:bg-blue-500 dark:text-white dark:hover:bg-blue-600"
                 onClick={() => setIsTagsOpen(!isTagsOpen)}
               >
                 <span className="truncate">
@@ -127,7 +127,7 @@ export function BoardsToolbar({
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-64 p-3 bg-background border-input dark:bg-zinc-900 dark:border-zinc-700 dark:text-white opacity-100"
+              className="w-64 p-3 bg-white border-gray-300 text-black shadow-md dark:bg-zinc-900 dark:border-zinc-700 dark:text-white"
               align="start"
             >
               <div className="space-y-2">
@@ -165,13 +165,13 @@ export function BoardsToolbar({
           {selectedTags.map((tag) => (
             <span
               key={tag}
-              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 dark:bg-primary/20 dark:text-primary-foreground"
+              className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-primary/10 text-primary border border-primary/20 dark:bg-primary/20 dark:text-white dark:border-primary/40"
             >
               {tag}
               <button
                 type="button"
                 onClick={() => removeTag(tag)}
-                className="inline-flex items-center justify-center w-3 h-3 text-primary hover:text-primary/80 dark:text-primary-foreground dark:hover:text-primary-foreground/80"
+                className="inline-flex items-center justify-center w-3 h-3 text-primary hover:text-primary/80 dark:text-white dark:hover:text-primary-foreground/80"
               >
                 <X className="w-2 h-2" />
               </button>
