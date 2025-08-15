@@ -354,7 +354,10 @@ export function Note({
                 ? note.user.name.charAt(0).toUpperCase()
                 : note.user.email.charAt(0).toUpperCase()}
             </AvatarFallback>
-            <AvatarImage src={note.user.image ? note.user.image : undefined} alt={note.user.name || ""} />
+            <AvatarImage
+              src={note.user.image ? note.user.image : undefined}
+              alt={note.user.name || ""}
+            />
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-gray-700 truncate max-w-20">
