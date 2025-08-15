@@ -2,7 +2,6 @@ import { auth } from "@/auth";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import { db } from "@/lib/db";
 
 async function joinOrganization(token: string) {
