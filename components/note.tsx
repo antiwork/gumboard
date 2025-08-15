@@ -12,7 +12,7 @@ import {
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
-import { Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Trash2, Archive, ArchiveRestore, Eye, EyeOff } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -88,8 +88,21 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`gumboard-hide-completed-${note.id}`);
+      if (saved !== null) setHideCompleted(saved === "1");
+    } catch {}
+  }, [note.id]);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(`gumboard-hide-completed-${note.id}`, hideCompleted ? "1" : "0");
+    } catch {}
+  }, [hideCompleted, note.id]);
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
@@ -378,6 +391,25 @@ export function Note({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    aria-label={hideCompleted ? "Show completed" : "Hide completed"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setHideCompleted((v) => !v);
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded"
+                    variant="ghost"
+                    size="icon"
+                  >
+                    {hideCompleted ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{hideCompleted ? "Show completed" : "Hide completed"}</p>
+                </TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
                     aria-label={`Delete Note ${note.id}`}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -449,13 +481,15 @@ export function Note({
         <div className="overflow-y-auto space-y-1">
           {/* Checklist Items */}
           <DraggableRoot
-            items={note.checklistItems ?? []}
+            items={(note.checklistItems ?? []).filter((i) => (hideCompleted ? !i.checked : true))}
             onItemsChange={(newItems) => {
               handleReorderChecklistItems(note.id, newItems);
             }}
           >
             <DraggableContainer className="space-y-1">
-              {note.checklistItems?.map((item) => (
+              {(note.checklistItems ?? [])
+                .filter((i) => (hideCompleted ? !i.checked : true))
+                .map((item) => (
                 <DraggableItem key={item.id} id={item.id}>
                   <ChecklistItemComponent
                     item={item}
