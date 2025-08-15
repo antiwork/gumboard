@@ -39,16 +39,16 @@ test.describe("Search Functionality", () => {
     }
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-    
+
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test item 1")}`)
     ).toBeVisible();
 
     const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
     await searchInput.fill("Test item 5");
-    
+
     await authenticatedPage.waitForTimeout(500);
-    
+
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test item 5")}`)
     ).toBeVisible();
@@ -60,7 +60,7 @@ test.describe("Search Functionality", () => {
     await searchInput.clear();
 
     await authenticatedPage.waitForTimeout(2000);
-    await expect(searchInput).toHaveValue('');
+    await expect(searchInput).toHaveValue("");
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test item 1")}`)
@@ -70,7 +70,7 @@ test.describe("Search Functionality", () => {
     ).toBeVisible({ timeout: 10000 });
 
     const finalScrollY = await authenticatedPage.evaluate(() => window.scrollY);
-    
+
     expect(finalScrollY).toBeLessThanOrEqual(100);
   });
 
@@ -141,7 +141,7 @@ test.describe("Search Functionality", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-    
+
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Buy groceries")}`)
     ).toBeVisible();
@@ -153,13 +153,13 @@ test.describe("Search Functionality", () => {
     ).toBeVisible();
     const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
     await searchInput.fill("meeting");
-    
+
     await authenticatedPage.waitForTimeout(500);
-    
+
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Meeting notes")}`)
     ).toBeVisible();
-    
+
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Buy groceries")}`)
     ).not.toBeVisible();
@@ -181,11 +181,7 @@ test.describe("Search Functionality", () => {
     ).toBeVisible();
   });
 
-  test("should search by author name", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
+  test("should search by author name", async ({ authenticatedPage, testContext, testPrisma }) => {
     const boardName = testContext.getBoardName("Author Search Board");
     const board = await testPrisma.board.create({
       data: {
@@ -214,13 +210,13 @@ test.describe("Search Functionality", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-    
+
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("User task")}`)
     ).toBeVisible();
 
     const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
-    
+
     await searchInput.fill("test");
     await authenticatedPage.waitForTimeout(500);
     await expect(

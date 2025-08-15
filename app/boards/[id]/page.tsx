@@ -434,7 +434,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }, [searchTerm]);
 
   const prevDebouncedSearchTerm = useRef<string>("");
-  
+
   useEffect(() => {
     if (!debouncedSearchTerm && prevDebouncedSearchTerm.current) {
       setTimeout(() => {
