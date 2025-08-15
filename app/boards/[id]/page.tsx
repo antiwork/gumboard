@@ -319,7 +319,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
 
-  // Smart layout: Add notes in rows, then fill gaps
   useEffect(() => {
     if (!notesContainerRef.current || filteredNotes.length === 0) return;
 
