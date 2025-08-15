@@ -109,7 +109,8 @@ export default function Dashboard() {
       setErrorDialog({
         open: true,
         title: "Failed to load dashboard",
-        description: "Unable to fetch your boards and user data. Please refresh the page or try again later.",
+        description:
+          "Unable to fetch your boards and user data. Please refresh the page or try again later.",
       });
     } finally {
       setLoading(false);
