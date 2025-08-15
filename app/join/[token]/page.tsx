@@ -24,7 +24,7 @@ async function joinOrganization(token: string) {
   if (!session?.user?.id || !session?.user?.email) {
     throw new Error("Not authenticated");
   }
-  
+
   //validating the invitation here (validateInvite is a unified function that is used both frontend and server actions)
   const { invite, error } = await validateInvite(token);
   if (error || !invite) {
