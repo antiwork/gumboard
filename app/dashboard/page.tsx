@@ -10,9 +10,9 @@ import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Plus, Grid3x3, Archive } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
 import {
   AlertDialog,
@@ -41,12 +41,23 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import { BoardsToolbar, type SortOption } from "@/components/boards-toolbar";
+import {
+  getAllTags,
+  filterBoardsByTags,
+  sortBoards,
+  parseUrlParams,
+  updateUrl,
+  loadPreferences,
+  savePreferences,
+} from "@/lib/board-utils";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  tags: string[];
   isPublic: boolean;
   _count: { notes: number };
 };
@@ -54,6 +65,7 @@ export type DashboardBoard = Board & {
 const formSchema = z.object({
   name: z.string().min(1, "Board name is required"),
   description: z.string().optional(),
+  tags: z.string().optional(),
 });
 
 export default function Dashboard() {
@@ -62,6 +74,9 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
 
+  const [sortBy, setSortBy] = useState<SortOption>("updatedAt|desc");
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
     title: string;
@@ -69,14 +84,39 @@ export default function Dashboard() {
   }>({ open: false, title: "", description: "" });
 
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
       description: "",
+      tags: "",
     },
   });
+
+  useEffect(() => {
+    const urlParams = parseUrlParams(searchParams);
+    if (urlParams.sort !== "updatedAt|desc" || urlParams.tags.length > 0) {
+      setSortBy(urlParams.sort);
+      setSelectedTags(urlParams.tags);
+    } else {
+      const preferences = loadPreferences();
+      setSortBy(preferences.sort);
+      setSelectedTags(preferences.tags);
+    }
+  }, [searchParams]);
+
+  const availableTags = useMemo(() => getAllTags(boards), [boards]);
+  const filteredBoards = useMemo(() => {
+    const filtered = filterBoardsByTags(boards, selectedTags);
+    return sortBoards(filtered, sortBy);
+  }, [boards, selectedTags, sortBy]);
+
+  useEffect(() => {
+    updateUrl(sortBy, selectedTags, true);
+    savePreferences(sortBy, selectedTags);
+  }, [sortBy, selectedTags]);
 
   const fetchUserAndBoards = useCallback(async () => {
     try {
@@ -99,7 +139,15 @@ export default function Dashboard() {
         }
       }
 
-      const boardsResponse = await fetch("/api/boards");
+      const params = new URLSearchParams();
+      if (sortBy !== "updatedAt|desc") {
+        const [sort, order] = sortBy.split("|");
+        params.set("sort", sort);
+        params.set("order", order);
+      }
+
+      const boardsUrl = `/api/boards${params.toString() ? `?${params.toString()}` : ""}`;
+      const boardsResponse = await fetch(boardsUrl);
       if (boardsResponse.ok) {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
@@ -115,14 +163,36 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, sortBy, selectedTags]);
+
+  // Handlers for toolbar
+  const handleSortChange = (newSort: SortOption) => {
+    setSortBy(newSort);
+  };
+
+  const handleTagsChange = (newTags: string[]) => {
+    setSelectedTags(newTags);
+  };
+
+  const handleClearFilters = () => {
+    setSortBy("updatedAt|desc");
+    setSelectedTags([]);
+  };
 
   useEffect(() => {
     fetchUserAndBoards();
   }, [fetchUserAndBoards]);
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
-    const { name, description } = values;
+    const { name, description, tags } = values;
+
+    const tagsArray = tags
+      ? tags
+          .split(",")
+          .map((tag) => tag.trim())
+          .filter(Boolean)
+      : [];
+
     try {
       const response = await fetch("/api/boards", {
         method: "POST",
@@ -132,6 +202,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           name,
           description,
+          tags: tagsArray,
         }),
       });
 
@@ -161,7 +232,7 @@ export default function Dashboard() {
   const handleOpenChange = (open: boolean) => {
     setIsAddBoardDialogOpen(open);
     if (!open) {
-      form.reset();
+      form.reset({ name: "", description: "", tags: "" });
     }
   };
 
@@ -245,6 +316,23 @@ export default function Dashboard() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="tags"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tags (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter tags separated by commas (e.g., work, personal, urgent)"
+                          className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 <DialogFooter>
                   <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
                     Create board
@@ -257,7 +345,7 @@ export default function Dashboard() {
 
         {boards.length > 0 && (
           <>
-            <div className="mb-8">
+            <div className="mb-6">
               <h3 className="text-lg font-medium text-foreground dark:text-zinc-100 mb-2">
                 Your Boards
               </h3>
@@ -265,67 +353,119 @@ export default function Dashboard() {
                 Manage your tasks and notes across different boards
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
-              <Link href="/boards/all-notes">
-                <Card className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
-                  <CardHeader>
-                    <div className="flex items-center space-x-2">
-                      <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
-                        All Notes
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-blue-700 dark:text-blue-300 truncate">
-                      View notes from all boards
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
 
-              {/* Archive Board */}
-              <Link href="/boards/archive">
-                <Card className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
-                  <CardHeader>
-                    <div className="flex items-center space-x-2">
-                      <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                      <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
-                        Archive
-                      </CardTitle>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-700 dark:text-gray-300 truncate">View archived notes</p>
-                  </CardContent>
-                </Card>
-              </Link>
+            <BoardsToolbar
+              sortBy={sortBy}
+              onSortChange={handleSortChange}
+              selectedTags={selectedTags}
+              availableTags={availableTags}
+              onTagsChange={handleTagsChange}
+              onClearFilters={handleClearFilters}
+              resultCount={filteredBoards.length}
+              totalCount={boards.length}
+            />
 
-              {boards.map((board) => (
-                <Link href={`/boards/${board.id}`} key={board.id}>
-                  <Card
-                    data-board-id={board.id}
-                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
-                  >
+            {filteredBoards.length === 0 && selectedTags.length > 0 && (
+              <div className="text-center py-12">
+                <div className="text-muted-foreground dark:text-zinc-400 mb-4">
+                  <Archive className="w-12 h-12 mx-auto" />
+                </div>
+                <h3 className="text-lg font-medium text-foreground dark:text-zinc-100 mb-2">
+                  No boards match these filters
+                </h3>
+                <p className="text-muted-foreground dark:text-zinc-400 mb-4">
+                  Try adjusting your filter criteria or clear filters to see all boards.
+                </p>
+                <Button onClick={handleClearFilters} variant="outline">
+                  Clear filters
+                </Button>
+              </div>
+            )}
+
+            {filteredBoards.length > 0 && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+                <Link href="/boards/all-notes">
+                  <Card className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
                     <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                        </span>
+                      <div className="flex items-center space-x-2">
+                        <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+                        <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
+                          All Notes
+                        </CardTitle>
                       </div>
                     </CardHeader>
-                    {board.description && (
-                      <CardContent>
-                        <p className="text-slate-600 dark:text-zinc-300 truncate">
-                          {board.description}
-                        </p>
-                      </CardContent>
-                    )}
+                    <CardContent>
+                      <p className="text-blue-700 dark:text-blue-300 truncate">
+                        View notes from all boards
+                      </p>
+                    </CardContent>
                   </Card>
                 </Link>
-              ))}
-            </div>
+
+                <Link href="/boards/archive">
+                  <Card className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
+                    <CardHeader>
+                      <div className="flex items-center space-x-2">
+                        <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                        <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
+                          Archive
+                        </CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-gray-700 dark:text-gray-300 truncate">
+                        View archived notes
+                      </p>
+                    </CardContent>
+                  </Card>
+                </Link>
+
+                {filteredBoards.map((board) => (
+                  <Link href={`/boards/${board.id}`} key={board.id}>
+                    <Card
+                      data-testid="board-card"
+                      data-board-id={board.id}
+                      className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
+                    >
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle data-slot="card-title" className="text-lg dark:text-zinc-100">
+                            {board.name}
+                          </CardTitle>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                          </span>
+                        </div>
+                        {board.tags && board.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {board.tags.slice(0, 3).map((tag) => (
+                              <span
+                                key={tag}
+                                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {board.tags.length > 3 && (
+                              <span className="text-xs text-muted-foreground">
+                                +{board.tags.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </CardHeader>
+                      {board.description && (
+                        <CardContent>
+                          <p className="text-slate-600 dark:text-zinc-300 truncate">
+                            {board.description}
+                          </p>
+                        </CardContent>
+                      )}
+                    </Card>
+                  </Link>
+                ))}
+              </div>
+            )}
           </>
         )}
         {boards.length === 0 && (
@@ -342,7 +482,7 @@ export default function Dashboard() {
             <Button
               onClick={() => {
                 setIsAddBoardDialogOpen(true);
-                form.reset({ name: "", description: "" });
+                form.reset({ name: "", description: "", tags: "" });
               }}
               className="dark:bg-blue-500 dark:hover:bg-blue-600"
             >

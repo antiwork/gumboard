@@ -86,6 +86,7 @@ model Board {
   id             String       @id @default(cuid())
   name           String
   description    String?
+  tags           String[]     @default([])
   isPublic       Boolean      @default(false)
   sendSlackUpdates Boolean    @default(true)
   organizationId String
