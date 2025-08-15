@@ -110,7 +110,7 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5"
+        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
         disabled={readonly}
       />
 
@@ -118,23 +118,26 @@ export function ChecklistItem({
         ref={textareaRef}
         value={editContent ?? item.content}
         onChange={(e) => onEditContentChange?.(e.target.value)}
+        disabled={readonly}
         className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 resize-none overflow-hidden outline-none",
+          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
           item.checked && "text-slate-500 dark:text-zinc-500 line-through"
         )}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        onFocus={() => {
+        onFocus={(e) => {
+          if (isEditing) {
+            const originalScrollIntoView = e.target.scrollIntoView;
+            e.target.scrollIntoView = () => {};
+            setTimeout(() => {
+              e.target.scrollIntoView = originalScrollIntoView;
+            }, 100);
+          }
+
           if (!isEditing && !readonly) {
             onStartEdit?.(item.id);
           }
         }}
-        onClick={() => {
-          if (!isEditing && !readonly) {
-            onStartEdit?.(item.id);
-          }
-        }}
-        autoFocus={isEditing}
         rows={1}
         style={{ height: "auto" }}
         onInput={(e) => {

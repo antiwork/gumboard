@@ -99,10 +99,7 @@ export function Note({
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
 
-      const sortedItems = [
-        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
-        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
-      ];
+      const sortedItems = updatedItems.sort((a, b) => a.order - b.order);
 
       const optimisticNote = {
         ...note,
@@ -341,6 +338,7 @@ export function Note({
         "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
         className
       )}
+      data-testid="note-card"
       style={{
         backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
         ...style,
@@ -354,10 +352,13 @@ export function Note({
                 ? note.user.name.charAt(0).toUpperCase()
                 : note.user.email.charAt(0).toUpperCase()}
             </AvatarFallback>
-            <AvatarImage src={note.user.image || ""} alt={note.user.name || ""} />
+            <AvatarImage
+              src={note.user.image ? note.user.image : undefined}
+              alt={note.user.name || ""}
+            />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 truncate max-w-20">
+            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 truncate max-w-20">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
@@ -451,12 +452,14 @@ export function Note({
           <DraggableRoot
             items={note.checklistItems ?? []}
             onItemsChange={(newItems) => {
-              handleReorderChecklistItems(note.id, newItems);
+              if (canEdit) {
+                handleReorderChecklistItems(note.id, newItems);
+              }
             }}
           >
             <DraggableContainer className="space-y-1">
               {note.checklistItems?.map((item) => (
-                <DraggableItem key={item.id} id={item.id}>
+                <DraggableItem key={item.id} id={item.id} disabled={!canEdit}>
                   <ChecklistItemComponent
                     item={item}
                     onToggle={handleToggleChecklistItem}

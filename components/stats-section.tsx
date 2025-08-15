@@ -12,6 +12,14 @@ interface TotalsData {
   totalChecklistItems: number;
 }
 
+const statsData = [
+  { key: "totalOrgs", label: "Organizations" },
+  { key: "totalUsers", label: "Users" },
+  { key: "totalBoards", label: "Boards" },
+  { key: "totalNotes", label: "Notes" },
+  { key: "totalChecklistItems", label: "Checklist Items" },
+] as const;
+
 export function StatsSection() {
   const [totals, setTotals] = useState<TotalsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -49,68 +57,23 @@ export function StatsSection() {
         </div>
 
         <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6">
-          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
-            <CardHeader className="pb-2 text-center">
-              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
-                Organizations
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totals.totalOrgs.toLocaleString()}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
-
-          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
-            <CardHeader className="pb-2 text-center">
-              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
-                Users
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totals.totalUsers.toLocaleString()}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
-
-          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
-            <CardHeader className="pb-2 text-center">
-              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
-                Boards
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totals.totalBoards.toLocaleString()}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
-
-          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
-            <CardHeader className="pb-2 text-center">
-              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
-                Notes
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totals.totalNotes.toLocaleString()}
-              </CardTitle>
-            </CardHeader>
-          </Card>
-
-          <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
-
-          <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
-            <CardHeader className="pb-2 text-center">
-              <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
-                Checklist Items
-              </CardDescription>
-              <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
-                {totals.totalChecklistItems.toLocaleString()}
-              </CardTitle>
-            </CardHeader>
-          </Card>
+          {statsData.map((stat, index) => (
+            <React.Fragment key={stat.key}>
+              <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
+                <CardHeader className="pb-2 text-center">
+                  <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
+                    {stat.label}
+                  </CardDescription>
+                  <CardTitle className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {totals[stat.key].toLocaleString()}
+                  </CardTitle>
+                </CardHeader>
+              </Card>
+              {index < statsData.length - 1 && (
+                <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
+              )}
+            </React.Fragment>
+          ))}
         </div>
       </div>
     </section>
