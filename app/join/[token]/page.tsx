@@ -17,32 +17,11 @@ interface ValidationResult {
   error?: { title: string; description: string };
 }
 
-// Reusable function to render an error card
-function ErrorCard({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-zinc-950">
-      <Card className="w-full max-w-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-        <CardHeader className="text-center space-y-2">
-          <CardTitle className="text-2xl font-semibold text-red-600">{title}</CardTitle>
-          <CardDescription className="text-slate-600 dark:text-slate-400">
-            {description}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <Button asChild className="w-full px-4 py-5">
-            <Link href="/dashboard">Go to Dashboard</Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
-
 // Server action for authenticated users to join
 async function joinOrganization(token: string) {
   "use server";
   const session = await auth();
-  if (!session?.user?.id) {
+  if (!session?.user?.id || !session?.user?.email) {
     throw new Error("Not authenticated");
   }
   
@@ -365,6 +344,27 @@ function JoinConfirmationCard({
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+// Reusable function to render an error card
+function ErrorCard({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-zinc-950">
+      <Card className="w-full max-w-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-2xl font-semibold text-red-600">{title}</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
+            {description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <Button asChild className="w-full px-4 py-5">
+            <Link href="/dashboard">Go to Dashboard</Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
