@@ -357,7 +357,7 @@ export function Note({
             <AvatarImage src={note.user.image || ""} alt={note.user.name || ""} />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 truncate max-w-20">
+            <span className="text-sm font-bold text-gray-700 dark:text-zinc-200 truncate max-w-20">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
