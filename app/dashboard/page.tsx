@@ -303,7 +303,7 @@ export default function Dashboard() {
                   >
                     <CardHeader>
                       <div className="flex items-center justify-between gap-2">
-                        <CardTitle className="text-lg dark:text-zinc-100 line-clamp-1">
+                        <CardTitle className="text-lg dark:text-zinc-100 line-clamp-1 break-all">
                           {board.name}
                         </CardTitle>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
