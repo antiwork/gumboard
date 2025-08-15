@@ -950,7 +950,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
-                        <div className="line-clamp-2 break-all">{b.name}</div>
+                        <div className="line-clamp-2">{b.name}</div>
                       </Link>
                     ))}
 
