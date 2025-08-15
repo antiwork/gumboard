@@ -89,7 +89,9 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
-  const pendingChecklistDeleteTimeoutsRef = React.useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingChecklistDeleteTimeoutsRef = React.useRef<
+    Record<string, ReturnType<typeof setTimeout>>
+  >({});
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
