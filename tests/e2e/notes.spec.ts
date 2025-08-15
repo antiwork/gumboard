@@ -958,19 +958,21 @@ test.describe("Note Management", () => {
 
       const today = new Date();
       const yesterday = addDays(today, -1);
-    
+
       await authenticatedPage.goto(`/boards/${board.id}`);
       await authenticatedPage.locator('[data-slot="filter-popover"]').click();
       await authenticatedPage.getByRole("button", { name: "Select date range" }).click();
-    
+
       // Start date
-      await authenticatedPage.getByRole("button", { name: "Pick a start date", exact: true }).click();
+      await authenticatedPage
+        .getByRole("button", { name: "Pick a start date", exact: true })
+        .click();
       await authenticatedPage.getByRole("gridcell", { name: String(yesterday.getDate()) }).click();
-    
+
       // End date
       await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
       await authenticatedPage.getByRole("gridcell", { name: String(today.getDate()) }).click();
-    
+
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);
     });

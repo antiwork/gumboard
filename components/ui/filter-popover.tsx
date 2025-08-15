@@ -17,7 +17,7 @@ interface FilterPopoverProps {
   onDateRangeChange?: (startDate: Date | null, endDate: Date | null) => void;
 
   selectedAuthor?: string | null;
-  authors: Array<{ id: string; name: string; email: string , image?: string | null }>;
+  authors: Array<{ id: string; name: string; email: string; image?: string | null }>;
   onAuthorChange?: (authorId: string | null) => void;
 
   className?: string;
@@ -91,7 +91,8 @@ function FilterPopover({
                     onClick={() => onAuthorChange?.(null)}
                     className={cn(
                       "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                      !selectedAuthor && "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
+                      !selectedAuthor &&
+                        "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
                     )}
                   >
                     <User className="w-4 h-4 " />
@@ -104,25 +105,23 @@ function FilterPopover({
                       onClick={() => onAuthorChange?.(author.id)}
                       className={cn(
                         "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                        selectedAuthor === author.id && "bg-blue-50 dark:bg-zinc-800 hover:bg-blue-50 text-blue-600 dark:text-zinc-200"
+                        selectedAuthor === author.id &&
+                          "bg-blue-50 dark:bg-zinc-800 hover:bg-blue-50 text-blue-600 dark:text-zinc-200"
                       )}
                     >
                       <Avatar className="w-6 h-6">
                         <AvatarImage src={author.image || ""} />
                         <AvatarFallback>
-
-                      <div className="w-6 h-6 bg-sky-600 text-primary-foreground rounded-full flex items-center justify-center flex-shrink-0">
-                        <span className="text-xs font-medium text-white">
-                          {author.name.charAt(0).toUpperCase()}
-                        </span>
-                      </div>
+                          <div className="w-6 h-6 bg-sky-600 text-primary-foreground rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-medium text-white">
+                              {author.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
                         </AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 flex-1">
                         <div className="font-medium truncate">{author.name}</div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          {author.email}
-                        </div>
+                        <div className="text-xs text-muted-foreground truncate">{author.email}</div>
                       </div>
                     </Button>
                   ))}

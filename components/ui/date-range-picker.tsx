@@ -136,8 +136,7 @@ function DateRangePicker({
                     }}
                     classNames={{
                       day: "hover:bg-sky-500 transition-colors duration-200 rounded",
-                      disabled:
-                        "opacity-50 cursor-not-allowed hover:bg-transparent",
+                      disabled: "opacity-50 cursor-not-allowed hover:bg-transparent",
                       selected: "bg-sky-500 text-white hover:bg-sky-600",
                     }}
                   />
@@ -160,9 +159,7 @@ function DateRangePicker({
                       !internalEndDate && "text-muted-foreground"
                     )}
                   >
-                    {internalEndDate
-                      ? format(internalEndDate, "LLL dd, y")
-                      : "Pick an end date"}
+                    {internalEndDate ? format(internalEndDate, "LLL dd, y") : "Pick an end date"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 text-muted-foreground dark:text-zinc-200">
@@ -179,8 +176,7 @@ function DateRangePicker({
                     }}
                     classNames={{
                       day: "hover:bg-sky-500 hover:text-white transition-colors rounded",
-                      disabled:
-                        "opacity-50 cursor-not-allowed hover:bg-transparent",
+                      disabled: "opacity-50 cursor-not-allowed hover:bg-transparent",
                       selected: "bg-sky-500 text-white hover:bg-sky-600",
                     }}
                   />

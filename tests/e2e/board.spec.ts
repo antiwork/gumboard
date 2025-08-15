@@ -124,6 +124,4 @@ test.describe("Board Management", () => {
       await expect(page).toHaveURL("/");
     });
   });
-
-
 });
