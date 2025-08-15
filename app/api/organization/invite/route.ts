@@ -127,7 +127,8 @@ export async function POST(request: NextRequest) {
                 © ${new Date().getFullYear()} Gumboard. All rights reserved.
               </p>
             </div>
-          `});
+          `,
+      });
     } catch (emailError) {
       console.error("Failed to send invite email:", emailError);
     }
