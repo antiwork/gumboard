@@ -83,19 +83,19 @@ export function BoardsToolbar({
     <div className={cn("flex flex-col sm:flex-row gap-4 mb-6", className)}>
       {/* Sort Dropdown */}
       <div className="flex items-center gap-2">
-        <Label className="text-sm font-medium text-muted-foreground whitespace-nowrap">
+        <Label className="text-sm font-medium text-muted-foreground whitespace-nowrap dark:text-white">
           Sort by
         </Label>
         <Select value={sortBy} onValueChange={onSortChange}>
-          <SelectTrigger className="w-[160px] bg-background border-input dark:bg-zinc-900 dark:border-zinc-700">
+          <SelectTrigger className="w-[180px] bg-white border-gray-300 text-black dark:bg-zinc-900 dark:border-zinc-700 dark:text-white">
             <SelectValue placeholder="Sort by..." />
           </SelectTrigger>
-          <SelectContent className="bg-background border-input dark:bg-zinc-900 dark:border-zinc-700">
+          <SelectContent className="bg-white border-gray-300 text-black dark:bg-zinc-900 dark:border-zinc-700 dark:text-white">
             {SORT_OPTIONS.map((option) => (
               <SelectItem
                 key={option.value}
                 value={option.value}
-                className="dark:hover:bg-zinc-800 dark:focus:bg-zinc-800"
+                className="hover:bg-gray-100 focus:bg-gray-100 dark:hover:bg-zinc-800 dark:focus:bg-zinc-800"
               >
                 {option.label}
               </SelectItem>
@@ -127,7 +127,7 @@ export function BoardsToolbar({
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-64 p-3 bg-background border-input dark:bg-zinc-900 dark:border-zinc-700"
+              className="w-64 p-3 bg-background border-input dark:bg-zinc-900 dark:border-zinc-700 dark:text-white opacity-100"
               align="start"
             >
               <div className="space-y-2">
@@ -185,7 +185,7 @@ export function BoardsToolbar({
 
       {/* Result Count and Clear Filters */}
       <div className="flex items-center gap-3">
-        <span className="text-sm text-muted-foreground whitespace-nowrap">
+        <span className="text-sm text-muted-foreground whitespace-nowrap dark:text-white">
           {resultCount === totalCount
             ? `${totalCount} boards`
             : `${resultCount} of ${totalCount} boards`}
