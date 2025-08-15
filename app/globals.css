@@ -16,3 +16,7 @@
 .dark .bg-dots {
   --dots-color: rgba(255, 255, 255, 0.08);
 }
+
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}

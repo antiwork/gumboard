@@ -106,6 +106,12 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to load dashboard",
+        description:
+          "Unable to fetch your boards and user data. Please refresh the page or try again later.",
+      });
     } finally {
       setLoading(false);
     }
@@ -261,7 +267,7 @@ export default function Dashboard() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
               <Link href="/boards/all-notes">
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
+                <Card className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
                   <CardHeader>
                     <div className="flex items-center space-x-2">
                       <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
@@ -280,7 +286,7 @@ export default function Dashboard() {
 
               {/* Archive Board */}
               <Link href="/boards/archive">
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
+                <Card className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                   <CardHeader>
                     <div className="flex items-center space-x-2">
                       <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -299,7 +305,7 @@ export default function Dashboard() {
                 <Link href={`/boards/${board.id}`} key={board.id}>
                   <Card
                     data-board-id={board.id}
-                    className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
+                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
                   >
                     <CardHeader>
                       <div className="flex items-center justify-between">
