@@ -768,9 +768,7 @@ test.describe("Note Management", () => {
             resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
             resp.request().method() === "DELETE"
         )
-        .catch(() => {
-          
-        });
+        .catch(() => {});
       expect(deleteCalled).toBe(false);
     });
   });
