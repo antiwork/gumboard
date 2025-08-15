@@ -1,18 +1,18 @@
 "use client";
 
-import * as React from "react";
-import { useState } from "react";
-import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import * as React from "react";
+import { useState } from "react";
 
 import {
-  ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
+  ChecklistItem as ChecklistItemComponent,
 } from "@/components/checklist-item";
-import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
+import { DraggableContainer, DraggableItem, DraggableRoot } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
-import { Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Archive, ArchiveRestore, Trash2 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 

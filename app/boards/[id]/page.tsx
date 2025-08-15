@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { Note as NoteCard } from "@/components/note";
+import { BetaBadge } from "@/components/ui/beta-badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, Settings, X } from "lucide-react";
-import Link from "next/link";
-import { BetaBadge } from "@/components/ui/beta-badge";
-import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
-import { Note as NoteCard } from "@/components/note";
+import { Input } from "@/components/ui/input";
+import { FullPageLoader } from "@/components/ui/loader";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
+import { ChevronDown, Copy, Search, Settings, Trash2, X } from "lucide-react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState } from "react";
 
+import { useUser } from "@/app/contexts/UserContext";
+import type { Board, Note, User } from "@/components/note";
+import { ProfileDropdown } from "@/components/profile-dropdown";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,19 +27,15 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-// Use shared types from components
-import type { Note, Board, User } from "@/components/note";
-import { useTheme } from "next-themes";
-import { ProfileDropdown } from "@/components/profile-dropdown";
-import { toast } from "sonner";
-import { useUser } from "@/app/contexts/UserContext";
 import {
-  getResponsiveConfig,
-  getUniqueAuthors,
   calculateGridLayout,
   calculateMobileLayout,
   filterAndSortNotes,
+  getResponsiveConfig,
+  getUniqueAuthors,
 } from "@/lib/utils";
+import { useTheme } from "next-themes";
+import { toast } from "sonner";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -78,6 +78,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [boardPickerOpen, setBoardPickerOpen] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -807,18 +808,56 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               )}
             </div>
 
-            <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else {
+            {boardId === "all-notes" ? (
+              <Popover open={boardPickerOpen} onOpenChange={setBoardPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    onClick={() => setBoardPickerOpen((o) => !o)}
+                    className="flex items-center justify-center text-white w-fit h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-sky-600 hover:bg-sky-500 dark:bg-sky-600 dark:hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
+                  >
+                    <span>Add note</span>
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-md rounded-md">
+                  <div className="p-2">
+                    <div className="px-2 pb-2 text-xs text-zinc-500 dark:text-zinc-400">
+                      Select a board
+                    </div>
+                    <div className="max-h-64 overflow-auto" role="listbox" aria-label="Boards">
+                      {allBoards.map((b) => (
+                        <button
+                          key={b.id}
+                          onClick={() => {
+                            setBoardPickerOpen(false);
+                            handleAddNote(b.id);
+                          }}
+                          role="option"
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm text-foreground dark:text-zinc-100 hover:bg-blue-50 dark:hover:bg-zinc-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 ${
+                            b.id === boardId ? "font-semibold" : ""
+                          }`}
+                        >
+                          {b.name}
+                        </button>
+                      ))}
+                      {allBoards.length === 0 && (
+                        <div className="px-3 py-3 text-sm text-zinc-500 dark:text-zinc-400">
+                          No boards
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+            ) : (
+              <Button
+                onClick={() => {
                   handleAddNote();
-                }
-              }}
-              className="flex items-center justify-center text-white w-fit h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
-            >
-              <span>Add note</span>
-            </Button>
+                }}
+                className="flex items-center justify-center text-white w-fit h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
+              >
+                <span>Add note</span>
+              </Button>
+            )}
 
             {/* User Dropdown */}
             <ProfileDropdown user={user} />
