@@ -21,7 +21,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             to: email,
             subject: "Sign in to Gumboard",
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <div style="font-family: Helvetica, Arial, sans-serif; margin: 0 auto;">
                 <h2 style="color: #1f2937; margin-bottom: 16px;">Welcome to Gumboard!</h2>
                 <p style="color: #374151; margin-bottom: 16px; line-height: 1.6;">
                   Click the button below to sign in to your account. This link will expire in 24 hours.
