@@ -1,5 +1,6 @@
 import React from "react";
 import { ImageResponse } from "next/og";
+import Image from "next/image";
 
 export const size = {
   width: 1200,
@@ -38,19 +39,7 @@ export default function OpenGraphImage() {
               gap: "16px",
             }}
           >
-            <svg
-              width="72"
-              height="72"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="#2563eb"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z" />
-              <path d="M15 3v4a2 2 0 0 0 2 2h4" />
-            </svg>
+            <Image src="/logo/gumboard.svg" alt="Gumboard" width={72} height={72} />
             <span
               style={{
                 fontSize: "72px",
