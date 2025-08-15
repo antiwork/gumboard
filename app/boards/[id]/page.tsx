@@ -433,6 +433,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
+  const prevDebouncedSearchTerm = useRef<string>("");
+  
+  useEffect(() => {
+    if (!debouncedSearchTerm && prevDebouncedSearchTerm.current) {
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }, 100);
+    }
+    prevDebouncedSearchTerm.current = debouncedSearchTerm;
+  }, [debouncedSearchTerm]);
+
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
     const authorsMap = new Map<string, { id: string; name: string; email: string }>();
@@ -1066,6 +1077,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setSearchTerm("");
                     setDebouncedSearchTerm("");
                     updateURL("");
+                    // Scroll to top when clearing search to maintain consistent UX
+                    window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
                 >
