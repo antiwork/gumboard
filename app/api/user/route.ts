@@ -54,3 +54,26 @@ export async function GET() {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+export async function DELETE() {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
+    await db.$transaction([
+      db.organizationSelfServeInvite.deleteMany({ where: { createdBy: userId } }),
+      db.organizationInvite.deleteMany({ where: { invitedBy: userId } }),
+      db.user.delete({ where: { id: userId } }),
+    ]);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("Error deleting user:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

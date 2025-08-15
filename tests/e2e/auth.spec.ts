@@ -69,7 +69,7 @@ test.describe("Authentication Flow", () => {
     });
 
     await page.goto("/dashboard");
-    await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 5000 });
+    await expect(page).toHaveURL(/.*auth.*signin/);
   });
 
   test("should authenticate user via Google OAuth and access dashboard", async ({
@@ -368,5 +368,28 @@ test.describe("Authentication Flow", () => {
     await expect(page.locator("text=No boards yet")).toBeVisible();
 
     expect(magicLinkAuthData!.email).toBe(githubAuthData!.email);
+  });
+
+  test("should redirect to dashboard if already a member of the organization (join link)", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const invite = await testPrisma.organizationSelfServeInvite.create({
+      data: {
+        name: `Test Invite ${testContext.testId}`,
+        organizationId: testContext.organizationId,
+        createdBy: testContext.userId,
+        isActive: true,
+        usageLimit: 5,
+        usageCount: 0,
+        token: `token_${testContext.testId}`,
+      },
+    });
+
+    await authenticatedPage.goto(`/join/${invite.token}`);
+
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 });
