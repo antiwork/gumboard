@@ -32,7 +32,7 @@ test.describe("Note Management", () => {
 
     // Look for any textarea in the note (the initial empty item input)
     const initialTextarea = authenticatedPage.locator("textarea").first();
-    await expect(initialTextarea).toBeVisible({ timeout: 10000 });
+    await expect(initialTextarea).toBeVisible();
 
     await initialTextarea.fill(testItemContent);
 
@@ -41,9 +41,6 @@ test.describe("Note Management", () => {
 
     // Wait for the content to appear in the UI (this means at least one submission worked)
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
-
-    // Add a small delay to ensure all async operations complete
-    await authenticatedPage.waitForTimeout(1000);
 
     const notes = await testPrisma.note.findMany({
       where: {
@@ -188,8 +185,7 @@ test.describe("Note Management", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok(),
-      { timeout: 15000 }
+        resp.ok()
     );
     await newItemInput.fill(newItemContent);
     await newItemInput.blur();
@@ -679,7 +675,7 @@ test.describe("Note Management", () => {
     }) => {
       // Create a board for testing all notes view
       const boardName = testContext.getBoardName("All Notes Test Board");
-      const board = await testPrisma.board.create({
+      await testPrisma.board.create({
         data: {
           name: boardName,
           description: testContext.prefix("All notes test board"),
@@ -766,16 +762,14 @@ test.describe("Note Management", () => {
         authenticatedPage.getByRole("button", { name: `Delete Note ${note.id}`, exact: true })
       ).toBeVisible();
 
-      // Wait a moment to ensure no delete call is made
       await authenticatedPage
         .waitForResponse(
           (resp) =>
             resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
-            resp.request().method() === "DELETE",
-          { timeout: 500 }
+            resp.request().method() === "DELETE"
         )
         .catch(() => {
-          // Expected to timeout - no delete should happen
+          
         });
       expect(deleteCalled).toBe(false);
     });
@@ -813,14 +807,13 @@ test.describe("Note Management", () => {
 
       // Look for any textarea in the newly created note
       const newItemInput = authenticatedPage.locator("textarea").first();
-      await expect(newItemInput).toBeVisible({ timeout: 10000 });
+      await expect(newItemInput).toBeVisible();
 
       const addItemResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&
           resp.request().method() === "PUT" &&
-          resp.ok(),
-        { timeout: 15000 }
+          resp.ok()
       );
       await newItemInput.fill(testItemContent);
       await newItemInput.blur();
@@ -879,14 +872,13 @@ test.describe("Note Management", () => {
 
       // Look for any textarea in the newly created note
       const newItemInput = authenticatedPage.locator("textarea").first();
-      await expect(newItemInput).toBeVisible({ timeout: 10000 });
+      await expect(newItemInput).toBeVisible();
 
       const addItemResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&
           resp.request().method() === "PUT" &&
-          resp.ok(),
-        { timeout: 15000 }
+          resp.ok()
       );
       await newItemInput.fill(testItemContent);
       await newItemInput.blur();

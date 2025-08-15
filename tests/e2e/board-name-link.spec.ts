@@ -114,9 +114,6 @@ test.describe("Board Name Link Functionality", () => {
 
     await authenticatedPage.goto("/boards/all-notes");
 
-    // Wait for page to be fully loaded
-    await authenticatedPage.waitForLoadState("networkidle");
-
     // Wait for the note to be visible
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Note from Board 1")}`)
@@ -126,15 +123,7 @@ test.describe("Board Name Link Functionality", () => {
     const boardLink = authenticatedPage.locator(`a[href="/boards/${board1.id}"]`).first();
     await expect(boardLink).toBeVisible();
 
-    // Use Promise.race to handle navigation with a timeout
-    await Promise.race([
-      boardLink
-        .click()
-        .then(() => authenticatedPage.waitForURL(`/boards/${board1.id}`, { timeout: 10000 })),
-      authenticatedPage.waitForTimeout(15000).then(() => {
-        throw new Error("Navigation timeout - link may not be working properly");
-      }),
-    ]);
+    await boardLink.click();
 
     // Verify we're on the correct page
     await expect(authenticatedPage).toHaveURL(`/boards/${board1.id}`);
