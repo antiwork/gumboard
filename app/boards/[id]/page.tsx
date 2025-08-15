@@ -937,7 +937,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
               {showBoardDropdown && (
                 <div className="fixed sm:absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
-                  <div className="p-2 flex flex-col gap-1 break-all line-clamp-1">
+                  <div className="p-2 flex flex-col gap-1">
                     {/* Boards */}
                     {allBoards.map((b) => (
                       <Link
