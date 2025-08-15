@@ -370,7 +370,11 @@ test.describe("Authentication Flow", () => {
     expect(magicLinkAuthData!.email).toBe(githubAuthData!.email);
   });
 
-  test("should redirect to dashboard if already a member of the organization (join link)", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should redirect to dashboard if already a member of the organization (join link)", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const invite = await testPrisma.organizationSelfServeInvite.create({
       data: {
         name: `Test Invite ${testContext.testId}`,
