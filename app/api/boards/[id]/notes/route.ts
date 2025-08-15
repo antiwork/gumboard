@@ -167,6 +167,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             id: true,
             name: true,
             email: true,
+            image: true,
           },
         },
         checklistItems: { orderBy: { order: "asc" } },
