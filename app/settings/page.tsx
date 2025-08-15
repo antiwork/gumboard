@@ -8,15 +8,17 @@ import { Label } from "@/components/ui/label";
 import { Mail, Trash2, AlertTriangle } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 
-import { AlertDialog, 
+import {
+  AlertDialog,
   AlertDialogAction,
-   AlertDialogCancel,
-    AlertDialogContent,
-     AlertDialogDescription, 
-     AlertDialogFooter,
-      AlertDialogHeader,
-       AlertDialogTitle,
-        AlertDialogTrigger } from "@/components/ui/alert-dialog";
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useUser } from "@/app/contexts/UserContext";
 import { useRouter } from "next/navigation";
 
@@ -54,7 +56,6 @@ export default function ProfileSettingsPage() {
       setDeleting(false);
     }
   };
-
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -152,9 +153,12 @@ export default function ProfileSettingsPage() {
                 <AlertTriangle className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-semibold text-red-700 dark:text-red-400">Danger zone</h3>
+                <h3 className="text-sm font-semibold text-red-700 dark:text-red-400">
+                  Danger zone
+                </h3>
                 <p className="text-sm text-red-700/80 dark:text-red-300/80">
-                  Deleting your account will remove you from your organization and delete content you created that is owned by you. This action cannot be undone.
+                  Deleting your account will remove you from your organization and delete content
+                  you created that is owned by you. This action cannot be undone.
                 </p>
                 <div className="mt-4">
                   <AlertDialog>
@@ -171,16 +175,25 @@ export default function ProfileSettingsPage() {
                           Delete account?
                         </AlertDialogTitle>
                         <AlertDialogDescription className="text-foreground dark:text-zinc-100">
-                          This will permanently delete your account and related data. This action cannot be undone.
+                          This will permanently delete your account and related data. This action
+                          cannot be undone.
                           <ul className="list-disc pl-5 mt-2 text-sm">
                             <li>You will be signed out immediately.</li>
                             <li>Your personal profile will be removed.</li>
-                            <li>Notes and content owned by you may be deleted or reassigned, depending on organization settings.</li>
+                            <li>
+                              Notes and content owned by you may be deleted or reassigned, depending
+                              on organization settings.
+                            </li>
                           </ul>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel disabled={deleting} className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">Cancel</AlertDialogCancel>
+                        <AlertDialogCancel
+                          disabled={deleting}
+                          className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                          Cancel
+                        </AlertDialogCancel>
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700 text-white"
                           onClick={handleDeleteAccount}
