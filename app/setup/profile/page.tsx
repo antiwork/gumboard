@@ -101,7 +101,11 @@ export default async function ProfileSetup() {
                   />
                 </div>
 
-                <Button type="submit" className="w-full">
+                <Button
+                  type="submit"
+                  variant="outline"
+                  className="w-full bg-white border-gray-200 text-gray-900 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+                >
                   Save
                 </Button>
               </form>
