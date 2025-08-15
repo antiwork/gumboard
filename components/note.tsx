@@ -185,7 +185,7 @@ export function Note({
           } finally {
             delete pendingChecklistDeleteTimeoutsRef.current[itemId];
           }
-        }, 10000);
+        }, 9000);
         pendingChecklistDeleteTimeoutsRef.current[itemId] = timeoutId;
       }
 
@@ -229,7 +229,7 @@ export function Note({
             }
           },
         },
-        duration: 10000,
+        duration: 9000,
       });
     } catch (error) {
       console.error("Error deleting checklist item:", error);
