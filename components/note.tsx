@@ -6,11 +6,8 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-import type {
-  ChecklistItem} from "@/components/checklist-item";
-import {
-  ChecklistItem as ChecklistItemComponent
-} from "@/components/checklist-item";
+import type { ChecklistItem } from "@/components/checklist-item";
+import { ChecklistItem as ChecklistItemComponent } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore } from "lucide-react";

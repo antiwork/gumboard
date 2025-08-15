@@ -1,14 +1,7 @@
 "use client";
 
-import type {
-  ReactNode} from "react";
-import React, {
-  useState,
-  useEffect,
-  createContext,
-  useContext,
-  useCallback,
-} from "react";
+import type { ReactNode } from "react";
+import React, { useState, useEffect, createContext, useContext, useCallback } from "react";
 
 export type Organization = {
   id: string;
