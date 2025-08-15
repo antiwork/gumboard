@@ -20,7 +20,8 @@
     "db:studio": "prisma studio",
     "db:reset": "prisma migrate reset",
     "docker:up": "docker compose up -d",
-    "docker:down": "docker compose down"
+    "docker:down": "docker compose down",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.10.0",
@@ -74,6 +75,8 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
+    "eslint-plugin-boundaries": "^5.0.1",
+    "eslint-plugin-unused-imports": "^4.1.4",
     "jest": "^30.0.5",
     "jest-environment-jsdom": "^30.0.5",
     "prettier": "^3.3.3",
