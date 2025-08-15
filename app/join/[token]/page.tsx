@@ -366,23 +366,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
   });
 
   if (user?.organizationId === invite.organizationId) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-zinc-900 dark:to-zinc-800 text-black dark:text-white flex items-center justify-center">
-        <Card className="w-lg dark:bg-zinc-900 dark:border-zinc-800">
-          <CardHeader className="text-center">
-            <CardTitle className="text-xl text-blue-600">Already a Member</CardTitle>
-            <CardDescription>
-              You are already a member of {invite.organization.name}.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <Button asChild className="w-full">
-              <Link href="/dashboard">Go to Dashboard</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
+    redirect("/dashboard");
   }
 
   if (user?.organizationId) {
