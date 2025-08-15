@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DatePicker } from "@/components/ui/date-picker";
 import {
   Trash2,
   UserPlus,
@@ -13,7 +14,7 @@ import {
   ShieldCheck,
   Link,
   Copy,
-  Calendar,
+  Calendar as CalendarIcon,
   Users,
   ExternalLink,
 } from "lucide-react";
@@ -30,6 +31,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import type { User } from "@/components/note";
+import { Calendar } from "@/components/ui/calendar";
 
 // Settings-specific extended types
 export type UserWithOrganization = User & {
@@ -70,6 +72,7 @@ interface SelfServeInvite {
 
 export default function OrganizationSettingsPage() {
   const [user, setUser] = useState<UserWithOrganization | null>(null);
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [orgName, setOrgName] = useState("");
@@ -728,25 +731,19 @@ export default function OrganizationSettingsPage() {
                   placeholder="e.g., General Invite"
                   required
                   disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className="bg-background"
                 />
               </div>
               <div>
                 <Label htmlFor="expiresAt" className="text-zinc-800 dark:text-zinc-200 mb-2">
                   Expires (Optional)
                 </Label>
-                <Input
-                  id="expiresAt"
-                  type="date"
+                <DatePicker
                   value={newSelfServeInvite.expiresAt}
-                  onChange={(e) =>
-                    setNewSelfServeInvite((prev) => ({
-                      ...prev,
-                      expiresAt: e.target.value,
-                    }))
-                  }
+                  onValueChange={(val) => setNewSelfServeInvite((prev) => ({ ...prev, expiresAt: val }))}
+                  placeholder="June 01, 2025"
+                  label={undefined}
                   disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                 />
               </div>
               <div>
@@ -766,7 +763,6 @@ export default function OrganizationSettingsPage() {
                   }
                   placeholder="Unlimited"
                   disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
                 />
               </div>
             </div>
@@ -810,7 +806,7 @@ export default function OrganizationSettingsPage() {
                           </span>
                           {invite.expiresAt && (
                             <span className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
+                              <CalendarIcon className="w-4 h-4 mr-1" />
                               Expires {new Date(invite.expiresAt).toLocaleDateString()}
                             </span>
                           )}
