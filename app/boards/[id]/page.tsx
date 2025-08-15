@@ -11,6 +11,7 @@ import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
+import { ColorPicker } from "@/components/ui/color-picker";
 import { Note as NoteCard } from "@/components/note";
 
 import {
@@ -42,6 +43,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
+  const [newBoardColor, setNewBoardColor] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -68,6 +70,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: "",
     isPublic: false,
     sendSlackUpdates: true,
+    color: "",
+    coverImage: "",
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
@@ -383,6 +387,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           setShowAddBoard(false);
           setNewBoardName("");
           setNewBoardDescription("");
+          setNewBoardColor("");
         }
       }
     };
@@ -600,6 +605,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           description: board.description || "",
           isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
           sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+          color: (board as { color?: string })?.color ?? "",
+          coverImage: (board as { coverImage?: string })?.coverImage ?? "",
         });
       }
 
@@ -793,6 +800,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         body: JSON.stringify({
           name: newBoardName,
           description: newBoardDescription,
+          color: newBoardColor,
         }),
       });
 
@@ -801,6 +809,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         setAllBoards([board, ...allBoards]);
         setNewBoardName("");
         setNewBoardDescription("");
+        setNewBoardColor("");
         setShowAddBoard(false);
         setShowBoardDropdown(false);
         router.push(`/boards/${board.id}`);
@@ -827,6 +836,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description?: string;
     isPublic?: boolean;
     sendSlackUpdates: boolean;
+    color?: string;
+    coverImage?: string;
   }) => {
     try {
       const response = await fetch(`/api/boards/${boardId}`, {
@@ -843,6 +854,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           description: board.description || "",
           isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
           sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+          color: (board as { color?: string })?.color ?? "",
+          coverImage: (board as { coverImage?: string })?.coverImage ?? "",
         });
         setBoardSettingsDialog(false);
       }
@@ -1010,6 +1023,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                             isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
                             sendSlackUpdates:
                               (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                            color: (board as { color?: string })?.color ?? "",
+                            coverImage: (board as { coverImage?: string })?.coverImage ?? "",
                           });
                           setBoardSettingsDialog(true);
                           setShowBoardDropdown(false);
@@ -1179,6 +1194,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             setShowAddBoard(false);
             setNewBoardName("");
             setNewBoardDescription("");
+            setNewBoardColor("");
           }}
         >
           <div
@@ -1215,6 +1231,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
                   />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                    Board Color (optional)
+                  </label>
+                  <ColorPicker
+                    value={newBoardColor}
+                    onChange={setNewBoardColor}
+                    className="w-full"
+                  />
+                </div>
               </div>
               <div className="flex justify-end space-x-3 mt-6">
                 <Button
@@ -1224,6 +1250,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setShowAddBoard(false);
                     setNewBoardName("");
                     setNewBoardDescription("");
+                    setNewBoardColor("");
                   }}
                   className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-300 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-300 dark:hover:bg-zinc-800"
                 >
@@ -1302,6 +1329,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 placeholder="Enter board description"
                 className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
               />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                Board Color (optional)
+              </label>
+              <ColorPicker
+                value={boardSettings.color}
+                onChange={(color) => setBoardSettings((prev) => ({ ...prev, color }))}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1">
+                Choose a color to help distinguish this board
+              </p>
             </div>
             <div className="space-y-4">
               <div className="flex items-center space-x-2">

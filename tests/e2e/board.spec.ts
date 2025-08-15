@@ -37,6 +37,48 @@ test.describe("Board Management", () => {
     expect(board?.createdBy).toBe(testContext.userId);
   });
 
+  test("should create a board with color selection", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    await authenticatedPage.goto("/dashboard");
+    const boardName = testContext.getBoardName("Colored Board");
+    const boardDescription = "Test board with color";
+
+    await authenticatedPage.click('button:has-text("Add Board")');
+    await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
+    await authenticatedPage.fill('input[placeholder*="board description"]', boardDescription);
+
+    await authenticatedPage.click('[data-testid="color-picker-trigger"]');
+    await authenticatedPage.click('[data-testid="color-option-1"]'); // Second color
+
+    const responsePromise = authenticatedPage.waitForResponse(
+      (resp) => resp.url().includes("/api/boards") && resp.status() === 201
+    );
+
+    await authenticatedPage.click('button:has-text("Create Board")');
+    await responsePromise;
+
+    await expect(
+      authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)
+    ).toBeVisible();
+
+    const board = await testPrisma.board.findFirst({
+      where: {
+        name: boardName,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    expect(board).toBeTruthy();
+    expect(board?.name).toBe(boardName);
+    expect(board?.description).toBe(boardDescription);
+    expect(board?.color).toBe("#8b5cf6"); // Second color in predefined list
+    expect(board?.createdBy).toBe(testContext.userId);
+  });
+
   test("should display empty state when no boards exist", async ({
     authenticatedPage,
     testContext,

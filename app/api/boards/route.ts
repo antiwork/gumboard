@@ -29,6 +29,8 @@ export async function GET() {
         name: true,
         description: true,
         isPublic: true,
+        color: true,
+        coverImage: true,
         createdBy: true,
         createdAt: true,
         updatedAt: true,
@@ -60,7 +62,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, description, isPublic } = await request.json();
+    const { name, description, isPublic, color, coverImage } = await request.json();
 
     if (!name) {
       return NextResponse.json({ error: "Board name is required" }, { status: 400 });
@@ -83,6 +85,8 @@ export async function POST(request: NextRequest) {
         name,
         description,
         isPublic: Boolean(isPublic || false),
+        color,
+        coverImage,
         organizationId: user.organizationId,
         createdBy: session.user.id,
       },
@@ -91,6 +95,8 @@ export async function POST(request: NextRequest) {
         name: true,
         description: true,
         isPublic: true,
+        color: true,
+        coverImage: true,
         createdBy: true,
         createdAt: true,
         updatedAt: true,

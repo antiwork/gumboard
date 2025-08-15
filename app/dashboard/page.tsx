@@ -14,6 +14,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Plus, Grid3x3, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
+import { ColorPicker } from "@/components/ui/color-picker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,12 +49,15 @@ export type DashboardBoard = Board & {
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
+  color?: string;
+  coverImage?: string;
   _count: { notes: number };
 };
 
 const formSchema = z.object({
   name: z.string().min(1, "Board name is required"),
   description: z.string().optional(),
+  color: z.string().optional(),
 });
 
 export default function Dashboard() {
@@ -75,6 +79,7 @@ export default function Dashboard() {
     defaultValues: {
       name: "",
       description: "",
+      color: "",
     },
   });
 
@@ -122,7 +127,7 @@ export default function Dashboard() {
   }, [fetchUserAndBoards]);
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
-    const { name, description } = values;
+    const { name, description, color } = values;
     try {
       const response = await fetch("/api/boards", {
         method: "POST",
@@ -132,6 +137,7 @@ export default function Dashboard() {
         body: JSON.stringify({
           name,
           description,
+          color,
         }),
       });
 
@@ -184,7 +190,7 @@ export default function Dashboard() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             <Button
               onClick={() => {
-                form.reset({ name: "", description: "" });
+                form.reset({ name: "", description: "", color: "" });
                 setIsAddBoardDialogOpen(true);
               }}
               className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
@@ -239,6 +245,23 @@ export default function Dashboard() {
                           placeholder="Enter board description"
                           className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
                           {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="color"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Board Color (Optional)</FormLabel>
+                      <FormControl>
+                        <ColorPicker
+                          value={field.value}
+                          onChange={field.onChange}
+                          className="w-full"
                         />
                       </FormControl>
                       <FormMessage />
@@ -305,23 +328,53 @@ export default function Dashboard() {
                 <Link href={`/boards/${board.id}`} key={board.id}>
                   <Card
                     data-board-id={board.id}
-                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
+                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer border-gray-200 dark:border-zinc-800 relative overflow-hidden"
+                    style={{
+                      backgroundColor: board.color ? board.color : undefined,
+                      borderColor: board.color ? board.color : undefined,
+                    }}
                   >
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    {board.description && (
-                      <CardContent>
-                        <p className="text-slate-600 dark:text-zinc-300 truncate">
-                          {board.description}
-                        </p>
-                      </CardContent>
+                    {board.color && (
+                      <div
+                        className="absolute inset-0 opacity-10"
+                        style={{ backgroundColor: board.color }}
+                      />
                     )}
+                    <div className="relative z-10">
+                      <CardHeader>
+                        <div className="flex items-center justify-between">
+                          <CardTitle
+                            className={`text-lg ${
+                              board.color ? "text-white drop-shadow-sm" : "dark:text-zinc-100"
+                            }`}
+                          >
+                            {board.name}
+                          </CardTitle>
+                          <span
+                            className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap ${
+                              board.color
+                                ? "bg-white/20 text-white"
+                                : "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+                            }`}
+                          >
+                            {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                          </span>
+                        </div>
+                      </CardHeader>
+                      {board.description && (
+                        <CardContent>
+                          <p
+                            className={`truncate ${
+                              board.color
+                                ? "text-white/90 drop-shadow-sm"
+                                : "text-slate-600 dark:text-zinc-300"
+                            }`}
+                          >
+                            {board.description}
+                          </p>
+                        </CardContent>
+                      )}
+                    </div>
                   </Card>
                 </Link>
               ))}
@@ -342,7 +395,7 @@ export default function Dashboard() {
             <Button
               onClick={() => {
                 setIsAddBoardDialogOpen(true);
-                form.reset({ name: "", description: "" });
+                form.reset({ name: "", description: "", color: "" });
               }}
               className="dark:bg-blue-500 dark:hover:bg-blue-600"
             >

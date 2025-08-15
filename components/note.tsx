@@ -29,6 +29,8 @@ export interface Board {
   id: string;
   name: string;
   description: string | null;
+  color?: string | null;
+  coverImage?: string | null;
 }
 
 export interface Note {

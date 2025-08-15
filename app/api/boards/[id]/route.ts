@@ -72,7 +72,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const boardId = (await params).id;
-    const { name, description, isPublic, sendSlackUpdates } = await request.json();
+    const { name, description, isPublic, sendSlackUpdates, color, coverImage } =
+      await request.json();
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
@@ -100,9 +101,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // For name/description/isPublic updates, check if user can edit this board (board creator or admin)
+    // For name/description/isPublic/color/coverImage updates, check if user can edit this board (board creator or admin)
     if (
-      (name !== undefined || description !== undefined || isPublic !== undefined) &&
+      (name !== undefined ||
+        description !== undefined ||
+        isPublic !== undefined ||
+        color !== undefined ||
+        coverImage !== undefined) &&
       board.createdBy !== session.user.id &&
       !currentUser.isAdmin
     ) {
@@ -117,12 +122,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       description?: string;
       isPublic?: boolean;
       sendSlackUpdates?: boolean;
+      color?: string;
+      coverImage?: string;
     } = {};
     if (name !== undefined) updateData.name = name?.trim() || board.name;
     if (description !== undefined)
       updateData.description = description?.trim() || board.description;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates;
+    if (color !== undefined) updateData.color = color;
+    if (coverImage !== undefined) updateData.coverImage = coverImage;
 
     const updatedBoard = await db.board.update({
       where: { id: boardId },
