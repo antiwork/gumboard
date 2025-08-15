@@ -1,7 +1,11 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Edit Board", () => {
-  test("should edit board title and description from dashboard", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should edit board title and description from dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Original Board"),
@@ -13,18 +17,13 @@ test.describe("Edit Board", () => {
 
     await authenticatedPage.goto("/dashboard");
 
-    await authenticatedPage.click(
-      `[data-board-id="${board.id}"] [aria-label="Edit board"]`
-    );
+    await authenticatedPage.click(`[data-board-id="${board.id}"] [aria-label="Edit board"]`);
 
     const newName = testContext.getBoardName("Updated Board");
     const newDescription = testContext.prefix("Updated description");
 
     await authenticatedPage.fill('input[placeholder*="board name"]', newName);
-    await authenticatedPage.fill(
-      'input[placeholder*="board description"]',
-      newDescription
-    );
+    await authenticatedPage.fill('input[placeholder*="board description"]', newDescription);
 
     const updateResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -42,9 +41,7 @@ test.describe("Edit Board", () => {
       )
     ).toBeVisible();
     await expect(
-      authenticatedPage.locator(
-        `[data-board-id="${board.id}"] :text("${newDescription}")`
-      )
+      authenticatedPage.locator(`[data-board-id="${board.id}"] :text("${newDescription}")`)
     ).toBeVisible();
 
     const updatedBoard = await testPrisma.board.findUnique({

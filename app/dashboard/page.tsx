@@ -182,9 +182,7 @@ export default function Dashboard() {
 
       if (response.ok) {
         const { board } = await response.json();
-        setBoards(
-          boards.map((b) => (b.id === board.id ? { ...b, ...board } : b))
-        );
+        setBoards(boards.map((b) => (b.id === board.id ? { ...b, ...board } : b)));
         editForm.reset();
         setIsEditBoardDialogOpen(false);
       } else {
