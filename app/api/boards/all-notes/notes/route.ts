@@ -1,12 +1,11 @@
-import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NOTE_COLORS } from "@/lib/constants";
+import { NextRequest, NextResponse } from "next/server";
 
 // Get all notes from all boards in the organization
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
     if (!session?.user?.id) {
