@@ -1111,6 +1111,58 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               currentUser={user as User}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
+              onDuplicate={(noteId) => {
+                const n = notes.find((x) => x.id === noteId);
+                if (!n) return;
+                const cloned = {
+                  ...n,
+                  id: `temp_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                  createdAt: new Date().toISOString(),
+                  updatedAt: new Date().toISOString(),
+                  checklistItems: (n.checklistItems || []).map((i, idx) => ({
+                    ...i,
+                    id: `item_${Date.now()}_${idx}_${Math.random().toString(36).slice(2)}`,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString(),
+                  })),
+                } as Note;
+                setNotes((prev) => [cloned, ...prev]);
+                const targetBoardId = n.board?.id ?? n.boardId;
+                fetch(`/api/boards/${targetBoardId}/notes`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    checklistItems: (n.checklistItems || []).map((i) => ({
+                      content: i.content,
+                      checked: i.checked,
+                      order: i.order,
+                    })),
+                  }),
+                })
+                  .then(async (res) => {
+                    if (res.ok) {
+                      const { note: created } = await res.json();
+                      setNotes((prev) => [created, ...prev.filter((x) => x.id !== cloned.id)]);
+                      toast("Note duplicated");
+                    } else {
+                      setNotes((prev) => prev.filter((x) => x.id !== cloned.id));
+                      const err = await res.json().catch(() => null);
+                      setErrorDialog({
+                        open: true,
+                        title: "Failed to duplicate",
+                        description: err?.error || "Failed to duplicate note",
+                      });
+                    }
+                  })
+                  .catch(() => {
+                    setNotes((prev) => prev.filter((x) => x.id !== cloned.id));
+                    setErrorDialog({
+                      open: true,
+                      title: "Failed to duplicate",
+                      description: "Network error",
+                    });
+                  });
+              }}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
               onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}

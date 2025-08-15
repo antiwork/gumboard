@@ -12,9 +12,10 @@ import {
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
-import { Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Trash2, Archive, ArchiveRestore, Eye, EyeOff, Copy, CheckSquare } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { toast } from "sonner";
 
 // Core domain types
 export interface User {
@@ -62,6 +63,7 @@ interface NoteProps {
   currentUser?: User;
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
+  onDuplicate?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
   onUnarchive?: (noteId: string) => void;
   readonly?: boolean;
@@ -75,6 +77,7 @@ export function Note({
   currentUser,
   onUpdate,
   onDelete,
+  onDuplicate,
   onArchive,
   onUnarchive,
   readonly = false,
@@ -88,8 +91,26 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+
+  // Persist hide/show completed per note
+  React.useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`gumboard-hide-completed-${note.id}`);
+      if (saved !== null) setHideCompleted(saved === "1");
+    } catch (e) {
+      // no-op
+    }
+  }, [note.id]);
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(`gumboard-hide-completed-${note.id}`, hideCompleted ? "1" : "0");
+    } catch (e) {
+      // no-op
+    }
+  }, [hideCompleted, note.id]);
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
@@ -143,6 +164,7 @@ export function Note({
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
+      const deletedItem = note.checklistItems.find((item) => item.id === itemId);
       const updatedItems = note.checklistItems.filter((item) => item.id !== itemId);
 
       const optimisticNote = {
@@ -169,6 +191,48 @@ export function Note({
         } else {
           onUpdate?.(note);
         }
+      }
+
+      if (deletedItem) {
+        toast("Item deleted", {
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                const restored = [...updatedItems, deletedItem]
+                  .sort((a, b) => a.order - b.order)
+                  .map((it, index) => ({ ...it, order: index }));
+
+                const optimisticRestored = {
+                  ...note,
+                  checklistItems: restored,
+                };
+                onUpdate?.(optimisticRestored);
+
+                if (syncDB) {
+                  const resp = await fetch(
+                    `/api/boards/${note.boardId}/notes/${note.id}`,
+                    {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ checklistItems: restored }),
+                    }
+                  );
+                  if (resp.ok) {
+                    const { note: updatedNoteAfterUndo } = await resp.json();
+                    onUpdate?.(updatedNoteAfterUndo);
+                  } else {
+                    onUpdate?.(optimisticNote);
+                  }
+                }
+              } catch (e) {
+                console.error("Failed to undo checklist delete:", e);
+                onUpdate?.(optimisticNote);
+              }
+            },
+          },
+          duration: 4000,
+        });
       }
     } catch (error) {
       console.error("Error deleting checklist item:", error);
@@ -327,6 +391,63 @@ export function Note({
     handleDeleteChecklistItem(itemId);
     handleStopEditItem();
   };
+  const handleClearCompleted = async () => {
+    try {
+      const allItems = note.checklistItems || [];
+      const remaining = allItems.filter((i) => !i.checked);
+      if (remaining.length === allItems.length) return;
+
+      const optimisticNote = { ...note, checklistItems: remaining } as Note;
+      onUpdate?.(optimisticNote);
+
+      if (syncDB) {
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ checklistItems: remaining }),
+        });
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
+        }
+      }
+
+      toast("Cleared completed", {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              const restored = (note.checklistItems || []).slice().sort((a, b) => a.order - b.order);
+              const resp = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ checklistItems: restored }),
+              });
+              if (resp.ok) {
+                const { note: updatedNoteAfterUndo } = await resp.json();
+                onUpdate?.(updatedNoteAfterUndo);
+              } else {
+                onUpdate?.(note);
+              }
+            } catch (e) {
+              console.error("Failed to undo clear completed:", e);
+              onUpdate?.(note);
+            }
+          },
+        },
+        duration: 4000,
+      });
+    } catch (e) {
+      console.error("Error clearing completed items:", e);
+    }
+  };
+
+  const visibleChecklistItems = React.useMemo(() => {
+    if (!note.checklistItems) return [] as ChecklistItem[];
+    return hideCompleted ? note.checklistItems.filter((i) => !i.checked) : note.checklistItems;
+  }, [hideCompleted, note.checklistItems]);
 
   const handleCreateNewItem = (content: string) => {
     if (content.trim()) {
@@ -357,7 +478,7 @@ export function Note({
             <AvatarImage src={note.user.image || ""} alt={note.user.name || ""} />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 truncate max-w-20">
+            <span className="text-sm font-bold text-gray-700 dark:text-zinc-200 truncate max-w-20">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
@@ -375,6 +496,71 @@ export function Note({
         <div className="flex items-center space-x-2">
           {canEdit && (
             <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              {/* Hide/Show Completed */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={hideCompleted ? "Show completed" : "Hide completed"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setHideCompleted((v) => !v);
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded"
+                    variant="ghost"
+                    size="icon"
+                  >
+                    {hideCompleted ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{hideCompleted ? "Show completed" : "Hide completed"}</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Clear Completed */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label="Clear completed"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleClearCompleted();
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded"
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <CheckSquare className="w-3 h-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Clear completed</p>
+                </TooltipContent>
+              </Tooltip>
+
+              {/* Duplicate Note */}
+              {onDuplicate && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      aria-label="Duplicate note"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDuplicate?.(note.id);
+                      }}
+                      className="p-1 text-gray-600 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded"
+                      variant="ghost"
+                      size="icon"
+                    >
+                      <Copy className="w-3 h-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Duplicate note</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -449,13 +635,13 @@ export function Note({
         <div className="overflow-y-auto space-y-1">
           {/* Checklist Items */}
           <DraggableRoot
-            items={note.checklistItems ?? []}
+            items={visibleChecklistItems}
             onItemsChange={(newItems) => {
               handleReorderChecklistItems(note.id, newItems);
             }}
           >
             <DraggableContainer className="space-y-1">
-              {note.checklistItems?.map((item) => (
+              {visibleChecklistItems.map((item) => (
                 <DraggableItem key={item.id} id={item.id}>
                   <ChecklistItemComponent
                     item={item}
