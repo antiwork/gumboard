@@ -435,7 +435,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
+    const authorsMap = new Map<
+      string,
+      { id: string; name: string; email: string; image?: string | null }
+    >();
 
     notes.forEach((note) => {
       if (!authorsMap.has(note.user.id)) {
@@ -443,6 +446,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           id: note.user.id,
           name: note.user.name || note.user.email.split("@")[0],
           email: note.user.email,
+          image: note.user.image,
         });
       }
     });
@@ -1023,7 +1027,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
 
             {/* Filter Popover */}
-            <div className="relative board-dropdown mr-0">
+            <div className="relative board-dropdown mr-0" data-slot="filter-popover">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
