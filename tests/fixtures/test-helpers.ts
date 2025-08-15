@@ -38,8 +38,6 @@ export class TestContext {
     this.prisma = getTestPrismaClient();
   }
 
-
-
   async ensureAuthInitialized() {
     if (this._isAuthInitialized) {
       return;
