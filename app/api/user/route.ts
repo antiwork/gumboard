@@ -53,11 +53,7 @@ export async function GET() {
 
 export async function DELETE() {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const userId = session.user.id;
 
