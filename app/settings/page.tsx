@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,32 +19,17 @@ import { AlertDialog,
         AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
 export default function ProfileSettingsPage() {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading, refreshUser } = useUser();
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [profileName, setProfileName] = useState("");
   const router = useRouter();
 
-  const fetchUserData = useCallback(async () => {
-    try {
-      const response = await fetch("/api/user");
-      if (response.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-
-      if (response.ok) {
-        const userData = await response.json();
-        setUser(userData);
-        setProfileName(userData.name || "");
-      }
-    } catch (error) {
-      console.error("Error fetching user data:", error);
-    } finally {
-      setLoading(false);
+  useEffect(() => {
+    if (user) {
+      setProfileName(user.name || "");
     }
-  }, [router]);
+  }, [user]);
 
   useEffect(() => {
     fetchUserData();
@@ -81,9 +65,8 @@ export default function ProfileSettingsPage() {
       });
 
       if (response.ok) {
-        const updatedUser = await response.json();
-        setUser(updatedUser);
-        setProfileName((updatedUser.name || "").trim());
+        await refreshUser();
+        setProfileName(profileName.trim());
       }
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -114,7 +97,9 @@ export default function ProfileSettingsPage() {
 
         <div className="space-y-4">
           <div>
-            <Label htmlFor="name" className="text-foreground dark:text-zinc-200">Full Name</Label>
+            <Label htmlFor="name" className="text-foreground dark:text-zinc-200">
+              Full Name
+            </Label>
             <Input
               id="name"
               type="text"
@@ -126,7 +111,9 @@ export default function ProfileSettingsPage() {
           </div>
 
           <div>
-            <Label htmlFor="email" className="text-foreground dark:text-zinc-200">Email Address</Label>
+            <Label htmlFor="email" className="text-foreground dark:text-zinc-200">
+              Email Address
+            </Label>
             <div className="relative mt-1">
               <Input
                 id="email"

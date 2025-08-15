@@ -1,0 +1,51 @@
+# Dependencies
+node_modules/
+.next/
+.turbo/
+
+# Production builds
+dist/
+build/
+out/
+
+# Database
+prisma/migrations/
+
+# Test artifacts
+test-results/
+playwright-report/
+coverage/
+
+# Environment files
+.env*
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Package lock files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Generated files
+*.d.ts
+!src/**/*.d.ts
+
+# Documentation that might have special formatting
+README.md
+CONTRIBUTING.md
+LICENSE.md
+
+# Configuration files that might have special formatting
+*.config.js
+*.config.ts
+*.config.mjs

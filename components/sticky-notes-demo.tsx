@@ -1,19 +1,18 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Note as NoteComponent } from "@/components/note"
-import type { Note } from "@/components/note"
-import { Plus } from "lucide-react"
-import { motion, AnimatePresence } from "framer-motion"
+import * as React from "react";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Note as NoteComponent } from "@/components/note";
+import type { Note } from "@/components/note";
+import { Plus } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 const initialNotes: Note[] = [
   {
     id: "1",
-    content: "",
     color: "bg-green-200/70",
-    done: false,
+    archivedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     boardId: "demo-board",
@@ -30,9 +29,8 @@ const initialNotes: Note[] = [
   },
   {
     id: "2",
-    content: "",
     color: "bg-purple-200/60",
-    done: false,
+    archivedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     boardId: "demo-board",
@@ -49,9 +47,8 @@ const initialNotes: Note[] = [
   },
   {
     id: "3",
-    content: "",
     color: "bg-blue-200/60",
-    done: false,
+    archivedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     boardId: "demo-board",
@@ -67,9 +64,8 @@ const initialNotes: Note[] = [
   },
   {
     id: "4",
-    content: "",
     color: "bg-pink-200/70",
-    done: false,
+    archivedAt: null,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     boardId: "demo-board",
@@ -83,9 +79,9 @@ const initialNotes: Note[] = [
       { id: "402", content: "PR reviews", checked: true, order: 1 },
     ],
   },
-]
+];
 
-const noteColors = ["bg-yellow-200/70", "bg-teal-200/70", "bg-orange-200/70"]
+const noteColors = ["bg-yellow-200/70", "bg-teal-200/70", "bg-orange-200/70"];
 const authors = [
   { name: "Aaron", initial: "A" },
   { name: "Abdul", initial: "A" },
@@ -282,7 +278,7 @@ const authors = [
   { name: "Wisen", initial: "W" },
   { name: "Yu-Hung", initial: "Y" },
   { name: "Zeta", initial: "Z" },
-]
+];
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -292,7 +288,7 @@ const containerVariants = {
       staggerChildren: 0.15,
     },
   },
-}
+};
 
 const itemVariants = {
   hidden: { y: 20, opacity: 0 },
@@ -305,43 +301,38 @@ const itemVariants = {
     y: -20,
     transition: { duration: 0.2 },
   },
-}
+};
 
 export function StickyNotesDemo() {
-  const [notes, setNotes] = useState<Note[]>(initialNotes)
+  const [notes, setNotes] = useState<Note[]>(initialNotes);
 
   const handleUpdateNote = (updatedNote: Note) => {
-    setNotes(notes.map((note) => (note.id === updatedNote.id ? updatedNote : note)))
-  }
+    setNotes(notes.map((note) => (note.id === updatedNote.id ? updatedNote : note)));
+  };
 
   const handleDeleteNote = (noteId: string) => {
-    setNotes(notes.filter((note) => note.id !== noteId))
-  }
-
-
+    setNotes(notes.filter((note) => note.id !== noteId));
+  };
 
   const handleAddNote = () => {
-    const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)]
-    const randomAuthor = authors[Math.floor(Math.random() * authors.length)]
+    const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)];
+    const randomAuthor = authors[Math.floor(Math.random() * authors.length)];
     const newNote: Note = {
       id: `${Date.now()}`,
-      content: "",
       color: randomColor,
-      done: false,
+      archivedAt: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       boardId: "demo-board",
       user: {
         id: "demo-user",
         name: randomAuthor.name,
-        email: `${randomAuthor.name.toLowerCase().replace(/\s+/g, '')}@example.com`,
+        email: `${randomAuthor.name.toLowerCase().replace(/\s+/g, "")}@example.com`,
       },
-      checklistItems: [
-        { id: `${Date.now() + 1}`, content: "New to-do", checked: false, order: 0 },
-      ],
-    }
-    setNotes([newNote, ...notes])
-  }
+      checklistItems: [{ id: `${Date.now() + 1}`, content: "New to-do", checked: false, order: 0 }],
+    };
+    setNotes([newNote, ...notes]);
+  };
 
   return (
     <div className="relative">
@@ -360,21 +351,28 @@ export function StickyNotesDemo() {
         >
           <AnimatePresence>
             {notes.map((note) => (
-              <motion.div key={note.id} className="mb-4 break-inside-avoid" variants={itemVariants} exit="exit" layout>
-                <NoteComponent
-                  addingChecklistItem={null}
-                  className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
-                  note={note}
-                  currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
-                  onUpdate={handleUpdateNote}
-                  onDelete={handleDeleteNote}
-                  syncDB={false}
-                />
+              <motion.div
+                key={note.id}
+                className="mb-4 break-inside-avoid"
+                variants={itemVariants}
+                exit="exit"
+                layout
+              >
+                <div className="pb-4">
+                  <NoteComponent
+                    className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
+                    note={note}
+                    currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
+                    onUpdate={handleUpdateNote}
+                    onDelete={handleDeleteNote}
+                    syncDB={false}
+                  />
+                </div>
               </motion.div>
             ))}
           </AnimatePresence>
         </motion.div>
       </div>
     </div>
-  )
+  );
 }
