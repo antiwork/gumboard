@@ -110,7 +110,7 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5"
+        className="border-slate-500 text-slate-500 dark:text-zinc-200 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5"
         disabled={readonly}
       />
 
@@ -119,7 +119,7 @@ export function ChecklistItem({
         value={editContent ?? item.content}
         onChange={(e) => onEditContentChange?.(e.target.value)}
         className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 resize-none overflow-hidden outline-none",
+          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 resize-none dark:text-zinc-200 overflow-hidden outline-none",
           item.checked && "text-slate-500 dark:text-zinc-500 line-through"
         )}
         onBlur={handleBlur}

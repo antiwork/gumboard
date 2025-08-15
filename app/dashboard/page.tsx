@@ -41,6 +41,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import Image from "next/image";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -164,15 +165,16 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950">
-      <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#242423]">
+      <nav className="bg-card dark:bg-neutral-900 border-b-4 border-gray-200 dark:border-zinc-700 shadow-sm">
+        <div className="flex justify-between items-center sm:h-22 h-16 px-4 sm:px-6 lg:px-8">
           <div className="flex items-center">
             <div className="flex-shrink-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                Gumboard
+              <div className="flex items-center gap-3">
+                <Image src="/logo/gumboard.svg" alt="Gumboard" width={70} height={70} className="h-14 w-14" />
+                <span className="text-xl sm:text-4xl text-zinc-900 dark:text-[#dddddd] font-bold">Gumboard</span>
                 <BetaBadge />
-              </h1>
+              </div>
             </div>
           </div>
           <div className="flex items-center space-x-2 sm:space-x-4">
@@ -181,13 +183,15 @@ export default function Dashboard() {
                 form.reset({ name: "", description: "" });
                 setIsAddBoardDialogOpen(true);
               }}
-              className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
+              className="flex items-center text-lg space-x-1 sm:space-x-2 bg-zinc-900 hover:bg-[#ff90e8] rounded-sm text-white dark:text-zinc-900 hover:text-zinc-900 transition-all duration-200 border-0 font-medium px-3 sm:px-8 py-2 sm:py-6 hover:shadow-[4px_6px_0px_black] dark:hover:shadow-[4px_6px_0px_#dddddd] transition duration-200 hover:translate-x-[-2px] hover:translate-y-[-2px] dark:bg-[#dddddd] "
             >
               <Plus className="w-4 h-4" />
               <span className="hidden sm:inline">Add Board</span>
             </Button>
 
-            <ProfileDropdown user={user} />
+            <div className="flex w-fit rounded-full sm:border-[8px] sm:border-zinc-900 sm:dark:border-[#dddddd] hover:border-[#ff90e8] transition-all duration-200 overflow-hidden">
+              <ProfileDropdown user={user} />
+            </div>
           </div>
         </div>
       </nav>
@@ -252,26 +256,26 @@ export default function Dashboard() {
         {boards.length > 0 && (
           <>
             <div className="mb-8">
-              <h3 className="text-lg font-medium text-foreground dark:text-zinc-100 mb-2">
+              <h3 className="text-xl sm:text-4xl font-bold text-foreground dark:text-zinc-100 mb-2">
                 Your Boards
               </h3>
-              <p className="text-muted-foreground dark:text-zinc-400">
+              <p className="text-zinc-500 text-sm sm:text-base">
                 Manage your tasks and notes across different boards
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
               <Link href="/boards/all-notes">
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer border-2 border-blue-200 dark:border-blue-900 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 dark:hover:bg-zinc-900/75">
+                <Card className="group hover:shadow-[6px_10px_0px_black]  hover:translate-x-[-4px] hover:translate-y-[-4px] transition-shadow cursor-pointer border-gray-800 dark:border-white hover:border-gray-900 hover:bg-[#ff90e8] dark:bg-neutral-900">
                   <CardHeader>
                     <div className="flex items-center space-x-2">
-                      <Grid3x3 className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                      <CardTitle className="text-lg text-blue-900 dark:text-blue-200">
+                      <Grid3x3 className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-gray-600" />
+                      <CardTitle className="text-lg sm:text-xl text-gray-900 dark:text-white group-hover:text-gray-900">
                         All Notes
                       </CardTitle>
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-blue-700 dark:text-blue-300 truncate">
+                    <p className="text-gray-700 dark:text-gray-300 group-hover:text-gray-700 truncate text-xs">
                       View notes from all boards
                     </p>
                   </CardContent>
@@ -280,7 +284,7 @@ export default function Dashboard() {
 
               {/* Archive Board */}
               <Link href="/boards/archive">
-                <Card className="group hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
+                <Card className="group hover:shadow-lg hover:shadow-[6px_10px_0px_black] dark:hover:shadow-[6px_10px_0px_#dddddd] hover:translate-x-[-4px] hover:translate-y-[-4px] transition-shadow cursor-pointer bg-white dark:bg-neutral-900 border-gray-800 dark:border-white dark:hover:bg-zinc-900/75">
                   <CardHeader>
                     <div className="flex items-center space-x-2">
                       <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
@@ -290,7 +294,7 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700 dark:text-gray-300 truncate">View archived notes</p>
+                    <p className="text-gray-700 dark:text-gray-300 text-xs truncate">View archived notes</p>
                   </CardContent>
                 </Card>
               </Link>
@@ -299,23 +303,21 @@ export default function Dashboard() {
                 <Link href={`/boards/${board.id}`} key={board.id}>
                   <Card
                     data-board-id={board.id}
-                    className="group hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
+                    className="group hover:shadow-lg hover:shadow-[6px_10px_0px_black] dark:hover:shadow-[6px_10px_0px_#dddddd] hover:translate-x-[-3px] hover:translate-y-[-3px] transition-shadow cursor-pointer bg-white dark:bg-neutral-900 border-gray-800 dark:border-white"
                   >
                     <CardHeader>
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                        <span className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium text-nowrap bg-gray-900 text-[#dddddd] dark:bg-[#dddddd] dark:text-gray-900">
                           {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
                         </span>
                       </div>
                     </CardHeader>
-                    {board.description && (
                       <CardContent>
-                        <p className="text-slate-600 dark:text-zinc-300 truncate">
-                          {board.description}
+                        <p className="text-slate-600 dark:text-zinc-300 text-xs min-h-[1rem] truncate">
+                          {board.description || ""}
                         </p>
                       </CardContent>
-                    )}
                   </Card>
                 </Link>
               ))}
