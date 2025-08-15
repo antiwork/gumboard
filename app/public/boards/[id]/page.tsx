@@ -99,7 +99,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     return headerHeight + paddingHeight + totalChecklistHeight + 40;
   };
 
-
   const calculateGridLayout = () => {
     if (typeof window === "undefined") return [];
 
@@ -412,10 +411,11 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
                             className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
                           />
                           <span
-                            className={`text-sm flex-1 ${item.checked
+                            className={`text-sm flex-1 ${
+                              item.checked
                                 ? "line-through text-gray-500 dark:text-gray-400"
                                 : "text-gray-900 dark:text-gray-100"
-                              }`}
+                            }`}
                           >
                             {item.content}
                           </span>
