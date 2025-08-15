@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { toast } from "sonner";
 
 // Core domain types
 export interface User {
@@ -143,6 +144,7 @@ export function Note({
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
+      const deletedItem = note.checklistItems.find((item) => item.id === itemId);
       const updatedItems = note.checklistItems.filter((item) => item.id !== itemId);
 
       const optimisticNote = {
@@ -169,6 +171,48 @@ export function Note({
         } else {
           onUpdate?.(note);
         }
+      }
+
+      if (deletedItem) {
+        toast("Item deleted", {
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                const restored = [...updatedItems, deletedItem]
+                  .sort((a, b) => a.order - b.order)
+                  .map((it, index) => ({ ...it, order: index }));
+
+                const optimisticRestored = {
+                  ...note,
+                  checklistItems: restored,
+                };
+                onUpdate?.(optimisticRestored);
+
+                if (syncDB) {
+                  const resp = await fetch(
+                    `/api/boards/${note.boardId}/notes/${note.id}`,
+                    {
+                      method: "PUT",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ checklistItems: restored }),
+                    }
+                  );
+                  if (resp.ok) {
+                    const { note: updatedNoteAfterUndo } = await resp.json();
+                    onUpdate?.(updatedNoteAfterUndo);
+                  } else {
+                    onUpdate?.(optimisticNote);
+                  }
+                }
+              } catch (e) {
+                console.error("Failed to undo checklist delete:", e);
+                onUpdate?.(optimisticNote);
+              }
+            },
+          },
+          duration: 4000,
+        });
       }
     } catch (error) {
       console.error("Error deleting checklist item:", error);
