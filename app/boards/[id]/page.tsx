@@ -1077,7 +1077,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setSearchTerm("");
                     setDebouncedSearchTerm("");
                     updateURL("");
-                    // Scroll to top when clearing search to maintain consistent UX
                     window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
