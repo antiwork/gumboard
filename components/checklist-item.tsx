@@ -56,7 +56,7 @@ export function ChecklistItem({
   };
 
   React.useEffect(() => {
-    if (isEditing && textareaRef.current) {
+    if (textareaRef.current) {
       adjustTextareaHeight(textareaRef.current);
       previousContentRef.current = editContent ?? item.content;
     }

@@ -43,7 +43,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -145,195 +145,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setSelectedAuthor(urlAuthor);
   };
 
-  // Enhanced responsive grid configuration
-  const getResponsiveConfig = () => {
-    if (typeof window === "undefined")
-      return {
-        noteWidth: 320,
-        gridGap: 20,
-        containerPadding: 20,
-        notePadding: 16,
-      };
-
-    const width = window.innerWidth;
-
-    // Ultra-wide screens (1920px+)
-    if (width >= 1920) {
-      return {
-        noteWidth: 340,
-        gridGap: 24,
-        containerPadding: 32,
-        notePadding: 18,
-      };
-    }
-    // Large desktop (1200px-1919px)
-    else if (width >= 1200) {
-      return {
-        noteWidth: 320,
-        gridGap: 20,
-        containerPadding: 24,
-        notePadding: 16,
-      };
-    }
-    // Medium desktop/laptop (768px-1199px)
-    else if (width >= 768) {
-      return {
-        noteWidth: 300,
-        gridGap: 16,
-        containerPadding: 20,
-        notePadding: 16,
-      };
-    }
-    // Small tablet (600px-767px)
-    else if (width >= 600) {
-      return {
-        noteWidth: 280,
-        gridGap: 16,
-        containerPadding: 16,
-        notePadding: 14,
-      };
-    }
-    // Mobile (less than 600px)
-    else {
-      return {
-        noteWidth: 260,
-        gridGap: 12,
-        containerPadding: 12,
-        notePadding: 12,
-      };
-    }
-  };
-
-  // Helper function to calculate note height based on content
-  const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
-    const config = getResponsiveConfig();
-    const actualNotePadding = notePadding || config.notePadding;
-
-    const headerHeight = 60; // User info header + margins
-    const paddingHeight = actualNotePadding * 2; // Top and bottom padding
-    const minContentHeight = 60; // Minimum content area
-
-    // All notes now use checklist items - calculate height based on number of items
-    const itemHeight = 32; // Use 32px for textarea-based items (slightly larger than main's 28px)
-    const itemSpacing = 4; // Space between items (space-y-1 = 4px)
-    const checklistItemsCount = note.checklistItems?.length || 0;
-    const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
-    const addTaskButtonHeight = 36; // Height for the "Add task" button including margin
-
-    const checklistHeight =
-      checklistItemsCount * itemHeight +
-      (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
-      addingItemHeight;
-    const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
-
-    return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
-  };
-
-  // Helper function to calculate bin-packed layout for desktop
-  const calculateGridLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate the actual available width and adjust note width to fill better
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-    // Ensure notes don't get too narrow or too wide based on screen size
-    const minWidth = config.noteWidth - 40;
-    const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
-
-    // Use full width with minimal left offset
-    const offsetX = config.containerPadding;
-
-    // Bin-packing algorithm: track the bottom Y position of each column
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: adjustedNoteWidth,
-        height: noteHeight,
-      };
-    });
-  };
-
-  // Helper function to calculate mobile layout (optimized single/double column)
-  const calculateMobileLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const minNoteWidth = config.noteWidth - 20; // Slightly smaller minimum for mobile
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate note width for mobile
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-
-    // Bin-packing for mobile with fewer columns
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: noteWidth,
-        height: noteHeight,
-      };
-    });
-  };
-
   useEffect(() => {
     const initializeParams = async () => {
       const resolvedParams = await params;
@@ -396,33 +207,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
   // Removed debounce cleanup effect; editing is scoped to Note
-
-  // Enhanced responsive handling with debounced resize and better breakpoints
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768); // Tablet breakpoint
-
-        // Force re-render of notes layout after screen size change
-        // This ensures notes are properly repositioned
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50); // Debounce resize events - reduced for real-time feel
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -530,19 +314,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
   const layoutNotes = useMemo(
-    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, calculateMobileLayout, calculateGridLayout]
+    () =>
+      filteredNotes.map((note) => ({
+        ...note,
+      })),
+    [filteredNotes]
   );
-
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -1098,34 +875,32 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         ref={boardRef}
         className="relative w-full"
         style={{
-          height: boardHeight,
           minHeight: "calc(100vh - 64px)", // Account for header height
         }}
       >
         {/* Notes */}
-        <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
-          ))}
+        <div className="w-full p-3 sm:p-4 md:p-5 lg:p-6">
+          <div className="columns-1 gap-5 w-full sm:columns-2 md:columns-3 lg:columns-4 2xl:columns-6">
+            {layoutNotes.map((note) => (
+              <div key={note.id} className="break-inside-avoid mb-5 w-full">
+                <NoteCard
+                  note={note as Note}
+                  currentUser={user as User}
+                  onUpdate={handleUpdateNoteFromComponent}
+                  onDelete={handleDeleteNote}
+                  onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                  onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                  showBoardName={boardId === "all-notes" || boardId === "archive"}
+                  className="shadow-md shadow-black/10 w-full p-4"
+                  style={{
+                    width: "100%",
+                    minHeight: "200px",
+                    backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
 
         {/* Empty State */}
