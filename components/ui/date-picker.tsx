@@ -17,11 +17,6 @@ function formatDate(date: Date | undefined) {
   })
 }
 
-function isValidDate(date: Date | undefined) {
-  if (!date) return false
-  return !isNaN(date.getTime())
-}
-
 export interface DatePickerProps extends React.InputHTMLAttributes<HTMLInputElement> {
   value?: string
   onValueChange?: (value: string) => void
