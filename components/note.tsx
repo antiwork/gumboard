@@ -99,10 +99,7 @@ export function Note({
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
 
-      const sortedItems = [
-        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
-        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
-      ];
+      const sortedItems = updatedItems.sort((a, b) => a.order - b.order);
 
       const optimisticNote = {
         ...note,
@@ -357,7 +354,7 @@ export function Note({
             <AvatarImage src={note.user.image || ""} alt={note.user.name || ""} />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 truncate max-w-20">
+            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 truncate max-w-20">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
