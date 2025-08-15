@@ -5,7 +5,10 @@ export function getUniqueAuthors(notes: Note[]) {
     return [];
   }
 
-  const authorsMap = new Map<string, { id: string; name: string; email: string; image?: string | null }>();
+  const authorsMap = new Map<
+    string,
+    { id: string; name: string; email: string; image?: string | null }
+  >();
 
   notes.forEach((note) => {
     if (note && note.user && note.user.id && note.user.email) {
@@ -40,7 +43,7 @@ export function filterAndSortNotes(
     const search = searchTerm.toLowerCase();
     filteredNotes = filteredNotes.filter((note) => {
       if (!note || !note.user) return false;
-      
+
       const authorName = (note.user.name || note.user.email || "").toLowerCase();
       const checklistContent =
         note.checklistItems?.map((item) => item?.content || "").join(" ") || "";
@@ -55,10 +58,10 @@ export function filterAndSortNotes(
   if (dateRange && (dateRange.startDate || dateRange.endDate)) {
     filteredNotes = filteredNotes.filter((note) => {
       if (!note || !note.createdAt) return false;
-      
+
       const noteDate = new Date(note.createdAt);
       if (isNaN(noteDate.getTime())) return false;
-      
+
       const startOfDay = (date: Date) =>
         new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const endOfDay = (date: Date) =>
@@ -80,7 +83,7 @@ export function filterAndSortNotes(
   if (currentUser && currentUser.id) {
     return filteredNotes.sort((a, b) => {
       if (!a || !b || !a.user || !b.user) return 0;
-      
+
       const aIsCurrentUser = a.user.id === currentUser.id;
       const bIsCurrentUser = b.user.id === currentUser.id;
 
@@ -95,7 +98,7 @@ export function filterAndSortNotes(
 
   return filteredNotes.sort((a, b) => {
     if (!a || !b) return 0;
-    
+
     const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
     const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
     return bDate - aDate;
