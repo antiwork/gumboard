@@ -1,16 +1,22 @@
-// Shared utilities for note operations
 import type { Note, User } from "@/components/note";
 
 export function getUniqueAuthors(notes: Note[]) {
-  const authorsMap = new Map<string, { id: string; name: string; email: string }>();
+  if (!notes || !Array.isArray(notes) || notes.length === 0) {
+    return [];
+  }
+
+  const authorsMap = new Map<string, { id: string; name: string; email: string; image?: string | null }>();
 
   notes.forEach((note) => {
-    if (!authorsMap.has(note.user.id)) {
-      authorsMap.set(note.user.id, {
-        id: note.user.id,
-        name: note.user.name || note.user.email.split("@")[0],
-        email: note.user.email,
-      });
+    if (note && note.user && note.user.id && note.user.email) {
+      if (!authorsMap.has(note.user.id)) {
+        authorsMap.set(note.user.id, {
+          id: note.user.id,
+          name: note.user.name || note.user.email.split("@")[0],
+          email: note.user.email,
+          image: note.user.image || null,
+        });
+      }
     }
   });
 
@@ -24,28 +30,35 @@ export function filterAndSortNotes(
   authorId: string | null,
   currentUser: User | null
 ): Note[] {
+  if (!notes || !Array.isArray(notes)) {
+    return [];
+  }
+
   let filteredNotes = notes;
 
-  // Filter by search term
-  if (searchTerm.trim()) {
+  if (searchTerm && searchTerm.trim()) {
     const search = searchTerm.toLowerCase();
     filteredNotes = filteredNotes.filter((note) => {
-      const authorName = (note.user.name || note.user.email).toLowerCase();
+      if (!note || !note.user) return false;
+      
+      const authorName = (note.user.name || note.user.email || "").toLowerCase();
       const checklistContent =
-        note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
+        note.checklistItems?.map((item) => item?.content || "").join(" ") || "";
       return authorName.includes(search) || checklistContent.includes(search);
     });
   }
 
-  // Filter by author
   if (authorId) {
-    filteredNotes = filteredNotes.filter((note) => note.user.id === authorId);
+    filteredNotes = filteredNotes.filter((note) => note && note.user && note.user.id === authorId);
   }
 
-  // Filter by date range
-  if (dateRange.startDate || dateRange.endDate) {
+  if (dateRange && (dateRange.startDate || dateRange.endDate)) {
     filteredNotes = filteredNotes.filter((note) => {
+      if (!note || !note.createdAt) return false;
+      
       const noteDate = new Date(note.createdAt);
+      if (isNaN(noteDate.getTime())) return false;
+      
       const startOfDay = (date: Date) =>
         new Date(date.getFullYear(), date.getMonth(), date.getDate());
       const endOfDay = (date: Date) =>
@@ -64,20 +77,27 @@ export function filterAndSortNotes(
     });
   }
 
-  // Sort notes with user priority (current user's notes first) and then by creation date (newest first)
-  if (currentUser) {
+  if (currentUser && currentUser.id) {
     return filteredNotes.sort((a, b) => {
+      if (!a || !b || !a.user || !b.user) return 0;
+      
       const aIsCurrentUser = a.user.id === currentUser.id;
       const bIsCurrentUser = b.user.id === currentUser.id;
 
       if (aIsCurrentUser && !bIsCurrentUser) return -1;
       if (!aIsCurrentUser && bIsCurrentUser) return 1;
 
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bDate - aDate;
     });
   }
 
-  return filteredNotes.sort(
-    (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-  );
+  return filteredNotes.sort((a, b) => {
+    if (!a || !b) return 0;
+    
+    const aDate = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+    const bDate = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+    return bDate - aDate;
+  });
 }
