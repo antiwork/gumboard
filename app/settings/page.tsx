@@ -5,15 +5,28 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail } from "lucide-react";
+import { Mail, Trash2, AlertTriangle } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
+
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useUser } from "@/app/contexts/UserContext";
 import { useRouter } from "next/navigation";
 
 export default function ProfileSettingsPage() {
   const { user, loading, refreshUser } = useUser();
   const [saving, setSaving] = useState(false);
-  const [profileName, setProfileName] = useState(user?.name || "");
+  const [deleting, setDeleting] = useState(false);
+  const [profileName, setProfileName] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -27,6 +40,22 @@ export default function ProfileSettingsPage() {
       router.push("/auth/signin");
     }
   }, [user, loading, router]);
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const response = await fetch("/api/user", { method: "DELETE" });
+      if (response.ok) {
+        router.push("/");
+        return;
+      }
+      console.error("Error deleting account:", await response.text());
+    } catch (error) {
+      console.error("Error deleting account:", error);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleSaveProfile = async () => {
     setSaving(true);
@@ -116,6 +145,69 @@ export default function ProfileSettingsPage() {
           >
             {saving ? "Saving..." : "Save Changes"}
           </Button>
+        </div>
+        <div className="pt-6 border-t border-gray-200 dark:border-zinc-800">
+          <div className="rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50/60 dark:bg-red-950/30 p-4">
+            <div className="flex items-start gap-3">
+              <div className="mt-1 text-red-600 dark:text-red-400">
+                <AlertTriangle className="w-5 h-5" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-red-700 dark:text-red-400">
+                  Danger zone
+                </h3>
+                <p className="text-sm text-red-700/80 dark:text-red-300/80">
+                  Deleting your account will remove you from your organization and delete content
+                  you created that is owned by you. This action cannot be undone.
+                </p>
+                <div className="mt-4">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button className="bg-red-600 hover:bg-red-700 text-white">
+                        <Trash2 className="w-4 h-4" />
+                        Delete account
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent className="sm:max-w-md bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+                          <AlertTriangle className="w-5 h-5" />
+                          Delete account?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="text-foreground dark:text-zinc-100">
+                          This will permanently delete your account and related data. This action
+                          cannot be undone.
+                          <ul className="list-disc pl-5 mt-2 text-sm">
+                            <li>You will be signed out immediately.</li>
+                            <li>Your personal profile will be removed.</li>
+                            <li>
+                              Notes and content owned by you may be deleted or reassigned, depending
+                              on organization settings.
+                            </li>
+                          </ul>
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel
+                          disabled={deleting}
+                          className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                        >
+                          Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-red-600 hover:bg-red-700 text-white"
+                          onClick={handleDeleteAccount}
+                          disabled={deleting}
+                        >
+                          {deleting ? "Deleting..." : "Yes, delete"}
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </Card>

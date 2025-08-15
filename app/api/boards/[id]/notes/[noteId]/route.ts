@@ -177,7 +177,7 @@ export async function PUT(
           ...(archivedAt !== undefined && { archivedAt }),
         },
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: { select: { id: true, name: true, email: true, image: true } },
           board: { select: { name: true, sendSlackUpdates: true } },
           checklistItems: { orderBy: { order: "asc" } },
         },

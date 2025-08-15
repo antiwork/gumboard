@@ -435,7 +435,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
+    const authorsMap = new Map<
+      string,
+      { id: string; name: string; email: string; image?: string | null }
+    >();
 
     notes.forEach((note) => {
       if (!authorsMap.has(note.user.id)) {
@@ -443,6 +446,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           id: note.user.id,
           name: note.user.name || note.user.email.split("@")[0],
           email: note.user.email,
+          image: note.user.image,
         });
       }
     });
@@ -1023,7 +1027,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
 
             {/* Filter Popover */}
-            <div className="relative board-dropdown mr-0">
+            <div className="relative board-dropdown mr-0" data-slot="filter-popover">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
@@ -1221,7 +1225,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setNewBoardName("");
                     setNewBoardDescription("");
                   }}
-                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-300 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-300 dark:hover:bg-zinc-800"
                 >
                   Cancel
                 </Button>
@@ -1262,7 +1266,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </AlertDialog>
 
       <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Board settings
@@ -1362,6 +1366,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onCheckedChange={(checked) =>
                   setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
                 }
+                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
               />
               <label
                 htmlFor="sendSlackUpdates"
@@ -1375,18 +1380,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </p>
           </div>
 
-          <AlertDialogFooter className="flex justify-between">
+          <AlertDialogFooter className="flex !flex-row justify-between">
             <Button
               onClick={() => setDeleteConfirmDialog(true)}
               variant="destructive"
-              className="mr-auto"
+              className="mr-auto bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Board
+              <Trash2 className="w-4 h-4" />
+              Delete <span className="hidden lg:inline">Board</span>
             </Button>
-            <div className="flex space-x-2">
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>
+            <div className="flex space-x-2 items-center">
+              <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleUpdateBoardSettings(boardSettings)}
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
+              >
                 Save settings
               </AlertDialogAction>
             </div>
