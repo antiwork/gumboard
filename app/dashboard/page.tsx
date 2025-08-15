@@ -338,7 +338,7 @@ export default function Dashboard() {
                 setIsAddBoardDialogOpen(true);
                 form.reset({ name: "", description: "" });
               }}
-              className="dark:bg-blue-500 dark:hover:bg-blue-600"
+              className="dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
             >
               Create your first board
             </Button>

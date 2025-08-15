@@ -109,7 +109,7 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
         </Button>
 
         <p className="text-xs text-muted-foreground">
-          {`we'll send invitations to join your organization to these email addresses.`}
+          {`We'll send invitations to join your organization to these email addresses.`}
         </p>
       </div>
 
