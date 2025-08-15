@@ -62,6 +62,7 @@ interface NoteProps {
   currentUser?: User;
   onUpdate?: (note: Note) => void;
   onDelete?: (noteId: string) => void;
+  onDuplicate?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
   onUnarchive?: (noteId: string) => void;
   readonly?: boolean;
@@ -75,6 +76,7 @@ export function Note({
   currentUser,
   onUpdate,
   onDelete,
+  onDuplicate,
   onArchive,
   onUnarchive,
   readonly = false,
@@ -392,6 +394,30 @@ export function Note({
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Delete note</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+          )}
+          {canEdit && onDuplicate && (
+            <div className="flex items-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDuplicate?.(note.id);
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-zinc-900 dark:hover:text-zinc-100 rounded"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Duplicate note"
+                  >
+                    {/* using Archive icon rotated as placeholder is not ideal; keeping minimal change: reuse Archive icon */}
+                    <Archive className="w-3 h-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Duplicate note</p>
                 </TooltipContent>
               </Tooltip>
             </div>
