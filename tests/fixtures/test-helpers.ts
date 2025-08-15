@@ -1,4 +1,5 @@
-import { test as base, Page } from "@playwright/test";
+import type { Page } from "@playwright/test";
+import { test as base } from "@playwright/test";
 import { randomBytes } from "crypto";
 import { PrismaClient } from "@prisma/client";
 

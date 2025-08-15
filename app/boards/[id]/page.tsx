@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,19 +23,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-// Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import {
-  getResponsiveConfig,
-  getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
-  filterAndSortNotes,
-} from "@/lib/utils";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -44,7 +36,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [notesloading, setNotesLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
-  // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
@@ -62,7 +53,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
-  // Per-item edit and animations are handled inside Note component now
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
     title: string;
@@ -88,38 +78,32 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   }, [user, userLoading, router]);
 
-  // Update URL with current filter state
-  const updateURL = (
-    newSearchTerm?: string,
-    newDateRange?: { startDate: Date | null; endDate: Date | null },
-    newAuthor?: string | null
-  ) => {
-    const params = new URLSearchParams();
+  // Update URL with current filter state (stable)
+  const updateURL = useCallback(
+    (
+      newSearchTerm?: string,
+      newDateRange?: { startDate: Date | null; endDate: Date | null },
+      newAuthor?: string | null
+    ) => {
+      const params = new URLSearchParams();
 
-    const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
-    const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
-    const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
+      const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
+      const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
+      const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
 
-    if (currentSearchTerm) {
-      params.set("search", currentSearchTerm);
-    }
+      if (currentSearchTerm) params.set("search", currentSearchTerm);
+      if (currentDateRange.startDate)
+        params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
+      if (currentDateRange.endDate)
+        params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
+      if (currentAuthor) params.set("author", currentAuthor);
 
-    if (currentDateRange.startDate) {
-      params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
-    }
-
-    if (currentDateRange.endDate) {
-      params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
-    }
-
-    if (currentAuthor) {
-      params.set("author", currentAuthor);
-    }
-
-    const queryString = params.toString();
-    const newURL = queryString ? `?${queryString}` : window.location.pathname;
-    router.replace(newURL, { scroll: false });
-  };
+      const queryString = params.toString();
+      const newURL = queryString ? `?${queryString}` : window.location.pathname;
+      router.replace(newURL, { scroll: false });
+    },
+    [searchTerm, dateRange, selectedAuthor, router]
+  );
 
   // Initialize filters from URL parameters
   const initializeFiltersFromURL = () => {
@@ -130,27 +114,100 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     setSearchTerm(urlSearchTerm);
 
-    // Parse dates safely
     let startDate: Date | null = null;
     let endDate: Date | null = null;
 
     if (urlStartDate) {
       const parsedStartDate = new Date(urlStartDate);
-      if (!isNaN(parsedStartDate.getTime())) {
-        startDate = parsedStartDate;
-      }
+      if (!isNaN(parsedStartDate.getTime())) startDate = parsedStartDate;
     }
 
     if (urlEndDate) {
       const parsedEndDate = new Date(urlEndDate);
-      if (!isNaN(parsedEndDate.getTime())) {
-        endDate = parsedEndDate;
-      }
+      if (!isNaN(parsedEndDate.getTime())) endDate = parsedEndDate;
     }
 
     setDateRange({ startDate, endDate });
     setSelectedAuthor(urlAuthor);
   };
+
+  // Responsive config (stable)
+  const getResponsiveConfig = useCallback(() => {
+    if (typeof window === "undefined")
+      return {
+        noteWidth: 320,
+        gridGap: 20,
+        containerPadding: 20,
+        notePadding: 16,
+      };
+
+    const width = window.innerWidth;
+
+    if (width >= 1920) {
+      return {
+        noteWidth: 340,
+        gridGap: 24,
+        containerPadding: 32,
+        notePadding: 18,
+      };
+    } else if (width >= 1200) {
+      return {
+        noteWidth: 320,
+        gridGap: 20,
+        containerPadding: 24,
+        notePadding: 16,
+      };
+    } else if (width >= 768) {
+      return {
+        noteWidth: 300,
+        gridGap: 16,
+        containerPadding: 20,
+        notePadding: 16,
+      };
+    } else if (width >= 600) {
+      return {
+        noteWidth: 280,
+        gridGap: 16,
+        containerPadding: 16,
+        notePadding: 14,
+      };
+    } else {
+      return {
+        noteWidth: 260,
+        gridGap: 12,
+        containerPadding: 12,
+        notePadding: 12,
+      };
+    }
+  }, []);
+
+  // Calculate note height (stable)
+  const calculateNoteHeight = useCallback(
+    (note: Note, noteWidth?: number, notePadding?: number) => {
+      const config = getResponsiveConfig();
+      const actualNotePadding = notePadding || config.notePadding;
+
+      const headerHeight = 60;
+      const paddingHeight = actualNotePadding * 2;
+      const minContentHeight = 60;
+
+      const itemHeight = 32;
+      const itemSpacing = 4;
+      const checklistItemsCount = note.checklistItems?.length || 0;
+      const addingItemHeight = addingChecklistItem === note.id ? 32 : 0;
+      const addTaskButtonHeight = 36;
+
+      const checklistHeight =
+        checklistItemsCount * itemHeight +
+        (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
+        addingItemHeight;
+
+      const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
+
+      return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
+    },
+    [addingChecklistItem, getResponsiveConfig]
+  );
 
   useEffect(() => {
     const initializeParams = async () => {
@@ -191,12 +248,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (addingChecklistItem) {
-          setAddingChecklistItem(null);
-        }
-        if (showBoardDropdown) {
-          setShowBoardDropdown(false);
-        }
+        if (addingChecklistItem) setAddingChecklistItem(null);
+        if (showBoardDropdown) setShowBoardDropdown(false);
         if (showAddBoard) {
           setShowAddBoard(false);
           setNewBoardName("");
@@ -213,8 +266,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
   }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
-  // Removed debounce cleanup effect; editing is scoped to Note
-
   // Enhanced responsive handling with debounced resize and better breakpoints
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
@@ -222,15 +273,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const checkResponsive = () => {
       if (typeof window !== "undefined") {
         const width = window.innerWidth;
-        setIsMobile(width < 768); // Tablet breakpoint
+        setIsMobile(width < 768);
 
-        // Force re-render of notes layout after screen size change
-        // This ensures notes are properly repositioned
         clearTimeout(resizeTimeout);
         resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
           setNotes((prevNotes) => [...prevNotes]);
-        }, 50); // Debounce resize events - reduced for real-time feel
+        }, 50);
       }
     };
 
@@ -242,6 +290,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
   }, []);
 
+  // Debounce search + update URL (now depends on stable updateURL)
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -249,28 +298,172 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, updateURL]);
 
-  // Get unique authors for dropdown
+  // Unique authors
+  const getUniqueAuthors = (notes: Note[]) => {
+    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
+    notes.forEach((note) => {
+      if (!authorsMap.has(note.user.id)) {
+        authorsMap.set(note.user.id, {
+          id: note.user.id,
+          name: note.user.name || note.user.email.split("@")[0],
+          email: note.user.email,
+        });
+      }
+    });
+    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+  };
+
+  // Filter/sort notes
+  const filterAndSortNotes = (
+    notes: Note[],
+    searchTerm: string,
+    dateRange: { startDate: Date | null; endDate: Date | null },
+    authorId: string | null,
+    currentUser: User | null
+  ): Note[] => {
+    let filteredNotes = notes;
+
+    if (searchTerm.trim()) {
+      const search = searchTerm.toLowerCase();
+      filteredNotes = filteredNotes.filter((note) => {
+        const authorName = (note.user.name || note.user.email).toLowerCase();
+        const checklistContent =
+          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
+        return authorName.includes(search) || checklistContent.includes(search);
+      });
+    }
+
+    if (authorId) {
+      filteredNotes = filteredNotes.filter((note) => note.user.id === authorId);
+    }
+
+    if (dateRange.startDate || dateRange.endDate) {
+      filteredNotes = filteredNotes.filter((note) => {
+        const noteDate = new Date(note.createdAt);
+        const startOfDay = (date: Date) =>
+          new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        const endOfDay = (date: Date) =>
+          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
+
+        if (dateRange.startDate && dateRange.endDate) {
+          return noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate);
+        } else if (dateRange.startDate) {
+          return noteDate >= startOfDay(dateRange.startDate);
+        } else if (dateRange.endDate) {
+          return noteDate <= endOfDay(dateRange.endDate);
+        }
+        return true;
+      });
+    }
+
+    filteredNotes.sort((a, b) => {
+      if (currentUser) {
+        const aIsCurrentUser = a.user.id === currentUser.id;
+        const bIsCurrentUser = b.user.id === currentUser.id;
+        if (aIsCurrentUser && !bIsCurrentUser) return -1;
+        if (!aIsCurrentUser && bIsCurrentUser) return 1;
+      }
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
+
+    return filteredNotes;
+  };
+
+  // Memos for authors and filtered notes
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
-  // Get filtered and sorted notes for display
   const filteredNotes = useMemo(
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
+
+  // Desktop/mobile layout calculators (stable + depend on filteredNotes)
+  const calculateGridLayout = useCallback(() => {
+    if (typeof window === "undefined") return [];
+
+    const config = getResponsiveConfig();
+    const containerWidth = window.innerWidth - config.containerPadding * 2;
+    const noteWidthWithGap = config.noteWidth + config.gridGap;
+    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
+    const actualColumnsCount = Math.max(1, columnsCount);
+
+    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
+    const minWidth = config.noteWidth - 40;
+    const maxWidth = config.noteWidth + 80;
+    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
+
+    const offsetX = config.containerPadding;
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
+
+    return filteredNotes.map((note) => {
+      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
+
+      let bestColumn = 0;
+      let minBottom = columnBottoms[0];
+
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+
+      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
+      const y = columnBottoms[bestColumn];
+
+      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
+
+      return { ...note, x, y, width: adjustedNoteWidth, height: noteHeight };
+    });
+  }, [filteredNotes, getResponsiveConfig, calculateNoteHeight]);
+
+  const calculateMobileLayout = useCallback(() => {
+    if (typeof window === "undefined") return [];
+
+    const config = getResponsiveConfig();
+    const containerWidth = window.innerWidth - config.containerPadding * 2;
+    const minNoteWidth = config.noteWidth - 20;
+    const columnsCount = Math.floor((containerWidth + config.gridGap) / (minNoteWidth + config.gridGap));
+    const actualColumnsCount = Math.max(1, columnsCount);
+
+    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
+    const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
+
+    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
+
+    return filteredNotes.map((note) => {
+      const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
+
+      let bestColumn = 0;
+      let minBottom = columnBottoms[0];
+
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+
+      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
+      const y = columnBottoms[bestColumn];
+
+      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
+
+      return { ...note, x, y, width: noteWidth, height: noteHeight };
+    });
+  }, [filteredNotes, getResponsiveConfig, calculateNoteHeight]);
+
+  // Choose layout
   const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
-        : calculateGridLayout(filteredNotes, addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem]
+    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
+    [isMobile, calculateMobileLayout, calculateGridLayout]
   );
 
   const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
+    if (layoutNotes.length === 0) return "calc(100vh - 64px)";
     const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
     const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
     const calculatedHeight = Math.max(minHeight, maxBottom + 100);
@@ -279,35 +472,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const fetchBoardData = async () => {
     try {
-      // Fetch all boards for the dropdown
       let allBoardsResponse: Response;
       let notesResponse: Response | undefined;
       let boardResponse: Response | undefined;
 
       if (boardId === "all-notes") {
-        // For all notes view, create a virtual board object and fetch all notes
-        [allBoardsResponse, notesResponse] = await Promise.all([
-          fetch("/api/boards"),
-          fetch(`/api/boards/all-notes/notes`),
-        ]);
-
-        setBoard({
-          id: "all-notes",
-          name: "All notes",
-          description: "Notes from all boards",
-        });
+        [allBoardsResponse, notesResponse] = await Promise.all([fetch("/api/boards"), fetch(`/api/boards/all-notes/notes`)]);
+        setBoard({ id: "all-notes", name: "All notes", description: "Notes from all boards" });
       } else if (boardId === "archive") {
-        [allBoardsResponse, notesResponse] = await Promise.all([
-          fetch("/api/boards"),
-          fetch(`/api/boards/archive/notes`),
-        ]);
-
-        // Set virtual board immediately
-        setBoard({
-          id: "archive",
-          name: "Archive",
-          description: "Archived notes from all boards",
-        });
+        [allBoardsResponse, notesResponse] = await Promise.all([fetch("/api/boards"), fetch(`/api/boards/archive/notes`)]);
+        setBoard({ id: "archive", name: "Archive", description: "Archived notes from all boards" });
       } else {
         [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
           fetch("/api/boards"),
@@ -351,18 +525,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  // Adapter: bridge component Note -> existing update handler
   const handleUpdateNoteFromComponent = async (updatedNote: Note) => {
-    // Find the note to get its board ID for all notes view
     const currentNote = notes.find((n) => n.id === updatedNote.id);
     if (!currentNote) return;
-
-    // OPTIMISTIC UPDATE: Update UI immediately
     setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
   const handleAddNote = async (targetBoardId?: string) => {
-    // For all notes view, ensure a board is selected
     if (boardId === "all-notes" && !targetBoardId) {
       setErrorDialog({
         open: true,
@@ -376,19 +545,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const actualTargetBoardId = boardId === "all-notes" ? targetBoardId : boardId;
       const isAllNotesView = boardId === "all-notes";
 
-      const response = await fetch(
-        `/api/boards/${isAllNotesView ? "all-notes" : actualTargetBoardId}/notes`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: [],
-            ...(isAllNotesView && { boardId: targetBoardId }),
-          }),
-        }
-      );
+      const response = await fetch(`/api/boards/${isAllNotesView ? "all-notes" : actualTargetBoardId}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ checklistItems: [], ...(isAllNotesView && { boardId: targetBoardId }) }),
+      });
 
       if (response.ok) {
         const { note } = await response.json();
@@ -410,9 +571,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     const timeoutId = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-          method: "DELETE",
-        });
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, { method: "DELETE" });
         if (!response.ok) {
           setNotes((prev) => [noteToDelete, ...prev]);
           const errorData = await response.json().catch(() => null);
@@ -425,11 +584,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       } catch (error) {
         console.error("Error deleting note:", error);
         setNotes((prev) => [noteToDelete, ...prev]);
-        setErrorDialog({
-          open: true,
-          title: "Failed to delete note",
-          description: "Failed to delete note",
-        });
+        setErrorDialog({ open: true, title: "Failed to delete note", description: "Failed to delete note" });
       } finally {
         delete pendingDeleteTimeoutsRef.current[noteId];
       }
@@ -468,18 +623,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       });
 
       if (!response.ok) {
-        // Revert on error
         setNotes([...notes, currentNote]);
-        setErrorDialog({
-          open: true,
-          title: "Archive Failed",
-          description: "Failed to archive note. Please try again.",
-        });
+        setErrorDialog({ open: true, title: "Archive Failed", description: "Failed to archive note. Please try again." });
       }
     } catch (error) {
       console.error("Error archiving note:", error);
     }
   };
+
   const handleUnarchiveNote = async (noteId: string) => {
     try {
       const currentNote = notes.find((n) => n.id === noteId);
@@ -498,11 +649,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (!response.ok) {
         setNotes([...notes, currentNote]);
-        setErrorDialog({
-          open: true,
-          title: "Unarchive Failed",
-          description: "Failed to unarchive note. Please try again.",
-        });
+        setErrorDialog({ open: true, title: "Unarchive Failed", description: "Failed to unarchive note. Please try again." });
       }
     } catch (error) {
       console.error("Error unarchiving note:", error);
@@ -516,13 +663,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     try {
       const response = await fetch("/api/boards", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: newBoardName,
-          description: newBoardDescription,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: newBoardName, description: newBoardDescription }),
       });
 
       if (response.ok) {
@@ -543,11 +685,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       }
     } catch (error) {
       console.error("Error creating board:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to create board",
-        description: "Failed to create board",
-      });
+      setErrorDialog({ open: true, title: "Failed to create board", description: "Failed to create board" });
     }
   };
 
@@ -593,10 +731,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const handleDeleteBoard = async () => {
     try {
-      const response = await fetch(`/api/boards/${boardId}`, {
-        method: "DELETE",
-      });
-
+      const response = await fetch(`/api/boards/${boardId}`, { method: "DELETE" });
       if (response.ok) {
         router.push("/dashboard");
       } else {
@@ -609,11 +744,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       }
     } catch (error) {
       console.error("Error deleting board:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to delete board",
-        description: "Failed to delete board",
-      });
+      setErrorDialog({ open: true, title: "Failed to delete board", description: "Failed to delete board" });
     }
     setDeleteConfirmDialog(false);
   };
@@ -652,20 +783,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className={`flex items-center justify-between ${showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"} text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
+                className={`flex items-center justify-between ${
+                  showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                } text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
               >
                 <div>
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
-                    {boardId === "all-notes"
-                      ? "All notes"
-                      : boardId === "archive"
-                        ? "Archive"
-                        : board?.name}
+                    {boardId === "all-notes" ? "All notes" : boardId === "archive" ? "Archive" : board?.name}
                   </div>
                 </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform }`}
-                />
+                <ChevronDown className="w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform }" />
               </Button>
 
               {showBoardDropdown && (
@@ -687,9 +814,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       </Link>
                     ))}
 
-                    {allBoards.length > 0 && (
-                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
-                    )}
+                    {allBoards.length > 0 && <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>}
 
                     {/* All Notes Option */}
                     <Link
@@ -737,8 +862,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                             name: board?.name || "",
                             description: board?.description || "",
                             isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                            sendSlackUpdates:
-                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                            sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
                           });
                           setBoardSettingsDialog(true);
                           setShowBoardDropdown(false);
@@ -756,7 +880,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
 
             {/* Filter Popover */}
-            <div className="relative board-dropdown mr-0" data-slot="filter-popover">
+            <div className="relative board-dropdown mr-0">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
@@ -832,7 +956,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         className="relative w-full"
         style={{
           height: boardHeight,
-          minHeight: "calc(100vh - 64px)", // Account for header height
+          minHeight: "calc(100vh - 64px)",
         }}
       >
         {/* Notes */}
@@ -872,9 +996,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 No notes match your current filters
                 {searchTerm && <div>Search: &quot;{searchTerm}&quot;</div>}
                 {selectedAuthor && (
-                  <div>
-                    Author: {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name || "Unknown"}
-                  </div>
+                  <div>Author: {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name || "Unknown"}</div>
                 )}
                 {(dateRange.startDate || dateRange.endDate) && (
                   <div>
@@ -914,15 +1036,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-gray-200 dark:border-zinc-800"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
-              Create new board
-            </h3>
+            <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">Create new board</h3>
             <form onSubmit={handleAddBoard}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                    Board name
-                  </label>
+                  <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">Board name</label>
                   <Input
                     type="text"
                     value={newBoardName}
@@ -954,14 +1072,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setNewBoardName("");
                     setNewBoardDescription("");
                   }}
-                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-300 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-300 dark:hover:bg-zinc-800"
+                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 >
                   Cancel
                 </Button>
-                <Button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-zinc-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
-                >
+                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-zinc-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100">
                   Create board
                 </Button>
               </div>
@@ -970,18 +1085,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-      <AlertDialog
-        open={errorDialog.open}
-        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
-      >
+      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              {errorDialog.title}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              {errorDialog.description}
-            </AlertDialogDescription>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">{errorDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">{errorDialog.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogAction
@@ -995,11 +1103,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </AlertDialog>
 
       <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              Board settings
-            </AlertDialogTitle>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">Board settings</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
               Configure settings for &quot;{board?.name}&quot; board.
             </AlertDialogDescription>
@@ -1007,9 +1113,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
           <div className="py-4 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                Board name
-              </label>
+              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">Board name</label>
               <Input
                 type="text"
                 value={boardSettings.name}
@@ -1019,15 +1123,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                Description (optional)
-              </label>
+              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">Description (optional)</label>
               <Input
                 type="text"
                 value={boardSettings.description}
-                onChange={(e) =>
-                  setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
-                }
+                onChange={(e) => setBoardSettings((prev) => ({ ...prev, description: e.target.value }))}
                 placeholder="Enter board description"
                 className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
               />
@@ -1037,40 +1137,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 <Switch
                   id="isPublic"
                   checked={boardSettings.isPublic}
-                  onCheckedChange={(checked) =>
-                    setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))
-                  }
+                  onCheckedChange={(checked) => setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))}
                 />
-                <label
-                  htmlFor="isPublic"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
-                >
+                <label htmlFor="isPublic" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100">
                   Make board public
                 </label>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-                When enabled, anyone with the link can view this board
-              </p>
+              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">When enabled, anyone with the link can view this board</p>
 
               {boardSettings.isPublic && (
                 <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium text-foreground dark:text-zinc-100">
-                        Public link
-                      </p>
+                      <p className="text-sm font-medium text-foreground dark:text-zinc-100">Public link</p>
                       <p className="text-xs text-muted-foreground dark:text-zinc-400 break-all">
-                        {typeof window !== "undefined"
-                          ? `${window.location.origin}/public/boards/${boardId}`
-                          : ""}
+                        {typeof window !== "undefined" ? `${window.location.origin}/public/boards/${boardId}` : ""}
                       </p>
                     </div>
-                    <Button
-                      onClick={handleCopyPublicUrl}
-                      size="sm"
-                      variant="outline"
-                      className="ml-3 flex items-center space-x-1"
-                    >
+                    <Button onClick={handleCopyPublicUrl} size="sm" variant="outline" className="ml-3 flex items-center space-x-1">
                       {copiedPublicUrl ? (
                         <>
                           <span className="text-xs">✓</span>
@@ -1092,15 +1176,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               <Checkbox
                 id="sendSlackUpdates"
                 checked={boardSettings.sendSlackUpdates}
-                onCheckedChange={(checked) =>
-                  setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
-                }
-                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
+                onCheckedChange={(checked) => setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))}
               />
-              <label
-                htmlFor="sendSlackUpdates"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
-              >
+              <label htmlFor="sendSlackUpdates" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100">
                 Send updates to Slack
               </label>
             </div>
@@ -1109,25 +1187,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </p>
           </div>
 
-          <AlertDialogFooter className="flex !flex-row justify-between">
-            <Button
-              onClick={() => setDeleteConfirmDialog(true)}
-              variant="destructive"
-              className="mr-auto bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete <span className="hidden lg:inline">Board</span>
+          <AlertDialogFooter className="flex justify-between">
+            <Button onClick={() => setDeleteConfirmDialog(true)} variant="destructive" className="mr-auto">
+              <Trash2 className="w-4 h-4 mr-2" />
+              Delete Board
             </Button>
-            <div className="flex space-x-2 items-center">
-              <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => handleUpdateBoardSettings(boardSettings)}
-                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
-              >
-                Save settings
-              </AlertDialogAction>
+            <div className="flex space-x-2">
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>Save settings</AlertDialogAction>
             </div>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1137,22 +1204,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       <AlertDialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              Delete Board
-            </AlertDialogTitle>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">Delete Board</AlertDialogTitle>
             <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete &quot;{board?.name}&quot;? This action cannot be
-              undone and will permanently delete all notes in this board.
+              Are you sure you want to delete &quot;{board?.name}&quot;? This action cannot be undone and will permanently delete all notes in this board.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteBoard}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
+            <AlertDialogAction onClick={handleDeleteBoard} className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700">
               Delete Board
             </AlertDialogAction>
           </AlertDialogFooter>
