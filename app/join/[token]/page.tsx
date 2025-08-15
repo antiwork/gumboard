@@ -40,7 +40,9 @@ function ErrorCard({ title, description }: { title: string; description: string 
 async function joinOrganization(token: string) {
   "use server";
   const session = await auth();
-  if (!session?.user?.id) throw new Error("Not authenticated");
+  if (!session?.user?.id){
+    throw new Error("Not authenticated");
+  }
   const { invite, error } = await validateInvite(token);
   if (error) return; 
 
@@ -53,13 +55,21 @@ async function joinOrganization(token: string) {
   if (user.organizationId) throw new Error("User is already in an organization");
 
   await db.user.update({
-    where: { id: session.user.id },
-    data: { organizationId: invite!.organizationId },
+    where: { 
+      id: session.user.id
+    },
+    data: {
+      organizationId: invite!.organizationId
+    },
   });
 
   await db.organizationSelfServeInvite.update({
-    where: { token },
-    data: { usageCount: { increment: 1 } },
+    where: {
+      token
+    },
+    data: { 
+      usageCount: { increment: 1 }
+    },
   });
 
   redirect("/dashboard");
@@ -96,9 +106,15 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
       });
     }
 
-    if (!user.emailVerified) await db.user.update({ where: { id: user.id }, data: { emailVerified: new Date() } });
+    if (!user.emailVerified) await db.user.update({ 
+      where: { id: user.id }, 
+      data: { emailVerified: new Date() } 
+    });
 
-    await db.organizationSelfServeInvite.update({ where: { token }, data: { usageCount: { increment: 1 } } });
+    await db.organizationSelfServeInvite.update({
+      where: { token },
+      data: { usageCount: { increment: 1 } }
+    });
 
     const sessionToken = crypto.randomUUID();
     await db.session.create({
@@ -106,7 +122,7 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
     });
 
     redirect(`/api/auth/set-session?token=${sessionToken}&redirectTo=${encodeURIComponent("/dashboard")}`);
-  } catch (error) {
+  } catch {
     redirect(`/auth/signin?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(`/join/${token}`)}`);
   }
 }
@@ -115,7 +131,10 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
 async function validateInvite(token: string): Promise<ValidationResult> {
   const invite = await db.organizationSelfServeInvite.findUnique({
     where: { token },
-    include: { organization: true, user: true },
+    include: { 
+      organization: true,
+      user: true
+    },
   });
 
   if (!invite) {
