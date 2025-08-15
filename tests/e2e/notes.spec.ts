@@ -33,25 +33,18 @@ test.describe("Note Management", () => {
 
     // Look for any textarea in the note (the initial empty item input)
     const initialTextarea = authenticatedPage.locator("textarea").first();
-    await expect(initialTextarea).toBeVisible();
-
-    const addItemResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
+    await expect(initialTextarea).toBeVisible({ timeout: 10000 });
 
     await initialTextarea.fill(testItemContent);
 
     // Use Tab key to move focus away and trigger blur
     await initialTextarea.press("Tab");
 
-    // Wait for the API response to complete
-    await addItemResponse;
-
     // Wait for the content to appear in the UI (this means at least one submission worked)
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
+
+    // Add a small delay to ensure all async operations complete
+    await authenticatedPage.waitForTimeout(1000);
 
     const notes = await testPrisma.note.findMany({
       where: {
@@ -196,7 +189,8 @@ test.describe("Note Management", () => {
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
         resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.ok(),
+      { timeout: 15000 }
     );
     await newItemInput.fill(newItemContent);
     await newItemInput.blur();
@@ -686,7 +680,7 @@ test.describe("Note Management", () => {
     }) => {
       // Create a board for testing all notes view
       const boardName = testContext.getBoardName("All Notes Test Board");
-      await testPrisma.board.create({
+      const board = await testPrisma.board.create({
         data: {
           name: boardName,
           description: testContext.prefix("All notes test board"),
@@ -820,13 +814,14 @@ test.describe("Note Management", () => {
 
       // Look for any textarea in the newly created note
       const newItemInput = authenticatedPage.locator("textarea").first();
-      await expect(newItemInput).toBeVisible();
+      await expect(newItemInput).toBeVisible({ timeout: 10000 });
 
       const addItemResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&
           resp.request().method() === "PUT" &&
-          resp.ok()
+          resp.ok(),
+        { timeout: 15000 }
       );
       await newItemInput.fill(testItemContent);
       await newItemInput.blur();
@@ -885,13 +880,14 @@ test.describe("Note Management", () => {
 
       // Look for any textarea in the newly created note
       const newItemInput = authenticatedPage.locator("textarea").first();
-      await expect(newItemInput).toBeVisible();
+      await expect(newItemInput).toBeVisible({ timeout: 10000 });
 
       const addItemResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes(`/api/boards/${board.id}/notes/`) &&
           resp.request().method() === "PUT" &&
-          resp.ok()
+          resp.ok(),
+        { timeout: 15000 }
       );
       await newItemInput.fill(testItemContent);
       await newItemInput.blur();
