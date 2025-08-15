@@ -756,7 +756,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
 
             {/* Filter Popover */}
-            <div className="relative board-dropdown mr-0">
+            <div className="relative board-dropdown mr-0" data-slot="filter-popover">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}

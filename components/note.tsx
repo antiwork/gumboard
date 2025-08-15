@@ -338,6 +338,7 @@ export function Note({
         "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
         className
       )}
+      data-testid="note-card"
       style={{
         backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
         ...style,
@@ -351,7 +352,10 @@ export function Note({
                 ? note.user.name.charAt(0).toUpperCase()
                 : note.user.email.charAt(0).toUpperCase()}
             </AvatarFallback>
-            <AvatarImage src={note.user.image || ""} alt={note.user.name || ""} />
+            <AvatarImage
+              src={note.user.image ? note.user.image : undefined}
+              alt={note.user.name || ""}
+            />
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 truncate max-w-20">

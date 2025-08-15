@@ -110,7 +110,7 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5"
+        className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
         disabled={readonly}
       />
 

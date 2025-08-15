@@ -69,7 +69,7 @@ test.describe("Authentication Flow", () => {
     });
 
     await page.goto("/dashboard");
-    await expect(page).toHaveURL(/.*auth.*signin/, { timeout: 5000 });
+    await expect(page).toHaveURL(/.*auth.*signin/);
   });
 
   test("should authenticate user via Google OAuth and access dashboard", async ({
