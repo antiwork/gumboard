@@ -118,6 +118,7 @@ export function ChecklistItem({
         ref={textareaRef}
         value={editContent ?? item.content}
         onChange={(e) => onEditContentChange?.(e.target.value)}
+        disabled={readonly}
         className={cn(
           "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 resize-none overflow-hidden outline-none",
           item.checked && "text-slate-500 dark:text-zinc-500 line-through"

@@ -21,14 +21,7 @@ export function getBaseUrl(requestOrHeaders?: Request | Headers): string {
   return process.env.AUTH_URL || "http://localhost:3000";
 }
 
-export type ResponsiveConfig = {
-  noteWidth: number;
-  gridGap: number;
-  containerPadding: number;
-  notePadding: number;
-};
-
-export function getResponsiveConfig(): ResponsiveConfig {
+export function getResponsiveConfig() {
   if (typeof window === "undefined") {
     return { noteWidth: 320, gridGap: 20, containerPadding: 20, notePadding: 16 };
   }
