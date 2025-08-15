@@ -33,7 +33,7 @@ export function DatePicker({
   value: controlledValue,
   onValueChange,
   label,
-  placeholder = "June 01, 2025",
+  placeholder = "e.g., June 01, 2025",
   ...inputProps
 }: DatePickerProps) {
   const [open, setOpen] = React.useState(false)
@@ -93,19 +93,27 @@ export function DatePicker({
             sideOffset={10}
           >
             <Calendar
-              mode="single"
-              selected={date}
-              captionLayout="dropdown"
-              month={month}
-              onMonthChange={setMonth}
-              onSelect={date => {
-                if (!date) return
-                const formatted = formatDate(date)
-                if (onValueChange) onValueChange(formatted)
-                else setInternalValue(formatted)
-                setOpen(false)
-              }}
-              className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                mode="single"
+                selected={date}
+                captionLayout="dropdown"
+                month={month}
+                onMonthChange={setMonth}
+                onSelect={date => {
+                    if (!date) return
+                    const formatted = formatDate(date)
+                    if (onValueChange) onValueChange(formatted)
+                    else setInternalValue(formatted)
+                    setOpen(false)
+                }}
+                modifiersClassNames={{
+                    outside: "text-gray-400 opacity-50 pointer-events-none",
+                }}
+                classNames={{
+                    day: "hover:bg-sky-500 transition-colors duration-200 rounded",
+                    disabled: "opacity-50 cursor-not-allowed hover:bg-transparent",
+                    selected: "bg-sky-500 text-white hover:bg-sky-600",
+                }}
+                className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
             />
           </PopoverContent>
         </Popover>

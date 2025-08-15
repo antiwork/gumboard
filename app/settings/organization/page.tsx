@@ -713,7 +713,7 @@ export default function OrganizationSettingsPage() {
                 <DatePicker
                   value={newSelfServeInvite.expiresAt}
                   onValueChange={(val) => setNewSelfServeInvite((prev) => ({ ...prev, expiresAt: val }))}
-                  placeholder="June 01, 2025"
+                  placeholder="e.g., June 01, 2025"
                   label={undefined}
                   disabled={!user?.isAdmin}
                 />
