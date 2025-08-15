@@ -124,17 +124,19 @@ export function ChecklistItem({
         )}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
-        onFocus={() => {
+        onFocus={(e) => {
+          if (isEditing) {
+            const originalScrollIntoView = e.target.scrollIntoView;
+            e.target.scrollIntoView = () => {};
+            setTimeout(() => {
+              e.target.scrollIntoView = originalScrollIntoView;
+            }, 100);
+          }
+
           if (!isEditing && !readonly) {
             onStartEdit?.(item.id);
           }
         }}
-        onClick={() => {
-          if (!isEditing && !readonly) {
-            onStartEdit?.(item.id);
-          }
-        }}
-        autoFocus={isEditing}
         rows={1}
         style={{ height: "auto" }}
         onInput={(e) => {

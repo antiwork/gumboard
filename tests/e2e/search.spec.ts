@@ -1,7 +1,7 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Search Functionality", () => {
-  test("should maintain scroll position at top when clearing search", async ({
+  test("should maintain visual stability when clearing search", async ({
     authenticatedPage,
     testContext,
     testPrisma,
@@ -44,10 +44,28 @@ test.describe("Search Functionality", () => {
       authenticatedPage.locator(`text=${testContext.prefix("Test item 1")}`)
     ).toBeVisible();
 
+    const getNotesPositions = async () => {
+      const positions: { text: string; x: number; y: number }[] = [];
+      for (let i = 1; i <= 3; i++) {
+        const element = authenticatedPage.locator(`text=${testContext.prefix(`Test item ${i}`)}`);
+        if (await element.isVisible()) {
+          const box = await element.boundingBox();
+          if (box) {
+            positions.push({
+              text: testContext.prefix(`Test item ${i}`),
+              x: box.x,
+              y: box.y,
+            });
+          }
+        }
+      }
+      return positions;
+    };
+
+    const initialPositions = await getNotesPositions();
+
     const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
     await searchInput.fill("Test item 5");
-
-    await authenticatedPage.waitForTimeout(500);
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test item 5")}`)
@@ -59,21 +77,28 @@ test.describe("Search Functionality", () => {
 
     await searchInput.clear();
 
-    await authenticatedPage.waitForTimeout(2000);
     await expect(searchInput).toHaveValue("");
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test item 1")}`)
-    ).toBeVisible({ timeout: 10000 });
+    ).toBeVisible();
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test item 5")}`)
-    ).toBeVisible({ timeout: 10000 });
+    ).toBeVisible();
 
-    const finalScrollY = await authenticatedPage.evaluate(() => window.scrollY);
+    const finalPositions = await getNotesPositions();
 
-    expect(finalScrollY).toBeLessThanOrEqual(100);
+    expect(finalPositions.length).toBe(initialPositions.length);
+
+    for (let i = 0; i < finalPositions.length; i++) {
+      const initial = initialPositions[i];
+      const final = finalPositions[i];
+
+      expect(final.text).toBe(initial.text);
+      expect(Math.abs(final.x - initial.x)).toBeLessThan(100);
+      expect(Math.abs(final.y - initial.y)).toBeLessThan(200);
+    }
   });
-
   test("should filter notes correctly by search term", async ({
     authenticatedPage,
     testContext,
@@ -154,8 +179,6 @@ test.describe("Search Functionality", () => {
     const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
     await searchInput.fill("meeting");
 
-    await authenticatedPage.waitForTimeout(500);
-
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Meeting notes")}`)
     ).toBeVisible();
@@ -168,7 +191,6 @@ test.describe("Search Functionality", () => {
     ).not.toBeVisible();
 
     await searchInput.fill("");
-    await authenticatedPage.waitForTimeout(500);
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Buy groceries")}`)
@@ -218,7 +240,6 @@ test.describe("Search Functionality", () => {
     const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
 
     await searchInput.fill("test");
-    await authenticatedPage.waitForTimeout(500);
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("User task")}`)
     ).toBeVisible();

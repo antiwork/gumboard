@@ -111,7 +111,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     const queryString = params.toString();
     const newURL = queryString ? `?${queryString}` : window.location.pathname;
-    router.replace(newURL, { scroll: false });
+    window.history.replaceState(null, "", newURL);
   };
 
   // Initialize filters from URL parameters
@@ -250,10 +250,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Use full width with minimal left offset
     const offsetX = config.containerPadding;
 
+    // Create a stable layout by using consistent note ordering
+    // Sort notes by creation date to ensure consistent positioning regardless of filter state
+    const stableSortedNotes = [...filteredNotes].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
+
     // Bin-packing algorithm: track the bottom Y position of each column
     const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
-    return filteredNotes.map((note) => {
+    return stableSortedNotes.map((note) => {
       const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
 
       // Find the column with the lowest bottom position
@@ -299,11 +305,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // Calculate note width for mobile
     const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
     const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
+    const stableSortedNotes = [...filteredNotes].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+    );
 
     // Bin-packing for mobile with fewer columns
     const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
-    return filteredNotes.map((note) => {
+    return stableSortedNotes.map((note) => {
       const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
 
       // Find the column with the lowest bottom position
@@ -432,17 +441,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     return () => clearTimeout(timer);
   }, [searchTerm]);
-
-  const prevDebouncedSearchTerm = useRef<string>("");
-
-  useEffect(() => {
-    if (!debouncedSearchTerm && prevDebouncedSearchTerm.current) {
-      setTimeout(() => {
-        window.scrollTo({ top: 0, behavior: "smooth" });
-      }, 100);
-    }
-    prevDebouncedSearchTerm.current = debouncedSearchTerm;
-  }, [debouncedSearchTerm]);
 
   // Get unique authors from notes
   const getUniqueAuthors = (notes: Note[]) => {
@@ -1081,7 +1079,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setSearchTerm("");
                     setDebouncedSearchTerm("");
                     updateURL("");
-                    window.scrollTo({ top: 0, behavior: "smooth" });
                   }}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
                 >
@@ -1116,6 +1113,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         style={{
           height: boardHeight,
           minHeight: "calc(100vh - 64px)", // Account for header height
+          overflowAnchor: "none",
         }}
       >
         {/* Notes */}
