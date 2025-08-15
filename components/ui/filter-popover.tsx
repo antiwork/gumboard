@@ -1,15 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { ListFilter, User } from "lucide-react";
-import { clsx } from "clsx";
-import { Button } from "./button";
-
-const cn = (...classes: (string | undefined | null | false)[]) => {
-  return clsx(classes.filter(Boolean));
-};
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 import { DateRangePicker } from "./date-range-picker";
+import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 
 interface FilterPopoverProps {
   startDate?: Date | null;
@@ -17,7 +17,7 @@ interface FilterPopoverProps {
   onDateRangeChange?: (startDate: Date | null, endDate: Date | null) => void;
 
   selectedAuthor?: string | null;
-  authors: Array<{ id: string; name: string; email: string }>;
+  authors: Array<{ id: string; name: string; email: string; image?: string | null }>;
   onAuthorChange?: (authorId: string | null) => void;
 
   className?: string;
@@ -34,9 +34,6 @@ function FilterPopover({
   className,
   disabled = false,
 }: FilterPopoverProps) {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
   const getFilterCount = () => {
     let count = 0;
     if (startDate || endDate) count++;
@@ -44,113 +41,96 @@ function FilterPopover({
     return count;
   };
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        setIsOpen(false);
-      }
-    };
-
-    if (isOpen) {
-      document.addEventListener("mousedown", handleClickOutside);
-      document.addEventListener("keydown", handleKeyDown);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [isOpen]);
+  const filterCount = getFilterCount();
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className={cn("relative", className)} ref={dropdownRef}>
-      <Button
-        onClick={() => !disabled && setIsOpen(!isOpen)}
-        disabled={disabled}
-        className={cn(
-          "flex items-center text-sm gap-0 rounded-md py-2 cursor-pointer w-full sm:w-auto text-foreground dark:text-zinc-100 transition-colors",
-          isOpen ? "bg-zinc-100 dark:bg-zinc-900/50" : "hover:bg-zinc-100 dark:hover:bg-zinc-800",
-          "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600",
-          disabled && "opacity-50 cursor-not-allowed"
-        )}
-      >
-        <ListFilter className="w-4 h-4 mr-1 text-muted-foreground dark:text-zinc-400" />
-        <span className="text-foreground dark:text-zinc-100">
-          {getFilterCount() > 0 && (
-            <span className="px-1.5 py-0.5 text-xs bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-400 rounded-md">
-              {getFilterCount()}
+    <div className={cn("relative", className)}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            disabled={disabled}
+            className={cn(
+              "flex items-center text-sm gap-0 rounded-md py-2 cursor-pointer w-full sm:w-auto",
+              disabled && "opacity-50 cursor-not-allowed"
+            )}
+          >
+            <ListFilter className="w-4 h-4 mr-1 text-muted-foreground" />
+            <span className="text-foreground">
+              {filterCount > 0 && (
+                <span className="px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-md">
+                  {filterCount}
+                </span>
+              )}
             </span>
-          )}
-        </span>
-      </Button>
-
-      {isOpen && (
-        <div className="fixed sm:absolute left-0 w-full sm:w-80 mt-1 bg-white dark:bg-zinc-900 rounded-md shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 p-4">
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-full sm:w-80">
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="block text-xs font-medium text-muted-foreground dark:text-zinc-300">
+              <Label className="block text-xs font-medium text-muted-foreground dark:text-zinc-200">
                 Date range
-              </label>
+              </Label>
               <DateRangePicker
                 startDate={startDate}
                 endDate={endDate}
                 onDateRangeChange={onDateRangeChange}
-                className="w-full"
               />
             </div>
 
             <div className="space-y-2">
-              <label className="block text-xs font-medium text-muted-foreground dark:text-zinc-300">
+              <Label className="block text-xs font-medium text-muted-foreground dark:text-zinc-100">
                 Author
-              </label>
-              <div className="space-y-1 max-h-32 overflow-y-auto">
-                <Button
-                  onClick={() => onAuthorChange?.(null)}
-                  className={cn(
-                    "w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent dark:hover:bg-zinc-800 flex items-center space-x-3",
-                    !selectedAuthor
-                      ? "bg-blue-50 dark:bg-zinc-900/70 text-blue-700 dark:text-blue-300"
-                      : "text-foreground dark:text-zinc-100"
-                  )}
-                >
-                  <User className="w-4 h-4 text-muted-foreground dark:text-zinc-400" />
-                  <span className="font-medium">All authors</span>
-                </Button>
-                {authors.map((author) => (
+              </Label>
+              <ScrollArea className="h-auto rounded-md dark:text-zinc-100">
+                <div className="space-y-1 p-1">
                   <Button
-                    key={author.id}
-                    onClick={() => onAuthorChange?.(author.id)}
+                    data-slot="all-authors-button"
+                    variant="ghost"
+                    onClick={() => onAuthorChange?.(null)}
                     className={cn(
-                      "w-full text-left px-3 py-2 text-sm rounded-md hover:bg-accent dark:hover:bg-zinc-800 flex items-center space-x-3",
-                      selectedAuthor === author.id
-                        ? "bg-blue-50 dark:bg-zinc-900/70 text-blue-700 dark:text-blue-300"
-                        : "text-foreground dark:text-zinc-100"
+                      "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                      !selectedAuthor &&
+                        "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
                     )}
                   >
-                    <div className="w-6 h-6 bg-blue-500 dark:bg-zinc-800 rounded-full flex items-center justify-center flex-shrink-0">
-                      <span className="text-xs font-medium text-white">
-                        {author.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium truncate">{author.name}</div>
-                      <div className="text-xs text-muted-foreground dark:text-zinc-400 truncate">
-                        {author.email}
-                      </div>
-                    </div>
+                    <User className="w-4 h-4 " />
+                    <span className="font-medium">All authors</span>
                   </Button>
-                ))}
-              </div>
+                  {authors.map((author) => (
+                    <Button
+                      key={author.id}
+                      variant="ghost"
+                      onClick={() => onAuthorChange?.(author.id)}
+                      className={cn(
+                        "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                        selectedAuthor === author.id &&
+                          "bg-blue-50 dark:bg-zinc-800 hover:bg-blue-50 text-blue-600 dark:text-zinc-200"
+                      )}
+                    >
+                      <Avatar className="w-6 h-6">
+                        <AvatarImage src={author.image || ""} />
+                        <AvatarFallback>
+                          <div className="w-6 h-6 bg-sky-600 text-primary-foreground rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-xs font-medium text-white">
+                              {author.name.charAt(0).toUpperCase()}
+                            </span>
+                          </div>
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0 flex-1">
+                        <div className="font-medium truncate">{author.name}</div>
+                        <div className="text-xs text-muted-foreground truncate">{author.email}</div>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+              </ScrollArea>
             </div>
           </div>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
