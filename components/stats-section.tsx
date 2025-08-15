@@ -13,11 +13,11 @@ interface TotalsData {
 }
 
 const statsData = [
-  { key: 'totalOrgs', label: 'Organizations' },
-  { key: 'totalUsers', label: 'Users' },
-  { key: 'totalBoards', label: 'Boards' },
-  { key: 'totalNotes', label: 'Notes' },
-  { key: 'totalChecklistItems', label: 'Checklist Items' }
+  { key: "totalOrgs", label: "Organizations" },
+  { key: "totalUsers", label: "Users" },
+  { key: "totalBoards", label: "Boards" },
+  { key: "totalNotes", label: "Notes" },
+  { key: "totalChecklistItems", label: "Checklist Items" },
 ] as const;
 
 export function StatsSection() {

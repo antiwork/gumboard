@@ -13,24 +13,27 @@ const features = [
   {
     icon: StickyNote,
     title: "Sticky notes & tasks",
-    description: "Create colorful sticky notes with interactive checklists to track your team's progress.",
+    description:
+      "Create colorful sticky notes with interactive checklists to track your team's progress.",
     iconBgColor: "bg-blue-100 dark:bg-blue-900/30",
-    iconColor: "text-blue-600 dark:text-blue-400"
+    iconColor: "text-blue-600 dark:text-blue-400",
   },
   {
     icon: Users,
     title: "Real-time collaboration",
-    description: "Work together seamlessly with your team in real-time. See updates instantly as they happen.",
+    description:
+      "Work together seamlessly with your team in real-time. See updates instantly as they happen.",
     iconBgColor: "bg-green-100 dark:bg-green-900/30",
-    iconColor: "text-green-600 dark:text-green-400"
+    iconColor: "text-green-600 dark:text-green-400",
   },
   {
     icon: Building2,
     title: "Organization management",
-    description: "Invite team members, manage permissions, and keep your workspace organized across projects.",
+    description:
+      "Invite team members, manage permissions, and keep your workspace organized across projects.",
     iconBgColor: "bg-purple-100 dark:bg-purple-900/30",
-    iconColor: "text-purple-600 dark:text-purple-400"
-  }
+    iconColor: "text-purple-600 dark:text-purple-400",
+  },
 ];
 
 export default async function HomePage() {
@@ -92,9 +95,14 @@ export default async function HomePage() {
               {features.map((feature) => {
                 const IconComponent = feature.icon;
                 return (
-                  <Card key={feature.title} className="text-center dark:bg-zinc-900 dark:border-zinc-800">
+                  <Card
+                    key={feature.title}
+                    className="text-center dark:bg-zinc-900 dark:border-zinc-800"
+                  >
                     <CardContent>
-                      <div className={`w-12 h-12 mx-auto mb-4 ${feature.iconBgColor} rounded-lg flex items-center justify-center`}>
+                      <div
+                        className={`w-12 h-12 mx-auto mb-4 ${feature.iconBgColor} rounded-lg flex items-center justify-center`}
+                      >
                         <IconComponent className={`h-6 w-6 ${feature.iconColor}`} />
                       </div>
                       <CardTitle className="mb-2">{feature.title}</CardTitle>
