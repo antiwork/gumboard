@@ -42,7 +42,10 @@ export function getResponsiveConfig() {
 }
 
 export function getUniqueAuthors(notes: Note[]) {
-  const authorsMap = new Map<string, { id: string; name: string; email: string;image?: string | null  }>();
+  const authorsMap = new Map<
+    string,
+    { id: string; name: string; email: string; image?: string | null }
+  >();
 
   notes.forEach((note) => {
     if (!authorsMap.has(note.user.id)) {
