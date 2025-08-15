@@ -59,7 +59,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
-  const [errorDialog, setErrorDialog] = useState<{ open: boolean; title: string; description: string }>({
+  const [errorDialog, setErrorDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+  }>({
     open: false,
     title: "",
     description: "",
@@ -95,8 +99,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const currentAuthor = newAuthor ?? selectedAuthor;
 
       if (currentSearchTerm) params.set("search", currentSearchTerm);
-      if (currentDateRange.startDate) params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
-      if (currentDateRange.endDate) params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
+      if (currentDateRange.startDate)
+        params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
+      if (currentDateRange.endDate)
+        params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
       if (currentAuthor) params.set("author", currentAuthor);
 
       const queryString = params.toString();
@@ -153,7 +159,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const handleClickOutside = (e: MouseEvent) => {
       if (showBoardDropdown || showAddBoard) {
         const target = e.target as Element;
-        if (!target.closest(".board-dropdown") && !target.closest(".user-dropdown") && !target.closest(".add-board-modal")) {
+        if (
+          !target.closest(".board-dropdown") &&
+          !target.closest(".user-dropdown") &&
+          !target.closest(".add-board-modal")
+        ) {
           setShowBoardDropdown(false);
           setShowAddBoard(false);
         }
@@ -235,10 +245,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       let boardResponse: Response | undefined;
 
       if (boardId === "all-notes") {
-        [allBoardsResponse, notesResponse] = await Promise.all([fetch("/api/boards"), fetch(`/api/boards/all-notes/notes`)]);
+        [allBoardsResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/all-notes/notes`),
+        ]);
         setBoard({ id: "all-notes", name: "All notes", description: "Notes from all boards" });
       } else if (boardId === "archive") {
-        [allBoardsResponse, notesResponse] = await Promise.all([fetch("/api/boards"), fetch(`/api/boards/archive/notes`)]);
+        [allBoardsResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/archive/notes`),
+        ]);
         setBoard({ id: "archive", name: "Archive", description: "Archived notes from all boards" });
       } else {
         [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
@@ -289,20 +305,27 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const handleAddNote = async (targetBoardId?: string) => {
     if (boardId === "all-notes" && !targetBoardId) {
-      setErrorDialog({ open: true, title: "Board selection required", description: "Please select a board to add the note to" });
+      setErrorDialog({
+        open: true,
+        title: "Board selection required",
+        description: "Please select a board to add the note to",
+      });
       return;
     }
     try {
       const actualTargetBoardId = boardId === "all-notes" ? targetBoardId : boardId;
       const isAllNotesView = boardId === "all-notes";
-      const response = await fetch(`/api/boards/${isAllNotesView ? "all-notes" : actualTargetBoardId}/notes`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          checklistItems: [],
-          ...(isAllNotesView && { boardId: targetBoardId }),
-        }),
-      });
+      const response = await fetch(
+        `/api/boards/${isAllNotesView ? "all-notes" : actualTargetBoardId}/notes`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            checklistItems: [],
+            ...(isAllNotesView && { boardId: targetBoardId }),
+          }),
+        }
+      );
       if (response.ok) {
         const { note } = await response.json();
         setNotes([...notes, note]);
@@ -322,7 +345,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     const timeoutId = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, { method: "DELETE" });
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "DELETE",
+        });
         if (!response.ok) {
           setNotes((prev) => [noteToDelete, ...prev]);
           const errorData = await response.json().catch(() => null);
@@ -335,7 +360,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       } catch (e) {
         console.error("Error deleting note:", e);
         setNotes((prev) => [noteToDelete, ...prev]);
-        setErrorDialog({ open: true, title: "Failed to delete note", description: "Failed to delete note" });
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete note",
+          description: "Failed to delete note",
+        });
       } finally {
         delete pendingDeleteTimeoutsRef.current[noteId];
       }
@@ -374,7 +403,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (!response.ok) {
         setNotes([...notes, current]);
-        setErrorDialog({ open: true, title: "Archive Failed", description: "Failed to archive note. Please try again." });
+        setErrorDialog({
+          open: true,
+          title: "Archive Failed",
+          description: "Failed to archive note. Please try again.",
+        });
       }
     } catch (e) {
       console.error("Error archiving note:", e);
@@ -398,7 +431,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (!response.ok) {
         setNotes([...notes, current]);
-        setErrorDialog({ open: true, title: "Unarchive Failed", description: "Failed to unarchive note. Please try again." });
+        setErrorDialog({
+          open: true,
+          title: "Unarchive Failed",
+          description: "Failed to unarchive note. Please try again.",
+        });
       }
     } catch (e) {
       console.error("Error unarchiving note:", e);
@@ -424,11 +461,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         router.push(`/boards/${board.id}`);
       } else {
         const errorData = await response.json();
-        setErrorDialog({ open: true, title: "Failed to create board", description: errorData.error || "Failed to create board" });
+        setErrorDialog({
+          open: true,
+          title: "Failed to create board",
+          description: errorData.error || "Failed to create board",
+        });
       }
     } catch (e) {
       console.error("Error creating board:", e);
-      setErrorDialog({ open: true, title: "Failed to create board", description: "Failed to create board" });
+      setErrorDialog({
+        open: true,
+        title: "Failed to create board",
+        description: "Failed to create board",
+      });
     }
   };
 
@@ -478,11 +523,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         router.push("/dashboard");
       } else {
         const errorData = await response.json();
-        setErrorDialog({ open: true, title: "Failed to delete board", description: errorData.error || "Failed to delete board" });
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete board",
+          description: errorData.error || "Failed to delete board",
+        });
       }
     } catch (e) {
       console.error("Error deleting board:", e);
-      setErrorDialog({ open: true, title: "Failed to delete board", description: "Failed to delete board" });
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete board",
+        description: "Failed to delete board",
+      });
     }
     setDeleteConfirmDialog(false);
   };
@@ -519,11 +572,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
                 className={`flex items-center justify-between ${
-                  showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  showBoardDropdown
+                    ? "bg-zinc-100 dark:bg-zinc-800"
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 } text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
               >
                 <div className="text-sm font-semibold">
-                  {boardId === "all-notes" ? "All notes" : boardId === "archive" ? "Archive" : board?.name}
+                  {boardId === "all-notes"
+                    ? "All notes"
+                    : boardId === "archive"
+                      ? "Archive"
+                      : board?.name}
                 </div>
                 <ChevronDown className="w-4 h-4 text-muted-foreground dark:text-zinc-400" />
               </Button>
@@ -544,7 +603,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       </Link>
                     ))}
 
-                    {allBoards.length > 0 && <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />}
+                    {allBoards.length > 0 && (
+                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1" />
+                    )}
 
                     <Link
                       href="/boards/all-notes"
@@ -588,7 +649,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                             name: board?.name || "",
                             description: board?.description || "",
                             isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                            sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                            sendSlackUpdates:
+                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
                           });
                           setBoardSettingsDialog(true);
                           setShowBoardDropdown(false);
@@ -715,11 +777,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 No notes match your current filters
                 {searchTerm && <div>Search: &quot;{searchTerm}&quot;</div>}
                 {selectedAuthor && (
-                  <div>Author: {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name || "Unknown"}</div>
+                  <div>
+                    Author: {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name || "Unknown"}
+                  </div>
                 )}
                 {(dateRange.startDate || dateRange.endDate) && (
                   <div>
-                    Date range: {dateRange.startDate ? dateRange.startDate.toLocaleDateString() : "..."} -{" "}
+                    Date range:{" "}
+                    {dateRange.startDate ? dateRange.startDate.toLocaleDateString() : "..."} -{" "}
                     {dateRange.endDate ? dateRange.endDate.toLocaleDateString() : "..."}
                   </div>
                 )}
@@ -799,14 +864,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
+      <AlertDialog
+        open={errorDialog.open}
+        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{errorDialog.title}</AlertDialogTitle>
             <AlertDialogDescription>{errorDialog.description}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => setErrorDialog({ open: false, title: "", description: "" })}>
+            <AlertDialogAction
+              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
+            >
               OK
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -817,7 +887,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         <AlertDialogContent className="p-4 lg:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle>Board settings</AlertDialogTitle>
-            <AlertDialogDescription>Configure settings for &quot;{board?.name}&quot; board.</AlertDialogDescription>
+            <AlertDialogDescription>
+              Configure settings for &quot;{board?.name}&quot; board.
+            </AlertDialogDescription>
           </AlertDialogHeader>
 
           <div className="py-4 space-y-4">
@@ -835,7 +907,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               <Input
                 type="text"
                 value={boardSettings.description}
-                onChange={(e) => setBoardSettings((prev) => ({ ...prev, description: e.target.value }))}
+                onChange={(e) =>
+                  setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
+                }
                 placeholder="Enter board description"
               />
             </div>
@@ -844,13 +918,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 <Switch
                   id="isPublic"
                   checked={boardSettings.isPublic}
-                  onCheckedChange={(checked) => setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))}
+                  onCheckedChange={(checked) =>
+                    setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))
+                  }
                 />
                 <label htmlFor="isPublic" className="text-sm font-medium leading-none">
                   Make board public
                 </label>
               </div>
-              <p className="text-xs text-muted-foreground mt-1 ml-6">When enabled, anyone with the link can view this board</p>
+              <p className="text-xs text-muted-foreground mt-1 ml-6">
+                When enabled, anyone with the link can view this board
+              </p>
 
               {boardSettings.isPublic && (
                 <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
@@ -858,10 +936,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     <div>
                       <p className="text-sm font-medium">Public link</p>
                       <p className="text-xs break-all">
-                        {typeof window !== "undefined" ? `${window.location.origin}/public/boards/${boardId}` : ""}
+                        {typeof window !== "undefined"
+                          ? `${window.location.origin}/public/boards/${boardId}`
+                          : ""}
                       </p>
                     </div>
-                    <Button onClick={handleCopyPublicUrl} size="sm" variant="outline" className="ml-3 flex items-center space-x-1">
+                    <Button
+                      onClick={handleCopyPublicUrl}
+                      size="sm"
+                      variant="outline"
+                      className="ml-3 flex items-center space-x-1"
+                    >
                       {copiedPublicUrl ? (
                         <>
                           <span className="text-xs">✓</span>
@@ -898,13 +983,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           <AlertDialogFooter className="flex !flex-row justify-between">
-            <Button onClick={() => setDeleteConfirmDialog(true)} variant="destructive" className="mr-auto">
+            <Button
+              onClick={() => setDeleteConfirmDialog(true)}
+              variant="destructive"
+              className="mr-auto"
+            >
               <Trash2 className="w-4 h-4" />
               Delete <span className="hidden lg:inline">Board</span>
             </Button>
             <div className="flex space-x-2 items-center">
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>Save settings</AlertDialogAction>
+              <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>
+                Save settings
+              </AlertDialogAction>
             </div>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -915,8 +1006,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Board</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{board?.name}&quot;? This action cannot be undone and will permanently
-              delete all notes in this board.
+              Are you sure you want to delete &quot;{board?.name}&quot;? This action cannot be
+              undone and will permanently delete all notes in this board.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
