@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { toast } from "sonner";
 
 // Core domain types
 export interface User {
@@ -88,6 +89,7 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const pendingChecklistDeleteTimeoutsRef = React.useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -143,6 +145,9 @@ export function Note({
   const handleDeleteChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
+      const deletedItem = note.checklistItems.find((item) => item.id === itemId);
+      if (!deletedItem) return;
+
       const updatedItems = note.checklistItems.filter((item) => item.id !== itemId);
 
       const optimisticNote = {
@@ -153,23 +158,77 @@ export function Note({
       onUpdate?.(optimisticNote);
 
       if (syncDB) {
-        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            checklistItems: updatedItems,
-          }),
-        });
+        // Delay server commit for 10s to allow Undo without touching DB
+        const timeoutId = setTimeout(async () => {
+          try {
+            const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({
+                checklistItems: updatedItems,
+              }),
+            });
 
-        if (response.ok) {
-          const { note: updatedNote } = await response.json();
-          onUpdate?.(updatedNote);
-        } else {
-          onUpdate?.(note);
-        }
+            if (response.ok) {
+              const { note: updatedNote } = await response.json();
+              onUpdate?.(updatedNote);
+            } else {
+              onUpdate?.(note);
+            }
+          } catch (err) {
+            console.error("Error deleting checklist item:", err);
+            onUpdate?.(note);
+          } finally {
+            delete pendingChecklistDeleteTimeoutsRef.current[itemId];
+          }
+        }, 10000);
+        pendingChecklistDeleteTimeoutsRef.current[itemId] = timeoutId;
       }
+
+      // Toast with Undo
+      toast("Item deleted", {
+        action: {
+          label: "Undo",
+          onClick: async () => {
+            try {
+              const t = pendingChecklistDeleteTimeoutsRef.current[itemId];
+              if (t) {
+                clearTimeout(t);
+                delete pendingChecklistDeleteTimeoutsRef.current[itemId];
+              }
+
+              const restored = [...(note.checklistItems || [])]
+                .filter((i) => i.id !== itemId)
+                .concat([deletedItem])
+                .sort((a, b) => a.order - b.order)
+                .map((it, index) => ({ ...it, order: index }));
+
+              const optimisticRestored = { ...note, checklistItems: restored };
+              onUpdate?.(optimisticRestored);
+
+              if (syncDB) {
+                const resp = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ checklistItems: restored }),
+                });
+                if (resp.ok) {
+                  const { note: updatedNoteAfterUndo } = await resp.json();
+                  onUpdate?.(updatedNoteAfterUndo);
+                } else {
+                  onUpdate?.(note);
+                }
+              }
+            } catch (e) {
+              console.error("Failed to undo checklist delete:", e);
+              onUpdate?.(note);
+            }
+          },
+        },
+        duration: 10000,
+      });
     } catch (error) {
       console.error("Error deleting checklist item:", error);
     }
