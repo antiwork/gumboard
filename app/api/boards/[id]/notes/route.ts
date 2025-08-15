@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
   sendSlackMessage,
@@ -8,11 +7,12 @@ import {
   shouldSendNotification,
 } from "@/lib/slack";
 import { NOTE_COLORS } from "@/lib/constants";
+import { getAuthenticatedSession } from "@/lib/auth-helpers";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    const session = await getAuthenticatedSession();
     const boardId = (await params).id;
 
     const board = await db.board.findUnique({
@@ -57,10 +57,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ notes: board.notes });
     }
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const user = await db.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -86,10 +82,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // Create a new note
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const { color, checklistItems } = await request.json();
     const boardId = (await params).id;

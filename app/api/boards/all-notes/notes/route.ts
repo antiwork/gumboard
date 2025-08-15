@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NOTE_COLORS } from "@/lib/constants";
+import { getAuthenticatedSession } from "@/lib/auth-helpers";
 
 // Get all notes from all boards in the organization
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     // Get user with organization
     const user = await db.user.findUnique({
@@ -63,10 +60,7 @@ export async function GET(request: NextRequest) {
 // Create a new note (for global view, we need to specify which board)
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const { color, boardId, checklistItems } = await request.json();
 

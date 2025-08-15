@@ -1,19 +1,15 @@
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
+import { getAuthenticatedSession } from "@/lib/auth-helpers";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const { email } = await request.json();
 

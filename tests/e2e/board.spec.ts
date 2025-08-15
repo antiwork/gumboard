@@ -125,3 +125,26 @@ test.describe("Board Management", () => {
     });
   });
 });
+
+test.describe("Authentication", () => {
+  test.describe("Protected API Routes", () => {
+    test("should block unauthenticated requests to /api/boards", async ({ page }) => {
+      // Make direct API calls without authentication
+      const response = await page.request.get("/api/boards");
+
+      expect(response.status()).toBe(401);
+      const body = await response.json();
+      expect(body).toEqual({ error: "Unauthorized" });
+    });
+
+    test("should allow authenticated requests to /api/boards", async ({ authenticatedPage }) => {
+      // This should succeed because authenticatedPage has valid session
+      const response = await authenticatedPage.request.get("/api/boards");
+
+      expect(response.status()).toBe(200);
+      const body = await response.json();
+      expect(body).toHaveProperty("boards");
+      expect(Array.isArray(body.boards)).toBe(true);
+    });
+  });
+});

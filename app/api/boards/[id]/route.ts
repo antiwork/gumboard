@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
+import { getAuthenticatedSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
+    const session = await getAuthenticatedSession();
     const boardId = (await params).id;
 
     const board = await db.board.findUnique({
@@ -27,10 +27,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           },
         },
       });
-    }
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is member of the organization
@@ -65,11 +61,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const boardId = (await params).id;
     const { name, description, isPublic, sendSlackUpdates } = await request.json();
@@ -151,11 +143,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const boardId = (await params).id;
 
