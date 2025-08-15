@@ -99,10 +99,7 @@ export function Note({
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
 
-      const sortedItems = [
-        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
-        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
-      ];
+      const sortedItems = updatedItems.sort((a, b) => a.order - b.order);
 
       const optimisticNote = {
         ...note,
