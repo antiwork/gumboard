@@ -1,484 +1,374 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Archive Functionality", () => {
-  test.beforeEach(async ({ page }) => {
-    await page.route("**/api/auth/session", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          user: {
-            id: "test-user",
-            email: "test@example.com",
-            name: "Test User",
-          },
-        }),
-      });
+  test("should display Archive board on dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/user", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          id: "test-user",
-          email: "test@example.com",
-          name: "Test User",
-          isAdmin: true,
-          organization: {
-            id: "test-org",
-            name: "Test Organization",
-          },
-        }),
-      });
-    });
+    await authenticatedPage.goto("/dashboard");
 
-    await page.route("**/api/boards", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          boards: [
-            {
-              id: "test-board",
-              name: "Test Board",
-              description: "A test board",
-              _count: { notes: 5 },
-              isPublic: false,
-              createdBy: "test-user",
-            },
-          ],
-        }),
-      });
-    });
-
-    await page.route("**/api/boards/test-board", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          board: {
-            id: "test-board",
-            name: "Test Board",
-            description: "A test board",
-          },
-        }),
-      });
-    });
-
-    await page.route("**/api/boards/all-notes/notes", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          notes: [],
-        }),
-      });
-    });
-
-    await page.route("**/api/boards/archive/notes", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          notes: [],
-        }),
-      });
-    });
-  });
-
-  test("should display Archive board on dashboard", async ({ page }) => {
-    await page.goto("/dashboard");
-
-    const archiveCard = page.locator('[href="/boards/archive"]');
+    const archiveCard = authenticatedPage.locator('[href="/boards/archive"]');
     await expect(archiveCard).toBeVisible();
   });
 
-  test("should navigate to Archive board from dashboard", async ({ page }) => {
-    await page.route("**/api/boards/archive/notes", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          notes: [
+  test("should navigate to Archive board from dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        archivedAt: new Date(),
+        createdBy: testContext.userId,
+        boardId: board.id,
+        checklistItems: {
+          create: [
             {
-              id: "archived-note-1",
-              content: "This is an archived note",
-              color: "#fef3c7",
-              archivedAt: true,
-              checklistItems: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
-              board: {
-                id: "test-board",
-                name: "Test Board",
-              },
+              content: testContext.prefix("This is an archived note"),
+              checked: false,
+              order: 0,
             },
           ],
-        }),
-      });
+        },
+      },
     });
 
-    await page.goto("/dashboard");
+    await authenticatedPage.goto("/dashboard");
 
-    await page.click('[href="/boards/archive"]');
+    await authenticatedPage.click('[href="/boards/archive"]');
 
-    await expect(page).toHaveURL("/boards/archive");
-    await expect(page.locator("text=This is an archived note")).toBeVisible();
+    await expect(authenticatedPage).toHaveURL("/boards/archive");
+
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
+    ).toBeVisible();
   });
 
-  test("should archive a note and remove it from regular board", async ({ page }) => {
-    let noteArchived = false;
-    let archivedNoteData: any = null;
-
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [
-              {
-                id: "test-note-1",
-                content: "Test note to archive",
-                color: "#fef3c7",
-                archivedAt: null,
-                checklistItems: [],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                board: {
-                  id: "test-board",
-                  name: "Test Board",
-                },
-                boardId: "test-board",
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
-              },
-            ],
-          }),
-        });
-      }
+  test("should archive a note and remove it from regular board", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/boards/test-board/notes/test-note-1", async (route) => {
-      if (route.request().method() === "PUT") {
-        const putData = await route.request().postDataJSON();
-        if (putData.archivedAt && typeof putData.archivedAt === "string") {
-          noteArchived = true;
-          archivedNoteData = putData;
-        }
-
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "test-note-1",
-              content: "Test note to archive",
-              color: "#fef3c7",
-              archivedAt: true,
-              checklistItems: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
+    const noteContent = testContext.prefix("Test note to archive");
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        archivedAt: null,
+        createdBy: testContext.userId,
+        boardId: board.id,
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("archive-item-1"),
+              content: noteContent,
+              checked: false,
+              order: 0,
             },
-          }),
-        });
-      }
+          ],
+        },
+      },
     });
 
-    await page.goto("/boards/test-board");
+    await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(page.locator("text=Test note to archive")).toBeVisible();
+    await expect(authenticatedPage.locator(`text=${noteContent}`)).toBeVisible();
 
-    const archiveButton = page.locator('[title="Archive note"]');
+    // Hover over the note to reveal the archive button
+    await authenticatedPage.locator(`text=${noteContent}`).hover();
+
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
+
+    // Hover over the archive button to show tooltip
+    await archiveButton.hover();
+
+    // Check if the tooltip is visible
+    await expect(
+      authenticatedPage.getByRole("tooltip", { name: "Archive note" }).getByRole("paragraph")
+    ).toBeVisible();
+
     await archiveButton.click();
 
-    await page.waitForTimeout(500);
+    const archiveResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await archiveResponse;
 
-    expect(noteArchived).toBe(true);
-    expect(archivedNoteData.archivedAt).toBeTruthy();
+    const archivedNote = await testPrisma.note.findUnique({
+      where: { id: note.id },
+    });
+    expect(archivedNote?.archivedAt).toBeTruthy();
+
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Test note to archive"))
+    ).not.toBeVisible();
   });
 
-  test("should not show archive button on Archive board", async ({ page }) => {
-    await page.route("**/api/boards/archive/notes", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          notes: [
-            {
-              id: "archived-note-1",
-              content: "This is an archived note",
-              color: "#fef3c7",
-              archivedAt: true,
-              checklistItems: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
-              board: {
-                id: "test-board",
-                name: "Test Board",
-              },
-            },
-          ],
-        }),
-      });
+  test("should not show archive button on Archive board", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.goto("/boards/archive");
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        archivedAt: new Date(),
+        createdBy: testContext.userId,
+        boardId: board.id,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("This is an archived note"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
+      },
+    });
 
-    await expect(page.locator("text=This is an archived note")).toBeVisible();
+    await authenticatedPage.goto("/boards/archive");
 
-    const archiveButton = page.locator('[title="Archive note"]');
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
+    ).toBeVisible();
+
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 
   test("should show empty state on Archive board when no archived notes exist", async ({
-    page,
+    authenticatedPage,
+    testContext,
+    testPrisma,
   }) => {
-    await page.route("**/api/boards/archive/notes", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          notes: [],
-        }),
-      });
+    const archivedNoteCount = await testPrisma.note.count({
+      where: {
+        createdBy: testContext.userId,
+        archivedAt: { not: null },
+      },
     });
+    expect(archivedNoteCount).toBe(0);
 
-    await page.goto("/boards/archive");
+    await authenticatedPage.goto("/boards/archive");
 
-    await expect(page.locator("text=No notes yet")).toBeVisible();
+    const deleteNoteButtons = authenticatedPage.getByRole("button", { name: /Delete Note/ });
+    await expect(deleteNoteButtons).toHaveCount(0);
   });
 
-  test('should display board name as "Archive" in navigation', async ({ page }) => {
-    await page.route("**/api/boards/archive/notes", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          notes: [],
-        }),
-      });
-    });
+  test('should display board name as "Archive" in navigation', async ({ authenticatedPage }) => {
+    await authenticatedPage.goto("/boards/archive");
 
-    await page.goto("/boards/archive");
-
-    await expect(page.locator("text=Archive")).toBeVisible();
+    await expect(authenticatedPage.getByText("Archive")).toBeVisible();
   });
 
   test("should show unarchive button instead of archive button on Archive board", async ({
-    page,
+    authenticatedPage,
+    testContext,
+    testPrisma,
   }) => {
-    await page.route("**/api/boards/archive/notes", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          notes: [
-            {
-              id: "note1",
-              content: "This is an archived note",
-              color: "#fef3c7",
-              archivedAt: true,
-              checklistItems: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "1",
-                name: "user1",
-                email: "user1@gmail.com",
-              },
-              board: {
-                id: "1",
-                name: "board1",
-              },
-            },
-          ],
-        }),
-      });
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.goto("/boards/archive");
-    await expect(page.locator("text=This is an archived note")).toBeVisible();
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        archivedAt: new Date(),
+        createdBy: testContext.userId,
+        boardId: board.id,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("This is an archived note"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
+      },
+    });
 
-    const unarchiveButton = page.locator('[title="Unarchive note"]');
+    await authenticatedPage.goto("/boards/archive");
+
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
+    ).toBeVisible();
+
+    const unarchiveButton = authenticatedPage.getByRole("button", { name: "Unarchive note" });
     await expect(unarchiveButton).toBeVisible();
 
-    const archiveButton = page.locator('[title="Archive note"]');
+    // Hover over the button and verify tooltip
+    await unarchiveButton.hover();
+
+    await expect(
+      authenticatedPage.getByRole("tooltip", { name: "Unarchive note" }).getByRole("paragraph")
+    ).toBeVisible();
+
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 
-  test("should unarchive a note and remove it from archive view", async ({ page }) => {
-    let noteUnarchived = false;
-    let unarchivedNoteData: any = null;
+  test("should unarchive a note and remove it from archive view", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
 
-    await page.route("**/api/boards/archive/notes", async (route) => {
-      await route.fulfill({
-        status: 200,
-        contentType: "application/json",
-        body: JSON.stringify({
-          notes: [
+    const archivedNote = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        archivedAt: new Date(),
+        createdBy: testContext.userId,
+        boardId: board.id,
+        checklistItems: {
+          create: [
             {
-              id: "note1",
-              content: "Test note to unarchive",
-              color: "#fef3c7",
-              archivedAt: true,
-              checklistItems: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "1",
-                name: "user1",
-                email: "user1@gmail.com",
-              },
-              board: {
-                id: "1",
-                name: "board1",
-              },
+              content: testContext.prefix("Test note to unarchive"),
+              checked: false,
+              order: 0,
             },
           ],
-        }),
-      });
+        },
+      },
     });
 
-    await page.route("**/api/boards/1/notes/note1", async (route) => {
-      if (route.request().method() === "PUT") {
-        const putData = await route.request().postDataJSON();
-        if (putData.archivedAt === null) {
-          noteUnarchived = true;
-          unarchivedNoteData = putData;
-        }
+    await authenticatedPage.goto("/boards/archive");
 
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "note1",
-              content: "Test note to unarchive",
-              color: "#fef3c7",
-              archivedAt: null,
-              checklistItems: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              user: {
-                id: "1",
-                name: "user1",
-                email: "user1@gmail.com",
-              },
-              board: {
-                id: "1",
-                name: "board1",
-              },
-            },
-          }),
-        });
-      }
-    });
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Test note to unarchive"))
+    ).toBeVisible();
 
-    await page.goto("/boards/archive");
-    await expect(page.locator("text=Test note to unarchive")).toBeVisible();
-
-    const unarchiveButton = page.locator('[title="Unarchive note"]');
+    const unarchiveButton = authenticatedPage.locator('[aria-label="Unarchive note"]');
     await expect(unarchiveButton).toBeVisible();
     await unarchiveButton.click();
 
-    await page.waitForTimeout(500);
-    await expect(page.locator("text=Test note to unarchive")).not.toBeVisible();
-    expect(noteUnarchived).toBe(true);
-    expect(unarchivedNoteData.archivedAt).toBe(null);
-    await expect(page.locator("text=Test note to unarchive")).not.toBeVisible();
+    const unarchiveResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await unarchiveResponse;
+
+    const unarchivedNote = await testPrisma.note.findUnique({
+      where: { id: archivedNote.id },
+    });
+    expect(unarchivedNote?.archivedAt).toBe(null);
+
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Test note to unarchive"))
+    ).not.toBeVisible();
   });
 
-  test("should complete full archive-unarchive workflow", async ({ page }) => {
-    await page.route("**/api/boards/test-board/notes", async (route) => {
-      if (route.request().method() === "GET") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            notes: [
-              {
-                id: "workflow-note",
-                content: "Note for archive-unarchive workflow test",
-                color: "#fef3c7",
-                archivedAt: null,
-                checklistItems: [],
-                createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString(),
-                boardId: "test-board",
-                board: {
-                  id: "test-board",
-                  name: "Test Board",
-                },
-                user: {
-                  id: "test-user",
-                  name: "Test User",
-                  email: "test@example.com",
-                },
-              },
-            ],
-          }),
-        });
-      }
+  test("should complete full archive-unarchive workflow", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
     });
 
-    await page.route("**/api/boards/test-board/notes/workflow-note", async (route) => {
-      if (route.request().method() === "PUT") {
-        await route.fulfill({
-          status: 200,
-          contentType: "application/json",
-          body: JSON.stringify({
-            note: {
-              id: "workflow-note",
-              content: "Note for archive-unarchive workflow test",
-              color: "#fef3c7",
-              archivedAt: true,
-              checklistItems: [],
-              createdAt: new Date().toISOString(),
-              updatedAt: new Date().toISOString(),
-              boardId: "test-board",
-              board: {
-                id: "test-board",
-                name: "Test Board",
-              },
-              user: {
-                id: "test-user",
-                name: "Test User",
-                email: "test@example.com",
-              },
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        archivedAt: null,
+        createdBy: testContext.userId,
+        boardId: board.id,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("Note for archive-unarchive workflow test"),
+              checked: false,
+              order: 0,
             },
-          }),
-        });
-      }
+          ],
+        },
+      },
     });
 
-    await page.goto("/boards/test-board");
-    await expect(page.locator("text=Note for archive-unarchive workflow test")).toBeVisible();
+    await authenticatedPage.goto(`/boards/${board.id}`);
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Note for archive-unarchive workflow test"))
+    ).toBeVisible();
 
-    const archiveButton = page.locator('[title="Archive note"]').first();
+    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
     await expect(archiveButton).toBeVisible();
     await archiveButton.click();
-    await page.waitForTimeout(500);
-    await expect(page.locator("text=Note for archive-unarchive workflow test")).not.toBeVisible();
+    const archiveResponse2 = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await archiveResponse2;
+
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Note for archive-unarchive workflow test"))
+    ).not.toBeVisible();
+    const archivedNote = await testPrisma.note.findUnique({
+      where: { id: note.id },
+    });
+    expect(archivedNote?.archivedAt).toBeTruthy();
   });
 });

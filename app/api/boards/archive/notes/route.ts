@@ -30,7 +30,6 @@ export async function GET() {
       },
       select: {
         id: true,
-        content: true,
         color: true,
         boardId: true,
         createdBy: true,
@@ -43,6 +42,7 @@ export async function GET() {
             id: true,
             name: true,
             email: true,
+            image: true,
           },
         },
         board: {

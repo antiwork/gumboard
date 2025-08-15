@@ -3,8 +3,6 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
   updateSlackMessage,
-  formatNoteForSlack,
-  sendSlackMessage,
   sendTodoNotification,
   hasValidContent,
   shouldSendNotification,
@@ -21,7 +19,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { content, color, archivedAt, checklistItems } = await request.json();
+    const { color, archivedAt, checklistItems } = await request.json();
     const { id: boardId, noteId } = await params;
 
     // Verify user has access to this board (same organization)
@@ -175,59 +173,27 @@ export async function PUT(
       return tx.note.update({
         where: { id: noteId },
         data: {
-          ...(content !== undefined && { content }),
           ...(color !== undefined && { color }),
           ...(archivedAt !== undefined && { archivedAt }),
         },
         include: {
-          user: { select: { id: true, name: true, email: true } },
+          user: { select: { id: true, name: true, email: true, image: true } },
           board: { select: { name: true, sendSlackUpdates: true } },
           checklistItems: { orderBy: { order: "asc" } },
         },
       });
     });
 
-    if (content !== undefined && user.organization?.slackWebhookUrl && !note.slackMessageId) {
-      const wasEmpty = !hasValidContent(note.content);
-      const hasContent = hasValidContent(content);
-
-      if (
-        wasEmpty &&
-        hasContent &&
-        shouldSendNotification(
-          session.user.id,
-          boardId,
-          updatedNote.board.name,
-          updatedNote.board.sendSlackUpdates
-        )
-      ) {
-        const slackMessage = formatNoteForSlack(
-          updatedNote,
-          updatedNote.board.name,
-          user.name || user.email || "Unknown User"
-        );
-        const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
-          text: slackMessage,
-          username: "Gumboard",
-          icon_emoji: ":clipboard:",
-        });
-
-        if (messageId) {
-          await db.note.update({
-            where: { id: noteId },
-            data: { slackMessageId: messageId },
-          });
-        }
-      }
-    }
-
     if (archivedAt !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
       const userName = note.user?.name || note.user?.email || "Unknown User";
       const boardName = note.board.name;
       const isArchived = archivedAt !== null;
+      // Get content from first checklist item for Slack message
+      const noteContent =
+        note.checklistItems && note.checklistItems.length > 0 ? note.checklistItems[0].content : "";
       await updateSlackMessage(
         user.organization.slackWebhookUrl,
-        note.content,
+        noteContent,
         isArchived,
         boardName,
         userName

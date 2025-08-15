@@ -2,7 +2,6 @@ name: CI
 
 on:
   push:
-    branches: [main]
   pull_request:
     branches: [main]
 
@@ -16,12 +15,27 @@ concurrency:
 jobs:
   test:
     runs-on: ubicloud-standard-4
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: gumboard_test
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     env:
       GITHUB_CLIENT_ID: dummy-client-id
       GITHUB_CLIENT_SECRET: dummy-client-secret
       AUTH_SECRET: sample-auth-secret
       AUTH_URL: http://localhost:3000
-      DATABASE_URL: postgresql://dummy:dummy@localhost:5432/dummy_db
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gumboard_test
       EMAIL_FROM: noreply@example.com
       AUTH_RESEND_KEY: dummy-resend-key
 
@@ -34,6 +48,11 @@ jobs:
           cache: "npm"
 
       - run: npm ci
+
+      - name: Set up database schema
+        run: |
+          npx prisma migrate deploy
+          npx prisma generate
 
       - name: Test
         run: npm test

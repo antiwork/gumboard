@@ -64,6 +64,7 @@ model User {
   createdSelfServeInvites OrganizationSelfServeInvite[]
   notes          Note[]
 
+  @@index([organizationId], name: "idx_user_org")
   @@map("users")
 }
 
@@ -101,7 +102,6 @@ model Board {
 
 model Note {
   id        String @id @default(cuid())
-  content   String @db.Text
   color     String @default("#fef3c7") // Default yellow color
   checklistItems ChecklistItem[]
   archivedAt     DateTime? // Track archived status

@@ -9,7 +9,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     const board = await db.board.findUnique({
       where: { id: boardId },
-      include: { organization: { include: { members: true } } },
+      include: { organization: true },
     });
 
     if (!board) {
@@ -34,9 +34,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Check if user is member of the organization
-    const isMember = board.organization.members.some((member) => member.id === session?.user?.id);
+    const userInOrg = await db.user.findFirst({
+      where: {
+        id: session.user.id,
+        organizationId: board.organizationId,
+      },
+    });
 
-    if (!isMember) {
+    if (!userInOrg) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -67,41 +72,37 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const boardId = (await params).id;
-    const { name, description, sendSlackUpdates } = await request.json();
+    const { name, description, isPublic, sendSlackUpdates } = await request.json();
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
       where: { id: boardId },
-      include: {
-        organization: {
-          include: {
-            members: {
-              select: {
-                id: true,
-                isAdmin: true,
-              },
-            },
-          },
-        },
-      },
+      include: { organization: true },
     });
 
     if (!board) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    // Check if user is member of the organization
-    const currentUser = board.organization.members.find(
-      (member) => member.id === session?.user?.id
-    );
+    // Check if user is member of the organization and get admin status
+    const currentUser = await db.user.findFirst({
+      where: {
+        id: session.user.id,
+        organizationId: board.organizationId,
+      },
+      select: {
+        id: true,
+        isAdmin: true,
+      },
+    });
 
     if (!currentUser) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // For name/description updates, check if user can edit this board (board creator or admin)
+    // For name/description/isPublic updates, check if user can edit this board (board creator or admin)
     if (
-      (name !== undefined || description !== undefined) &&
+      (name !== undefined || description !== undefined || isPublic !== undefined) &&
       board.createdBy !== session.user.id &&
       !currentUser.isAdmin
     ) {
@@ -114,11 +115,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const updateData: {
       name?: string;
       description?: string;
+      isPublic?: boolean;
       sendSlackUpdates?: boolean;
     } = {};
     if (name !== undefined) updateData.name = name?.trim() || board.name;
     if (description !== undefined)
       updateData.description = description?.trim() || board.description;
+    if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates;
 
     const updatedBoard = await db.board.update({
@@ -159,30 +162,24 @@ export async function DELETE(
     // Check if board exists and user has access
     const board = await db.board.findUnique({
       where: { id: boardId },
-      include: {
-        organization: {
-          include: {
-            members: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                isAdmin: true,
-              },
-            },
-          },
-        },
-      },
+      include: { organization: true },
     });
 
     if (!board) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    // Check if user is member of the organization
-    const currentUser = board.organization.members.find(
-      (member) => member.id === session?.user?.id
-    );
+    // Check if user is member of the organization and get admin status
+    const currentUser = await db.user.findFirst({
+      where: {
+        id: session.user.id,
+        organizationId: board.organizationId,
+      },
+      select: {
+        id: true,
+        isAdmin: true,
+      },
+    });
 
     if (!currentUser) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
