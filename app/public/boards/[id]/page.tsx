@@ -295,12 +295,12 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const fetchBoardData = async () => {
     try {
       const boardResponse = await fetch(`/api/boards/${boardId}`);
-      if (boardResponse.status === 404) {
+      if (boardResponse.status === 404 || boardResponse.status === 403) {
         setBoard(null);
         setLoading(false);
         return;
       }
-      if (boardResponse.status === 401 || boardResponse.status === 403) {
+      if (boardResponse.status === 401) {
         router.push("/auth/signin");
         return;
       }
@@ -353,14 +353,14 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
 
   if (!board) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen dark:bg-zinc-950 dark:text-zinc-100 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Board not found</h1>
           <p className="text-muted-foreground mb-4">
             This board doesn&apos;t exist or is not publicly accessible.
           </p>
 
-          <Button asChild>
+          <Button asChild variant="outline">
             <Link href="/">Go to Gumboard</Link>
           </Button>
         </div>

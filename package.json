@@ -81,7 +81,6 @@
     "prettier": "^3.3.3",
     "prisma": "^6.10.1",
     "tailwindcss": "^4",
-    "ts-jest": "^29.4.0",
     "tw-animate-css": "^1.3.4",
     "typescript": "^5"
   }
