@@ -348,7 +348,7 @@ function JoinConfirmationCard({
   );
 }
 
-// Reusable function to render an error card
+// Reusable Component to render an error card
 function ErrorCard({ title, description }: { title: string; description: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-zinc-950">
