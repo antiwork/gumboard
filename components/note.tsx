@@ -490,22 +490,22 @@ export function Note({
               {(note.checklistItems ?? [])
                 .filter((i) => (hideCompleted ? !i.checked : true))
                 .map((item) => (
-                <DraggableItem key={item.id} id={item.id}>
-                  <ChecklistItemComponent
-                    item={item}
-                    onToggle={handleToggleChecklistItem}
-                    onEdit={handleEditItem}
-                    onDelete={handleDeleteItem}
-                    isEditing={editingItem === item.id}
-                    editContent={editingItem === item.id ? editingItemContent : undefined}
-                    onEditContentChange={setEditingItemContent}
-                    onStartEdit={handleStartEditItem}
-                    onStopEdit={handleStopEditItem}
-                    readonly={readonly}
-                    showDeleteButton={canEdit}
-                  />
-                </DraggableItem>
-              ))}
+                  <DraggableItem key={item.id} id={item.id}>
+                    <ChecklistItemComponent
+                      item={item}
+                      onToggle={handleToggleChecklistItem}
+                      onEdit={handleEditItem}
+                      onDelete={handleDeleteItem}
+                      isEditing={editingItem === item.id}
+                      editContent={editingItem === item.id ? editingItemContent : undefined}
+                      onEditContentChange={setEditingItemContent}
+                      onStartEdit={handleStartEditItem}
+                      onStopEdit={handleStopEditItem}
+                      readonly={readonly}
+                      showDeleteButton={canEdit}
+                    />
+                  </DraggableItem>
+                ))}
             </DraggableContainer>
 
             {/* Always-available New Item Input */}
