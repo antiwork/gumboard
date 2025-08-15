@@ -113,8 +113,11 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
         </p>
       </div>
 
-      <Button type="submit" disabled={isSubmitting} className="bg-blue-500 hover:bg-blue-600 text-white w-full"
-            >
+      <Button
+        type="submit"
+        disabled={isSubmitting}
+        className="bg-blue-500 hover:bg-blue-600 text-white w-full"
+      >
         {isSubmitting ? "Creating..." : hasValidEmails() ? "Save & Send Invites" : "Save"}
       </Button>
     </form>
