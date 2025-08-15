@@ -6,10 +6,7 @@ import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
-import {
-  ChecklistItem as ChecklistItemComponent,
-  ChecklistItem,
-} from "@/components/checklist-item";
+import { ChecklistItem } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore } from "lucide-react";
@@ -457,7 +454,7 @@ export function Note({
             <DraggableContainer className="space-y-1">
               {note.checklistItems?.map((item) => (
                 <DraggableItem key={item.id} id={item.id}>
-                  <ChecklistItemComponent
+                  <ChecklistItem
                     item={item}
                     onToggle={handleToggleChecklistItem}
                     onEdit={handleEditItem}
@@ -476,7 +473,7 @@ export function Note({
 
             {/* Always-available New Item Input */}
             {canEdit && (
-              <ChecklistItemComponent
+              <ChecklistItem
                 item={{
                   id: "new-item",
                   content: newItemContent,
