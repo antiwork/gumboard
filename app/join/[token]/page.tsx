@@ -10,7 +10,6 @@ import { Input } from "@/components/ui/input";
 
 // Reusable type for validation result
 interface ValidationResult {
-  success: boolean;
   invite?: OrganizationSelfServeInvite & {
     organization: { name: string };
     user: { name?: string | null; email: string };
@@ -42,8 +41,8 @@ async function joinOrganization(token: string) {
   "use server";
   const session = await auth();
   if (!session?.user?.id) throw new Error("Not authenticated");
-  const inviteResult = await validateInvite(token);
-  if (!inviteResult.success || !inviteResult.invite) return; 
+  const { invite, error } = await validateInvite(token);
+  if (error) return; 
 
   const user = await db.user.findUnique({
      where: {
@@ -55,7 +54,7 @@ async function joinOrganization(token: string) {
 
   await db.user.update({
     where: { id: session.user.id },
-    data: { organizationId: inviteResult.invite.organizationId },
+    data: { organizationId: invite!.organizationId },
   });
 
   await db.organizationSelfServeInvite.update({
@@ -73,8 +72,8 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
   if (!email) throw new Error("Email required");
 
   try {
-    const invite = await validateInvite(token);
-    if (!invite.success || !invite.invite) throw new Error("Invalid invitation");
+    const { invite, error } = await validateInvite(token);
+    if (error || !invite) throw new Error("Invalid invitation");
     
     let user = await db.user.findUnique({ where: { email } });
 
@@ -83,17 +82,17 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
         data: {
           email,
           emailVerified: new Date(),
-          organizationId: invite.invite.organizationId,
+          organizationId: invite.organizationId,
         },
       });
     } else if (user.organizationId) {
-      if (user.organizationId !== invite.invite.organizationId) {
+      if (user.organizationId !== invite.organizationId) {
         throw new Error("Already in another organization");
       }
     } else {
       user = await db.user.update({
         where: { id: user.id },
-        data: { organizationId: invite.invite.organizationId },
+        data: { organizationId: invite.organizationId },
       });
     }
 
@@ -121,7 +120,6 @@ async function validateInvite(token: string): Promise<ValidationResult> {
 
   if (!invite) {
     return {
-      success: false,
       error: {
         title: "Invalid Invitation",
         description: "This invitation link doesn't exist."
@@ -131,7 +129,6 @@ async function validateInvite(token: string): Promise<ValidationResult> {
 
   if (!invite.isActive) {
     return {
-      success: false,
       error: {
         title: "Invitation Deactivated",
         description: "This invitation has been deactivated by the organization."
@@ -141,7 +138,6 @@ async function validateInvite(token: string): Promise<ValidationResult> {
 
   if (invite.expiresAt && invite.expiresAt < new Date()) {
     return {
-      success: false,
       error: {
         title: "Invitation Expired",
         description: `This invitation expired on ${invite.expiresAt.toLocaleDateString()}.`
@@ -151,7 +147,6 @@ async function validateInvite(token: string): Promise<ValidationResult> {
 
   if (invite.usageLimit && invite.usageCount >= invite.usageLimit) {
     return {
-      success: false,
       error: {
         title: "Invitation Limit Reached",
         description: `This invitation has reached its maximum usage limit of ${invite.usageLimit}.`
@@ -159,7 +154,7 @@ async function validateInvite(token: string): Promise<ValidationResult> {
     };
   }
 
-  return { success: true, invite };
+  return { invite };
 }
 
 export default async function JoinPage({ params }: { params: Promise<{ token: string }> }) {
@@ -170,21 +165,20 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
     return <ErrorCard title="Invalid Link" description="This invitation link is invalid or missing required information." />;
   }
 
-  const inviteResult = await validateInvite(token);
-  if (!inviteResult.success) {
-    return <ErrorCard title={inviteResult.error!.title} description={inviteResult.error!.description} />;
+  const { invite, error } = await validateInvite(token);
+  if (error) {
+    return <ErrorCard title={error.title} description={error.description} />;
   }
-  const invite = inviteResult.invite!;
 
   // Case 1: Unauthenticated user
   if (!session?.user) {
-    return <JoinForm invite={invite} />;
+    return <JoinForm invite={invite!} />;
   }
 
   // Case 2: Authenticated user
   const user = await db.user.findUnique({ where: { id: session.user.id }, include: { organization: true } });
 
-  if (user?.organizationId === invite.organizationId) {
+  if (user?.organizationId === invite!.organizationId) {
     redirect("/dashboard"); //should redirect to dashboard according to the tests
   }
 
@@ -192,7 +186,7 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
     return <ErrorCard title="Already in Organization" description={`You are already a member of ${user.organization?.name}. You can only be a member of one organization at a time.`} />;
   }
 
-  return <JoinConfirmationCard invite={invite} token={token} />;
+  return <JoinConfirmationCard invite={invite!} token={token} />;
 }
 
 // Reusable components for different states
