@@ -316,6 +316,8 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
       }
     } catch (error) {
       console.error("Error fetching board data:", error);
+      // Set board to null to trigger the not-found UI
+      setBoard(null);
     } finally {
       setLoading(false);
     }
