@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures/test-helpers";
+import { addDays } from "date-fns";
 
 test.describe("Note Management", () => {
   test("should create a note and add checklist items", async ({
@@ -912,6 +913,128 @@ test.describe("Note Management", () => {
         .filter({ hasNot: authenticatedPage.getByTestId("new-item") });
       await expect(checklistItems).toHaveCount(2);
       await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
+    });
+  });
+
+  test.describe("Note Filters", () => {
+    test("should create and filter notes between a given date", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board description"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      // Create notes for today
+      for (let i = 0; i < 3; i++) {
+        await testPrisma.note.create({
+          data: {
+            color: "#fef3c7",
+            boardId: board.id,
+            createdBy: testContext.userId,
+            createdAt: new Date(),
+          },
+        });
+      }
+
+      // Create notes for 5 days ago
+      for (let i = 0; i < 2; i++) {
+        await testPrisma.note.create({
+          data: {
+            color: "#fef3c7",
+            boardId: board.id,
+            createdBy: testContext.userId,
+            createdAt: addDays(new Date(), -5),
+          },
+        });
+      }
+
+      const today = new Date();
+      const yesterday = addDays(today, -1);
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+      await authenticatedPage.locator('[data-slot="filter-popover"]').click();
+      await authenticatedPage.getByRole("button", { name: "Select date range" }).click();
+
+      // Start date
+      await authenticatedPage
+        .getByRole("button", { name: "Pick a start date", exact: true })
+        .click();
+      await authenticatedPage.getByRole("gridcell", { name: String(yesterday.getDate()) }).click();
+
+      // End date
+      await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
+      await authenticatedPage.getByRole("gridcell", { name: String(today.getDate()) }).click();
+
+      await authenticatedPage.getByRole("button", { name: "Apply" }).click();
+      await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);
+    });
+
+    test("should filter notes by author", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      // Create a second author
+      const otherUserId = `usr_other_${testContext.testId}`;
+      await testPrisma.user.create({
+        data: {
+          id: otherUserId,
+          email: `other-${testContext.testId}@example.com`,
+          name: "Other User",
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      const boardName = testContext.getBoardName("Test Board Author");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board description"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      // Create 3 notes by the current user
+      for (let index = 0; index < 3; index++) {
+        await testPrisma.note.create({
+          data: {
+            color: "#fef3c7",
+            boardId: board.id,
+            createdBy: testContext.userId,
+          },
+        });
+      }
+
+      // Create 2 notes by the other user
+      for (let index = 0; index < 2; index++) {
+        await testPrisma.note.create({
+          data: {
+            color: "#fef3c7",
+            boardId: board.id,
+            createdBy: otherUserId,
+          },
+        });
+      }
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+      await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(5);
+      await authenticatedPage.locator('[data-slot="filter-popover"]').click();
+      await authenticatedPage.getByRole("button", { name: testContext.userEmail }).click();
+      await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);
+      await expect(authenticatedPage.getByText("1", { exact: true })).toBeVisible();
+      await authenticatedPage.locator('[data-slot="filter-popover"]').click();
+      await authenticatedPage.locator('[data-slot="all-authors-button"]').click({ force: true });
+      await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(5);
+      await expect(authenticatedPage.getByText("1", { exact: true })).not.toBeVisible();
     });
   });
 });
