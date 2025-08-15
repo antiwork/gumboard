@@ -939,20 +939,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 <div className="fixed sm:absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
                   <div className="p-2 flex flex-col gap-1">
                     {/* Boards */}
-                    {allBoards.map((b) => (
-                      <Link
-                        key={b.id}
-                        href={`/boards/${b.id}`}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${
-                          b.id === boardId
-                            ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
-                            : "text-foreground dark:text-zinc-100"
-                        }`}
-                        onClick={() => setShowBoardDropdown(false)}
-                      >
-                        <div>{b.name}</div>
-                      </Link>
-                    ))}
+                    <div className="flex flex-col p-2 max-h-32 overflow-y-auto">
+                      {allBoards.map((b) => (
+                        <Link
+                          key={b.id}
+                          href={`/boards/${b.id}`}
+                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${
+                            b.id === boardId
+                              ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
+                              : "text-foreground dark:text-zinc-100"
+                          }`}
+                          onClick={() => setShowBoardDropdown(false)}
+                        >
+                          <div className="line-clamp-2">{b.name}</div>
+                        </Link>
+                      ))}
+                    </div>
 
                     {allBoards.length > 0 && (
                       <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
