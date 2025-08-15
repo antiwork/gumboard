@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Trash2, AlertTriangle } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
-import type { User } from "@/components/note";
+
 import { AlertDialog, 
   AlertDialogAction,
    AlertDialogCancel,
