@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
@@ -21,13 +21,39 @@ export async function GET() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Get all boards for the organization
+    const { searchParams } = new URL(request.url);
+    const sort = searchParams.get("sort") || "updatedAt";
+    const order = searchParams.get("order") || "desc";
+    const whereClause = { organizationId: user.organizationId };
+
+    type OrderByClause = {
+      name?: "asc" | "desc";
+      updatedAt?: "asc" | "desc";
+      createdAt?: "asc" | "desc";
+    };
+
+    let orderBy: OrderByClause = { createdAt: "desc" };
+
+    switch (sort) {
+      case "title":
+        orderBy = { name: order as "asc" | "desc" };
+        break;
+      case "notesCount":
+        orderBy = { updatedAt: "desc" };
+        break;
+      case "updatedAt":
+      default:
+        orderBy = { updatedAt: order as "asc" | "desc" };
+        break;
+    }
+
     const boards = await db.board.findMany({
-      where: { organizationId: user.organizationId },
+      where: whereClause,
       select: {
         id: true,
         name: true,
         description: true,
+        tags: true,
         isPublic: true,
         createdBy: true,
         createdAt: true,
@@ -42,8 +68,15 @@ export async function GET() {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy,
     });
+
+    if (sort === "notesCount") {
+      boards.sort((a, b) => {
+        const diff = b._count.notes - a._count.notes;
+        return order === "asc" ? -diff : diff;
+      });
+    }
 
     return NextResponse.json({ boards });
   } catch (error) {
@@ -60,7 +93,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, description, isPublic } = await request.json();
+    const { name, description, isPublic, tags } = await request.json();
 
     if (!name) {
       return NextResponse.json({ error: "Board name is required" }, { status: 400 });
@@ -82,6 +115,7 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         description,
+        tags: tags || [],
         isPublic: Boolean(isPublic || false),
         organizationId: user.organizationId,
         createdBy: session.user.id,
@@ -90,6 +124,7 @@ export async function POST(request: NextRequest) {
         id: true,
         name: true,
         description: true,
+        tags: true,
         isPublic: true,
         createdBy: true,
         createdAt: true,
