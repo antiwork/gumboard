@@ -123,7 +123,12 @@ test.describe("Board Name Link Functionality", () => {
     const boardLink = authenticatedPage.locator(`a[href="/boards/${board1.id}"]`).first();
     await expect(boardLink).toBeVisible();
 
-    await boardLink.click();
+    await Promise.race([
+      boardLink.click().then(() => authenticatedPage.waitForURL(`/boards/${board1.id}`)),
+      authenticatedPage.waitForTimeout(15000).then(() => {
+        throw new Error("Navigation timeout - link may not be working properly");
+      }),
+    ]);
 
     // Verify we're on the correct page
     await expect(authenticatedPage).toHaveURL(`/boards/${board1.id}`);

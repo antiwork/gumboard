@@ -762,14 +762,16 @@ test.describe("Note Management", () => {
         authenticatedPage.getByRole("button", { name: `Delete Note ${note.id}`, exact: true })
       ).toBeVisible();
 
+      // Wait a moment to ensure no delete call is made
       await authenticatedPage
         .waitForResponse(
           (resp) =>
             resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
-            resp.request().method() === "DELETE"
+            resp.request().method() === "DELETE",
+          { timeout: 500 }
         )
         .catch(() => {
-          
+          // Expected to timeout - no delete should happen
         });
       expect(deleteCalled).toBe(false);
     });
