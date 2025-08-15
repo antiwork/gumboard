@@ -72,6 +72,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
+  const notesContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -317,13 +318,103 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
-  const layoutNotes = useMemo(
-    () =>
-      filteredNotes.map((note) => ({
-        ...note,
-      })),
-    [filteredNotes]
-  );
+
+  // Smart layout: Add notes in rows, then fill gaps
+  useEffect(() => {
+    if (!notesContainerRef.current || filteredNotes.length === 0) return;
+
+    const performLayout = () => {
+      const container = notesContainerRef.current;
+      if (!container) return;
+
+      const notes = container.children;
+      const containerWidth = container.offsetWidth;
+
+      // Responsive column count based on screen width
+      let numColumns = 4;
+      if (containerWidth < 640)
+        numColumns = 1; // sm: 1 column
+      else if (containerWidth < 768)
+        numColumns = 2; // md: 2 columns
+      else if (containerWidth < 1024)
+        numColumns = 3; // lg: 3 columns
+      else if (containerWidth < 1536)
+        numColumns = 4; // xl: 4 columns
+      else numColumns = 6; // 2xl: 6 columns
+
+      const gap = 12;
+      const noteWidth = (containerWidth - gap * (numColumns - 1)) / numColumns;
+
+      // First pass: Position notes in strict row order (4 per row)
+      const rowHeights: number[] = [];
+      let currentRow = 0;
+      let currentRowHeight = 0;
+      let notesInCurrentRow = 0;
+
+      Array.from(notes).forEach((noteElement, index) => {
+        const columnIndex = index % numColumns;
+        const noteHeight = (noteElement as HTMLElement).offsetHeight;
+
+        // If starting a new row
+        if (columnIndex === 0 && index > 0) {
+          rowHeights.push(currentRowHeight);
+          currentRow++;
+          currentRowHeight = 0;
+          notesInCurrentRow = 0;
+        }
+
+        // Position note in current row
+        (noteElement as HTMLElement).style.position = "absolute";
+        (noteElement as HTMLElement).style.left = `${columnIndex * (noteWidth + gap)}px`;
+        (noteElement as HTMLElement).style.top =
+          `${currentRow * (Math.max(...rowHeights) + gap)}px`;
+        (noteElement as HTMLElement).style.width = `${noteWidth}px`;
+
+        // Track row height
+        currentRowHeight = Math.max(currentRowHeight, noteHeight);
+        notesInCurrentRow++;
+      });
+
+      // Add height of last row
+      if (notesInCurrentRow > 0) {
+        rowHeights.push(currentRowHeight);
+      }
+
+      // Second pass: Fill gaps by repositioning notes
+      const columnHeights = new Array(numColumns).fill(0);
+
+      Array.from(notes).forEach((noteElement) => {
+        const noteHeight = (noteElement as HTMLElement).offsetHeight;
+
+        // Find shortest column
+        const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+
+        // Reposition to fill gap
+        (noteElement as HTMLElement).style.left = `${shortestColumnIndex * (noteWidth + gap)}px`;
+        (noteElement as HTMLElement).style.top = `${columnHeights[shortestColumnIndex]}px`;
+
+        // Update column height
+        columnHeights[shortestColumnIndex] += noteHeight + gap;
+      });
+
+      // Set container height
+      container.style.height = `${Math.max(...columnHeights)}px`;
+    };
+
+    // Initial layout
+    performLayout();
+
+    // Add resize listener for mobile responsiveness
+    const handleResize = () => {
+      performLayout();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [filteredNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -883,10 +974,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         }}
       >
         {/* Notes */}
-        <div className="w-full p-3 sm:p-4 md:p-5 lg:p-6">
-          <div className="columns-1 gap-5 w-full sm:columns-2 md:columns-3 lg:columns-4 2xl:columns-6">
-            {layoutNotes.map((note) => (
-              <div key={note.id} className="break-inside-avoid mb-5 w-full">
+        <div className="w-full p-2 sm:p-3 md:p-4">
+          <div ref={notesContainerRef} className="relative w-full" style={{ minHeight: "400px" }}>
+            {filteredNotes.map((note) => (
+              <div key={note.id} className="transition-all duration-300 ease-in-out">
                 <NoteCard
                   note={note as Note}
                   currentUser={user as User}
@@ -895,7 +986,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
                   onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
                   showBoardName={boardId === "all-notes" || boardId === "archive"}
-                  className="shadow-md shadow-black/10 w-full p-4"
+                  className="shadow-md shadow-black/10 w-full p-3"
                   style={{
                     width: "100%",
                     minHeight: "200px",
