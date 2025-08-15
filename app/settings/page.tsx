@@ -17,6 +17,8 @@ import { AlertDialog,
       AlertDialogHeader,
        AlertDialogTitle,
         AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { useUser } from "@/app/contexts/UserContext";
+import { useRouter } from "next/navigation";
 
 export default function ProfileSettingsPage() {
   const { user, loading, refreshUser } = useUser();
@@ -32,14 +34,17 @@ export default function ProfileSettingsPage() {
   }, [user]);
 
   useEffect(() => {
-    fetchUserData();
-  }, [fetchUserData]);
+    if (!loading && !user) {
+      router.push("/auth/signin");
+    }
+  }, [user, loading, router]);
+
   const handleDeleteAccount = async () => {
     setDeleting(true);
     try {
       const response = await fetch("/api/user", { method: "DELETE" });
       if (response.ok) {
-        router.push("/auth/signin");
+        router.push("/");
         return;
       }
       console.error("Error deleting account:", await response.text());
