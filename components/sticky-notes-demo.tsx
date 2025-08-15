@@ -145,7 +145,8 @@ export function StickyNotesDemo() {
 
   const handleAddNote = () => {
     const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)];
-    const randomAuthor = { name: generateRandomName(), initial: generateRandomName().charAt(0) };
+    const name = generateRandomName(); 
+    const randomAuthor = { name, initial: name.charAt(0) };
     const newNote: Note = {
       id: `${Date.now()}`,
       color: randomColor,
