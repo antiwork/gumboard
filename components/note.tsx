@@ -341,6 +341,7 @@ export function Note({
         "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
         className
       )}
+      data-testid="note-card"
       style={{
         backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
         ...style,

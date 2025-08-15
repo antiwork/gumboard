@@ -66,7 +66,7 @@ function FilterPopover({
             </span>
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-full sm:w-80 p-4 ">
+        <PopoverContent className="w-full sm:w-80">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label className="block text-xs font-medium text-muted-foreground dark:text-zinc-200">
@@ -76,7 +76,6 @@ function FilterPopover({
                 startDate={startDate}
                 endDate={endDate}
                 onDateRangeChange={onDateRangeChange}
-                className="w-full"
               />
             </div>
 
@@ -84,18 +83,19 @@ function FilterPopover({
               <Label className="block text-xs font-medium text-muted-foreground dark:text-zinc-100">
                 Author
               </Label>
-              <ScrollArea className="h-32 rounded-md border border-zinc-200 dark:border-zinc-800 dark:text-zinc-100">
+              <ScrollArea className="h-auto rounded-md dark:text-zinc-100">
                 <div className="space-y-1 p-1">
                   <Button
+                    data-slot="all-authors-button"
                     variant="ghost"
                     onClick={() => onAuthorChange?.(null)}
                     className={cn(
                       "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
-                      !selectedAuthor && "bg-blue-50  hover:bg-blue-50 text-sky-600"
+                      !selectedAuthor && "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
                     )}
                   >
                     <User className="w-4 h-4 " />
-                    <span className="font-medium ">All authors</span>
+                    <span className="font-medium">All authors</span>
                   </Button>
                   {authors.map((author) => (
                     <Button
@@ -103,7 +103,7 @@ function FilterPopover({
                       variant="ghost"
                       onClick={() => onAuthorChange?.(author.id)}
                       className={cn(
-                        "w-full py-2 justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                        "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
                         selectedAuthor === author.id && "bg-blue-50 dark:bg-zinc-800 hover:bg-blue-50 text-blue-600 dark:text-zinc-200"
                       )}
                     >
