@@ -84,7 +84,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
   const handleDateRangeChange = (startDate: Date | null, endDate: Date | null) => {
     const newDateRange = { startDate, endDate };
     setDateRange(newDateRange);
-    
+
     if (enableUrlSync) {
       updateURL(undefined, newDateRange);
     }
@@ -92,7 +92,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
 
   const handleAuthorChange = (authorId: string | null) => {
     setSelectedAuthor(authorId);
-    
+
     if (enableUrlSync) {
       updateURL(undefined, undefined, authorId);
     }
@@ -102,7 +102,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     setSearchTerm("");
     setDateRange({ startDate: null, endDate: null });
     setSelectedAuthor(null);
-    
+
     if (enableUrlSync) {
       updateURL("", { startDate: null, endDate: null }, null);
     }
@@ -115,7 +115,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     newAuthor?: string | null
   ) => {
     if (!enableUrlSync) return;
-    
+
     const params = new URLSearchParams();
 
     const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
@@ -145,7 +145,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
 
   const initializeFiltersFromURL = () => {
     if (!enableUrlSync) return;
-    
+
     const urlSearchTerm = searchParams.get("search") || "";
     const urlStartDate = searchParams.get("startDate");
     const urlEndDate = searchParams.get("endDate");
@@ -188,7 +188,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
       if (boardId === "all-notes") {
         boardResponse = undefined;
         notesResponse = await fetch(`/api/boards/all-notes/notes`);
-        
+
         setBoard({
           id: "all-notes",
           name: "All notes",
@@ -197,7 +197,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
       } else if (boardId === "archive") {
         boardResponse = undefined;
         notesResponse = await fetch(`/api/boards/archive/notes`);
-        
+
         setBoard({
           id: "archive",
           name: "Archive",
@@ -286,30 +286,30 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     dateRange,
     selectedAuthor,
     boardRef,
-    
+
     // Setters
     setBoard,
     setNotes,
     setLoading,
-    
+
     // Computed values
     filteredNotes,
     layoutNotes,
     boardHeight,
     uniqueAuthors,
-    
+
     // Filter handlers
     handleSearchChange,
     handleDateRangeChange,
     handleAuthorChange,
     clearAllFilters,
-    
+
     // Actions
     setSearchTerm,
     setDateRange,
     setSelectedAuthor,
     fetchBoardData,
-    
+
     // Options
     readonly,
     enableFilters,

@@ -32,7 +32,6 @@ import { useUser } from "@/app/contexts/UserContext";
 import { useBoard } from "@/lib/hooks/useBoard";
 import { getResponsiveConfig } from "@/lib/utils";
 
-
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
@@ -547,15 +546,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
             {/* Filter Popover */}
             <div className="relative board-dropdown mr-0" data-slot="filter-popover">
-                          <FilterPopover
-              startDate={dateRange.startDate}
-              endDate={dateRange.endDate}
-              onDateRangeChange={handleDateRangeChange}
-              selectedAuthor={selectedAuthor}
-              authors={uniqueAuthors}
-              onAuthorChange={handleAuthorChange}
-              className="w-fit"
-            />
+              <FilterPopover
+                startDate={dateRange.startDate}
+                endDate={dateRange.endDate}
+                onDateRangeChange={handleDateRangeChange}
+                selectedAuthor={selectedAuthor}
+                authors={uniqueAuthors}
+                onAuthorChange={handleAuthorChange}
+                className="w-fit"
+              />
             </div>
           </div>
 
