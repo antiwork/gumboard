@@ -305,12 +305,14 @@ export default function Dashboard() {
                 <Link href={`/boards/${board.id}`} key={board.id}>
                   <Card
                     data-board-id={board.id}
-                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
+                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer whitespace-nowrap bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
                   >
                     <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                      <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
+                        <CardTitle className="text-lg dark:text-zinc-100" title={board.name}>
+                          {board.name}
+                        </CardTitle>
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
                           {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
                         </span>
                       </div>

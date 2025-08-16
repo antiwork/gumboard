@@ -452,12 +452,15 @@ export function Note({
           <DraggableRoot
             items={note.checklistItems ?? []}
             onItemsChange={(newItems) => {
-              handleReorderChecklistItems(note.id, newItems);
+              if (canEdit) {
+                handleReorderChecklistItems(note.id, newItems);
+              }
             }}
           >
             <DraggableContainer className="space-y-1">
               {note.checklistItems?.map((item) => (
-                <DraggableItem key={item.id} id={item.id} className="hover:bg-transparent">
+                <DraggableItem key={item.id} id={item.id} >
+                <DraggableItem key={item.id} id={item.id} disabled={!canEdit} className="hover:bg-transparent">
                   <ChecklistItemComponent
                     item={item}
                     onToggle={handleToggleChecklistItem}

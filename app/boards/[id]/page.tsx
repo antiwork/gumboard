@@ -29,6 +29,13 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
+import {
+  getResponsiveConfig,
+  getUniqueAuthors,
+  calculateGridLayout,
+  calculateMobileLayout,
+  filterAndSortNotes,
+} from "@/lib/utils";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -145,195 +152,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setSelectedAuthor(urlAuthor);
   };
 
-  // Enhanced responsive grid configuration
-  const getResponsiveConfig = () => {
-    if (typeof window === "undefined")
-      return {
-        noteWidth: 320,
-        gridGap: 20,
-        containerPadding: 20,
-        notePadding: 16,
-      };
-
-    const width = window.innerWidth;
-
-    // Ultra-wide screens (1920px+)
-    if (width >= 1920) {
-      return {
-        noteWidth: 340,
-        gridGap: 24,
-        containerPadding: 32,
-        notePadding: 18,
-      };
-    }
-    // Large desktop (1200px-1919px)
-    else if (width >= 1200) {
-      return {
-        noteWidth: 320,
-        gridGap: 20,
-        containerPadding: 24,
-        notePadding: 16,
-      };
-    }
-    // Medium desktop/laptop (768px-1199px)
-    else if (width >= 768) {
-      return {
-        noteWidth: 300,
-        gridGap: 16,
-        containerPadding: 20,
-        notePadding: 16,
-      };
-    }
-    // Small tablet (600px-767px)
-    else if (width >= 600) {
-      return {
-        noteWidth: 280,
-        gridGap: 16,
-        containerPadding: 16,
-        notePadding: 14,
-      };
-    }
-    // Mobile (less than 600px)
-    else {
-      return {
-        noteWidth: 260,
-        gridGap: 12,
-        containerPadding: 12,
-        notePadding: 12,
-      };
-    }
-  };
-
-  // Helper function to calculate note height based on content
-  const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
-    const config = getResponsiveConfig();
-    const actualNotePadding = notePadding || config.notePadding;
-
-    const headerHeight = 60; // User info header + margins
-    const paddingHeight = actualNotePadding * 2; // Top and bottom padding
-    const minContentHeight = 60; // Minimum content area
-
-    // All notes now use checklist items - calculate height based on number of items
-    const itemHeight = 32; // Use 32px for textarea-based items (slightly larger than main's 28px)
-    const itemSpacing = 4; // Space between items (space-y-1 = 4px)
-    const checklistItemsCount = note.checklistItems?.length || 0;
-    const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
-    const addTaskButtonHeight = 36; // Height for the "Add task" button including margin
-
-    const checklistHeight =
-      checklistItemsCount * itemHeight +
-      (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
-      addingItemHeight;
-    const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
-
-    return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
-  };
-
-  // Helper function to calculate bin-packed layout for desktop
-  const calculateGridLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate the actual available width and adjust note width to fill better
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-    // Ensure notes don't get too narrow or too wide based on screen size
-    const minWidth = config.noteWidth - 40;
-    const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
-
-    // Use full width with minimal left offset
-    const offsetX = config.containerPadding;
-
-    // Bin-packing algorithm: track the bottom Y position of each column
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: adjustedNoteWidth,
-        height: noteHeight,
-      };
-    });
-  };
-
-  // Helper function to calculate mobile layout (optimized single/double column)
-  const calculateMobileLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const minNoteWidth = config.noteWidth - 20; // Slightly smaller minimum for mobile
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate note width for mobile
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-
-    // Bin-packing for mobile with fewer columns
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: noteWidth,
-        height: noteHeight,
-      };
-    });
-  };
-
   useEffect(() => {
     const initializeParams = async () => {
       const resolvedParams = await params;
@@ -433,98 +251,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Get unique authors from notes
-  const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<
-      string,
-      { id: string; name: string; email: string; image?: string | null }
-    >();
-
-    notes.forEach((note) => {
-      if (!authorsMap.has(note.user.id)) {
-        authorsMap.set(note.user.id, {
-          id: note.user.id,
-          name: note.user.name || note.user.email.split("@")[0],
-          email: note.user.email,
-          image: note.user.image,
-        });
-      }
-    });
-
-    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  };
-
-  // Filter notes based on search term, date range, and author
-  const filterAndSortNotes = (
-    notes: Note[],
-    searchTerm: string,
-    dateRange: { startDate: Date | null; endDate: Date | null },
-    authorId: string | null,
-    currentUser: User | null
-  ): Note[] => {
-    let filteredNotes = notes;
-
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      filteredNotes = filteredNotes.filter((note) => {
-        const authorName = (note.user.name || note.user.email).toLowerCase();
-        // Search in checklist items content
-        const checklistContent =
-          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
-        return authorName.includes(search) || checklistContent.includes(search);
-      });
-    }
-
-    // Filter by author
-    if (authorId) {
-      filteredNotes = filteredNotes.filter((note) => note.user.id === authorId);
-    }
-
-    // Filter by date range
-    if (dateRange.startDate || dateRange.endDate) {
-      filteredNotes = filteredNotes.filter((note) => {
-        const noteDate = new Date(note.createdAt);
-        const startOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const endOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-
-        if (dateRange.startDate && dateRange.endDate) {
-          return (
-            noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate)
-          );
-        } else if (dateRange.startDate) {
-          return noteDate >= startOfDay(dateRange.startDate);
-        } else if (dateRange.endDate) {
-          return noteDate <= endOfDay(dateRange.endDate);
-        }
-        return true;
-      });
-    }
-
-    // Sort notes with user priority (current user's notes first) and then by creation date (newest first)
-    filteredNotes.sort((a, b) => {
-      // First priority: logged-in user's notes come first
-      if (currentUser) {
-        const aIsCurrentUser = a.user.id === currentUser.id;
-        const bIsCurrentUser = b.user.id === currentUser.id;
-
-        if (aIsCurrentUser && !bIsCurrentUser) {
-          return -1; // a (current user's note) comes first
-        }
-        if (!aIsCurrentUser && bIsCurrentUser) {
-          return 1; // b (current user's note) comes first
-        }
-      }
-
-      // Third priority: newest first
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return filteredNotes;
-  };
-
   // Get unique authors for dropdown
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
@@ -534,8 +260,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
   const layoutNotes = useMemo(
-    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, calculateMobileLayout, calculateGridLayout]
+    () =>
+      isMobile
+        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
+        : calculateGridLayout(filteredNotes, addingChecklistItem),
+    [isMobile, filteredNotes, addingChecklistItem]
   );
 
   const boardHeight = useMemo(() => {
