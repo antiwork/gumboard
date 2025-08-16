@@ -8,7 +8,6 @@ import { OrganizationSelfServeInvite } from "@prisma/client";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
-// Reusable type for validation result
 interface ValidationResult {
   invite?: OrganizationSelfServeInvite & {
     organization: { name: string };
@@ -20,60 +19,87 @@ interface ValidationResult {
 // Server action for authenticated users to join
 async function joinOrganization(token: string) {
   "use server";
-  const session = await auth();
-  if (!session?.user?.id || !session?.user?.email) {
-    throw new Error("Not authenticated");
+  
+  try {
+    const session = await auth();
+    if (!session?.user?.id || !session?.user?.email) {
+      redirect(`/join/${token}?error=auth_required&message=${encodeURIComponent("You must be signed in to join an organization.")}`);
+    }
+
+    // Validate the invitation
+    const { invite, error } = await validateInvite(token);
+    if (error || !invite) {
+      const errorMessage = error?.description || "This invitation link is not valid.";
+      redirect(`/join/${token}?error=invalid_invite&message=${encodeURIComponent(errorMessage)}`);
+    }
+
+    const user = await db.user.findUnique({
+      where: {
+        id: session.user.id,
+      },
+    });
+    
+    if (!user) {
+      redirect(`/join/${token}?error=user_not_found&message=${encodeURIComponent("Your user account could not be found.")}`);
+    }
+    
+    if (user.organizationId === invite.organizationId) {
+      // User is already in this organization - redirect to dashboard
+      redirect("/dashboard");
+    }
+    
+    if (user.organizationId) {
+      redirect(`/join/${token}?error=already_in_org&message=${encodeURIComponent("You are already a member of another organization.")}`);
+    }
+
+    // Join the organization
+    await db.user.update({
+      where: {
+        id: session.user.id,
+      },
+      data: {
+        organizationId: invite.organizationId,
+      },
+    });
+
+    // Update usage count
+    await db.organizationSelfServeInvite.update({
+      where: {
+        token,
+      },
+      data: {
+        usageCount: { increment: 1 },
+      },
+    });
+
+    redirect("/dashboard");
+  } catch (error) {
+    console.error("Error joining organization:", error);
+    redirect(`/join/${token}?error=unexpected&message=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
   }
-
-  //validating the invitation here (validateInvite is a unified function that is used both frontend and server actions)
-  const { invite, error } = await validateInvite(token);
-  if (error || !invite) {
-    throw new Error(error?.description || "Invalid invitation");
-  }
-
-  const user = await db.user.findUnique({
-    where: {
-      id: session.user.id,
-    },
-  });
-  if (!user) throw new Error("No user found");
-  if (user.organizationId) throw new Error("User is already in an organization");
-
-  await db.user.update({
-    where: {
-      id: session.user.id,
-    },
-    data: {
-      organizationId: invite.organizationId,
-    },
-  });
-
-  await db.organizationSelfServeInvite.update({
-    where: {
-      token,
-    },
-    data: {
-      usageCount: { increment: 1 },
-    },
-  });
-
-  redirect("/dashboard");
 }
 
 // Server action for new users (auto-creation)
 async function autoCreateAccountAndJoin(token: string, formData: FormData) {
   "use server";
-  const email = formData.get("email")?.toString();
-  if (!email) throw new Error("Email required");
-
+  
   try {
-    //validating the invitation here (validateInvite is a unified function that is used both frontend and server actions)
+    const email = formData.get("email")?.toString();
+    if (!email) {
+      redirect(`/join/${token}?error=email_required&message=${encodeURIComponent("Please provide a valid email address.")}`);
+    }
+
+    // Validate the invitation
     const { invite, error } = await validateInvite(token);
-    if (error || !invite) throw new Error("Invalid invitation");
+    if (error || !invite) {
+      const errorMessage = error?.description || "This invitation link is not valid.";
+      redirect(`/join/${token}?error=invalid_invite&message=${encodeURIComponent(errorMessage)}`);
+    }
 
     let user = await db.user.findUnique({ where: { email } });
 
     if (!user) {
+      // Create new user
       user = await db.user.create({
         data: {
           email,
@@ -83,26 +109,32 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
       });
     } else if (user.organizationId) {
       if (user.organizationId !== invite.organizationId) {
-        throw new Error("Already in another organization");
+        redirect(`/join/${token}?error=already_in_org&message=${encodeURIComponent("This email is already associated with another organization.")}`);
       }
+      // User already in target organization - continue to sign in
     } else {
+      // Add user to organization
       user = await db.user.update({
         where: { id: user.id },
         data: { organizationId: invite.organizationId },
       });
     }
 
-    if (!user.emailVerified)
+    // Ensure email is verified
+    if (!user.emailVerified) {
       await db.user.update({
         where: { id: user.id },
         data: { emailVerified: new Date() },
       });
+    }
 
+    // Update usage count
     await db.organizationSelfServeInvite.update({
       where: { token },
       data: { usageCount: { increment: 1 } },
     });
 
+    // Create session and redirect
     const sessionToken = crypto.randomUUID();
     await db.session.create({
       data: {
@@ -115,10 +147,17 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
     redirect(
       `/api/auth/set-session?token=${sessionToken}&redirectTo=${encodeURIComponent("/dashboard")}`
     );
-  } catch {
-    redirect(
-      `/auth/signin?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(`/join/${token}`)}`
-    );
+  } catch (error) {
+    console.error("Error in autoCreateAccountAndJoin:", error);
+    // redirect to sign in with callback
+    const email = formData.get("email")?.toString();
+    if (email) {
+      redirect(
+        `/auth/signin?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(`/join/${token}`)}`
+      );
+    }
+    
+    redirect(`/join/${token}?error=account_creation_failed&message=${encodeURIComponent("Unable to create your account. Please try signing in instead.")}`);
   }
 }
 
@@ -171,9 +210,16 @@ async function validateInvite(token: string): Promise<ValidationResult> {
   return { invite };
 }
 
-export default async function JoinPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function JoinPage({ 
+  params, 
+  searchParams 
+}: { 
+  params: Promise<{ token: string }>; 
+  searchParams: Promise<{ error?: string; message?: string }>;
+}) {
   const session = await auth();
   const { token } = await params;
+  const { error: errorType, message: errorMessage } = await searchParams;
 
   if (!token) {
     return (
@@ -183,6 +229,27 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
       />
     );
   }
+
+  // Handle error states from server actions
+  if (errorType && errorMessage) {
+    const errorTitles: Record<string, string> = {
+      auth_required: "Authentication Required",
+      invalid_invite: "Invalid Invitation",
+      user_not_found: "User Not Found",
+      already_in_org: "Already in Organization",
+      email_required: "Email Required",
+      account_creation_failed: "Account Creation Failed",
+      unexpected: "Something Went Wrong"
+    };
+
+    return (
+      <ErrorCard
+        title={errorTitles[errorType] || "Error"}
+        description={decodeURIComponent(errorMessage)}
+      />
+    );
+  }
+
   const { invite, error } = await validateInvite(token);
   if (error) {
     return <ErrorCard title={error.title} description={error.description} />;
@@ -200,7 +267,7 @@ export default async function JoinPage({ params }: { params: Promise<{ token: st
   });
 
   if (user?.organizationId === invite!.organizationId) {
-    redirect("/dashboard"); //should redirect to dashboard according to the tests
+    redirect("/dashboard"); //should redirect to dashboard
   }
 
   if (user?.organizationId) {
