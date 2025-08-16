@@ -35,14 +35,12 @@ import { getResponsiveConfig } from "@/lib/utils";
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { resolvedTheme } = useTheme();
   const { user, loading: userLoading } = useUser();
-  // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
-  // Per-item edit and animations are handled inside Note component now
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
     title: string;
@@ -101,7 +99,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     initializeParams();
   }, [params]);
 
-  // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (showBoardDropdown || showAddBoard) {

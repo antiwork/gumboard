@@ -31,20 +31,16 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Core state
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Additional state for all-notes view
   const [allBoards, setAllBoards] = useState<Board[]>([]);
 
-  // Responsive state
   const [isMobile, setIsMobile] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
 
-  // Filter state
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<DateRange>({
@@ -53,7 +49,6 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
 
-  // Computed values
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
   const filteredNotes = useMemo(
@@ -79,7 +74,6 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     return `${calculatedHeight}px`;
   }, [layoutNotes]);
 
-  // Filter handlers
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
   };
@@ -111,7 +105,6 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     }
   };
 
-  // URL sync helpers
   const updateURL = (
     newSearchTerm?: string,
     newDateRange?: DateRange,
@@ -177,7 +170,6 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     setSelectedAuthor(urlAuthor);
   };
 
-  // Fetch board data
   const fetchBoardData = async () => {
     if (!boardId) return;
 
@@ -243,7 +235,6 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     }
   };
 
-  // Responsive handling
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
 
@@ -267,7 +258,6 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     };
   }, []);
 
-  // Search debouncing
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -276,23 +266,19 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Initialize filters from URL on mount
   useEffect(() => {
     if (enableUrlSync) {
       initializeFiltersFromURL();
     }
   }, [enableUrlSync]);
 
-  // Fetch data when boardId changes
   useEffect(() => {
     if (boardId) {
       fetchBoardData();
     }
   }, [boardId]);
 
-  // Return everything needed by components
   return {
-    // State
     board,
     notes,
     loading,
@@ -304,31 +290,26 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     boardRef,
     allBoards,
 
-    // Setters
     setBoard,
     setNotes,
     setLoading,
     setAllBoards,
 
-    // Computed values
     filteredNotes,
     layoutNotes,
     boardHeight,
     uniqueAuthors,
 
-    // Filter handlers
     handleSearchChange,
     handleDateRangeChange,
     handleAuthorChange,
     clearAllFilters,
 
-    // Actions
     setSearchTerm,
     setDateRange,
     setSelectedAuthor,
     fetchBoardData,
 
-    // Options
     readonly,
     enableFilters,
     enableUrlSync,
