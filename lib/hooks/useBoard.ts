@@ -37,6 +37,9 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Additional state for all-notes view
+  const [allBoards, setAllBoards] = useState<Board[]>([]);
+
   // Responsive state
   const [isMobile, setIsMobile] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -184,11 +187,15 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
 
       let boardResponse: Response | undefined;
       let notesResponse: Response;
+      let allBoardsResponse: Response;
 
       if (boardId === "all-notes") {
         boardResponse = undefined;
-        notesResponse = await fetch(`/api/boards/all-notes/notes`);
-
+        [allBoardsResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/all-notes/notes`),
+        ]);
+        
         setBoard({
           id: "all-notes",
           name: "All notes",
@@ -196,18 +203,27 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
         });
       } else if (boardId === "archive") {
         boardResponse = undefined;
-        notesResponse = await fetch(`/api/boards/archive/notes`);
-
+        [allBoardsResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
+          fetch(`/api/boards/archive/notes`),
+        ]);
+        
         setBoard({
           id: "archive",
           name: "Archive",
           description: "Archived notes from all boards",
         });
       } else {
-        [boardResponse, notesResponse] = await Promise.all([
+        [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
+          fetch("/api/boards"),
           fetch(`/api/boards/${boardId}`),
           fetch(`/api/boards/${boardId}/notes`),
         ]);
+      }
+
+      if (allBoardsResponse.ok) {
+        const { boards } = await allBoardsResponse.json();
+        setAllBoards(boards);
       }
 
       if (boardResponse && boardResponse.ok) {
@@ -286,30 +302,32 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     dateRange,
     selectedAuthor,
     boardRef,
-
+    allBoards,
+    
     // Setters
     setBoard,
     setNotes,
     setLoading,
-
+    setAllBoards,
+    
     // Computed values
     filteredNotes,
     layoutNotes,
     boardHeight,
     uniqueAuthors,
-
+    
     // Filter handlers
     handleSearchChange,
     handleDateRangeChange,
     handleAuthorChange,
     clearAllFilters,
-
+    
     // Actions
     setSearchTerm,
     setDateRange,
     setSelectedAuthor,
     fetchBoardData,
-
+    
     // Options
     readonly,
     enableFilters,

@@ -24,7 +24,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 // Use shared types from components
-import type { Note, Board, User } from "@/components/note";
+import type { Note, User } from "@/components/note";
 import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
@@ -34,7 +34,6 @@ import { getResponsiveConfig } from "@/lib/utils";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const { resolvedTheme } = useTheme();
-  const [allBoards, setAllBoards] = useState<Board[]>([]);
   const { user, loading: userLoading } = useUser();
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
@@ -75,6 +74,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     layoutNotes,
     boardHeight,
     uniqueAuthors,
+    allBoards,
+    setAllBoards,
     handleSearchChange,
     handleDateRangeChange,
     handleAuthorChange,
