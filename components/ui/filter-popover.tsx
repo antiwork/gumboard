@@ -104,12 +104,12 @@ function FilterPopover({
                       variant="ghost"
                       onClick={() => onAuthorChange?.(author.id)}
                       className={cn(
-                        "w-full justify-start text-left flex items-start hover:bg-zinc-100 dark:hover:bg-zinc-800 py-2 px-3 h-auto",
+                        "w-full justify-start text-left flex items-center hover:bg-zinc-100 dark:hover:bg-zinc-800 py-2 px-3 h-auto",
                         selectedAuthor === author.id &&
                           "bg-blue-50 dark:bg-zinc-800 hover:bg-blue-50 text-blue-600 dark:text-zinc-200"
                       )}
                     >
-                      <Avatar className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5">
+                      <Avatar className="w-5 h-5 mr-3 flex-shrink-0">
                         <AvatarImage src={author.image || ""} />
                         <AvatarFallback>
                           <div className="w-5 h-5 bg-sky-600 text-primary-foreground rounded-full flex items-center justify-center">
