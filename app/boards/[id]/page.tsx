@@ -36,6 +36,22 @@ import {
   calculateMobileLayout,
   filterAndSortNotes,
 } from "@/lib/utils";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { SortableNoteWrapper } from "@/components/ui/sortable-note-wrapper";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -81,6 +97,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [orderKey, setOrderKey] = useState(0);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, 
+      },
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -259,13 +287,30 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
+
+  const orderedNotes = useMemo(() => {
+    let result = filteredNotes;
+    if (boardId && boardId !== "all-notes" && boardId !== "archive") {
+      const storageKey = `board-${boardId}-note-order`;
+      const savedOrder = localStorage.getItem(storageKey);
+      if (savedOrder) {
+        const order = JSON.parse(savedOrder) as string[];
+        const orderMap = new Map(order.map((id, index) => [id, index]));
+        result = [...filteredNotes].sort(
+          (a, b) => (orderMap.get(a.id) ?? Infinity) - (orderMap.get(b.id) ?? Infinity)
+        );
+      }
+    }
+    return result;
+  }, [filteredNotes, boardId, orderKey]);
+
   const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
-        : calculateGridLayout(filteredNotes, addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem]
-  );
+  () =>
+    isMobile
+      ? calculateMobileLayout(orderedNotes, addingChecklistItem)
+      : calculateGridLayout(orderedNotes, addingChecklistItem),
+  [orderedNotes, isMobile, addingChecklistItem]
+);
 
   const boardHeight = useMemo(() => {
     if (layoutNotes.length === 0) {
@@ -394,6 +439,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         const { note } = await response.json();
         setNotes([...notes, note]);
         setAddingChecklistItem(note.id);
+
+        const storageKey = `board-${actualTargetBoardId}-note-order`;
+        const savedOrder = localStorage.getItem(storageKey);
+        const order = savedOrder ? JSON.parse(savedOrder) as string[] : [];
+        order.push(note.id);
+        localStorage.setItem(storageKey, JSON.stringify(order));
+        setOrderKey((prev) => prev + 1);
       }
     } catch (error) {
       console.error("Error creating note:", error);
@@ -407,6 +459,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const targetBoardId = noteToDelete.board?.id ?? noteToDelete.boardId;
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
+
+    const storageKey = `board-${targetBoardId}-note-order`;
+    const savedOrder = localStorage.getItem(storageKey);
+    if (savedOrder) {
+      const order = JSON.parse(savedOrder) as string[];
+      const newOrder = order.filter((id) => id !== noteId);
+      localStorage.setItem(storageKey, JSON.stringify(newOrder));
+      setOrderKey((prev) => prev + 1);
+    }
 
     const timeoutId = setTimeout(async () => {
       try {
@@ -460,6 +521,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
       setNotes(notes.filter((n) => n.id !== noteId));
+
+      const storageKey = `board-${targetBoardId}-note-order`;
+      const savedOrder = localStorage.getItem(storageKey);
+      if (savedOrder) {
+        const order = JSON.parse(savedOrder) as string[];
+        const newOrder = order.filter((id) => id !== noteId);
+        localStorage.setItem(storageKey, JSON.stringify(newOrder));
+        setOrderKey((prev) => prev + 1);
+      }
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -617,6 +687,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
     setDeleteConfirmDialog(false);
   };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over || active.id === over.id || !boardId) return;
+
+    const oldIndex = orderedNotes.findIndex((n) => n.id === active.id);
+    const newIndex = orderedNotes.findIndex((n) => n.id === over.id);
+    const newNotes = arrayMove(orderedNotes, oldIndex, newIndex);
+
+    const storageKey = `board-${boardId}-note-order`;
+    localStorage.setItem(storageKey, JSON.stringify(newNotes.map((n) => n.id)));
+    setOrderKey((prev) => prev + 1);
+  };
+
+  const hasActiveFilters =
+    debouncedSearchTerm !== "" || dateRange.startDate || dateRange.endDate || selectedAuthor;
+
 
   if (userLoading || notesloading) {
     return <FullPageLoader message="Loading board..." />;
@@ -837,28 +925,48 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       >
         {/* Notes */}
         <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
-          ))}
+          {hasActiveFilters ? (
+            layoutNotes.map((note) => (
+              <NoteCard
+                key={note.id}
+                note={note as Note}
+                currentUser={user as User}
+                onUpdate={handleUpdateNoteFromComponent}
+                onDelete={handleDeleteNote}
+                onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                showBoardName={boardId === "all-notes" || boardId === "archive"}
+                className="shadow-md shadow-black/10"
+                style={{
+                  position: "absolute",
+                  left: note.x,
+                  top: note.y,
+                  width: note.width,
+                  height: note.height,
+                  padding: `${getResponsiveConfig().notePadding}px`,
+                  backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                }}
+              />
+            ))
+          ) : (
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+              <SortableContext items={layoutNotes.map((note) => note.id)} strategy={rectSortingStrategy}>
+                {layoutNotes.map((note) => (
+                  <SortableNoteWrapper
+                    key={note.id}
+                    note={note}
+                    user={user as User}
+                    resolvedTheme={resolvedTheme}
+                    boardId={boardId}
+                    onUpdate={handleUpdateNoteFromComponent}
+                    onDelete={handleDeleteNote}
+                    onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                    onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                  />
+                ))}
+              </SortableContext>
+            </DndContext>
+          )}
         </div>
 
         {/* Empty State */}
