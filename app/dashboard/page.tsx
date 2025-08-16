@@ -309,11 +309,12 @@ export default function Dashboard() {
                   >
                     <CardHeader>
                       <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
-                        <CardTitle className="text-lg dark:text-zinc-100" title={board.name}>
+                        <CardTitle className="text-lg dark:text-zinc-100 line-clamp-1 break-all">
                           {board.name}
                         </CardTitle>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
-                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                          {board._count.notes <= 99 ? board._count.notes : "99+"}{" "}
+                          {board._count.notes === 1 ? "note" : "notes"}
                         </span>
                       </div>
                     </CardHeader>
