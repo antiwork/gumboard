@@ -222,7 +222,7 @@ function JoinForm({ invite }: { invite: NonNullable<ValidationResult["invite"]> 
       <div className="w-full max-w-md space-y-8">
         <div className="text-center space-y-3">
           <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-            Join {invite.organization.name}
+            Join {invite.organization.name} on Gumboard!
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400">
             You&apos;ve been invited to join{" "}
