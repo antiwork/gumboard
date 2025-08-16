@@ -37,6 +37,7 @@ export async function GET() {
             notes: {
               where: {
                 deletedAt: null,
+                archivedAt: null,
               },
             },
           },
@@ -96,7 +97,14 @@ export async function POST(request: NextRequest) {
         updatedAt: true,
         organizationId: true,
         _count: {
-          select: { notes: true },
+          select: {
+            notes: {
+              where: {
+                deletedAt: null,
+                archivedAt: null,
+              },
+            },
+          },
         },
       },
     });
