@@ -63,9 +63,7 @@ test.describe("Note card layout", () => {
 
     // Verify note card height expands to fit content (no overflow)
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
-    const hasOverflow = await noteCard.evaluate(
-      (el) => el.scrollHeight > el.clientHeight
-    );
+    const hasOverflow = await noteCard.evaluate((el) => el.scrollHeight > el.clientHeight);
     expect(hasOverflow).toBe(false);
   });
 });
