@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
-import { readFile } from "node:fs/promises";
-import { join } from "node:path";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
 export const size = {
   width: 1200,
@@ -9,9 +9,7 @@ export const size = {
 export const contentType = "image/png";
 
 export default async function OpenGraphImage() {
-  const geistBold = await readFile(
-    join(process.cwd(), "public/font/Geist-Bold.ttf")
-  );
+  const geistBold = await readFile(join(process.cwd(), "public/font/Geist-Bold.ttf"));
   return new ImageResponse(
     (
       <div
