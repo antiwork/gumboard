@@ -19,11 +19,13 @@ interface ValidationResult {
 // Server action for authenticated users to join
 async function joinOrganization(token: string) {
   "use server";
-  
+
   try {
     const session = await auth();
     if (!session?.user?.id || !session?.user?.email) {
-      redirect(`/join/${token}?error=auth_required&message=${encodeURIComponent("You must be signed in to join an organization.")}`);
+      redirect(
+        `/join/${token}?error=auth_required&message=${encodeURIComponent("You must be signed in to join an organization.")}`
+      );
     }
 
     // Validate the invitation
@@ -38,18 +40,22 @@ async function joinOrganization(token: string) {
         id: session.user.id,
       },
     });
-    
+
     if (!user) {
-      redirect(`/join/${token}?error=user_not_found&message=${encodeURIComponent("Your user account could not be found.")}`);
+      redirect(
+        `/join/${token}?error=user_not_found&message=${encodeURIComponent("Your user account could not be found.")}`
+      );
     }
-    
+
     if (user.organizationId === invite.organizationId) {
       // User is already in this organization - redirect to dashboard
       redirect("/dashboard");
     }
-    
+
     if (user.organizationId) {
-      redirect(`/join/${token}?error=already_in_org&message=${encodeURIComponent("You are already a member of another organization.")}`);
+      redirect(
+        `/join/${token}?error=already_in_org&message=${encodeURIComponent("You are already a member of another organization.")}`
+      );
     }
 
     // Join the organization
@@ -75,18 +81,22 @@ async function joinOrganization(token: string) {
     redirect("/dashboard");
   } catch (error) {
     console.error("Error joining organization:", error);
-    redirect(`/join/${token}?error=unexpected&message=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
+    redirect(
+      `/join/${token}?error=unexpected&message=${encodeURIComponent("An unexpected error occurred. Please try again.")}`
+    );
   }
 }
 
 // Server action for new users (auto-creation)
 async function autoCreateAccountAndJoin(token: string, formData: FormData) {
   "use server";
-  
+
   try {
     const email = formData.get("email")?.toString();
     if (!email) {
-      redirect(`/join/${token}?error=email_required&message=${encodeURIComponent("Please provide a valid email address.")}`);
+      redirect(
+        `/join/${token}?error=email_required&message=${encodeURIComponent("Please provide a valid email address.")}`
+      );
     }
 
     // Validate the invitation
@@ -109,7 +119,9 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
       });
     } else if (user.organizationId) {
       if (user.organizationId !== invite.organizationId) {
-        redirect(`/join/${token}?error=already_in_org&message=${encodeURIComponent("This email is already associated with another organization.")}`);
+        redirect(
+          `/join/${token}?error=already_in_org&message=${encodeURIComponent("This email is already associated with another organization.")}`
+        );
       }
       // User already in target organization - continue to sign in
     } else {
@@ -156,8 +168,10 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
         `/auth/signin?email=${encodeURIComponent(email)}&callbackUrl=${encodeURIComponent(`/join/${token}`)}`
       );
     }
-    
-    redirect(`/join/${token}?error=account_creation_failed&message=${encodeURIComponent("Unable to create your account. Please try signing in instead.")}`);
+
+    redirect(
+      `/join/${token}?error=account_creation_failed&message=${encodeURIComponent("Unable to create your account. Please try signing in instead.")}`
+    );
   }
 }
 
@@ -210,11 +224,11 @@ async function validateInvite(token: string): Promise<ValidationResult> {
   return { invite };
 }
 
-export default async function JoinPage({ 
-  params, 
-  searchParams 
-}: { 
-  params: Promise<{ token: string }>; 
+export default async function JoinPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ token: string }>;
   searchParams: Promise<{ error?: string; message?: string }>;
 }) {
   const session = await auth();
@@ -239,7 +253,7 @@ export default async function JoinPage({
       already_in_org: "Already in Organization",
       email_required: "Email Required",
       account_creation_failed: "Account Creation Failed",
-      unexpected: "Something Went Wrong"
+      unexpected: "Something Went Wrong",
     };
 
     return (
