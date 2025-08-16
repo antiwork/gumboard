@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, Settings, X } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, Settings, X, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -652,7 +652,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className={`flex items-center justify-between ${showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"} text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
+                className={`flex items-center justify-between text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
               >
                 <div>
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
@@ -663,9 +663,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         : board?.name}
                   </div>
                 </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform }`}
-                />
+                {
+                  showBoardDropdown ? <ChevronUp className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`} /> : <ChevronDown className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`} />
+                }
               </Button>
 
               {showBoardDropdown && (
