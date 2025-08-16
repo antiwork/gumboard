@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { ColorPicker } from "./ui/color-picker";
 
 // Core domain types
 export interface User {
@@ -332,6 +333,39 @@ export function Note({
     }
   };
 
+  const handleColorChange = async (newColor: string) => {
+    try {
+      const optimisticNote = {
+        ...note,
+        color: newColor,
+      };
+
+      onUpdate?.(optimisticNote);
+
+      if (syncDB) {
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            color: newColor,
+          }),
+        });
+
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating note color:", error);
+      onUpdate?.(note);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -397,27 +431,34 @@ export function Note({
               </Tooltip>
             </div>
           )}
-          {canEdit && onArchive && (
-            <div className="flex items-center">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onArchive(note.id);
-                    }}
-                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Archive note"
-                  >
-                    <Archive className="w-3 h-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Archive note</p>
-                </TooltipContent>
-              </Tooltip>
+          {canEdit && (
+            <div className="flex items-center space-x-1">
+              <ColorPicker
+                currentColor={note.color}
+                onColorChange={handleColorChange}
+                disabled={!canEdit}
+              />
+              {onArchive && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onArchive(note.id);
+                      }}
+                      className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Archive note"
+                    >
+                      <Archive className="w-3 h-3" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Archive note</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </div>
           )}
           {canEdit && onUnarchive && (
