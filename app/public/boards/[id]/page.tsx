@@ -1,43 +1,22 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
-import type { Note, Board } from "@/components/note";
+import type { Note } from "@/components/note";
 import { Note as NoteCard } from "@/components/note";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { useUser } from "@/app/contexts/UserContext";
-import {
-  getResponsiveConfig,
-  getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
-  filterAndSortNotes,
-} from "@/lib/utils";
+import { useBoard } from "@/lib/hooks/useBoard";
+import { getResponsiveConfig } from "@/lib/utils";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
-  const [board, setBoard] = useState<Board | null>(null);
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-  }>({
-    startDate: null,
-    endDate: null,
-  });
-  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const { user } = useUser();
+  const [boardId, setBoardId] = useState<string | null>(null);
 
   useEffect(() => {
     const initializeParams = async () => {
@@ -47,92 +26,26 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     initializeParams();
   }, [params]);
 
-  useEffect(() => {
-    if (boardId) {
-      fetchBoardData();
-    }
-  }, [boardId]);
-
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768);
-
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50);
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
-
-  const fetchBoardData = async () => {
-    try {
-      const boardResponse = await fetch(`/api/boards/${boardId}`);
-      if (boardResponse.status === 404 || boardResponse.status === 403) {
-        setBoard(null);
-        setLoading(false);
-        return;
-      }
-      if (boardResponse.status === 401) {
-        router.push("/auth/signin");
-        return;
-      }
-      if (boardResponse.ok) {
-        const { board } = await boardResponse.json();
-        setBoard(board);
-      }
-
-      const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
-      if (notesResponse.ok) {
-        const { notes } = await notesResponse.json();
-        setNotes(notes);
-      }
-    } catch (error) {
-      console.error("Error fetching board data:", error);
-      // Set board to null to trigger the not-found UI
-      setBoard(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
-
-  const filteredNotes = useMemo(
-    () => filterAndSortNotes(notes, searchTerm, dateRange, selectedAuthor, null),
-    [notes, searchTerm, dateRange, selectedAuthor]
-  );
-
-  const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, null)
-        : calculateGridLayout(filteredNotes, null),
-    [isMobile, filteredNotes]
-  );
-
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
+  const {
+    board,
+    loading,
+    searchTerm,
+    dateRange,
+    selectedAuthor,
+    filteredNotes,
+    layoutNotes,
+    boardHeight,
+    boardRef,
+    uniqueAuthors,
+    handleSearchChange,
+    handleDateRangeChange,
+    handleAuthorChange,
+  } = useBoard(boardId, {
+    readonly: true,
+    enableFilters: true,
+    enableUrlSync: false,
+    enableUserFeatures: false,
+  });
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
@@ -180,14 +93,10 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
-                onDateRangeChange={(startDate, endDate) => {
-                  setDateRange({ startDate, endDate });
-                }}
+                onDateRangeChange={handleDateRangeChange}
                 selectedAuthor={selectedAuthor}
                 authors={uniqueAuthors}
-                onAuthorChange={(authorId) => {
-                  setSelectedAuthor(authorId);
-                }}
+                onAuthorChange={handleAuthorChange}
                 className="min-w-fit"
               />
             </div>
@@ -203,7 +112,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
                 type="text"
                 placeholder="Search notes..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-64 pl-10 pr-4 py-2 border border-gray-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
             </div>
