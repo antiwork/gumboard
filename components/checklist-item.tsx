@@ -4,7 +4,7 @@ import * as React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Trash2, GripVertical } from "lucide-react";
 
 export interface ChecklistItem {
   id: string;
@@ -107,6 +107,7 @@ export function ChecklistItem({
       data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
       data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
     >
+      <GripVertical className="cursor-grabbing text-zinc-200 dark:text-zinc-700 mt-1.5 h-4 w-4 opacity-0 group-hover/item:opacity-100" />
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
