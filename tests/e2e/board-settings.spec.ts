@@ -19,8 +19,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     await expect(authenticatedPage.locator("text=Board settings")).toBeVisible();
     await expect(
@@ -53,8 +52,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeChecked();
@@ -147,8 +145,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     await expect(authenticatedPage.locator("text=Board settings")).toBeVisible();
     await expect(
@@ -178,8 +175,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeChecked();
@@ -198,8 +194,7 @@ test.describe("Board Settings", () => {
     expect(unchangedBoard?.sendSlackUpdates).toBe(true);
 
     // Reopen settings to verify UI reflects unchanged state
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     await expect(checkbox).toBeChecked();
   });
