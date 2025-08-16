@@ -680,7 +680,7 @@ test.describe("Note Management", () => {
     }) => {
       // Create a board for testing all notes view
       const boardName = testContext.getBoardName("All Notes Test Board");
-      const board = await testPrisma.board.create({
+      await testPrisma.board.create({
         data: {
           name: boardName,
           description: testContext.prefix("All notes test board"),
