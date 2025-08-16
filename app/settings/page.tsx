@@ -141,7 +141,7 @@ export default function ProfileSettingsPage() {
               profileName.trim().length === 0 ||
               profileName.trim() === (user?.name || "").trim()
             }
-            className="bg-black hover:bg-zinc-900 text-white dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
           >
             {saving ? "Saving..." : "Save Changes"}
           </Button>
@@ -190,7 +190,6 @@ export default function ProfileSettingsPage() {
                       <AlertDialogFooter>
                         <AlertDialogCancel
                           disabled={deleting}
-                          className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                         >
                           Cancel
                         </AlertDialogCancel>
