@@ -9,9 +9,7 @@ export const size = {
 export const contentType = "image/png";
 
 export default async function OpenGraphImage() {
-  const geistBold = await readFile(
-    join(process.cwd(), "public/font/Geist-Bold.ttf")
-  );
+  const geistBold = await readFile(join(process.cwd(), "public/font/Geist-Bold.ttf"));
   return new ImageResponse(
     (
       <div
