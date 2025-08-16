@@ -17,9 +17,9 @@ test.describe("Organization Settings", () => {
     // Update organization to have an existing name
     await testPrisma.organization.update({
       where: { id: testContext.organizationId },
-      data: { 
+      data: {
         name: "Test Organization",
-        slackWebhookUrl: null 
+        slackWebhookUrl: null,
       },
     });
 
@@ -38,7 +38,9 @@ test.describe("Organization Settings", () => {
 
     // Expect error dialog to appear
     await expect(authenticatedPage.locator("text=Invalid Slack Webhook URL")).toBeVisible();
-    await expect(authenticatedPage.locator("text=Please enter a valid Slack Webhook URL")).toBeVisible();
+    await expect(
+      authenticatedPage.locator("text=Please enter a valid Slack Webhook URL")
+    ).toBeVisible();
 
     // Close error dialog
     await authenticatedPage.locator('button:has-text("OK")').click();
@@ -58,9 +60,9 @@ test.describe("Organization Settings", () => {
     // Update organization to have an existing name
     await testPrisma.organization.update({
       where: { id: testContext.organizationId },
-      data: { 
+      data: {
         name: "Test Organization",
-        slackWebhookUrl: null 
+        slackWebhookUrl: null,
       },
     });
 
@@ -70,21 +72,20 @@ test.describe("Organization Settings", () => {
     await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
 
     // Test valid Slack webhook URL (contains "slack")
-    const validSlackUrl = "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX";
+    const validSlackUrl =
+      "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX";
     const slackWebhookInput = authenticatedPage.locator("#slackWebhookUrl");
     await slackWebhookInput.fill(validSlackUrl);
 
     // Click save button for Slack integration
     const slackSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
-    
+
     // Wait for the save request to complete
     const saveResponse = authenticatedPage.waitForResponse(
       (resp) =>
-        resp.url().includes("/api/organization") &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.url().includes("/api/organization") && resp.request().method() === "PUT" && resp.ok()
     );
-    
+
     await slackSaveButton.click();
     await saveResponse;
 
@@ -107,9 +108,9 @@ test.describe("Organization Settings", () => {
     const existingSlackUrl = "https://hooks.slack.com/services/existing/webhook/url";
     await testPrisma.organization.update({
       where: { id: testContext.organizationId },
-      data: { 
+      data: {
         name: "Test Organization",
-        slackWebhookUrl: existingSlackUrl 
+        slackWebhookUrl: existingSlackUrl,
       },
     });
 
@@ -127,15 +128,13 @@ test.describe("Organization Settings", () => {
 
     // Click save button for Slack integration
     const slackSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
-    
+
     // Wait for the save request to complete
     const saveResponse = authenticatedPage.waitForResponse(
       (resp) =>
-        resp.url().includes("/api/organization") &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.url().includes("/api/organization") && resp.request().method() === "PUT" && resp.ok()
     );
-    
+
     await slackSaveButton.click();
     await saveResponse;
 
@@ -160,9 +159,9 @@ test.describe("Organization Settings", () => {
     // Update organization to have an existing name
     await testPrisma.organization.update({
       where: { id: testContext.organizationId },
-      data: { 
+      data: {
         name: "Test Organization",
-        slackWebhookUrl: null 
+        slackWebhookUrl: null,
       },
     });
 
@@ -180,6 +179,9 @@ test.describe("Organization Settings", () => {
     await expect(slackSaveButton).toBeDisabled();
 
     // Verify tooltip shows admin-only message
-    await expect(slackSaveButton).toHaveAttribute("title", "Only admins can update organization settings");
+    await expect(slackSaveButton).toHaveAttribute(
+      "title",
+      "Only admins can update organization settings"
+    );
   });
 });
