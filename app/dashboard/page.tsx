@@ -11,7 +11,7 @@ import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Grid3x3, Archive } from "lucide-react";
+import { Plus, Grid3x3, Archive, Pencil } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
 import {
@@ -61,6 +61,8 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
+  const [isEditBoardDialogOpen, setIsEditBoardDialogOpen] = useState(false);
+  const [editingBoard, setEditingBoard] = useState<DashboardBoard | null>(null);
 
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
@@ -71,6 +73,14 @@ export default function Dashboard() {
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
+  });
+
+  const editForm = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
@@ -154,6 +164,41 @@ export default function Dashboard() {
         open: true,
         title: "Failed to create board",
         description: "Failed to create board",
+      });
+    }
+  };
+
+  const handleEditBoard = async (values: z.infer<typeof formSchema>) => {
+    if (!editingBoard) return;
+    const { name, description } = values;
+    try {
+      const response = await fetch(`/api/boards/${editingBoard.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, description }),
+      });
+
+      if (response.ok) {
+        const { board } = await response.json();
+        setBoards(boards.map((b) => (b.id === board.id ? { ...b, ...board } : b)));
+        editForm.reset();
+        setIsEditBoardDialogOpen(false);
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update board",
+          description: errorData.error || "Failed to update board",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating board:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to update board",
+        description: "Failed to update board",
       });
     }
   };
@@ -255,6 +300,72 @@ export default function Dashboard() {
           </DialogContent>
         </Dialog>
 
+        <Dialog
+          open={isEditBoardDialogOpen}
+          onOpenChange={(open) => {
+            setIsEditBoardDialogOpen(open);
+            if (!open) {
+              setEditingBoard(null);
+              editForm.reset();
+            }
+          }}
+        >
+          <DialogContent className="bg-white dark:bg-zinc-950  sm:max-w-[425px] ">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
+                Edit Board
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground dark:text-zinc-400">
+                Update the board details.
+              </DialogDescription>
+            </DialogHeader>
+            <Form {...editForm}>
+              <form className="space-y-4" onSubmit={editForm.handleSubmit(handleEditBoard)}>
+                <FormField
+                  control={editForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Board Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter board name"
+                          className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
+                          autoFocus
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage className="text-xs text-red-600" />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editForm.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description (Optional)</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Enter board description"
+                          className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <DialogFooter>
+                  <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white">
+                    Save changes
+                  </Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          </DialogContent>
+        </Dialog>
+
         {boards.length > 0 && (
           <>
             <div className="mb-8">
@@ -302,30 +413,62 @@ export default function Dashboard() {
               </Link>
 
               {boards.map((board) => (
-                <Link href={`/boards/${board.id}`} key={board.id}>
-                  <Card
-                    data-board-id={board.id}
-                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer whitespace-nowrap bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
-                  >
-                    <CardHeader>
-                      <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
-                        <CardTitle className="text-lg dark:text-zinc-100" title={board.name}>
+                <div key={board.id} data-board-id={board.id}>
+                  <Link href={`/boards/${board.id}`} className="block">
+                    <Card className="group relative h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
+                      <CardHeader className="flex items-start justify-between gap-3">
+                        <CardTitle className="text-lg dark:text-zinc-100 truncate">
                           {board.name}
                         </CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
-                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    {board.description && (
-                      <CardContent>
-                        <p className="text-slate-600 dark:text-zinc-300 truncate">
-                          {board.description}
-                        </p>
-                      </CardContent>
-                    )}
-                  </Card>
-                </Link>
+
+                        <div className="grid w-fit shrink-0">
+                          <span
+                            className="col-start-1 row-start-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap
+                 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                 transition-opacity duration-150
+                 group-hover:opacity-0 group-focus-within:opacity-0
+                 group-hover:pointer-events-none group-focus-within:pointer-events-none
+                 md:opacity-100"
+                          >
+                            {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                          </span>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Edit board"
+                            className="col-start-1 row-start-1 h-6 w-6 z-10
+                 opacity-100 md:opacity-0
+                 md:group-hover:opacity-100 md:group-focus-within:opacity-100
+                 pointer-events-auto
+                 transition-opacity duration-150"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditingBoard(board);
+                              editForm.reset({
+                                name: board.name,
+                                description: board.description || "",
+                              });
+                              setIsEditBoardDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </CardHeader>
+
+                      {board.description && (
+                        <CardContent>
+                          <p className="text-slate-600 dark:text-zinc-300 truncate">
+                            {board.description}
+                          </p>
+                        </CardContent>
+                      )}
+                    </Card>
+                  </Link>
+                </div>
               ))}
             </div>
           </>
