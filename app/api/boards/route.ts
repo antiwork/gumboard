@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const session = await auth();
 
@@ -19,6 +19,42 @@ export async function GET() {
 
     if (!user?.organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const isCheckOnly = searchParams.get("check") === "true";
+
+    if (isCheckOnly) {
+      const [latestBoard, latestNote, latestChecklistItem] = await Promise.all([
+        db.board.findFirst({
+          where: { organizationId: user.organizationId },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+        db.note.findFirst({
+          where: { board: { organizationId: user.organizationId } },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+        db.checklistItem.findFirst({
+          where: { note: { board: { organizationId: user.organizationId } } },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+      ]);
+
+      const timestamps = [
+        latestBoard?.updatedAt,
+        latestNote?.updatedAt,
+        latestChecklistItem?.updatedAt,
+      ].filter(Boolean) as Date[];
+
+      const lastModified =
+        timestamps.length > 0
+          ? new Date(Math.max(...timestamps.map((t) => t.getTime()))).toISOString()
+          : null;
+
+      return NextResponse.json({ lastModified });
     }
 
     // Get all boards for the organization

@@ -41,6 +41,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import { useBoardsListPolling } from "@/lib/hooks/useBoardsListPolling";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -69,6 +70,20 @@ export default function Dashboard() {
   }>({ open: false, title: "", description: "" });
 
   const router = useRouter();
+
+  const { error: boardsPollingError } = useBoardsListPolling({
+    enabled: !loading,
+    pollingInterval: 5000,
+    onUpdate: useCallback((data: { boards: DashboardBoard[] }) => {
+      setBoards(data.boards);
+    }, []),
+  });
+
+  useEffect(() => {
+    if (boardsPollingError && boardsPollingError.includes("Client error: 401")) {
+      router.push("/auth/signin");
+    }
+  }, [boardsPollingError, router]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),

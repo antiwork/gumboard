@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,6 +28,7 @@ import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
+import { useBoardNotesPolling } from "@/lib/hooks/useBoardNotesPolling";
 import { useUser } from "@/app/contexts/UserContext";
 import {
   getResponsiveConfig,
@@ -69,6 +70,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: string;
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingLocalDeleteIdsRef = useRef<Set<string>>(new Set());
   const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
   const [boardSettings, setBoardSettings] = useState({
     name: "",
@@ -81,6 +83,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  const { error: pollingError } = useBoardNotesPolling({
+    boardId,
+    enabled: !notesloading && !!boardId,
+    pollingInterval: 4000,
+    onUpdate: useCallback((data: { notes: Note[] }) => {
+      const incoming = data.notes.filter((n) => !pendingLocalDeleteIdsRef.current.has(n.id));
+      setNotes(incoming);
+    }, []),
+  });
+
+  useEffect(() => {
+    if (pollingError && pollingError.includes("Client error: 401")) {
+      router.push("/auth/signin");
+    }
+  }, [pollingError, router]);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -406,6 +424,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     const targetBoardId = noteToDelete.board?.id ?? noteToDelete.boardId;
 
+    pendingLocalDeleteIdsRef.current.add(noteId);
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
     const timeoutId = setTimeout(async () => {
@@ -414,6 +433,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           method: "DELETE",
         });
         if (!response.ok) {
+          pendingLocalDeleteIdsRef.current.delete(noteId);
           setNotes((prev) => [noteToDelete, ...prev]);
           const errorData = await response.json().catch(() => null);
           setErrorDialog({
@@ -424,6 +444,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         }
       } catch (error) {
         console.error("Error deleting note:", error);
+        pendingLocalDeleteIdsRef.current.delete(noteId);
         setNotes((prev) => [noteToDelete, ...prev]);
         setErrorDialog({
           open: true,
@@ -432,6 +453,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         });
       } finally {
         delete pendingDeleteTimeoutsRef.current[noteId];
+        // On success, keep it removed; clear guard after next poll tick automatically
+        // as the ID won't appear again.
       }
     }, 4000);
     pendingDeleteTimeoutsRef.current[noteId] = timeoutId;
@@ -445,6 +468,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             clearTimeout(t);
             delete pendingDeleteTimeoutsRef.current[noteId];
           }
+          pendingLocalDeleteIdsRef.current.delete(noteId);
           setNotes((prev) => [noteToDelete, ...prev]);
         },
       },

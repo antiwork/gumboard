@@ -15,68 +15,94 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const session = await auth();
     const boardId = (await params).id;
 
-    const board = await db.board.findUnique({
+    const boardMeta = await db.board.findUnique({
       where: { id: boardId },
       select: {
         id: true,
         isPublic: true,
         organizationId: true,
-        notes: {
-          where: {
-            deletedAt: null, // Only include non-deleted notes
-            archivedAt: null,
-          },
-          select: {
-            id: true,
-            color: true,
-            boardId: true,
-            createdBy: true,
-            createdAt: true,
-            updatedAt: true,
-            archivedAt: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                image: true,
-              },
-            },
-            checklistItems: { orderBy: { order: "asc" } },
-          },
-          orderBy: { createdAt: "desc" },
-        },
+        updatedAt: true,
       },
     });
 
-    if (!board) {
+    if (!boardMeta) {
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    if (board.isPublic) {
-      return NextResponse.json({ notes: board.notes });
+    // Check permissions for non-public boards
+    if (!boardMeta.isPublic) {
+      if (!session?.user?.id) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { organizationId: true },
+      });
+
+      if (!user?.organizationId) {
+        return NextResponse.json({ error: "No organization found" }, { status: 403 });
+      }
+
+      if (boardMeta.organizationId !== user.organizationId) {
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
+      }
     }
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const { searchParams } = new URL(request.url);
+    const isCheckOnly = searchParams.get("check") === "true";
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
+    // If check-only, return just timestamp
+    if (isCheckOnly) {
+      const [latestNote, latestChecklistItem] = await Promise.all([
+        db.note.findFirst({
+          where: { boardId },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+        db.checklistItem.findFirst({
+          where: { note: { boardId } },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+      ]);
+
+      const timestamps = [
+        latestNote?.updatedAt,
+        latestChecklistItem?.updatedAt,
+        boardMeta.updatedAt,
+      ].filter(Boolean) as Date[];
+
+      const lastModified =
+        timestamps.length > 0
+          ? new Date(Math.max(...timestamps.map((t) => t.getTime()))).toISOString()
+          : null;
+
+      return NextResponse.json({ lastModified });
+    }
+    const notes = await db.note.findMany({
+      where: { boardId, deletedAt: null, archivedAt: null },
       select: {
-        organizationId: true,
+        id: true,
+        color: true,
+        boardId: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        archivedAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
+        checklistItems: { orderBy: { order: "asc" } },
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 });
-    }
-
-    if (board.organizationId !== user.organizationId) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    return NextResponse.json({ notes: board.notes });
+    return NextResponse.json({ notes });
   } catch (error) {
     console.error("Error fetching notes:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

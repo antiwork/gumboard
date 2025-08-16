@@ -3,8 +3,6 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NOTE_COLORS } from "@/lib/constants";
 
-// Get all notes from all boards in the organization
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();
@@ -12,20 +10,61 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get user with organization
     const user = await db.user.findUnique({
       where: { id: session.user.id },
-      include: { organization: true },
+      select: { organizationId: true },
     });
 
     if (!user?.organizationId) {
       return NextResponse.json({ error: "No organization found" }, { status: 403 });
     }
 
-    // Get all notes from all boards in the organization
+    const { searchParams } = new URL(request.url);
+    const isCheckOnly = searchParams.get("check") === "true";
+
+    // If check-only, return just timestamp
+    if (isCheckOnly) {
+      const [latestNote, latestChecklistItem, latestBoard] = await Promise.all([
+        db.note.findFirst({
+          where: {
+            board: { organizationId: user.organizationId },
+          },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+        db.checklistItem.findFirst({
+          where: {
+            note: {
+              board: { organizationId: user.organizationId },
+            },
+          },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+        db.board.findFirst({
+          where: { organizationId: user.organizationId },
+          orderBy: { updatedAt: "desc" },
+          select: { updatedAt: true },
+        }),
+      ]);
+
+      const timestamps = [
+        latestNote?.updatedAt,
+        latestChecklistItem?.updatedAt,
+        latestBoard?.updatedAt,
+      ].filter(Boolean) as Date[];
+
+      const lastModified =
+        timestamps.length > 0
+          ? new Date(Math.max(...timestamps.map((t) => t.getTime()))).toISOString()
+          : null;
+
+      return NextResponse.json({ lastModified });
+    }
+
     const notes = await db.note.findMany({
       where: {
-        deletedAt: null, // Only include non-deleted notes
+        deletedAt: null,
         archivedAt: null,
         board: {
           organizationId: user.organizationId,
