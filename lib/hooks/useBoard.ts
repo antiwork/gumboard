@@ -1,0 +1,319 @@
+import { useState, useEffect, useRef, useMemo } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import type { Note, Board } from "@/components/note";
+import {
+  getUniqueAuthors,
+  calculateGridLayout,
+  calculateMobileLayout,
+  filterAndSortNotes,
+} from "@/lib/utils";
+
+interface UseBoardOptions {
+  readonly?: boolean;
+  enableFilters?: boolean;
+  enableUrlSync?: boolean;
+  enableUserFeatures?: boolean;
+}
+
+interface DateRange {
+  startDate: Date | null;
+  endDate: Date | null;
+}
+
+export function useBoard(boardId: string | null, options: UseBoardOptions = {}) {
+  const {
+    readonly = false,
+    enableFilters = true,
+    enableUrlSync = false,
+    enableUserFeatures = true,
+  } = options;
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Core state
+  const [board, setBoard] = useState<Board | null>(null);
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Responsive state
+  const [isMobile, setIsMobile] = useState(false);
+  const boardRef = useRef<HTMLDivElement>(null);
+
+  // Filter state
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [dateRange, setDateRange] = useState<DateRange>({
+    startDate: null,
+    endDate: null,
+  });
+  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
+
+  // Computed values
+  const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
+
+  const filteredNotes = useMemo(
+    () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, null),
+    [notes, debouncedSearchTerm, dateRange, selectedAuthor]
+  );
+
+  const layoutNotes = useMemo(
+    () =>
+      isMobile
+        ? calculateMobileLayout(filteredNotes, null)
+        : calculateGridLayout(filteredNotes, null),
+    [isMobile, filteredNotes]
+  );
+
+  const boardHeight = useMemo(() => {
+    if (layoutNotes.length === 0) {
+      return "calc(100vh - 64px)";
+    }
+    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
+    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
+    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
+    return `${calculatedHeight}px`;
+  }, [layoutNotes]);
+
+  // Filter handlers
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+  };
+
+  const handleDateRangeChange = (startDate: Date | null, endDate: Date | null) => {
+    const newDateRange = { startDate, endDate };
+    setDateRange(newDateRange);
+    
+    if (enableUrlSync) {
+      updateURL(undefined, newDateRange);
+    }
+  };
+
+  const handleAuthorChange = (authorId: string | null) => {
+    setSelectedAuthor(authorId);
+    
+    if (enableUrlSync) {
+      updateURL(undefined, undefined, authorId);
+    }
+  };
+
+  const clearAllFilters = () => {
+    setSearchTerm("");
+    setDateRange({ startDate: null, endDate: null });
+    setSelectedAuthor(null);
+    
+    if (enableUrlSync) {
+      updateURL("", { startDate: null, endDate: null }, null);
+    }
+  };
+
+  // URL sync helpers
+  const updateURL = (
+    newSearchTerm?: string,
+    newDateRange?: DateRange,
+    newAuthor?: string | null
+  ) => {
+    if (!enableUrlSync) return;
+    
+    const params = new URLSearchParams();
+
+    const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
+    const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
+    const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
+
+    if (currentSearchTerm) {
+      params.set("search", currentSearchTerm);
+    }
+
+    if (currentDateRange.startDate) {
+      params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
+    }
+
+    if (currentDateRange.endDate) {
+      params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
+    }
+
+    if (currentAuthor) {
+      params.set("author", currentAuthor);
+    }
+
+    const queryString = params.toString();
+    const newURL = queryString ? `?${queryString}` : window.location.pathname;
+    router.replace(newURL, { scroll: false });
+  };
+
+  const initializeFiltersFromURL = () => {
+    if (!enableUrlSync) return;
+    
+    const urlSearchTerm = searchParams.get("search") || "";
+    const urlStartDate = searchParams.get("startDate");
+    const urlEndDate = searchParams.get("endDate");
+    const urlAuthor = searchParams.get("author");
+
+    setSearchTerm(urlSearchTerm);
+
+    let startDate: Date | null = null;
+    let endDate: Date | null = null;
+
+    if (urlStartDate) {
+      const parsedStartDate = new Date(urlStartDate);
+      if (!isNaN(parsedStartDate.getTime())) {
+        startDate = parsedStartDate;
+      }
+    }
+
+    if (urlEndDate) {
+      const parsedEndDate = new Date(urlEndDate);
+      if (!isNaN(parsedEndDate.getTime())) {
+        endDate = parsedEndDate;
+      }
+    }
+
+    setDateRange({ startDate, endDate });
+    setSelectedAuthor(urlAuthor);
+  };
+
+  // Fetch board data
+  const fetchBoardData = async () => {
+    if (!boardId) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      let boardResponse: Response | undefined;
+      let notesResponse: Response;
+
+      if (boardId === "all-notes") {
+        boardResponse = undefined;
+        notesResponse = await fetch(`/api/boards/all-notes/notes`);
+        
+        setBoard({
+          id: "all-notes",
+          name: "All notes",
+          description: "Notes from all boards",
+        });
+      } else if (boardId === "archive") {
+        boardResponse = undefined;
+        notesResponse = await fetch(`/api/boards/archive/notes`);
+        
+        setBoard({
+          id: "archive",
+          name: "Archive",
+          description: "Archived notes from all boards",
+        });
+      } else {
+        [boardResponse, notesResponse] = await Promise.all([
+          fetch(`/api/boards/${boardId}`),
+          fetch(`/api/boards/${boardId}/notes`),
+        ]);
+      }
+
+      if (boardResponse && boardResponse.ok) {
+        const { board } = await boardResponse.json();
+        setBoard(board);
+      }
+
+      if (notesResponse.ok) {
+        const { notes } = await notesResponse.json();
+        setNotes(notes);
+      }
+    } catch (error) {
+      console.error("Error fetching board data:", error);
+      setError("Failed to load board data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Responsive handling
+  useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout;
+
+    const checkResponsive = () => {
+      if (typeof window !== "undefined") {
+        const width = window.innerWidth;
+        setIsMobile(width < 768);
+
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          setNotes((prevNotes) => [...prevNotes]);
+        }, 50);
+      }
+    };
+
+    checkResponsive();
+    window.addEventListener("resize", checkResponsive);
+    return () => {
+      window.removeEventListener("resize", checkResponsive);
+      clearTimeout(resizeTimeout);
+    };
+  }, []);
+
+  // Search debouncing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+
+  // Initialize filters from URL on mount
+  useEffect(() => {
+    if (enableUrlSync) {
+      initializeFiltersFromURL();
+    }
+  }, [enableUrlSync]);
+
+  // Fetch data when boardId changes
+  useEffect(() => {
+    if (boardId) {
+      fetchBoardData();
+    }
+  }, [boardId]);
+
+  // Return everything needed by components
+  return {
+    // State
+    board,
+    notes,
+    loading,
+    error,
+    isMobile,
+    searchTerm,
+    dateRange,
+    selectedAuthor,
+    boardRef,
+    
+    // Setters
+    setBoard,
+    setNotes,
+    setLoading,
+    
+    // Computed values
+    filteredNotes,
+    layoutNotes,
+    boardHeight,
+    uniqueAuthors,
+    
+    // Filter handlers
+    handleSearchChange,
+    handleDateRangeChange,
+    handleAuthorChange,
+    clearAllFilters,
+    
+    // Actions
+    setSearchTerm,
+    setDateRange,
+    setSelectedAuthor,
+    fetchBoardData,
+    
+    // Options
+    readonly,
+    enableFilters,
+    enableUrlSync,
+    enableUserFeatures,
+  };
+}

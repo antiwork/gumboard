@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -29,20 +29,13 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import {
-  getResponsiveConfig,
-  getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
-  filterAndSortNotes,
-} from "@/lib/utils";
+import { useBoard } from "@/lib/hooks/useBoard";
+import { getResponsiveConfig } from "@/lib/utils";
+
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
-  const [board, setBoard] = useState<Board | null>(null);
-  const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
-  const [notesloading, setNotesLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
@@ -50,17 +43,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-  const [dateRange, setDateRange] = useState<{
-    startDate: Date | null;
-    endDate: Date | null;
-  }>({
-    startDate: null,
-    endDate: null,
-  });
-  const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
   // Per-item edit and animations are handled inside Note component now
   const [errorDialog, setErrorDialog] = useState<{
@@ -78,79 +60,38 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
-  const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const searchParams = useSearchParams();
+
+  const {
+    board,
+    notes,
+    loading: notesloading,
+    setBoard,
+    setNotes,
+    searchTerm,
+    dateRange,
+    selectedAuthor,
+    boardRef,
+    filteredNotes,
+    layoutNotes,
+    boardHeight,
+    uniqueAuthors,
+    handleSearchChange,
+    handleDateRangeChange,
+    handleAuthorChange,
+    clearAllFilters,
+  } = useBoard(boardId, {
+    readonly: false,
+    enableFilters: true,
+    enableUrlSync: true,
+    enableUserFeatures: true,
+  });
 
   useEffect(() => {
     if (!userLoading && !user) {
       router.push("/auth/signin");
     }
   }, [user, userLoading, router]);
-
-  // Update URL with current filter state
-  const updateURL = (
-    newSearchTerm?: string,
-    newDateRange?: { startDate: Date | null; endDate: Date | null },
-    newAuthor?: string | null
-  ) => {
-    const params = new URLSearchParams();
-
-    const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
-    const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
-    const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
-
-    if (currentSearchTerm) {
-      params.set("search", currentSearchTerm);
-    }
-
-    if (currentDateRange.startDate) {
-      params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
-    }
-
-    if (currentDateRange.endDate) {
-      params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
-    }
-
-    if (currentAuthor) {
-      params.set("author", currentAuthor);
-    }
-
-    const queryString = params.toString();
-    const newURL = queryString ? `?${queryString}` : window.location.pathname;
-    router.replace(newURL, { scroll: false });
-  };
-
-  // Initialize filters from URL parameters
-  const initializeFiltersFromURL = () => {
-    const urlSearchTerm = searchParams.get("search") || "";
-    const urlStartDate = searchParams.get("startDate");
-    const urlEndDate = searchParams.get("endDate");
-    const urlAuthor = searchParams.get("author");
-
-    setSearchTerm(urlSearchTerm);
-
-    // Parse dates safely
-    let startDate: Date | null = null;
-    let endDate: Date | null = null;
-
-    if (urlStartDate) {
-      const parsedStartDate = new Date(urlStartDate);
-      if (!isNaN(parsedStartDate.getTime())) {
-        startDate = parsedStartDate;
-      }
-    }
-
-    if (urlEndDate) {
-      const parsedEndDate = new Date(urlEndDate);
-      if (!isNaN(parsedEndDate.getTime())) {
-        endDate = parsedEndDate;
-      }
-    }
-
-    setDateRange({ startDate, endDate });
-    setSelectedAuthor(urlAuthor);
-  };
 
   useEffect(() => {
     const initializeParams = async () => {
@@ -159,19 +100,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
     initializeParams();
   }, [params]);
-
-  // Initialize filters from URL on mount
-  useEffect(() => {
-    initializeFiltersFromURL();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    if (boardId) {
-      fetchBoardData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [boardId]);
 
   // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
@@ -212,144 +140,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
-
-  // Removed debounce cleanup effect; editing is scoped to Note
-
-  // Enhanced responsive handling with debounced resize and better breakpoints
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768); // Tablet breakpoint
-
-        // Force re-render of notes layout after screen size change
-        // This ensures notes are properly repositioned
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50); // Debounce resize events - reduced for real-time feel
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-      updateURL(searchTerm);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [searchTerm]);
-
-  // Get unique authors for dropdown
-  const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
-
-  // Get filtered and sorted notes for display
-  const filteredNotes = useMemo(
-    () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
-    [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
-  );
-  const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
-        : calculateGridLayout(filteredNotes, addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem]
-  );
-
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
-
-  const fetchBoardData = async () => {
-    try {
-      // Fetch all boards for the dropdown
-      let allBoardsResponse: Response;
-      let notesResponse: Response | undefined;
-      let boardResponse: Response | undefined;
-
-      if (boardId === "all-notes") {
-        // For all notes view, create a virtual board object and fetch all notes
-        [allBoardsResponse, notesResponse] = await Promise.all([
-          fetch("/api/boards"),
-          fetch(`/api/boards/all-notes/notes`),
-        ]);
-
-        setBoard({
-          id: "all-notes",
-          name: "All notes",
-          description: "Notes from all boards",
-        });
-      } else if (boardId === "archive") {
-        [allBoardsResponse, notesResponse] = await Promise.all([
-          fetch("/api/boards"),
-          fetch(`/api/boards/archive/notes`),
-        ]);
-
-        // Set virtual board immediately
-        setBoard({
-          id: "archive",
-          name: "Archive",
-          description: "Archived notes from all boards",
-        });
-      } else {
-        [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
-          fetch("/api/boards"),
-          fetch(`/api/boards/${boardId}`),
-          fetch(`/api/boards/${boardId}/notes`),
-        ]);
-      }
-
-      if (allBoardsResponse.ok) {
-        const { boards } = await allBoardsResponse.json();
-        setAllBoards(boards);
-      }
-
-      if (boardResponse && boardResponse.ok) {
-        const { board } = await boardResponse.json();
-        setBoard(board);
-        setBoardSettings({
-          name: board.name,
-          description: board.description || "",
-          isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-          sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-        });
-      }
-
-      if (notesResponse && notesResponse.ok) {
-        const { notes } = await notesResponse.json();
-        setNotes(notes);
-      }
-
-      if (boardId && boardId !== "all-notes") {
-        try {
-          localStorage.setItem("gumboard-last-visited-board", boardId);
-        } catch (error) {
-          console.warn("Failed to save last visited board:", error);
-        }
-      }
-    } catch (error) {
-      console.error("Error fetching board data:", error);
-    } finally {
-      setNotesLoading(false);
-    }
-  };
 
   // Adapter: bridge component Note -> existing update handler
   const handleUpdateNoteFromComponent = async (updatedNote: Note) => {
@@ -757,22 +547,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
             {/* Filter Popover */}
             <div className="relative board-dropdown mr-0" data-slot="filter-popover">
-              <FilterPopover
-                startDate={dateRange.startDate}
-                endDate={dateRange.endDate}
-                onDateRangeChange={(startDate, endDate) => {
-                  const newDateRange = { startDate, endDate };
-                  setDateRange(newDateRange);
-                  updateURL(undefined, newDateRange);
-                }}
-                selectedAuthor={selectedAuthor}
-                authors={uniqueAuthors}
-                onAuthorChange={(authorId) => {
-                  setSelectedAuthor(authorId);
-                  updateURL(undefined, undefined, authorId);
-                }}
-                className="w-fit"
-              />
+                          <FilterPopover
+              startDate={dateRange.startDate}
+              endDate={dateRange.endDate}
+              onDateRangeChange={handleDateRangeChange}
+              selectedAuthor={selectedAuthor}
+              authors={uniqueAuthors}
+              onAuthorChange={handleAuthorChange}
+              className="w-fit"
+            />
             </div>
           </div>
 
@@ -788,18 +571,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 type="text"
                 placeholder="Search notes..."
                 value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full sm:w-64 pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
               {searchTerm && (
                 <Button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setDebouncedSearchTerm("");
-                    updateURL("");
-                  }}
+                  onClick={() => handleSearchChange("")}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
                 >
                   <X className="h-4 w-4" />
@@ -885,13 +662,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 )}
               </div>
               <Button
-                onClick={() => {
-                  setSearchTerm("");
-                  setDebouncedSearchTerm("");
-                  setDateRange({ startDate: null, endDate: null });
-                  setSelectedAuthor(null);
-                  updateURL("", { startDate: null, endDate: null }, null);
-                }}
+                onClick={clearAllFilters}
                 variant="outline"
                 className="flex items-center space-x-2 cursor-pointer"
               >
