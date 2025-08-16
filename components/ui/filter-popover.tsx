@@ -121,7 +121,9 @@ function FilterPopover({
                       </Avatar>
                       <div className="min-w-0 flex-1 text-left">
                         <div className="font-medium truncate leading-tight">{author.name}</div>
-                        <div className="text-xs text-muted-foreground truncate leading-tight">{author.email}</div>
+                        <div className="text-xs text-muted-foreground truncate leading-tight">
+                          {author.email}
+                        </div>
                       </div>
                     </Button>
                   ))}
