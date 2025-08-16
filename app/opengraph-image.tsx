@@ -41,15 +41,32 @@ export default function OpenGraphImage() {
             <svg
               width="72"
               height="72"
-              viewBox="0 0 24 24"
+              viewBox="0 0 86 87"
               fill="none"
-              stroke="#2563eb"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+              xmlns="http://www.w3.org/2000/svg"
             >
-              <path d="M16 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V8Z" />
-              <path d="M15 3v4a2 2 0 0 0 2 2h4" />
+              <rect
+                x="4"
+                y="5"
+                width="81"
+                height="81"
+                fill="black"
+                stroke="black"
+                strokeWidth="2"
+              />
+              <rect
+                x="1"
+                y="1"
+                width="81"
+                height="81"
+                fill="#FF90E8"
+                stroke="black"
+                strokeWidth="2"
+              />
+              <path
+                d="M38.23 60.901C27.381 60.901 21 52.2 21 41.375C21 30.126 28.02 21 41.421 21C55.249 21 59.929 30.339 60.141 35.645H50.143C49.93 32.673 47.378 28.216 41.208 28.216C34.614 28.216 30.359 33.946 30.359 40.951C30.359 47.956 34.614 53.685 41.209 53.685C47.165 53.685 49.718 49.015 50.781 44.347H41.208V40.527H61.295V60.052H52.483V47.742C51.845 52.2 49.079 60.901 38.23 60.901Z"
+                fill="black"
+              />
             </svg>
             <span
               style={{
