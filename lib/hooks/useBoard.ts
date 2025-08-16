@@ -195,7 +195,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
           fetch("/api/boards"),
           fetch(`/api/boards/all-notes/notes`),
         ]);
-        
+
         setBoard({
           id: "all-notes",
           name: "All notes",
@@ -207,7 +207,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
           fetch("/api/boards"),
           fetch(`/api/boards/archive/notes`),
         ]);
-        
+
         setBoard({
           id: "archive",
           name: "Archive",
@@ -303,31 +303,31 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     selectedAuthor,
     boardRef,
     allBoards,
-    
+
     // Setters
     setBoard,
     setNotes,
     setLoading,
     setAllBoards,
-    
+
     // Computed values
     filteredNotes,
     layoutNotes,
     boardHeight,
     uniqueAuthors,
-    
+
     // Filter handlers
     handleSearchChange,
     handleDateRangeChange,
     handleAuthorChange,
     clearAllFilters,
-    
+
     // Actions
     setSearchTerm,
     setDateRange,
     setSelectedAuthor,
     fetchBoardData,
-    
+
     // Options
     readonly,
     enableFilters,
