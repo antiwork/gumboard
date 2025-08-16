@@ -102,7 +102,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
-        distance: 5, 
+        distance: 5,
       },
     }),
     useSensor(KeyboardSensor, {
@@ -305,12 +305,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }, [filteredNotes, boardId, orderKey]);
 
   const layoutNotes = useMemo(
-  () =>
-    isMobile
-      ? calculateMobileLayout(orderedNotes, addingChecklistItem)
-      : calculateGridLayout(orderedNotes, addingChecklistItem),
-  [orderedNotes, isMobile, addingChecklistItem]
-);
+    () =>
+      isMobile
+        ? calculateMobileLayout(orderedNotes, addingChecklistItem)
+        : calculateGridLayout(orderedNotes, addingChecklistItem),
+    [orderedNotes, isMobile, addingChecklistItem]
+  );
 
   const boardHeight = useMemo(() => {
     if (layoutNotes.length === 0) {
@@ -442,7 +442,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
         const storageKey = `board-${actualTargetBoardId}-note-order`;
         const savedOrder = localStorage.getItem(storageKey);
-        const order = savedOrder ? JSON.parse(savedOrder) as string[] : [];
+        const order = savedOrder ? (JSON.parse(savedOrder) as string[]) : [];
         order.push(note.id);
         localStorage.setItem(storageKey, JSON.stringify(order));
         setOrderKey((prev) => prev + 1);
@@ -705,7 +705,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const hasActiveFilters =
     debouncedSearchTerm !== "" || dateRange.startDate || dateRange.endDate || selectedAuthor;
 
-
   if (userLoading || notesloading) {
     return <FullPageLoader message="Loading board..." />;
   }
@@ -949,8 +948,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               />
             ))
           ) : (
-            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <SortableContext items={layoutNotes.map((note) => note.id)} strategy={rectSortingStrategy}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={layoutNotes.map((note) => note.id)}
+                strategy={rectSortingStrategy}
+              >
                 {layoutNotes.map((note) => (
                   <SortableNoteWrapper
                     key={note.id}

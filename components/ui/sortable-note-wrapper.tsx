@@ -21,7 +21,9 @@ export function SortableNoteWrapper({
   onArchive?: (noteId: string) => void;
   onUnarchive?: (noteId: string) => void;
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: note.id });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: note.id,
+  });
 
   const style = {
     position: "absolute" as const,
@@ -39,7 +41,11 @@ export function SortableNoteWrapper({
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="rounded-md">
       <NoteCard
-        style={{ padding: `${getResponsiveConfig().notePadding}px`, width: note.width, height: note.height }}
+        style={{
+          padding: `${getResponsiveConfig().notePadding}px`,
+          width: note.width,
+          height: note.height,
+        }}
         note={note as Note}
         currentUser={user}
         onUpdate={onUpdate}
