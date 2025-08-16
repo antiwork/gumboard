@@ -41,6 +41,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -166,7 +167,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <FullPageLoader message="Loading dashboard..." />;
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -377,6 +378,46 @@ export default function Dashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+const DashboardSkeleton = () => {
+  const skeletonBoardCount = 5;
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950">
+      <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
+        <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Skeleton className="h-8 w-32" />
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </div>
+      </nav>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="space-y-4 mb-6">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-6 w-84" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+          {Array.from({ length: skeletonBoardCount }).map((_, i) => (
+            <div
+              key={i}
+              className="h-full min-h-34 bg-white dark:bg-zinc-900 shadow-sm p-4 rounded-sm flex flex-col justify-between"
+            >
+              <div>
+                <Skeleton className="h-8 w-32 mb-8" />
+                <Skeleton className="h-6 w-64" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
