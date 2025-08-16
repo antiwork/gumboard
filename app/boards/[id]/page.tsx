@@ -29,12 +29,19 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import { getUniqueAuthors, filterAndSortNotes } from "@/lib/utils";
+import {
+  getUniqueAuthors,
+  filterAndSortNotes,
+  getColumnDetails,
+  calculateColumnsData,
+  getResponsiveGapClass,
+} from "@/lib/utils";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
+
   const [allBoards, setAllBoards] = useState<Board[]>([]);
   const [notesloading, setNotesLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
@@ -44,7 +51,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
-
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -72,8 +78,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
-  const boardRef = useRef<HTMLDivElement>(null);
-  const notesContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -147,6 +151,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setSelectedAuthor(urlAuthor);
   };
 
+  const columnDetails = useMemo(() => {
+    if (typeof window === "undefined") return { count: 1, gap: 0 };
+    return getColumnDetails(window.innerWidth);
+  }, []);
+
   useEffect(() => {
     const initializeParams = async () => {
       const resolvedParams = await params;
@@ -208,8 +217,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
   }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
-  // Removed debounce cleanup effect; editing is scoped to Note
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -228,101 +235,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
 
-  useEffect(() => {
-    if (!notesContainerRef.current || filteredNotes.length === 0) return;
-
-    const performLayout = () => {
-      const container = notesContainerRef.current;
-      if (!container) return;
-
-      const notes = container.children;
-      const containerWidth = container.offsetWidth;
-
-      // Responsive column count based on screen width
-      let numColumns = 4;
-      if (containerWidth < 640)
-        numColumns = 1; // sm: 1 column
-      else if (containerWidth < 768)
-        numColumns = 2; // md: 2 columns
-      else if (containerWidth < 1024)
-        numColumns = 3; // lg: 3 columns
-      else if (containerWidth < 1536)
-        numColumns = 4; // xl: 4 columns
-      else numColumns = 6; // 2xl: 6 columns
-
-      const gap = 12;
-      const noteWidth = (containerWidth - gap * (numColumns - 1)) / numColumns;
-
-      // First pass: Position notes in strict row order (4 per row)
-      const rowHeights: number[] = [];
-      let currentRow = 0;
-      let currentRowHeight = 0;
-      let notesInCurrentRow = 0;
-
-      Array.from(notes).forEach((noteElement, index) => {
-        const columnIndex = index % numColumns;
-        const noteHeight = (noteElement as HTMLElement).offsetHeight;
-
-        // If starting a new row
-        if (columnIndex === 0 && index > 0) {
-          rowHeights.push(currentRowHeight);
-          currentRow++;
-          currentRowHeight = 0;
-          notesInCurrentRow = 0;
-        }
-
-        // Position note in current row
-        (noteElement as HTMLElement).style.position = "absolute";
-        (noteElement as HTMLElement).style.left = `${columnIndex * (noteWidth + gap)}px`;
-        (noteElement as HTMLElement).style.top =
-          `${currentRow * (Math.max(...rowHeights) + gap)}px`;
-        (noteElement as HTMLElement).style.width = `${noteWidth}px`;
-
-        // Track row height
-        currentRowHeight = Math.max(currentRowHeight, noteHeight);
-        notesInCurrentRow++;
-      });
-
-      // Add height of last row
-      if (notesInCurrentRow > 0) {
-        rowHeights.push(currentRowHeight);
-      }
-
-      // Second pass: Fill gaps by repositioning notes
-      const columnHeights = new Array(numColumns).fill(0);
-
-      Array.from(notes).forEach((noteElement) => {
-        const noteHeight = (noteElement as HTMLElement).offsetHeight;
-
-        // Find shortest column
-        const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
-
-        // Reposition to fill gap
-        (noteElement as HTMLElement).style.left = `${shortestColumnIndex * (noteWidth + gap)}px`;
-        (noteElement as HTMLElement).style.top = `${columnHeights[shortestColumnIndex]}px`;
-
-        // Update column height
-        columnHeights[shortestColumnIndex] += noteHeight + gap;
-      });
-
-      // Set container height
-      container.style.height = `${Math.max(...columnHeights)}px`;
-    };
-
-    // Initial layout
-    performLayout();
-
-    // Add resize listener for mobile responsiveness
-    const handleResize = () => {
-      performLayout();
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [filteredNotes]);
+  const columnsData = useMemo(
+    () => calculateColumnsData(filteredNotes, columnDetails),
+    [columnDetails, filteredNotes]
+  );
 
   const fetchBoardData = async () => {
     try {
@@ -874,36 +790,29 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </div>
 
       {/* Board Area */}
-      <div
-        ref={boardRef}
-        className="relative w-full"
-        style={{
-          minHeight: "calc(100vh - 64px)", // Account for header height
-        }}
-      >
-        {/* Notes */}
-        <div className="w-full p-2 sm:p-3 md:p-4">
-          <div ref={notesContainerRef} className="relative w-full" style={{ minHeight: "400px" }}>
-            {filteredNotes.map((note) => (
-              <div key={note.id} className="transition-all duration-300 ease-in-out">
+
+      <div className="p-3 md:p-5">
+        <div className={`flex ${getResponsiveGapClass(columnDetails.gap)}`}>
+          {columnsData.map((column, index) => (
+            <div key={index} className="flex-1 flex flex-col gap-4">
+              {column.map((note) => (
                 <NoteCard
-                  note={note as Note}
+                  key={note.id}
+                  note={note}
                   currentUser={user as User}
                   onUpdate={handleUpdateNoteFromComponent}
                   onDelete={handleDeleteNote}
                   onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
                   onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
                   showBoardName={boardId === "all-notes" || boardId === "archive"}
-                  className="shadow-md shadow-black/10 w-full p-3"
+                  className="shadow-md shadow-black/10 p-4"
                   style={{
-                    width: "100%",
-                    minHeight: "200px",
                     backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
                   }}
                 />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ))}
         </div>
 
         {/* Empty State */}
