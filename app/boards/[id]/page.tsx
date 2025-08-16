@@ -433,7 +433,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       } finally {
         delete pendingDeleteTimeoutsRef.current[noteId];
       }
-    }, 4000);
+    }, 9000);
     pendingDeleteTimeoutsRef.current[noteId] = timeoutId;
 
     toast("Note deleted", {
@@ -448,7 +448,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           setNotes((prev) => [noteToDelete, ...prev]);
         },
       },
-      duration: 4000,
+      duration: 10000,
     });
   };
 
