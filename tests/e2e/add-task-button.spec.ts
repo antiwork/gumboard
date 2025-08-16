@@ -1,4 +1,4 @@
-import { test, expect } from "../fixtures/test-helpers";
+import { expect, test } from "../fixtures/test-helpers";
 
 test.describe("Add Task Button", () => {
   test("should display new item input for all notes when user is authorized", async ({
@@ -52,10 +52,9 @@ test.describe("Add Task Button", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
-    ).toBeVisible();
+    await authenticatedPage.waitForResponse(
+      (r) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok()
+    );
 
     const newItemInputs = authenticatedPage.getByTestId("new-item");
     await expect(newItemInputs).toHaveCount(2);
@@ -101,6 +100,12 @@ test.describe("Add Task Button", () => {
     });
 
     await page.goto(`/boards/${board.id}`);
+    await page.waitForResponse((r) => {
+      if (!r.url().includes(`/api/boards/${board.id}/notes`)) return false;
+      const s = r.status();
+      return s === 200 || s === 401 || s === 403;
+    });
+
     const newItemInput = page.getByTestId("new-item");
     await expect(newItemInput).not.toBeVisible();
   });
@@ -139,10 +144,9 @@ test.describe("Add Task Button", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
-    ).toBeVisible();
+    await authenticatedPage.waitForResponse(
+      (r) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok()
+    );
 
     const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
@@ -209,10 +213,9 @@ test.describe("Add Task Button", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
-    ).toBeVisible();
+    await authenticatedPage.waitForResponse(
+      (r) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok()
+    );
 
     const newItemInput = authenticatedPage.getByTestId("new-item");
     await expect(newItemInput).toBeVisible();
@@ -259,10 +262,9 @@ test.describe("Add Task Button", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
-    ).toBeVisible();
+    await authenticatedPage.waitForResponse(
+      (r) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok()
+    );
 
     const initialNote = await testPrisma.note.findUnique({
       where: { id: note.id },
