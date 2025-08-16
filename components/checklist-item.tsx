@@ -155,7 +155,7 @@ export function ChecklistItem({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 opacity-50 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
+          className="h-6 w-6 opacity-50 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500 self-center"
           onMouseDown={() => {
             deletingRef.current = true;
           }}

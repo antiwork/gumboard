@@ -52,18 +52,18 @@ function FilterPopover({
             variant="outline"
             disabled={disabled}
             className={cn(
-              "flex items-center text-sm gap-0 rounded-md py-2 cursor-pointer w-full sm:w-auto",
+              "flex items-center justify-center text-sm rounded-md py-2 cursor-pointer w-full sm:w-auto min-h-[40px]",
               disabled && "opacity-50 cursor-not-allowed"
             )}
           >
-            <ListFilter className="w-4 h-4 mr-1 text-muted-foreground" />
-            <span className="text-foreground">
+            <div className="flex items-center justify-center w-full">
+              <ListFilter className="w-4 h-4 text-muted-foreground" />
               {filterCount > 0 && (
-                <span className="px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-md">
+                <span className="ml-2 px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-md">
                   {filterCount}
                 </span>
               )}
-            </span>
+            </div>
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-full sm:w-80">
@@ -84,18 +84,18 @@ function FilterPopover({
                 Author
               </Label>
               <ScrollArea className="h-auto rounded-md dark:text-zinc-100">
-                <div className="space-y-1 p-1">
+                <div className="space-y-1">
                   <Button
                     data-slot="all-authors-button"
                     variant="ghost"
                     onClick={() => onAuthorChange?.(null)}
                     className={cn(
-                      "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                      "w-full justify-start text-left flex items-center hover:bg-zinc-100 dark:hover:bg-zinc-800 py-2 px-3 h-auto",
                       !selectedAuthor &&
                         "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
                     )}
                   >
-                    <User className="w-4 h-4 " />
+                    <User className="w-5 h-5 mr-3 flex-shrink-0" />
                     <span className="font-medium">All authors</span>
                   </Button>
                   {authors.map((author) => (
@@ -104,24 +104,24 @@ function FilterPopover({
                       variant="ghost"
                       onClick={() => onAuthorChange?.(author.id)}
                       className={cn(
-                        "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                        "w-full justify-start text-left flex items-start hover:bg-zinc-100 dark:hover:bg-zinc-800 py-2 px-3 h-auto",
                         selectedAuthor === author.id &&
                           "bg-blue-50 dark:bg-zinc-800 hover:bg-blue-50 text-blue-600 dark:text-zinc-200"
                       )}
                     >
-                      <Avatar className="w-6 h-6">
+                      <Avatar className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5">
                         <AvatarImage src={author.image || ""} />
                         <AvatarFallback>
-                          <div className="w-6 h-6 bg-sky-600 text-primary-foreground rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-5 h-5 bg-sky-600 text-primary-foreground rounded-full flex items-center justify-center">
                             <span className="text-xs font-medium text-white">
                               {author.name.charAt(0).toUpperCase()}
                             </span>
                           </div>
                         </AvatarFallback>
                       </Avatar>
-                      <div className="min-w-0 flex-1">
-                        <div className="font-medium truncate">{author.name}</div>
-                        <div className="text-xs text-muted-foreground truncate">{author.email}</div>
+                      <div className="min-w-0 flex-1 text-left">
+                        <div className="font-medium truncate leading-tight">{author.name}</div>
+                        <div className="text-xs text-muted-foreground truncate leading-tight">{author.email}</div>
                       </div>
                     </Button>
                   ))}
