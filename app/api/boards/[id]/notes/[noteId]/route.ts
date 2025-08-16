@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import {
   updateSlackMessage,
@@ -7,6 +6,7 @@ import {
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";
+import { getAuthenticatedSession } from "@/lib/auth-helpers";
 
 // Update a note
 export async function PUT(
@@ -14,10 +14,7 @@ export async function PUT(
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const { color, archivedAt, checklistItems } = await request.json();
     const { id: boardId, noteId } = await params;
@@ -259,10 +256,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const { id: boardId, noteId } = await params;
 

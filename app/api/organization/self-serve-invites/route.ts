@@ -1,7 +1,7 @@
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
+import { getAuthenticatedSession } from "@/lib/auth-helpers";
 
 // Generate a cryptographically secure token using nanoid
 function generateSecureToken(): string {
@@ -11,11 +11,7 @@ function generateSecureToken(): string {
 // Get all active self-serve invites for the organization
 export async function GET() {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     // Get user with organization
     const user = await db.user.findUnique({
@@ -54,11 +50,7 @@ export async function GET() {
 // Create a new self-serve invite
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     const { name, expiresAt, usageLimit } = await request.json();
 

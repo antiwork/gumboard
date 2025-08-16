@@ -1,14 +1,10 @@
-import { auth } from "@/auth";
+import { getAuthenticatedSession } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const session = await auth();
-
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const session = await getAuthenticatedSession();
 
     // Get user with organization
     const user = await db.user.findUnique({
