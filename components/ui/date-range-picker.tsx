@@ -167,7 +167,7 @@ function DateRangePicker({
                     mode="single"
                     selected={internalEndDate || undefined}
                     onSelect={handleEndCalendarSelect}
-                    disabled={(date) => 
+                    disabled={(date) =>
                       date > new Date() || (internalStartDate ? date < internalStartDate : false)
                     }
                     modifiersClassNames={{
