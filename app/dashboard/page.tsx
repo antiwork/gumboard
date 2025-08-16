@@ -413,15 +413,9 @@ export default function Dashboard() {
               </Link>
 
               {boards.map((board) => (
-                <div
-                  key={board.id}
-                  data-board-id={board.id}
-                  className="relative group"
-                >
+                <div key={board.id} data-board-id={board.id} className="relative group">
                   <Link href={`/boards/${board.id}`} className="block">
-                    <Card
-                      className="relative h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
-                    >
+                    <Card className="relative h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
                       <CardHeader>
                         <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
                       </CardHeader>
