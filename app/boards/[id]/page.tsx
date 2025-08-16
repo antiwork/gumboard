@@ -9,7 +9,6 @@ import { Switch } from "@/components/ui/switch";
 import { ChevronDown, Search, Copy, Trash2, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
-import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
 
@@ -36,6 +35,7 @@ import {
   calculateMobileLayout,
   filterAndSortNotes,
 } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -619,7 +619,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   };
 
   if (userLoading || notesloading) {
-    return <FullPageLoader message="Loading board..." />;
+    return <BoardPageSkeleton />;
   }
 
   if (!board && boardId !== "all-notes" && boardId !== "archive") {
@@ -676,11 +676,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       <Link
                         key={b.id}
                         href={`/boards/${b.id}`}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${
-                          b.id === boardId
-                            ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
-                            : "text-foreground dark:text-zinc-100"
-                        }`}
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${b.id === boardId
+                          ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
+                          : "text-foreground dark:text-zinc-100"
+                          }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>{b.name}</div>
@@ -694,11 +693,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* All Notes Option */}
                     <Link
                       href="/boards/all-notes"
-                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
-                        boardId === "all-notes"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
+                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${boardId === "all-notes"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                        }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
                       <div>All notes</div>
@@ -707,11 +705,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* Archive Option */}
                     <Link
                       href="/boards/archive"
-                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
-                        boardId === "archive"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
+                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${boardId === "archive"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                        }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
                       <div>All archived</div>
@@ -1160,4 +1157,55 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </AlertDialog>
     </div>
   );
+}
+
+const BoardPageSkeleton = () => {
+  const skeletonNoteCount = 5;
+  return (
+    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
+      <div>
+        <div className="mx-2 flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center w-full sm:w-auto">
+            <div>
+              <Skeleton className="h-10 w-38" />
+            </div>
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
+            <div className="flex-1 mr-0 sm:flex-none">
+              <Skeleton className="h-10 w-28" />
+            </div>
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
+            <Skeleton className="h-10 w-10" />
+          </div>
+
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto">
+            <div className="flex justify-between gap-2 items-center w-full sm:w-auto">
+              <Skeleton className="h-10 w-42 sm:w-64 pl-10 pr-8" />
+              <Skeleton className="h-10 w-24 rounded-md" />
+              <Skeleton className="h-10 w-10 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Board cards skeleton row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mt-8 pl-8">
+        {Array.from({ length: skeletonNoteCount }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-md flex flex-col p-5"
+            style={{ minHeight: 190, maxWidth: 350, width: '100%' }}
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <Skeleton className="h-5 w-28" />
+            </div>
+            <Skeleton className="h-4 w-40 mb-3" />
+            <Skeleton className="h-4 w-32 mb-3" />
+            <Skeleton className="h-4 w-48 mb-3" />
+            <Skeleton className="h-4 w-20 mb-3" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
