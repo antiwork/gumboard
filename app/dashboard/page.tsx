@@ -413,12 +413,52 @@ export default function Dashboard() {
               </Link>
 
               {boards.map((board) => (
-                <div key={board.id} data-board-id={board.id} className="relative group">
+                <div key={board.id} data-board-id={board.id}>
                   <Link href={`/boards/${board.id}`} className="block">
-                    <Card className="relative h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
-                      <CardHeader>
-                        <CardTitle className="text-lg dark:text-zinc-100">{board.name}</CardTitle>
+                    <Card className="group relative h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800">
+                      <CardHeader className="flex items-start justify-between gap-3">
+                        <CardTitle className="text-lg dark:text-zinc-100 truncate">
+                          {board.name}
+                        </CardTitle>
+
+                        <div className="grid w-fit shrink-0">
+                          <span
+                            className="col-start-1 row-start-1 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap
+                 bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200
+                 transition-opacity duration-150
+                 group-hover:opacity-0 group-focus-within:opacity-0
+                 group-hover:pointer-events-none group-focus-within:pointer-events-none
+                 md:opacity-100"
+                          >
+                            {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                          </span>
+
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            aria-label="Edit board"
+                            className="col-start-1 row-start-1 h-6 w-6 z-10
+                 opacity-100 md:opacity-0
+                 md:group-hover:opacity-100 md:group-focus-within:opacity-100
+                 pointer-events-auto
+                 transition-opacity duration-150"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditingBoard(board);
+                              editForm.reset({
+                                name: board.name,
+                                description: board.description || "",
+                              });
+                              setIsEditBoardDialogOpen(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </CardHeader>
+
                       {board.description && (
                         <CardContent>
                           <p className="text-slate-600 dark:text-zinc-300 truncate">
@@ -428,27 +468,6 @@ export default function Dashboard() {
                       )}
                     </Card>
                   </Link>
-                  <span className="absolute top-2 right-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium text-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 group-hover:hidden group-focus-within:hidden">
-                    {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    aria-label="Edit board"
-                    className="absolute top-2 right-2 h-6 w-6 hidden group-hover:flex group-focus-within:flex"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      setEditingBoard(board);
-                      editForm.reset({
-                        name: board.name,
-                        description: board.description || "",
-                      });
-                      setIsEditBoardDialogOpen(true);
-                    }}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
                 </div>
               ))}
             </div>
