@@ -710,7 +710,11 @@ test.describe("Note Management", () => {
       await authenticatedPage.getByRole("option", { name: board.name }).click(); // select the test board
       await createNoteResponse;
 
-      await expect(authenticatedPage.locator(".shadow-md")).toBeVisible();
+      // Ensure the popover is gone before asserting
+      await expect(authenticatedPage.getByRole("dialog")).toBeHidden({ timeout: 2000 });
+
+      // Prefer a stable test id over a class
+      await expect(authenticatedPage.getByTestId("note-card").first()).toBeVisible();
 
       // Verify note was created in database (could be on any board)
       const createdNote = await testPrisma.note.findFirst({
