@@ -663,9 +663,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         : board?.name}
                   </div>
                 </div>
-                {
-                  showBoardDropdown ? <ChevronUp className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`} /> : <ChevronDown className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`} />
-                }
+                {showBoardDropdown ? (
+                  <ChevronUp
+                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
+                  />
+                ) : (
+                  <ChevronDown
+                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
+                  />
+                )}
               </Button>
 
               {showBoardDropdown && (
