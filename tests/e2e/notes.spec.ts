@@ -1,5 +1,5 @@
-import { test, expect } from "../fixtures/test-helpers";
 import { addDays } from "date-fns";
+import { expect, test } from "../fixtures/test-helpers";
 
 test.describe("Note Management", () => {
   test("should create a note and add checklist items", async ({
@@ -28,19 +28,27 @@ test.describe("Note Management", () => {
     await authenticatedPage.click('button:has-text("Add Note")');
     await createNoteResponse;
 
-    // Since the note is empty, it should show the new-item input automatically
+    // After creating the note and focusing the first textarea:
     const testItemContent = testContext.prefix("Test checklist item");
-
-    // Look for any textarea in the note (the initial empty item input)
     const initialTextarea = authenticatedPage.locator("textarea").first();
     await expect(initialTextarea).toBeVisible({ timeout: 10000 });
 
-    await initialTextarea.fill(testItemContent);
+    // Prepare network wait for the checklist save
+    const saveItemResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
 
-    // Use Tab key to move focus away and trigger blur
+    // Type and trigger blur (saves the item)
+    await initialTextarea.fill(testItemContent);
     await initialTextarea.press("Tab");
 
-    // Wait for the content to appear in the UI (this means at least one submission worked)
+    // Ensure save completed before hitting the DB
+    await saveItemResponse;
+
+    // Optional UI confirmation
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
 
     // Add a small delay to ensure all async operations complete
@@ -699,6 +707,7 @@ test.describe("Note Management", () => {
           resp.status() === 201
       );
       await authenticatedPage.getByRole("button", { name: "Add Note" }).first().click();
+      await authenticatedPage.getByRole("option", { name: board.name }).click(); // select the test board
       await createNoteResponse;
 
       await expect(authenticatedPage.locator(".shadow-md")).toBeVisible();
