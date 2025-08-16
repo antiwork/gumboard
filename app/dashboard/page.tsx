@@ -52,7 +52,10 @@ export type DashboardBoard = Board & {
 };
 
 const formSchema = z.object({
-  name: z.string().min(1, "Board name is required"),
+  name: z
+    .string()
+    .min(1, "Board name is required")
+    .refine((value) => value.trim().length > 0, "Board name cannot be empty"),
   description: z.string().optional(),
 });
 
@@ -123,6 +126,7 @@ export default function Dashboard() {
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
     const { name, description } = values;
+    const trimmedName = name.trim();
     try {
       const response = await fetch("/api/boards", {
         method: "POST",
@@ -130,7 +134,7 @@ export default function Dashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
+          name: trimmedName,
           description,
         }),
       });
