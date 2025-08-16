@@ -72,9 +72,9 @@ test.describe("Board Management", () => {
     await expect(createButton).toBeEnabled();
   });
 
-  test("should prevent creating boards with whitespace-only names", async ({ 
-    authenticatedPage, 
-    testContext 
+  test("should prevent creating boards with whitespace-only names", async ({
+    authenticatedPage,
+    testContext,
   }) => {
     await authenticatedPage.goto("/dashboard");
 
@@ -83,28 +83,23 @@ test.describe("Board Management", () => {
     const nameInput = authenticatedPage.locator('input[placeholder*="board name"]');
     const createButton = authenticatedPage.getByRole("button", { name: "Create board" });
 
-
     await nameInput.fill("   ");
     await createButton.click();
-    
 
     await expect(authenticatedPage.locator("text=Board name cannot be empty")).toBeVisible();
-    
-   
+
     await nameInput.fill("\t  \t ");
     await createButton.click();
-    
 
     await expect(authenticatedPage.locator("text=Board name cannot be empty")).toBeVisible();
 
-  
     await expect(authenticatedPage.locator('text="Create New Board"')).toBeVisible();
   });
 
-  test("should trim whitespace from board names", async ({ 
-    authenticatedPage, 
+  test("should trim whitespace from board names", async ({
+    authenticatedPage,
     testContext,
-    testPrisma 
+    testPrisma,
   }) => {
     await authenticatedPage.goto("/dashboard");
 
@@ -112,10 +107,10 @@ test.describe("Board Management", () => {
     const nameWithWhitespace = `  ${boardName}  `;
 
     await authenticatedPage.getByRole("button", { name: "Add Board" }).click();
-    
+
     const nameInput = authenticatedPage.locator('input[placeholder*="board name"]');
     await nameInput.fill(nameWithWhitespace);
-    
+
     const responsePromise = authenticatedPage.waitForResponse(
       (resp) => resp.url().includes("/api/boards") && resp.status() === 201
     );
@@ -125,15 +120,15 @@ test.describe("Board Management", () => {
 
     const board = await testPrisma.board.findFirst({
       where: {
-        name: boardName, 
+        name: boardName,
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
       },
     });
 
     expect(board).toBeTruthy();
-    expect(board?.name).toBe(boardName); 
-    expect(board?.name).not.toBe(nameWithWhitespace); 
+    expect(board?.name).toBe(boardName);
+    expect(board?.name).not.toBe(nameWithWhitespace);
   });
 
   test.describe("Board Not Found", () => {

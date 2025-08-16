@@ -64,7 +64,10 @@ export async function POST(request: NextRequest) {
     const { name, description, isPublic } = await request.json();
 
     if (!name || typeof name !== "string" || name.trim().length === 0) {
-      return NextResponse.json({ error: "Board name is required and cannot be empty or only whitespace" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Board name is required and cannot be empty or only whitespace" },
+        { status: 400 }
+      );
     }
 
     const trimmedName = name.trim();

@@ -52,10 +52,10 @@ export type DashboardBoard = Board & {
 };
 
 const formSchema = z.object({
-  name: z.string().min(1, "Board name is required").refine(
-    (value) => value.trim().length > 0,
-    "Board name cannot be empty"
-  ),
+  name: z
+    .string()
+    .min(1, "Board name is required")
+    .refine((value) => value.trim().length > 0, "Board name cannot be empty"),
   description: z.string().optional(),
 });
 
