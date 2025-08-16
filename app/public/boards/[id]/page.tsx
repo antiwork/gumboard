@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -13,11 +13,11 @@ import { Note as NoteCard } from "@/components/note";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { useUser } from "@/app/contexts/UserContext";
 import {
-  getResponsiveConfig,
   getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
   filterAndSortNotes,
+  getColumnDetails,
+  calculateColumnsData,
+  getResponsiveGapClass,
 } from "@/lib/utils";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -25,7 +25,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
     startDate: Date | null;
@@ -35,7 +35,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     endDate: null,
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { user } = useUser();
 
@@ -52,29 +51,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
       fetchBoardData();
     }
   }, [boardId]);
-
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768);
-
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50);
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
 
   const fetchBoardData = async () => {
     try {
@@ -114,25 +90,15 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     [notes, searchTerm, dateRange, selectedAuthor]
   );
 
-  const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, null)
-        : calculateGridLayout(filteredNotes, null),
-    [isMobile, filteredNotes]
+  const columnDetails = useMemo(() => {
+    if (typeof window === "undefined") return { count: 1, gap: 0 };
+    return getColumnDetails(window.innerWidth);
+  }, []);
+
+  const columnsData = useMemo(
+    () => calculateColumnsData(filteredNotes, columnDetails),
+    [filteredNotes, columnDetails]
   );
-
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;
@@ -221,23 +187,21 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <div className="relative" style={{ height: boardHeight }} ref={boardRef}>
-        {layoutNotes.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note as Note}
-            readonly={true}
-            className="shadow-md shadow-black/10 absolute"
-            style={{
-              position: "absolute",
-              left: note.x,
-              top: note.y,
-              width: note.width,
-              height: note.height,
-              padding: `${getResponsiveConfig().notePadding}px`,
-            }}
-          />
-        ))}
+      <div className="p-3 md:p-5">
+        <div className={`flex ${getResponsiveGapClass(columnDetails.gap)}`}>
+          {columnsData.map((column, index) => (
+            <div key={index} className="flex-1 flex flex-col gap-4">
+              {column.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  readonly={true}
+                  className="shadow-md shadow-black/10 p-3"
+                />
+              ))}
+            </div>
+          ))}
+        </div>
 
         {filteredNotes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
