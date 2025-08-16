@@ -375,36 +375,63 @@ function JoinConfirmationCard({
     ? `${invite.usageCount}/${invite.usageLimit} used`
     : `${invite.usageCount} members joined`;
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 p-4">
-      <div className="max-w-md mx-auto space-y-8">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold mb-2">Join Organization</h1>
-          <p className="text-muted-foreground">You&apos;ve been invited to join an organization</p>
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 p-4">
+      <div className="w-full max-w-md space-y-8">
+        <div className="text-center space-y-4">
+          <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100 leading-tight">
+            Join {invite.organization.name} on Gumboard!
+          </h1>
+          <p className="text-lg text-slate-600 dark:text-slate-400 leading-relaxed">
+            You&apos;ve been invited to join{" "}
+            <span className="font-semibold text-slate-800 dark:text-slate-200">
+              {invite.organization.name}
+            </span>{" "}
+            on Gumboard
+          </p>
         </div>
-        <Card className="border-2">
-          <CardHeader className="text-center">
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-green-500 to-blue-600">
-              <span className="text-2xl font-bold text-white">
+        <Card className="border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 shadow-sm">
+          <CardHeader className="text-center pb-6">
+            <div className="mx-auto mb-3 flex h-24 w-24 items-center justify-center rounded-full bg-slate-200 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-800">
+              <span className="text-3xl font-bold text-slate-900 dark:text-slate-100">
                 {invite.organization.name.charAt(0).toUpperCase()}
               </span>
             </div>
-            <CardTitle className="text-xl">{invite.organization.name}</CardTitle>
-            <CardDescription className="text-base">{invite.name}</CardDescription>
+            <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100 -mt-2">
+              {invite.organization.name}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-center space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Created by: {invite.user.name || invite.user.email}
-              </p>
-              <p className="text-sm text-muted-foreground">{usageInfo}</p>
-              {invite.expiresAt && (
-                <p className="text-sm text-muted-foreground">
-                  Expires: {invite.expiresAt.toLocaleDateString()}
+          <CardContent className="space-y-3">
+            <div className="text-center space-y-3">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Created by
                 </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {invite.user.name || invite.user.email}
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
+                  Organization info
+                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  {usageInfo}
+                </p>
+              </div>
+              {invite.expiresAt && (
+                <div className="pt-2">
+                  <p className="text-xs text-muted-foreground">
+                    Expires: {invite.expiresAt.toLocaleDateString()}
+                  </p>
+                </div>
               )}
             </div>
-            <form action={joinOrganization.bind(null, token)}>
-              <Button type="submit" className="w-full bg-green-600 hover:bg-green-700">
+            <form action={joinOrganization.bind(null, token)} className="pt-2">
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium"
+                size="lg"
+              >
                 Join {invite.organization.name}
               </Button>
             </form>
