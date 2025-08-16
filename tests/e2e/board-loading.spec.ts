@@ -49,4 +49,3 @@ test.describe("Board Page Loading", () => {
     ).toBeVisible();
   });
 });
-
