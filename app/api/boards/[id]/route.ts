@@ -129,7 +129,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       data: updateData,
       include: {
         _count: {
-          select: { notes: true },
+          select: {
+            notes: {
+              where: {
+                deletedAt: null,
+                archivedAt: null,
+              },
+            },
+          },
         },
         organization: {
           select: {
