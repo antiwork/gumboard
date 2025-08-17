@@ -419,4 +419,4 @@ const DashboardSkeleton = () => {
       </div>
     </div>
   );
-}
+};

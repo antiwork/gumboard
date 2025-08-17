@@ -1,7 +1,6 @@
 import { Skeleton } from "./ui/skeleton";
 
-export 
-const BoardPageSkeleton = () => {
+export const BoardPageSkeleton = () => {
   const skeletonNoteCount = 5;
   return (
     <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
@@ -48,5 +47,5 @@ const BoardPageSkeleton = () => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};

@@ -676,10 +676,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       <Link
                         key={b.id}
                         href={`/boards/${b.id}`}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${b.id === boardId
-                          ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
-                          : "text-foreground dark:text-zinc-100"
-                          }`}
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${
+                          b.id === boardId
+                            ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
+                            : "text-foreground dark:text-zinc-100"
+                        }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>{b.name}</div>
@@ -693,10 +694,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* All Notes Option */}
                     <Link
                       href="/boards/all-notes"
-                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${boardId === "all-notes"
-                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                        : "text-foreground dark:text-white"
-                        }`}
+                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
+                        boardId === "all-notes"
+                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                          : "text-foreground dark:text-white"
+                      }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
                       <div>All notes</div>
@@ -705,10 +707,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* Archive Option */}
                     <Link
                       href="/boards/archive"
-                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${boardId === "archive"
-                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                        : "text-foreground dark:text-white"
-                        }`}
+                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
+                        boardId === "archive"
+                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                          : "text-foreground dark:text-white"
+                      }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
                       <div>All archived</div>

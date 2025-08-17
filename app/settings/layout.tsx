@@ -53,20 +53,22 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
             <nav className="flex flex-row lg:flex-col space-x-2 lg:space-x-0 lg:space-y-2 overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
               <Link
                 href="/settings"
-                className={`flex-shrink-0 lg:w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors ${isProfileActive
-                  ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
-                  : "text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                  }`}
+                className={`flex-shrink-0 lg:w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors ${
+                  isProfileActive
+                    ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
+                    : "text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                }`}
               >
                 <UserIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                 <span className="text-sm sm:text-base whitespace-nowrap">Profile</span>
               </Link>
               <Link
                 href="/settings/organization"
-                className={`flex-shrink-0 lg:w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors ${isOrganizationActive
-                  ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
-                  : "text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
-                  }`}
+                className={`flex-shrink-0 lg:w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors ${
+                  isOrganizationActive
+                    ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
+                    : "text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                }`}
               >
                 <Building2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                 <span className="text-sm sm:text-base whitespace-nowrap">Organization</span>
@@ -131,4 +133,4 @@ const SettingsSkeleton = () => {
       </div>
     </div>
   );
-}
+};
