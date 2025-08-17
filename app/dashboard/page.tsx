@@ -13,7 +13,6 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Grid3x3, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FullPageLoader } from "@/components/ui/loader";
 import {
   AlertDialog,
   AlertDialogAction,
