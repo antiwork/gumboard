@@ -16,7 +16,9 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/dashboard");
-    await expect(authenticatedPage.getByRole("heading", { name: "Your Boards" })).toBeVisible({ timeout: 15000 });
+    await expect(authenticatedPage.getByRole("heading", { name: "Your Boards" })).toBeVisible({
+      timeout: 15000,
+    });
     await expect(authenticatedPage.getByRole("link", { name: "Archive" })).toBeVisible();
   });
 
@@ -101,13 +103,13 @@ test.describe("Archive Functionality", () => {
 
     // Optional: ensure notes have loaded
     await authenticatedPage.waitForResponse(
-      r => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok()
+      (r) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok()
     );
 
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
     await expect(noteCard).toBeVisible();
 
-    const textarea = noteCard.locator('textarea').first();
+    const textarea = noteCard.locator("textarea").first();
     await expect(textarea).toHaveValue(noteContent);
 
     // Reveal actions
@@ -296,7 +298,9 @@ test.describe("Archive Functionality", () => {
 
     await authenticatedPage.goto("/boards/archive");
 
-    await expect(authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)
+    ).toBeVisible();
 
     const unarchiveButton = authenticatedPage.locator('[aria-label="Unarchive note"]');
     await expect(unarchiveButton).toBeVisible();
@@ -390,7 +394,7 @@ test.describe("Archive Functionality", () => {
         organizationId: testContext.organizationId,
       },
     });
-  
+
     // Create a note with multiple checklist items in specific order
     await testPrisma.note.create({
       data: {
@@ -419,22 +423,22 @@ test.describe("Archive Functionality", () => {
         },
       },
     });
-  
+
     await authenticatedPage.goto("/boards/archive");
-  
+
     // Wait for the note to load
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
     await expect(noteCard).toBeVisible();
-  
+
     // Verify all items are visible and in correct order
     // Note: Archive board notes are still editable by the owner, so we expect 4 textareas (3 items + 1 new item input)
-    const textareas = noteCard.locator('textarea');
+    const textareas = noteCard.locator("textarea");
     await expect(textareas).toHaveCount(4);
-    
+
     const firstTextarea = await textareas.nth(0).inputValue();
     const secondTextarea = await textareas.nth(1).inputValue();
     const thirdTextarea = await textareas.nth(2).inputValue();
-  
+
     expect(firstTextarea).toContain(testContext.prefix("First item"));
     expect(secondTextarea).toContain(testContext.prefix("Second item"));
     expect(thirdTextarea).toContain(testContext.prefix("Third item"));
@@ -483,10 +487,10 @@ test.describe("Archive Functionality", () => {
 
     // Verify button cannot be clicked (should not trigger any action)
     await addNoteButton.click({ force: true });
-    
+
     // Wait a moment and verify no new note was created
     await authenticatedPage.waitForTimeout(1000);
-    
+
     // Count existing notes (should remain the same)
     const noteCount = await testPrisma.note.count({
       where: {
@@ -494,7 +498,7 @@ test.describe("Archive Functionality", () => {
         deletedAt: null,
       },
     });
-    
+
     // Should still have only the one note we created
     expect(noteCount).toBe(1);
   });
@@ -541,7 +545,7 @@ test.describe("Archive Functionality", () => {
         archivedAt: null,
       },
     });
-    
+
     expect(noteCount).toBe(1);
   });
 
@@ -663,5 +667,4 @@ test.describe("Archive Functionality", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
     await expect(authenticatedPage.getByText(noteContent)).toBeVisible();
   });
-
 });
