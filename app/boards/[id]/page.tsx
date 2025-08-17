@@ -358,7 +358,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     if (!currentNote) return;
 
     // OPTIMISTIC UPDATE: Update UI immediately
-    setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
+    setNotes((prev) => prev.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
   const handleAddNote = async (targetBoardId?: string) => {
@@ -815,6 +815,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
+              disabled={boardId === "archive"}
               className="flex items-center justify-center text-white w-fit h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
             >
               <span>Add note</span>
