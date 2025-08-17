@@ -489,7 +489,11 @@ export function Note({
                     onSelect={(date) => {
                       // Only update if a different date is selected
                       // Don't allow deselecting by clicking the same date
-                      if (date && (!note.dueDate || date.toISOString().split('T')[0] !== note.dueDate.split('T')[0])) {
+                      if (
+                        date &&
+                        (!note.dueDate ||
+                          date.toISOString().split("T")[0] !== note.dueDate.split("T")[0])
+                      ) {
                         handleDueDateChange(date);
                       }
                     }}
@@ -557,18 +561,22 @@ export function Note({
       </div>
       {note.dueDate && (
         <div className="flex items-center space-x-2 mb-2 px-2 group">
-          <Calendar className={cn(
-            "w-3 h-3",
-            isPastDue(note.dueDate) 
-              ? "text-red-600 dark:text-red-400" 
-              : "text-blue-600 dark:text-blue-400"
-          )} />
-          <span className={cn(
-            "text-xs font-medium",
-            isPastDue(note.dueDate)
-              ? "text-red-600 dark:text-red-400"
-              : "text-blue-600 dark:text-blue-400"
-          )}>
+          <Calendar
+            className={cn(
+              "w-3 h-3",
+              isPastDue(note.dueDate)
+                ? "text-red-600 dark:text-red-400"
+                : "text-blue-600 dark:text-blue-400"
+            )}
+          />
+          <span
+            className={cn(
+              "text-xs font-medium",
+              isPastDue(note.dueDate)
+                ? "text-red-600 dark:text-red-400"
+                : "text-blue-600 dark:text-blue-400"
+            )}
+          >
             {isPastDue(note.dueDate) ? "Past Due: " : "Due: "}
             {format(new Date(note.dueDate), "MMM d, yyyy")}
           </span>
@@ -595,7 +603,8 @@ export function Note({
                   Remove Due Date
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-                  Are you sure you want to remove the due date from this note? You can always add it back later.
+                  Are you sure you want to remove the due date from this note? You can always add it
+                  back later.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

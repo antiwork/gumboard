@@ -1085,11 +1085,11 @@ test.describe("Due Date Management", () => {
     await updateResponse;
 
     await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
-    
-    const formattedDate = tomorrow.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+
+    const formattedDate = tomorrow.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
     await expect(authenticatedPage.getByText(formattedDate)).toBeVisible();
 
@@ -1117,7 +1117,7 @@ test.describe("Due Date Management", () => {
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -1130,11 +1130,11 @@ test.describe("Due Date Management", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
-    
-    const formattedYesterday = yesterday.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+
+    const formattedYesterday = yesterday.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
     await expect(authenticatedPage.getByText(formattedYesterday)).toBeVisible();
 
@@ -1158,11 +1158,11 @@ test.describe("Due Date Management", () => {
     await updateResponse;
 
     await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
-    
-    const formattedNewDate = dayAfterTomorrow.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric', 
-      year: 'numeric' 
+
+    const formattedNewDate = dayAfterTomorrow.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
     });
     await expect(authenticatedPage.getByText(formattedNewDate)).toBeVisible();
 
@@ -1191,7 +1191,7 @@ test.describe("Due Date Management", () => {
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -1205,7 +1205,10 @@ test.describe("Due Date Management", () => {
 
     await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
 
-    const dueDateContainer = authenticatedPage.locator('.group').filter({ hasText: /Due:/ }).first();
+    const dueDateContainer = authenticatedPage
+      .locator(".group")
+      .filter({ hasText: /Due:/ })
+      .first();
     await dueDateContainer.hover();
 
     const removeButton = authenticatedPage.locator('[aria-label="Remove due date"]').first();
@@ -1249,7 +1252,7 @@ test.describe("Due Date Management", () => {
 
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -1262,8 +1265,11 @@ test.describe("Due Date Management", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     await expect(authenticatedPage.getByText(/Past Due:/)).toBeVisible();
-    
-    const dueDateGroup = authenticatedPage.locator('.group').filter({ hasText: /Past Due:/ }).first();
+
+    const dueDateGroup = authenticatedPage
+      .locator(".group")
+      .filter({ hasText: /Past Due:/ })
+      .first();
     const calendarIcon = dueDateGroup.locator('svg[class*="text-red-600"]').first();
     await expect(calendarIcon).toBeVisible();
 
@@ -1288,7 +1294,7 @@ test.describe("Due Date Management", () => {
 
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    
+
     const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",

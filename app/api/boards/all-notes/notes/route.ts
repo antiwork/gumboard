@@ -52,14 +52,14 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
-        checklistItems: { 
+        checklistItems: {
           select: {
             id: true,
             content: true,
             checked: true,
             order: true,
           },
-          orderBy: { order: "asc" } 
+          orderBy: { order: "asc" },
         },
       },
       orderBy: {
