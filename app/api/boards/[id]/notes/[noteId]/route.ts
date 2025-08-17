@@ -19,7 +19,7 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { color, archivedAt, checklistItems } = await request.json();
+    const { color, archivedAt, checklistItems, dueDate } = await request.json();
     const { id: boardId, noteId } = await params;
 
     // Verify user has access to this board (same organization)
@@ -175,6 +175,7 @@ export async function PUT(
         data: {
           ...(color !== undefined && { color }),
           ...(archivedAt !== undefined && { archivedAt }),
+          ...(dueDate !== undefined && { dueDate }),
         },
         include: {
           user: { select: { id: true, name: true, email: true, image: true } },

@@ -31,7 +31,13 @@ export async function GET(request: NextRequest) {
           organizationId: user.organizationId,
         },
       },
-      include: {
+      select: {
+        id: true,
+        color: true,
+        archivedAt: true,
+        dueDate: true,
+        createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             id: true,
@@ -46,7 +52,15 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
-        checklistItems: { orderBy: { order: "asc" } },
+        checklistItems: { 
+          select: {
+            id: true,
+            content: true,
+            checked: true,
+            order: true,
+          },
+          orderBy: { order: "asc" } 
+        },
       },
       orderBy: {
         createdAt: "desc",

@@ -12,9 +12,23 @@ import {
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
-import { Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Trash2, Archive, ArchiveRestore, Calendar, X } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { format } from "date-fns";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 // Core domain types
 export interface User {
@@ -35,6 +49,7 @@ export interface Note {
   id: string;
   color: string;
   archivedAt?: string | null;
+  dueDate?: string | null;
   createdAt: string;
   updatedAt: string;
   checklistItems?: ChecklistItem[];
@@ -88,6 +103,7 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -332,6 +348,40 @@ export function Note({
     }
   };
 
+  const handleDueDateChange = async (date: Date | undefined) => {
+    try {
+      const optimisticNote = {
+        ...note,
+        dueDate: date ? date.toISOString() : null,
+      };
+
+      onUpdate?.(optimisticNote);
+
+      if (syncDB) {
+        const response = await fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            dueDate: date ? date.toISOString() : null,
+          }),
+        });
+
+        if (response.ok) {
+          const { note: updatedNote } = await response.json();
+          onUpdate?.(updatedNote);
+        } else {
+          onUpdate?.(note);
+        }
+      }
+      setIsDatePickerOpen(false);
+    } catch (error) {
+      console.error("Error updating due date:", error);
+      onUpdate?.(note);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -397,6 +447,58 @@ export function Note({
               </Tooltip>
             </div>
           )}
+          {canEdit && (
+            <div className="flex items-center">
+              <Popover open={isDatePickerOpen} onOpenChange={setIsDatePickerOpen}>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <PopoverTrigger asChild>
+                      <Button
+                        aria-label="Set due date"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsDatePickerOpen(!isDatePickerOpen);
+                        }}
+                        className={cn(
+                          "p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded",
+                          note.dueDate && "text-blue-600 dark:text-blue-400"
+                        )}
+                        variant="ghost"
+                        size="icon"
+                      >
+                        <Calendar className="w-3 h-3" />
+                      </Button>
+                    </PopoverTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>{note.dueDate ? "Change due date" : "Set due date"}</p>
+                  </TooltipContent>
+                </Tooltip>
+                <PopoverContent className="w-auto p-0 text-muted-foreground dark:text-zinc-200">
+                  <CalendarComponent
+                    mode="single"
+                    selected={note.dueDate ? new Date(note.dueDate) : undefined}
+                    onSelect={(date) => {
+                      // Only update if a different date is selected
+                      // Don't allow deselecting by clicking the same date
+                      if (date && (!note.dueDate || date.toISOString().split('T')[0] !== note.dueDate.split('T')[0])) {
+                        handleDueDateChange(date);
+                      }
+                    }}
+                    initialFocus
+                    modifiersClassNames={{
+                      outside: "text-gray-400 opacity-50 pointer-events-none",
+                    }}
+                    classNames={{
+                      day: "hover:bg-sky-500 transition-colors duration-200 rounded",
+                      disabled: "opacity-50 cursor-not-allowed hover:bg-transparent",
+                      selected: "bg-sky-500 text-white hover:bg-sky-600",
+                    }}
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          )}
           {canEdit && onArchive && (
             <div className="flex items-center">
               <Tooltip>
@@ -445,7 +547,48 @@ export function Note({
           )}
         </div>
       </div>
-
+      {note.dueDate && (
+        <div className="flex items-center space-x-2 mb-2 px-2 group">
+          <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
+            Due: {format(new Date(note.dueDate), "MMM d, yyyy")}
+          </span>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                onClick={(e) => e.stopPropagation()}
+                className="p-0.5 h-auto w-auto text-blue-600 dark:text-blue-400 hover:text-red-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                variant="ghost"
+                size="icon"
+                aria-label="Remove due date"
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+                  Remove Due Date
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+                  Are you sure you want to remove the due date from this note? You can always add it back later.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-300 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
+                  Cancel
+                </AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => handleDueDateChange(undefined)}
+                  className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+                >
+                  Remove Due Date
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      )}
       <div className="flex flex-col">
         <div className="overflow-y-auto space-y-1">
           {/* Checklist Items */}

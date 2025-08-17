@@ -105,6 +105,7 @@ model Note {
   color     String @default("#fef3c7") // Default yellow color
   checklistItems ChecklistItem[]
   archivedAt     DateTime? // Track archived status
+  dueDate        DateTime?
   slackMessageId String?
   boardId   String
   board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
