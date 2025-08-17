@@ -156,27 +156,28 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4">
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
+    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
+      <div>
+        <div className="mx-2 flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center w-full sm:w-auto">
+            <Link href="/" className="flex-shrink-0 pl-1">
+              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
                 Gumboard
                 <BetaBadge />
               </h1>
             </Link>
-
-            <div className="flex items-center space-x-2">
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
+            <div className="flex-1 mr-0 sm:flex-none">
               <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
                 {board.name}
               </div>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                Public
-              </span>
             </div>
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+              Public
+            </span>
 
-            <div className="hidden md:block">
+            <div className="board-dropdown mr-0 pl-4" data-slot="filter-popover">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
@@ -188,57 +189,70 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
                 onAuthorChange={(authorId) => {
                   setSelectedAuthor(authorId);
                 }}
-                className="min-w-fit"
+                className="w-fit"
               />
             </div>
           </div>
 
-          <div className="flex items-center space-x-2 px-3">
-            <div className="relative hidden sm:block">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto">
+            <div className="flex justify-between gap-2 items-center w-full sm:w-auto">
+              <div className="relative flex-1 sm:flex-none min-w-[150px]">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
+                </div>
+                <input
+                  aria-label="Search notes"
+                  type="text"
+                  placeholder="Search notes..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full sm:w-64 pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                />
               </div>
-              <input
-                aria-label="Search notes"
-                type="text"
-                placeholder="Search notes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 border border-gray-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
-              />
+              {user ? (
+                <ProfileDropdown user={user} />
+              ) : (
+                <Link href="/auth/signin">
+                  <Button variant="outline" size="sm">
+                    Sign in
+                  </Button>
+                </Link>
+              )}
             </div>
-
-            {user ? (
-              <ProfileDropdown user={user} />
-            ) : (
-              <Link href="/auth/signin">
-                <Button variant="outline" size="sm">
-                  Sign in
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
       </div>
 
-      <div className="relative" style={{ height: boardHeight }} ref={boardRef}>
-        {layoutNotes.map((note) => (
-          <NoteCard
-            key={note.id}
-            note={note as Note}
-            readonly={true}
-            className="shadow-md shadow-black/10 absolute"
-            style={{
-              position: "absolute",
-              left: note.x,
-              top: note.y,
-              width: note.width,
-              height: note.height,
-              padding: `${getResponsiveConfig().notePadding}px`,
-            }}
-          />
-        ))}
+      {/* Board Area */}
+      <div
+        ref={boardRef}
+        className="relative w-full"
+        style={{
+          height: boardHeight,
+          minHeight: "calc(100vh - 64px)",
+        }}
+      >
+        {/* Notes */}
+        <div className="relative w-full h-full">
+          {layoutNotes.map((note) => (
+            <NoteCard
+              key={note.id}
+              note={note as Note}
+              readonly={true}
+              className="shadow-md shadow-black/10 absolute"
+              style={{
+                position: "absolute",
+                left: note.x,
+                top: note.y,
+                width: note.width,
+                height: note.height,
+                padding: `${getResponsiveConfig().notePadding}px`,
+              }}
+            />
+          ))}
+        </div>
 
+        {/* Empty State */}
         {filteredNotes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
