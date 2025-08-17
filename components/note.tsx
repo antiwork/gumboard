@@ -459,7 +459,12 @@ export function Note({
           >
             <DraggableContainer className="space-y-1">
               {note.checklistItems?.map((item) => (
-                <DraggableItem key={item.id} id={item.id} disabled={!canEdit} className="hover:bg-transparent">
+                <DraggableItem
+                  key={item.id}
+                  id={item.id}
+                  disabled={!canEdit}
+                  className="hover:bg-transparent"
+                >
                   <ChecklistItemComponent
                     item={item}
                     onToggle={handleToggleChecklistItem}
