@@ -1187,8 +1187,7 @@ const BoardPageSkeleton = () => {
         </div>
       </div>
 
-      {/* Board cards skeleton row */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mt-8 pl-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mt-8 pl-8 gap-4">
         {Array.from({ length: skeletonNoteCount }).map((_, i) => (
           <div
             key={i}
