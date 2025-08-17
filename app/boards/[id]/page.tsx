@@ -392,7 +392,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes([...notes, note]);
+        setNotes((prev) => [...prev, note]);
         setAddingChecklistItem(note.id);
       }
     } catch (error) {
@@ -459,7 +459,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
-      setNotes(notes.filter((n) => n.id !== noteId));
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -469,7 +469,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (!response.ok) {
         // Revert on error
-        setNotes([...notes, currentNote]);
+        setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
@@ -488,7 +488,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
       if (!targetBoardId) return;
 
-      setNotes(notes.filter((n) => n.id !== noteId));
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -497,7 +497,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       });
 
       if (!response.ok) {
-        setNotes([...notes, currentNote]);
+        setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
           title: "Unarchive Failed",
