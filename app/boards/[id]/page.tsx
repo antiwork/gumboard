@@ -1187,12 +1187,12 @@ const BoardPageSkeleton = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 mt-8 pl-8 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 mt-4 pl-4 gap-4">
         {Array.from({ length: skeletonNoteCount }).map((_, i) => (
           <div
             key={i}
-            className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-md flex flex-col p-5"
-            style={{ minHeight: 190, maxWidth: 350, width: '100%' }}
+            className="rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-md flex flex-col p-5 w-full"
+            style={{ minHeight: 190 }}
           >
             <div className="flex items-center gap-3 mb-4">
               <Skeleton className="h-8 w-8 rounded-full" />
