@@ -107,6 +107,14 @@ export function Note({
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
+  const isPastDue = (dueDate: string) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const due = new Date(dueDate);
+    due.setHours(0, 0, 0, 0);
+    return due < today;
+  };
+
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
       if (!note.checklistItems) return;
@@ -549,15 +557,31 @@ export function Note({
       </div>
       {note.dueDate && (
         <div className="flex items-center space-x-2 mb-2 px-2 group">
-          <Calendar className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-          <span className="text-xs text-blue-600 dark:text-blue-400 font-medium">
-            Due: {format(new Date(note.dueDate), "MMM d, yyyy")}
+          <Calendar className={cn(
+            "w-3 h-3",
+            isPastDue(note.dueDate) 
+              ? "text-red-600 dark:text-red-400" 
+              : "text-blue-600 dark:text-blue-400"
+          )} />
+          <span className={cn(
+            "text-xs font-medium",
+            isPastDue(note.dueDate)
+              ? "text-red-600 dark:text-red-400"
+              : "text-blue-600 dark:text-blue-400"
+          )}>
+            {isPastDue(note.dueDate) ? "Past Due: " : "Due: "}
+            {format(new Date(note.dueDate), "MMM d, yyyy")}
           </span>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button
                 onClick={(e) => e.stopPropagation()}
-                className="p-0.5 h-auto w-auto text-blue-600 dark:text-blue-400 hover:text-red-600 dark:hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                className={cn(
+                  "p-0.5 h-auto w-auto transition-colors opacity-0 group-hover:opacity-100",
+                  isPastDue(note.dueDate)
+                    ? "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
+                    : "text-blue-600 dark:text-blue-400 hover:text-red-600 dark:hover:text-red-400"
+                )}
                 variant="ghost"
                 size="icon"
                 aria-label="Remove due date"
