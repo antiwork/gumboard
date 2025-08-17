@@ -100,7 +100,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
       }
     } catch (error) {
       console.error("Error fetching board data:", error);
-      // Set board to null to trigger the not-found UI
       setBoard(null);
     } finally {
       setLoading(false);
@@ -223,7 +222,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      {/* Board Area */}
       <div
         ref={boardRef}
         className="relative w-full"
@@ -232,7 +230,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
           minHeight: "calc(100vh - 64px)",
         }}
       >
-        {/* Notes */}
         <div className="relative w-full h-full">
           {layoutNotes.map((note) => (
             <NoteCard
@@ -252,7 +249,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
           ))}
         </div>
 
-        {/* Empty State */}
         {filteredNotes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
