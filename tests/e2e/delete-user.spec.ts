@@ -2,9 +2,7 @@ import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Delete User Functionality", () => {
   test("should navigate to settings and display delete account option", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
+    authenticatedPage
   }) => {
     await authenticatedPage.goto("/settings");
 
@@ -19,9 +17,7 @@ test.describe("Delete User Functionality", () => {
   });
 
   test("should open delete confirmation dialog with proper warnings", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
+    authenticatedPage
   }) => {
     await authenticatedPage.goto("/settings");
 
@@ -174,9 +170,7 @@ test.describe("Delete User Functionality", () => {
   });
 
   test("should show loading state during deletion", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
+    authenticatedPage
   }) => {
     await authenticatedPage.route("**/api/user", async (route) => {
       if (route.request().method() === "DELETE") {
@@ -282,8 +276,7 @@ test.describe("Delete User Functionality", () => {
 
   test("should not allow user to delete themselves from organization members list", async ({
     authenticatedPage,
-    testContext,
-    testPrisma,
+    testContext
   }) => {
     await authenticatedPage.goto("/settings/organization");
 

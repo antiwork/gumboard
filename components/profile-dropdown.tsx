@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { User } from "./note";
+import { type User } from "./note";
 
 type Props = {
   user: User | null;
