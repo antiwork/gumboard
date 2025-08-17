@@ -65,11 +65,7 @@ export default async function HomePage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button
-                    asChild
-                    size="lg"
-                    className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-white dark:text-black dark:hover:bg-zinc-100"
-                  >
+                  <Button asChild variant="shiny" size="shiny">
                     <Link href="/auth/signin">Get started - it&apos;s free</Link>
                   </Button>
                 </div>

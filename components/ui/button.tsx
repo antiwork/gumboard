@@ -17,11 +17,14 @@ const buttonVariants = cva(
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
         link: "text-primary underline-offset-4 hover:underline",
+        shiny:
+          "relative bg-black dark:bg-white text-white dark:text-black border-2 border-orange-500/20 dark:border-orange-400/20 shadow-[0_8px_16px_-6px_rgba(251,113,133,0.3)] dark:shadow-[0_8px_16px_-6px_rgba(251,113,133,0.2)] shadow-[0_15px_30px_-6px_rgba(251,113,133,0.4),0_0px_30px_-6px_rgba(168,85,247,0.4)] dark:shadow-[0_15px_30px_-6px_rgba(251,113,133,0.3),0_0px_30px_-6px_rgba(168,85,247,0.3)] backdrop-blur-xs hover:rotate-[1deg] rounded-xl font-medium gap-4",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
         sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
         lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
+        shiny: "h-12 px-6 min-w-72 md:min-w-56",
         icon: "size-9",
       },
     },
