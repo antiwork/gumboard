@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { NOTE_COLORS } from "@/lib/constants";
 
 // Get all notes from all boards in the organization
- 
+
 export async function GET() {
   try {
     const session = await auth();
