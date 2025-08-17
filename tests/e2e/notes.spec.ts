@@ -1038,3 +1038,277 @@ test.describe("Note Management", () => {
     });
   });
 });
+
+test.describe("Due Date Management", () => {
+  test("should set a due date on a note", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Due Date Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Due date test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    const calendarButton = authenticatedPage.locator('[aria-label="Set due date"]').first();
+    await expect(calendarButton).toBeVisible();
+    await calendarButton.click();
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowDate = tomorrow.getDate();
+
+    await authenticatedPage.waitForTimeout(500);
+    await authenticatedPage.getByRole("gridcell", { name: String(tomorrowDate) }).click();
+
+    const updateResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await updateResponse;
+
+    await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
+    
+    const formattedDate = tomorrow.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+    await expect(authenticatedPage.getByText(formattedDate)).toBeVisible();
+
+    const updatedNote = await testPrisma.note.findUnique({
+      where: { id: note.id },
+    });
+    expect(updatedNote).not.toBeNull();
+    expect(updatedNote?.dueDate).toBeTruthy();
+  });
+
+  test("should update an existing due date", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Update Due Date Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Update due date test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        dueDate: yesterday.toISOString(),
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
+    
+    const formattedYesterday = yesterday.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+    await expect(authenticatedPage.getByText(formattedYesterday)).toBeVisible();
+
+    const calendarButton = authenticatedPage.locator('[aria-label="Change due date"]').first();
+    await expect(calendarButton).toBeVisible();
+    await calendarButton.click();
+
+    const dayAfterTomorrow = new Date();
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    const dayAfterTomorrowDate = dayAfterTomorrow.getDate();
+
+    await authenticatedPage.waitForTimeout(500);
+    await authenticatedPage.getByRole("gridcell", { name: String(dayAfterTomorrowDate) }).click();
+
+    const updateResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await updateResponse;
+
+    await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
+    
+    const formattedNewDate = dayAfterTomorrow.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric' 
+    });
+    await expect(authenticatedPage.getByText(formattedNewDate)).toBeVisible();
+
+    const updatedNote = await testPrisma.note.findUnique({
+      where: { id: note.id },
+    });
+    expect(updatedNote).not.toBeNull();
+    expect(updatedNote?.dueDate).toBeTruthy();
+    expect(new Date(updatedNote!.dueDate!).getDate()).toBe(dayAfterTomorrowDate);
+  });
+
+  test("should remove a due date from a note", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Remove Due Date Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Remove due date test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        dueDate: tomorrow.toISOString(),
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
+
+    const dueDateContainer = authenticatedPage.locator('.group').filter({ hasText: /Due:/ }).first();
+    await dueDateContainer.hover();
+
+    const removeButton = authenticatedPage.locator('[aria-label="Remove due date"]').first();
+    await expect(removeButton).toBeVisible();
+    await removeButton.click();
+
+    await expect(authenticatedPage.getByRole("heading", { name: "Remove Due Date" })).toBeVisible();
+    await authenticatedPage.getByRole("button", { name: "Remove Due Date" }).click();
+
+    const updateResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await updateResponse;
+
+    await expect(authenticatedPage.getByText(/Due:/)).not.toBeVisible();
+
+    const updatedNote = await testPrisma.note.findUnique({
+      where: { id: note.id },
+    });
+    expect(updatedNote).not.toBeNull();
+    expect(updatedNote?.dueDate).toBeNull();
+  });
+
+  test("should display past due dates correctly", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Past Due Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Past due test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        dueDate: yesterday.toISOString(),
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await expect(authenticatedPage.getByText(/Past Due:/)).toBeVisible();
+    
+    const dueDateGroup = authenticatedPage.locator('.group').filter({ hasText: /Past Due:/ }).first();
+    const calendarIcon = dueDateGroup.locator('svg[class*="text-red-600"]').first();
+    await expect(calendarIcon).toBeVisible();
+
+    const pastDueText = dueDateGroup.locator('span[class*="text-red-600"]').first();
+    await expect(pastDueText).toBeVisible();
+  });
+
+  test("should not allow selecting the same date twice", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Same Date Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Same date test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        dueDate: tomorrow.toISOString(),
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    const calendarButton = authenticatedPage.locator('[aria-label="Change due date"]').first();
+    await expect(calendarButton).toBeVisible();
+    await calendarButton.click();
+
+    const tomorrowDate = tomorrow.getDate();
+    await authenticatedPage.waitForTimeout(500);
+    await authenticatedPage.getByRole("gridcell", { name: String(tomorrowDate) }).click();
+    await authenticatedPage.waitForTimeout(1000);
+
+    await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
+  });
+});

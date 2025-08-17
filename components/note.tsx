@@ -462,7 +462,7 @@ export function Note({
                   <TooltipTrigger asChild>
                     <PopoverTrigger asChild>
                       <Button
-                        aria-label="Set due date"
+                        aria-label={note.dueDate ? "Change due date" : "Set due date"}
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsDatePickerOpen(!isDatePickerOpen);
