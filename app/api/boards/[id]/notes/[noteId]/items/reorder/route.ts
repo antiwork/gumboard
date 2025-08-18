@@ -15,6 +15,18 @@ export async function PUT(
 
     const { items } = ReorderItems.parse(await request.json());
 
+    const existingItems = await db.checklistItem.findMany({
+      where: { noteId },
+      select: { id: true },
+    });
+
+    if (items.length !== existingItems.length) {
+      return NextResponse.json(
+        { error: "Item count mismatch: expected " + existingItems.length + " items" },
+        { status: 400 }
+      );
+    }
+
     await db.$transaction(
       items.map((item) =>
         db.checklistItem.updateMany({

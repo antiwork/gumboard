@@ -14,6 +14,15 @@ export const UpdateItem = z
     message: "At least one field must be provided for update",
   });
 
+export const UpdateNote = z
+  .object({
+    color: z.string().optional(),
+    archivedAt: z.string().nullable().optional(),
+  })
+  .refine((data) => Object.keys(data).length > 0, {
+    message: "At least one field must be provided for update",
+  });
+
 export const ReorderItems = z.object({
   items: z.array(
     z.object({
