@@ -405,11 +405,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const targetBoardId = boardId === "all-notes" ? originalNote.boardId : boardId;
       const isAllNotesView = boardId === "all-notes";
 
-      const checklistItems = originalNote.checklistItems?.map((item, index) => ({
-        content: item.content,
-        checked: item.checked,
-        order: index,
-      })) || [];
+      const checklistItems =
+        originalNote.checklistItems?.map((item, index) => ({
+          content: item.content,
+          checked: item.checked,
+          order: index,
+        })) || [];
 
       const response = await fetch(
         `/api/boards/${isAllNotesView ? "all-notes" : targetBoardId}/notes`,

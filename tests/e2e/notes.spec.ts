@@ -1088,13 +1088,17 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
-    await expect(authenticatedPage.getByText(testContext.prefix("First checklist item"))).toBeVisible();
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("First checklist item"))
+    ).toBeVisible();
 
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
-    
+
     await noteCard.hover();
-    
+
     const copyButton = noteCard.getByRole("button", { name: /Copy Note/i });
     await expect(copyButton).toBeVisible({ timeout: 5000 });
 
@@ -1104,15 +1108,23 @@ test.describe("Note Management", () => {
         resp.request().method() === "POST" &&
         resp.status() === 201
     );
-    
+
     await copyButton.click();
     await copyNoteResponse;
 
-    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(2, { timeout: 10000 });
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(2, {
+      timeout: 10000,
+    });
 
-    await expect(authenticatedPage.getByText(testContext.prefix("First checklist item"))).toHaveCount(2);
-    await expect(authenticatedPage.getByText(testContext.prefix("Second checklist item"))).toHaveCount(2);
-    await expect(authenticatedPage.getByText(testContext.prefix("Third checklist item"))).toHaveCount(2);
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("First checklist item"))
+    ).toHaveCount(2);
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Second checklist item"))
+    ).toHaveCount(2);
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Third checklist item"))
+    ).toHaveCount(2);
 
     const allNotes = await testPrisma.note.findMany({
       where: {
@@ -1128,8 +1140,8 @@ test.describe("Note Management", () => {
 
     expect(allNotes).toHaveLength(2);
 
-    const originalNoteFromDb = allNotes.find(note => note.id === originalNote.id);
-    const copiedNote = allNotes.find(note => note.id !== originalNote.id);
+    const originalNoteFromDb = allNotes.find((note) => note.id === originalNote.id);
+    const copiedNote = allNotes.find((note) => note.id !== originalNote.id);
 
     expect(originalNoteFromDb).toBeDefined();
     expect(copiedNote).toBeDefined();
@@ -1170,7 +1182,7 @@ test.describe("Note Management", () => {
 
     const originalNote = await testPrisma.note.create({
       data: {
-        color: "#dbeafe", 
+        color: "#dbeafe",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -1188,13 +1200,16 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/all-notes`);
 
-
-    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
-    await expect(authenticatedPage.getByText(testContext.prefix("All notes copy test item"))).toBeVisible();
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("All notes copy test item"))
+    ).toBeVisible();
 
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
     await noteCard.hover();
-    
+
     const copyButton = noteCard.getByRole("button", { name: /Copy Note/i });
     await expect(copyButton).toBeVisible({ timeout: 5000 });
 
@@ -1204,13 +1219,17 @@ test.describe("Note Management", () => {
         resp.request().method() === "POST" &&
         resp.status() === 201
     );
-    
+
     await copyButton.click();
     await copyNoteResponse;
 
-    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(2, { timeout: 10000 });
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(2, {
+      timeout: 10000,
+    });
 
-    await expect(authenticatedPage.getByText(testContext.prefix("All notes copy test item"))).toHaveCount(2);
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("All notes copy test item"))
+    ).toHaveCount(2);
 
     // Verify in database
     const allNotes = await testPrisma.note.findMany({
@@ -1267,7 +1286,9 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
 
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
     await noteCard.hover();
