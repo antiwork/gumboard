@@ -1,59 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { sendTodoNotification, shouldSendNotification } from "@/lib/slack";
+import { requireSession, getUserWithOrg, requireNoteAccess } from "@/lib/server/access";
+import { UpdateItem } from "@/lib/server/schemas";
 
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; noteId: string; itemId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { content, checked, order } = await request.json();
+    const session = await requireSession();
+    const user = await getUserWithOrg(session.user.id);
     const { id: boardId, noteId, itemId } = await params;
-
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            slackWebhookUrl: true,
-          },
-        },
-      },
-    });
-
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 });
-    }
-
-    const note = await db.note.findUnique({
-      where: { id: noteId },
-      include: {
-        board: { select: { organizationId: true, name: true, sendSlackUpdates: true } },
-      },
-    });
-
-    if (!note || note.deletedAt) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 });
-    }
-
-    if (note.board.organizationId !== user.organizationId) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    if (note.createdBy !== session.user.id && !user.isAdmin) {
-      return NextResponse.json(
-        { error: "Only the note author or admin can edit this note" },
-        { status: 403 }
-      );
-    }
+    const note = await requireNoteAccess(noteId, user);
 
     const existingItem = await db.checklistItem.findUnique({
       where: { id: itemId },
@@ -63,10 +22,7 @@ export async function PUT(
       return NextResponse.json({ error: "Checklist item not found" }, { status: 404 });
     }
 
-    const updateData: { content?: string; checked?: boolean; order?: number } = {};
-    if (content !== undefined) updateData.content = content.trim();
-    if (checked !== undefined) updateData.checked = checked;
-    if (order !== undefined) updateData.order = order;
+    const updateData = UpdateItem.parse(await request.json());
 
     const checklistItem = await db.checklistItem.update({
       where: { id: itemId },
@@ -75,9 +31,9 @@ export async function PUT(
 
     if (
       user.organization?.slackWebhookUrl &&
-      checked !== undefined &&
-      checked === true &&
-      checked !== existingItem.checked &&
+      updateData.checked !== undefined &&
+      updateData.checked === true &&
+      updateData.checked !== existingItem.checked &&
       shouldSendNotification(session.user.id, boardId, note.board.name, note.board.sendSlackUpdates)
     ) {
       const userName = user.name || user.email || "Unknown User";
@@ -91,9 +47,13 @@ export async function PUT(
     }
 
     return NextResponse.json({ checklistItem });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof NextResponse) return error;
     console.error("Error updating checklist item:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }
 
@@ -102,49 +62,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string; noteId: string; itemId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
+    const session = await requireSession();
+    const user = await getUserWithOrg(session.user.id);
     const { noteId, itemId } = await params;
-
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        organization: {
-          select: {
-            id: true,
-          },
-        },
-      },
-    });
-
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 });
-    }
-
-    const note = await db.note.findUnique({
-      where: { id: noteId },
-      include: {
-        board: { select: { organizationId: true } },
-      },
-    });
-
-    if (!note || note.deletedAt) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 });
-    }
-
-    if (note.board.organizationId !== user.organizationId) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    if (note.createdBy !== session.user.id && !user.isAdmin) {
-      return NextResponse.json(
-        { error: "Only the note author or admin can edit this note" },
-        { status: 403 }
-      );
-    }
+    await requireNoteAccess(noteId, user);
 
     const existingItem = await db.checklistItem.findUnique({
       where: { id: itemId },
@@ -159,8 +80,12 @@ export async function DELETE(
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof NextResponse) return error;
     console.error("Error deleting checklist item:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }

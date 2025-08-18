@@ -1,71 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { sendTodoNotification, hasValidContent, shouldSendNotification } from "@/lib/slack";
+import { requireSession, getUserWithOrg, requireNoteAccess } from "@/lib/server/access";
+import { CreateItem } from "@/lib/server/schemas";
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; noteId: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { content, checked = false } = await request.json();
+    const session = await requireSession();
+    const user = await getUserWithOrg(session.user.id);
     const { id: boardId, noteId } = await params;
+    const note = await requireNoteAccess(noteId, user);
 
-    if (!content || typeof content !== "string") {
-      return NextResponse.json({ error: "Item content is required" }, { status: 400 });
-    }
+    const { content, checked } = CreateItem.parse(await request.json());
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            slackWebhookUrl: true,
-          },
-        },
-      },
-    });
-
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 });
-    }
-
-    const note = await db.note.findUnique({
-      where: { id: noteId },
-      include: {
-        board: { select: { organizationId: true, name: true, sendSlackUpdates: true } },
-        checklistItems: { select: { order: true } },
-      },
-    });
-
-    if (!note || note.deletedAt) {
-      return NextResponse.json({ error: "Note not found" }, { status: 404 });
-    }
-
-    if (note.board.organizationId !== user.organizationId) {
-      return NextResponse.json({ error: "Access denied" }, { status: 403 });
-    }
-
-    if (note.createdBy !== session.user.id && !user.isAdmin) {
-      return NextResponse.json(
-        { error: "Only the note author or admin can edit this note" },
-        { status: 403 }
-      );
-    }
-
-    const maxOrder = Math.max(...note.checklistItems.map((item) => item.order), -1);
+    const maxOrder = Math.max(...(note.checklistItems.map((item) => item.order) || []), -1);
     const order = maxOrder + 1;
 
     const checklistItem = await db.checklistItem.create({
       data: {
-        content: content.trim(),
+        content,
         checked,
         order,
         noteId,
@@ -88,8 +44,12 @@ export async function POST(
     }
 
     return NextResponse.json({ item: checklistItem });
-  } catch (error) {
+  } catch (error: unknown) {
+    if (error instanceof NextResponse) return error;
     console.error("Error creating checklist item:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "Internal server error" },
+      { status: 500 }
+    );
   }
 }
