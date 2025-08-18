@@ -95,7 +95,13 @@ function FilterPopover({
                         "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
                     )}
                   >
-                    <User className="w-4 h-4 " />
+                    <Avatar className="w-6 h-6">
+                      <AvatarFallback>
+                        <div className="w-6 h-6 text-primary-foreground rounded-full flex items-center justify-center flex-shrink-0">
+                          <User className="w-4 h-4" />
+                        </div>
+                      </AvatarFallback>
+                    </Avatar>
                     <span className="font-medium">All authors</span>
                   </Button>
                   {authors.map((author) => (
