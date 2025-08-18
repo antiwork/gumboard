@@ -1074,7 +1074,10 @@ test.describe("Due Date Management", () => {
     const tomorrowDate = tomorrow.getDate();
 
     await authenticatedPage.waitForTimeout(500);
-    await authenticatedPage.getByRole("gridcell", { name: String(tomorrowDate) }).click();
+    
+    const dateCell = authenticatedPage.locator(`[data-day*="${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrowDate).padStart(2, '0')}"]`).first();
+    await expect(dateCell).toBeVisible();
+    await dateCell.click();
 
     const updateResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -1312,7 +1315,11 @@ test.describe("Due Date Management", () => {
 
     const tomorrowDate = tomorrow.getDate();
     await authenticatedPage.waitForTimeout(500);
-    await authenticatedPage.getByRole("gridcell", { name: String(tomorrowDate) }).click();
+    
+    const dateCell = authenticatedPage.locator(`[data-day*="${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrowDate).padStart(2, '0')}"]`).first();
+    await expect(dateCell).toBeVisible();
+    await dateCell.click();
+    
     await authenticatedPage.waitForTimeout(1000);
 
     await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();

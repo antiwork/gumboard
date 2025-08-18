@@ -175,6 +175,8 @@ test.describe("Home Page", () => {
     await editResponse;
     await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible();
 
+    await authenticatedPage.waitForTimeout(500);
+
     // Verify edit was saved to database
     const editedItem = await testPrisma.checklistItem.findFirst({
       where: { content: updatedFinanceText },
