@@ -324,7 +324,10 @@ export default async function JoinPage({ params }: JoinPageProps) {
                   )}
                 </div>
               )}
-              <form action={autoCreateAccountAndJoin.bind(null, invite.token!)} className="space-y-5">
+              <form
+                action={autoCreateAccountAndJoin.bind(null, invite.token!)}
+                className="space-y-5"
+              >
                 <div className="space-y-2">
                   <Label
                     htmlFor="email"
@@ -426,9 +429,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
           <CardContent className="space-y-3">
             <div className="text-center space-y-3">
               <div className="space-y-1">
-                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
-                  Created by
-                </p>
+                <p className="text-sm font-medium text-slate-900 dark:text-slate-100">Created by</p>
                 <p className="text-sm text-slate-600 dark:text-slate-400">
                   {invite.user.name || invite.user.email}
                 </p>
@@ -437,9 +438,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
                 <p className="text-sm font-medium text-slate-900 dark:text-slate-100">
                   Organization info
                 </p>
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  {usageInfo}
-                </p>
+                <p className="text-sm text-slate-600 dark:text-slate-400">{usageInfo}</p>
               </div>
               {invite.expiresAt && (
                 <div className="pt-2">
@@ -450,11 +449,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
               )}
             </div>
             <form action={joinOrganization.bind(null, token)} className="pt-2">
-              <Button
-                type="submit"
-                className="w-full h-12 text-base font-medium"
-                size="lg"
-              >
+              <Button type="submit" className="w-full h-12 text-base font-medium" size="lg">
                 Join {invite.organization.name}
               </Button>
             </form>
