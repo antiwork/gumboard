@@ -16,7 +16,7 @@ export async function POST(
 
     const { content, checked } = CreateItem.parse(await request.json());
 
-    const maxOrder = Math.max(...(note.checklistItems.map((item) => item.order) || []), -1);
+    const maxOrder = Math.max(...note.checklistItems.map((item) => item.order), -1);
     const order = maxOrder + 1;
 
     const checklistItem = await db.checklistItem.create({

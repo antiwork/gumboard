@@ -67,17 +67,13 @@ export async function DELETE(
     const { noteId, itemId } = await params;
     await requireNoteAccess(noteId, user);
 
-    const existingItem = await db.checklistItem.findUnique({
-      where: { id: itemId },
+    const result = await db.checklistItem.deleteMany({
+      where: { id: itemId, noteId },
     });
 
-    if (!existingItem || existingItem.noteId !== noteId) {
+    if (result.count === 0) {
       return NextResponse.json({ error: "Checklist item not found" }, { status: 404 });
     }
-
-    await db.checklistItem.delete({
-      where: { id: itemId },
-    });
 
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

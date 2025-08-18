@@ -28,18 +28,21 @@ export async function getUserWithOrg(userId: string) {
       },
     },
   });
-  
+
   if (!user?.organizationId) {
     throw new NextResponse(JSON.stringify({ error: "No organization found" }), { status: 403 });
   }
-  
+
   return {
     ...user,
     organizationId: user.organizationId,
   };
 }
 
-export async function requireNoteAccess(noteId: string, user: { id: string; isAdmin: boolean; organizationId: string }) {
+export async function requireNoteAccess(
+  noteId: string,
+  user: { id: string; isAdmin: boolean; organizationId: string }
+) {
   const note = await db.note.findUnique({
     where: { id: noteId },
     include: {
@@ -65,7 +68,10 @@ export async function requireNoteAccess(noteId: string, user: { id: string; isAd
   }
 
   if (note.createdBy !== user.id && !user.isAdmin) {
-    throw new NextResponse(JSON.stringify({ error: "Only the note author or admin can edit this note" }), { status: 403 });
+    throw new NextResponse(
+      JSON.stringify({ error: "Only the note author or admin can edit this note" }),
+      { status: 403 }
+    );
   }
 
   return note;
