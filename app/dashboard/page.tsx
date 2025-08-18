@@ -13,7 +13,6 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Grid3x3, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { FullPageLoader } from "@/components/ui/loader";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -41,6 +40,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -52,7 +52,10 @@ export type DashboardBoard = Board & {
 };
 
 const formSchema = z.object({
-  name: z.string().min(1, "Board name is required"),
+  name: z
+    .string()
+    .min(1, "Board name is required")
+    .refine((value) => value.trim().length > 0, "Board name cannot be empty"),
   description: z.string().optional(),
 });
 
@@ -123,6 +126,7 @@ export default function Dashboard() {
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
     const { name, description } = values;
+    const trimmedName = name.trim();
     try {
       const response = await fetch("/api/boards", {
         method: "POST",
@@ -130,7 +134,7 @@ export default function Dashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
+          name: trimmedName,
           description,
         }),
       });
@@ -166,7 +170,7 @@ export default function Dashboard() {
   };
 
   if (loading) {
-    return <FullPageLoader message="Loading dashboard..." />;
+    return <DashboardSkeleton />;
   }
 
   return (
@@ -189,8 +193,10 @@ export default function Dashboard() {
               }}
               className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Board</span>
+              <div className="flex justify-between items-center sm:space-x-2">
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Add Board</span>
+              </div>
             </Button>
 
             <ProfileDropdown user={user} />
@@ -309,7 +315,10 @@ export default function Dashboard() {
                   >
                     <CardHeader>
                       <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
-                        <CardTitle className="text-lg dark:text-zinc-100" title={board.name}>
+                        <CardTitle
+                          className="text-lg dark:text-zinc-100 truncate"
+                          title={board.name}
+                        >
                           {board.name}
                         </CardTitle>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
@@ -380,3 +389,43 @@ export default function Dashboard() {
     </div>
   );
 }
+
+const DashboardSkeleton = () => {
+  const skeletonBoardCount = 5;
+  return (
+    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950">
+      <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
+        <div className="flex justify-between items-center h-16 px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              <Skeleton className="h-8 w-32" />
+            </div>
+          </div>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <Skeleton className="h-8 w-32" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+          </div>
+        </div>
+      </nav>
+      <div className="p-4 sm:p-6 lg:p-8">
+        <div className="space-y-4 mb-6">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="h-6 w-84" />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+          {Array.from({ length: skeletonBoardCount }).map((_, i) => (
+            <div
+              key={i}
+              className="h-full min-h-34 bg-white dark:bg-zinc-900 shadow-sm p-4 rounded-sm flex flex-col justify-between"
+            >
+              <div>
+                <Skeleton className="h-8 w-32 mb-8" />
+                <Skeleton className="h-6 w-64" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};

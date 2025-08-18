@@ -1,5 +1,6 @@
-import React from "react";
 import { ImageResponse } from "next/og";
+import { readFile } from "fs/promises";
+import { join } from "path";
 
 export const size = {
   width: 1200,
@@ -7,7 +8,9 @@ export const size = {
 };
 export const contentType = "image/png";
 
-export default function OpenGraphImage() {
+export default async function OpenGraphImage() {
+  const geistBold = await readFile(join(process.cwd(), "public/font/Geist-Bold.ttf"));
+  const geistRegular = await readFile(join(process.cwd(), "public/font/Geist-Regular.ttf"));
   return new ImageResponse(
     (
       <div
@@ -18,7 +21,6 @@ export default function OpenGraphImage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "system-ui, sans-serif",
         }}
       >
         <div
@@ -28,7 +30,7 @@ export default function OpenGraphImage() {
             alignItems: "center",
             justifyContent: "center",
             textAlign: "center",
-            gap: "24px",
+            gap: "12px",
           }}
         >
           <div
@@ -71,8 +73,8 @@ export default function OpenGraphImage() {
             <span
               style={{
                 fontSize: "72px",
-                fontWeight: "bold",
                 color: "#1e293b",
+                fontFamily: "Geist-Bold, sans-serif",
               }}
             >
               Gumboard
@@ -84,6 +86,7 @@ export default function OpenGraphImage() {
               color: "#64748b",
               margin: 0,
               maxWidth: "800px",
+              fontFamily: "Geist-Regular, sans-serif",
             }}
           >
             Keep on top of your team&apos;s to-dos
@@ -93,6 +96,20 @@ export default function OpenGraphImage() {
     ),
     {
       ...size,
+      fonts: [
+        {
+          name: "Geist-Bold",
+          data: geistBold,
+          style: "normal",
+          weight: 700,
+        },
+        {
+          name: "Geist-Regular",
+          data: geistRegular,
+          style: "normal",
+          weight: 400,
+        },
+      ],
     }
   );
 }
