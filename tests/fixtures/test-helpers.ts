@@ -38,10 +38,6 @@ export class TestContext {
     this.prisma = getTestPrismaClient();
   }
 
-  async setup() {
-    // Minimal setup - auth will be initialized lazily when needed
-  }
-
   async ensureAuthInitialized() {
     if (this._isAuthInitialized) {
       return;
@@ -133,51 +129,6 @@ export class TestContext {
       if (process.env.DEBUG_TESTS) {
         console.error(`Cleanup failed for test ${this.testId}:`, error);
       }
-
-      // Try individual cleanup as fallback
-      const fallbackCleanup = [
-        () =>
-          this.prisma.checklistItem.deleteMany({
-            where: {
-              note: {
-                board: {
-                  organizationId: this.organizationId,
-                },
-              },
-            },
-          }),
-        () =>
-          this.prisma.note.deleteMany({
-            where: { board: { organizationId: this.organizationId } },
-          }),
-        () =>
-          this.prisma.board.deleteMany({
-            where: { organizationId: this.organizationId },
-          }),
-        () =>
-          this.prisma.session.deleteMany({
-            where: { userId: this.userId },
-          }),
-        () =>
-          this.prisma.user.deleteMany({
-            where: { organizationId: this.organizationId },
-          }),
-        () =>
-          this.prisma.organization.deleteMany({
-            where: { id: this.organizationId },
-          }),
-      ];
-
-      for (const cleanupFn of fallbackCleanup) {
-        try {
-          await cleanupFn();
-        } catch (fallbackError) {
-          // Log but continue with other cleanup operations
-          if (process.env.DEBUG_TESTS) {
-            console.error(`Fallback cleanup step failed:`, fallbackError);
-          }
-        }
-      }
     }
   }
 
@@ -188,10 +139,6 @@ export class TestContext {
 
   // Specific prefix methods if you want more semantic names
   getBoardName(name: string) {
-    return `${name}_${this.testId}`;
-  }
-
-  getNoteName(name: string) {
     return `${name}_${this.testId}`;
   }
 }
@@ -211,7 +158,6 @@ export const test = base.extend<{
       console.log(`  User ID: ${context.userId}`);
     }
 
-    await context.setup();
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(context);
     await context.cleanup();

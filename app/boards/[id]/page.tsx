@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, Settings, X } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, Settings, X, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
-import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
 
@@ -29,6 +28,14 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
+import {
+  getResponsiveConfig,
+  getUniqueAuthors,
+  calculateGridLayout,
+  calculateMobileLayout,
+  filterAndSortNotes,
+} from "@/lib/utils";
+import { BoardPageSkeleton } from "@/components/board-skeleton";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -145,195 +152,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setSelectedAuthor(urlAuthor);
   };
 
-  // Enhanced responsive grid configuration
-  const getResponsiveConfig = () => {
-    if (typeof window === "undefined")
-      return {
-        noteWidth: 320,
-        gridGap: 20,
-        containerPadding: 20,
-        notePadding: 16,
-      };
-
-    const width = window.innerWidth;
-
-    // Ultra-wide screens (1920px+)
-    if (width >= 1920) {
-      return {
-        noteWidth: 340,
-        gridGap: 24,
-        containerPadding: 32,
-        notePadding: 18,
-      };
-    }
-    // Large desktop (1200px-1919px)
-    else if (width >= 1200) {
-      return {
-        noteWidth: 320,
-        gridGap: 20,
-        containerPadding: 24,
-        notePadding: 16,
-      };
-    }
-    // Medium desktop/laptop (768px-1199px)
-    else if (width >= 768) {
-      return {
-        noteWidth: 300,
-        gridGap: 16,
-        containerPadding: 20,
-        notePadding: 16,
-      };
-    }
-    // Small tablet (600px-767px)
-    else if (width >= 600) {
-      return {
-        noteWidth: 280,
-        gridGap: 16,
-        containerPadding: 16,
-        notePadding: 14,
-      };
-    }
-    // Mobile (less than 600px)
-    else {
-      return {
-        noteWidth: 260,
-        gridGap: 12,
-        containerPadding: 12,
-        notePadding: 12,
-      };
-    }
-  };
-
-  // Helper function to calculate note height based on content
-  const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
-    const config = getResponsiveConfig();
-    const actualNotePadding = notePadding || config.notePadding;
-
-    const headerHeight = 60; // User info header + margins
-    const paddingHeight = actualNotePadding * 2; // Top and bottom padding
-    const minContentHeight = 60; // Minimum content area
-
-    // All notes now use checklist items - calculate height based on number of items
-    const itemHeight = 32; // Use 32px for textarea-based items (slightly larger than main's 28px)
-    const itemSpacing = 4; // Space between items (space-y-1 = 4px)
-    const checklistItemsCount = note.checklistItems?.length || 0;
-    const addingItemHeight = addingChecklistItem === note.id ? 32 : 0; // Add height for input field
-    const addTaskButtonHeight = 36; // Height for the "Add task" button including margin
-
-    const checklistHeight =
-      checklistItemsCount * itemHeight +
-      (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
-      addingItemHeight;
-    const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
-
-    return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
-  };
-
-  // Helper function to calculate bin-packed layout for desktop
-  const calculateGridLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate the actual available width and adjust note width to fill better
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-    // Ensure notes don't get too narrow or too wide based on screen size
-    const minWidth = config.noteWidth - 40;
-    const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
-
-    // Use full width with minimal left offset
-    const offsetX = config.containerPadding;
-
-    // Bin-packing algorithm: track the bottom Y position of each column
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: adjustedNoteWidth,
-        height: noteHeight,
-      };
-    });
-  };
-
-  // Helper function to calculate mobile layout (optimized single/double column)
-  const calculateMobileLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const minNoteWidth = config.noteWidth - 20; // Slightly smaller minimum for mobile
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    // Calculate note width for mobile
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-
-    // Bin-packing for mobile with fewer columns
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
-
-      // Find the column with the lowest bottom position
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      // Place the note in the best column
-      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      // Update the column bottom position
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: noteWidth,
-        height: noteHeight,
-      };
-    });
-  };
-
   useEffect(() => {
     const initializeParams = async () => {
       const resolvedParams = await params;
@@ -433,94 +251,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return () => clearTimeout(timer);
   }, [searchTerm]);
 
-  // Get unique authors from notes
-  const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
-
-    notes.forEach((note) => {
-      if (!authorsMap.has(note.user.id)) {
-        authorsMap.set(note.user.id, {
-          id: note.user.id,
-          name: note.user.name || note.user.email.split("@")[0],
-          email: note.user.email,
-        });
-      }
-    });
-
-    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  };
-
-  // Filter notes based on search term, date range, and author
-  const filterAndSortNotes = (
-    notes: Note[],
-    searchTerm: string,
-    dateRange: { startDate: Date | null; endDate: Date | null },
-    authorId: string | null,
-    currentUser: User | null
-  ): Note[] => {
-    let filteredNotes = notes;
-
-    // Filter by search term
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      filteredNotes = filteredNotes.filter((note) => {
-        const authorName = (note.user.name || note.user.email).toLowerCase();
-        // Search in checklist items content
-        const checklistContent =
-          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
-        return authorName.includes(search) || checklistContent.includes(search);
-      });
-    }
-
-    // Filter by author
-    if (authorId) {
-      filteredNotes = filteredNotes.filter((note) => note.user.id === authorId);
-    }
-
-    // Filter by date range
-    if (dateRange.startDate || dateRange.endDate) {
-      filteredNotes = filteredNotes.filter((note) => {
-        const noteDate = new Date(note.createdAt);
-        const startOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const endOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-
-        if (dateRange.startDate && dateRange.endDate) {
-          return (
-            noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate)
-          );
-        } else if (dateRange.startDate) {
-          return noteDate >= startOfDay(dateRange.startDate);
-        } else if (dateRange.endDate) {
-          return noteDate <= endOfDay(dateRange.endDate);
-        }
-        return true;
-      });
-    }
-
-    // Sort notes with user priority (current user's notes first) and then by creation date (newest first)
-    filteredNotes.sort((a, b) => {
-      // First priority: logged-in user's notes come first
-      if (currentUser) {
-        const aIsCurrentUser = a.user.id === currentUser.id;
-        const bIsCurrentUser = b.user.id === currentUser.id;
-
-        if (aIsCurrentUser && !bIsCurrentUser) {
-          return -1; // a (current user's note) comes first
-        }
-        if (!aIsCurrentUser && bIsCurrentUser) {
-          return 1; // b (current user's note) comes first
-        }
-      }
-
-      // Third priority: newest first
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return filteredNotes;
-  };
-
   // Get unique authors for dropdown
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
@@ -530,8 +260,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
   const layoutNotes = useMemo(
-    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, calculateMobileLayout, calculateGridLayout]
+    () =>
+      isMobile
+        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
+        : calculateGridLayout(filteredNotes, addingChecklistItem),
+    [isMobile, filteredNotes, addingChecklistItem]
   );
 
   const boardHeight = useMemo(() => {
@@ -625,7 +358,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     if (!currentNote) return;
 
     // OPTIMISTIC UPDATE: Update UI immediately
-    setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
+    setNotes((prev) => prev.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
   const handleAddNote = async (targetBoardId?: string) => {
@@ -659,7 +392,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes([...notes, note]);
+        setNotes((prev) => [...prev, note]);
         setAddingChecklistItem(note.id);
       }
     } catch (error) {
@@ -726,7 +459,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
-      setNotes(notes.filter((n) => n.id !== noteId));
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -736,7 +469,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (!response.ok) {
         // Revert on error
-        setNotes([...notes, currentNote]);
+        setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
@@ -755,7 +488,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
       if (!targetBoardId) return;
 
-      setNotes(notes.filter((n) => n.id !== noteId));
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -764,7 +497,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       });
 
       if (!response.ok) {
-        setNotes([...notes, currentNote]);
+        setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
           title: "Unarchive Failed",
@@ -834,6 +567,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { board } = await response.json();
         setBoard(board);
+
+        setAllBoards((prevBoards) => prevBoards.map((b) => (b.id === board.id ? board : b)));
+
         setBoardSettings({
           name: board.name,
           description: board.description || "",
@@ -886,7 +622,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   };
 
   if (userLoading || notesloading) {
-    return <FullPageLoader message="Loading board..." />;
+    return <BoardPageSkeleton />;
   }
 
   if (!board && boardId !== "all-notes" && boardId !== "archive") {
@@ -919,7 +655,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className={`flex items-center justify-between ${showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"} text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
+                className={`flex items-center justify-between text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
               >
                 <div>
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
@@ -930,9 +666,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         : board?.name}
                   </div>
                 </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform }`}
-                />
+                {showBoardDropdown ? (
+                  <ChevronUp
+                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
+                  />
+                ) : (
+                  <ChevronDown
+                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
+                  />
+                )}
               </Button>
 
               {showBoardDropdown && (
@@ -995,27 +737,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     >
                       <span className="font-medium">Create new board</span>
                     </Button>
-                    {boardId !== "all-notes" && boardId !== "archive" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setBoardSettings({
-                            name: board?.name || "",
-                            description: board?.description || "",
-                            isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                            sendSlackUpdates:
-                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                          });
-                          setBoardSettingsDialog(true);
-                          setShowBoardDropdown(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2"
-                      >
-                        <Settings className="w-4 h-4 mr-2" />
-                        <span className="font-medium">Board settings</span>
-                      </Button>
-                    )}
                   </div>
                 </div>
               )}
@@ -1023,7 +744,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
 
             {/* Filter Popover */}
-            <div className="relative board-dropdown mr-0">
+            <div className="relative board-dropdown mr-1" data-slot="filter-popover">
               <FilterPopover
                 startDate={dateRange.startDate}
                 endDate={dateRange.endDate}
@@ -1038,9 +759,30 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   setSelectedAuthor(authorId);
                   updateURL(undefined, undefined, authorId);
                 }}
-                className="w-fit"
+                className="w-fit size-9"
               />
             </div>
+            {boardId !== "all-notes" && boardId !== "archive" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setBoardSettings({
+                    name: board?.name || "",
+                    description: board?.description || "",
+                    isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+                    sendSlackUpdates:
+                      (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                  });
+                  setBoardSettingsDialog(true);
+                }}
+                aria-label="Board settings"
+                title="Board settings"
+                className="flex items-center size-9"
+              >
+                <Settings className="size-4" />
+              </Button>
+            )}
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
@@ -1082,6 +824,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
+              disabled={boardId === "archive"}
               className="flex items-center justify-center text-white w-fit h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
             >
               <span>Add note</span>
@@ -1221,7 +964,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setNewBoardName("");
                     setNewBoardDescription("");
                   }}
-                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-300 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-300 dark:hover:bg-zinc-800"
                 >
                   Cancel
                 </Button>
@@ -1262,7 +1005,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </AlertDialog>
 
       <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Board settings
@@ -1362,6 +1105,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onCheckedChange={(checked) =>
                   setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
                 }
+                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
               />
               <label
                 htmlFor="sendSlackUpdates"
@@ -1375,18 +1119,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </p>
           </div>
 
-          <AlertDialogFooter className="flex justify-between">
+          <AlertDialogFooter className="flex !flex-row justify-between">
             <Button
               onClick={() => setDeleteConfirmDialog(true)}
               variant="destructive"
-              className="mr-auto"
+              className="mr-auto bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Delete Board
+              <Trash2 className="w-4 h-4" />
+              Delete <span className="hidden lg:inline">Board</span>
             </Button>
-            <div className="flex space-x-2">
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => handleUpdateBoardSettings(boardSettings)}>
+            <div className="flex space-x-2 items-center">
+              <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleUpdateBoardSettings(boardSettings)}
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
+              >
                 Save settings
               </AlertDialogAction>
             </div>

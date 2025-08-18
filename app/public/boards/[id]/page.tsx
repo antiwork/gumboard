@@ -9,6 +9,16 @@ import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import type { Note, Board } from "@/components/note";
+import { Note as NoteCard } from "@/components/note";
+import { ProfileDropdown } from "@/components/profile-dropdown";
+import { useUser } from "@/app/contexts/UserContext";
+import {
+  getResponsiveConfig,
+  getUniqueAuthors,
+  calculateGridLayout,
+  calculateMobileLayout,
+  filterAndSortNotes,
+} from "@/lib/utils";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -27,233 +37,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  const getResponsiveConfig = () => {
-    if (typeof window === "undefined")
-      return {
-        noteWidth: 320,
-        gridGap: 20,
-        containerPadding: 20,
-        notePadding: 16,
-      };
-
-    const width = window.innerWidth;
-
-    if (width >= 1920) {
-      return {
-        noteWidth: 340,
-        gridGap: 24,
-        containerPadding: 32,
-        notePadding: 18,
-      };
-    } else if (width >= 1200) {
-      return {
-        noteWidth: 320,
-        gridGap: 20,
-        containerPadding: 24,
-        notePadding: 16,
-      };
-    } else if (width >= 768) {
-      return {
-        noteWidth: 300,
-        gridGap: 16,
-        containerPadding: 20,
-        notePadding: 16,
-      };
-    } else if (width >= 600) {
-      return {
-        noteWidth: 280,
-        gridGap: 16,
-        containerPadding: 16,
-        notePadding: 14,
-      };
-    } else {
-      return {
-        noteWidth: 260,
-        gridGap: 12,
-        containerPadding: 12,
-        notePadding: 12,
-      };
-    }
-  };
-
-  const calculateNoteHeight = (note: Note, noteWidth?: number, notePadding?: number) => {
-    const config = getResponsiveConfig();
-    const actualNotePadding = notePadding || config.notePadding;
-
-    const headerHeight = 76;
-    const paddingHeight = actualNotePadding * 2;
-    const minContentHeight = 84;
-
-    // All notes now use checklist items
-    const itemHeight = 32;
-    const itemSpacing = 8;
-    const checklistItemsCount = note.checklistItems?.length || 0;
-
-    const checklistHeight =
-      checklistItemsCount * itemHeight +
-      (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0);
-    const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
-
-    return headerHeight + paddingHeight + totalChecklistHeight + 40;
-  };
-
-  const getUniqueAuthors = (notes: Note[]) => {
-    const authorsMap = new Map<string, { id: string; name: string; email: string }>();
-
-    notes.forEach((note) => {
-      if (!authorsMap.has(note.user.id)) {
-        authorsMap.set(note.user.id, {
-          id: note.user.id,
-          name: note.user.name || note.user.email.split("@")[0],
-          email: note.user.email,
-        });
-      }
-    });
-
-    return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
-  };
-
-  const filterAndSortNotes = (
-    notes: Note[],
-    searchTerm: string,
-    dateRange: { startDate: Date | null; endDate: Date | null },
-    authorId: string | null
-  ): Note[] => {
-    let filteredNotes = notes;
-
-    if (searchTerm.trim()) {
-      const search = searchTerm.toLowerCase();
-      filteredNotes = filteredNotes.filter((note) => {
-        const authorName = (note.user.name || note.user.email).toLowerCase();
-        // Search in checklist items content
-        const checklistContent =
-          note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
-        return authorName.includes(search) || checklistContent.includes(search);
-      });
-    }
-
-    if (authorId) {
-      filteredNotes = filteredNotes.filter((note) => note.user.id === authorId);
-    }
-
-    if (dateRange.startDate || dateRange.endDate) {
-      filteredNotes = filteredNotes.filter((note) => {
-        const noteDate = new Date(note.createdAt);
-        const startOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const endOfDay = (date: Date) =>
-          new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999);
-
-        if (dateRange.startDate && dateRange.endDate) {
-          return (
-            noteDate >= startOfDay(dateRange.startDate) && noteDate <= endOfDay(dateRange.endDate)
-          );
-        } else if (dateRange.startDate) {
-          return noteDate >= startOfDay(dateRange.startDate);
-        } else if (dateRange.endDate) {
-          return noteDate <= endOfDay(dateRange.endDate);
-        }
-        return true;
-      });
-    }
-
-    filteredNotes.sort((a, b) => {
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
-    });
-
-    return filteredNotes;
-  };
-
-  const calculateGridLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const noteWidthWithGap = config.noteWidth + config.gridGap;
-    const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-    const minWidth = config.noteWidth - 40;
-    const maxWidth = config.noteWidth + 80;
-    const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
-
-    const offsetX = config.containerPadding;
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, adjustedNoteWidth, config.notePadding);
-
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: adjustedNoteWidth,
-        height: noteHeight,
-      };
-    });
-  };
-
-  const calculateMobileLayout = () => {
-    if (typeof window === "undefined") return [];
-
-    const config = getResponsiveConfig();
-    const containerWidth = window.innerWidth - config.containerPadding * 2;
-    const minNoteWidth = config.noteWidth - 20;
-    const columnsCount = Math.floor(
-      (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
-    );
-    const actualColumnsCount = Math.max(1, columnsCount);
-
-    const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-    const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-
-    const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
-
-    return filteredNotes.map((note) => {
-      const noteHeight = calculateNoteHeight(note, noteWidth, config.notePadding);
-
-      let bestColumn = 0;
-      let minBottom = columnBottoms[0];
-
-      for (let col = 1; col < actualColumnsCount; col++) {
-        if (columnBottoms[col] < minBottom) {
-          minBottom = columnBottoms[col];
-          bestColumn = col;
-        }
-      }
-
-      const x = config.containerPadding + bestColumn * (noteWidth + config.gridGap);
-      const y = columnBottoms[bestColumn];
-
-      columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
-
-      return {
-        ...note,
-        x,
-        y,
-        width: noteWidth,
-        height: noteHeight,
-      };
-    });
-  };
+  const { user } = useUser();
 
   useEffect(() => {
     const initializeParams = async () => {
@@ -295,18 +79,20 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const fetchBoardData = async () => {
     try {
       const boardResponse = await fetch(`/api/boards/${boardId}`);
-      if (boardResponse.status === 404) {
+      if (boardResponse.status === 404 || boardResponse.status === 403) {
         setBoard(null);
         setLoading(false);
         return;
       }
-      if (boardResponse.status === 401 || boardResponse.status === 403) {
+      if (boardResponse.status === 401) {
         router.push("/auth/signin");
         return;
       }
       if (boardResponse.ok) {
         const { board } = await boardResponse.json();
-        setBoard(board);
+        if (board.isPublic) {
+          setBoard(board);
+        }
       }
 
       const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
@@ -316,6 +102,8 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
       }
     } catch (error) {
       console.error("Error fetching board data:", error);
+      // Set board to null to trigger the not-found UI
+      setBoard(null);
     } finally {
       setLoading(false);
     }
@@ -324,13 +112,16 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
   const filteredNotes = useMemo(
-    () => filterAndSortNotes(notes, searchTerm, dateRange, selectedAuthor),
+    () => filterAndSortNotes(notes, searchTerm, dateRange, selectedAuthor, null),
     [notes, searchTerm, dateRange, selectedAuthor]
   );
 
   const layoutNotes = useMemo(
-    () => (isMobile ? calculateMobileLayout() : calculateGridLayout()),
-    [isMobile, filteredNotes, calculateMobileLayout, calculateGridLayout]
+    () =>
+      isMobile
+        ? calculateMobileLayout(filteredNotes, null)
+        : calculateGridLayout(filteredNotes, null),
+    [isMobile, filteredNotes]
   );
 
   const boardHeight = useMemo(() => {
@@ -351,14 +142,14 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
 
   if (!board) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen dark:bg-zinc-950 dark:text-zinc-100 flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Board not found</h1>
           <p className="text-muted-foreground mb-4">
             This board doesn&apos;t exist or is not publicly accessible.
           </p>
 
-          <Button asChild>
+          <Button asChild variant="outline">
             <Link href="/">Go to Gumboard</Link>
           </Button>
         </div>
@@ -419,77 +210,35 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
               />
             </div>
 
-            <Link href="/auth/signin">
-              <Button variant="outline" size="sm">
-                Sign in
-              </Button>
-            </Link>
+            {user ? (
+              <ProfileDropdown user={user} />
+            ) : (
+              <Link href="/auth/signin">
+                <Button variant="outline" size="sm">
+                  Sign in
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
       </div>
 
       <div className="relative" style={{ height: boardHeight }} ref={boardRef}>
         {layoutNotes.map((note) => (
-          <div
+          <NoteCard
             key={note.id}
-            className="absolute transition-all duration-300 ease-out"
+            note={note as Note}
+            readonly={true}
+            className="shadow-md shadow-black/10 absolute"
             style={{
-              left: `${note.x}px`,
-              top: `${note.y}px`,
-              width: `${note.width}px`,
-              height: `${note.height}px`,
+              position: "absolute",
+              left: note.x,
+              top: note.y,
+              width: note.width,
+              height: note.height,
+              padding: `${getResponsiveConfig().notePadding}px`,
             }}
-          >
-            <div
-              className={`h-full rounded-lg shadow-md border-2 p-4 ${note.color} transition-all duration-200`}
-            >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center space-x-2">
-                  <div className="w-6 h-6 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-                      {note.user.name
-                        ? note.user.name.charAt(0).toUpperCase()
-                        : note.user.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
-                  <span className="text-xs text-gray-600 dark:text-gray-400 font-medium">
-                    {note.user.name || note.user.email.split("@")[0]}
-                  </span>
-                </div>
-                <span className="text-xs text-gray-500 dark:text-gray-400">
-                  {new Date(note.createdAt).toLocaleDateString()}
-                </span>
-              </div>
-
-              <div className="flex-1 overflow-hidden">
-                {note.checklistItems && note.checklistItems.length > 0 && (
-                  <div className="space-y-2">
-                    {note.checklistItems
-                      .sort((a, b) => a.order - b.order)
-                      .map((item) => (
-                        <div key={item.id} className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            checked={item.checked}
-                            disabled
-                            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:opacity-50"
-                          />
-                          <span
-                            className={`text-sm flex-1 ${
-                              item.checked
-                                ? "line-through text-gray-500 dark:text-gray-400"
-                                : "text-gray-900 dark:text-gray-100"
-                            }`}
-                          >
-                            {item.content}
-                          </span>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+          />
         ))}
 
         {filteredNotes.length === 0 && (

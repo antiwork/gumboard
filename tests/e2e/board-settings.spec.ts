@@ -19,8 +19,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     await expect(authenticatedPage.locator("text=Board settings")).toBeVisible();
     await expect(
@@ -53,8 +52,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeChecked();
@@ -147,8 +145,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     await expect(authenticatedPage.locator("text=Board settings")).toBeVisible();
     await expect(
@@ -178,8 +175,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     const checkbox = authenticatedPage.locator("#sendSlackUpdates");
     await expect(checkbox).toBeChecked();
@@ -198,9 +194,55 @@ test.describe("Board Settings", () => {
     expect(unchangedBoard?.sendSlackUpdates).toBe(true);
 
     // Reopen settings to verify UI reflects unchanged state
-    await authenticatedPage.click(`button:has(div:has-text("${board.name}"))`);
-    await authenticatedPage.click('button:has-text("Board settings")');
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
 
     await expect(checkbox).toBeChecked();
+  });
+
+  test("renders a public board for unauthenticated user", async ({
+    page,
+    testPrisma,
+    testContext,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Public Board"),
+        description: testContext.prefix("A public board"),
+        isPublic: true,
+        sendSlackUpdates: false,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await page.goto(`/public/boards/${board.id}`);
+
+    await expect(page.locator(`text=${board.name}`)).toBeVisible();
+    await expect(page.locator("text=Public").first()).toBeVisible();
+    await expect(page.locator("text=No notes found")).toBeVisible();
+  });
+
+  test("shows not found for private board on public route", async ({
+    authenticatedPage,
+    testPrisma,
+    testContext,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Private Board"),
+        description: testContext.prefix("A private board"),
+        isPublic: false,
+        sendSlackUpdates: false,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.goto(`/public/boards/${board.id}`);
+
+    await expect(authenticatedPage.locator("text=Board not found")).toBeVisible();
+    await expect(
+      authenticatedPage.locator("text=This board doesn't exist or is not publicly accessible.")
+    ).toBeVisible();
   });
 });
