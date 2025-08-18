@@ -488,8 +488,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     });
   };
 
-  const handleNoteArchiveStatus = async (noteId: string , shouldArchive: boolean) => {
-    try{
+  const handleNoteArchiveStatus = async (noteId: string, shouldArchive: boolean) => {
+    try {
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
 
@@ -508,8 +508,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
-          title: `${shouldArchive ? 'Archive' : 'Unarchive'} Failed`,
-          description: `Failed to ${shouldArchive ? 'archive' : 'unarchive'} note. Please try again.`,
+          title: `${shouldArchive ? "Archive" : "Unarchive"} Failed`,
+          description: `Failed to ${shouldArchive ? "archive" : "unarchive"} note. Please try again.`,
         });
       }
     } catch (error) {
@@ -862,8 +862,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               currentUser={user as User}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? () => handleNoteArchiveStatus(note.id, true) : undefined}
-              onUnarchive={boardId === "archive" ? () => handleNoteArchiveStatus(note.id, false) : undefined}
+              onArchive={
+                boardId !== "archive" ? () => handleNoteArchiveStatus(note.id, true) : undefined
+              }
+              onUnarchive={
+                boardId === "archive" ? () => handleNoteArchiveStatus(note.id, false) : undefined
+              }
               onCopy={handleCopyNote}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="shadow-md shadow-black/10"
