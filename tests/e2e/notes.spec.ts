@@ -1336,8 +1336,12 @@ test.describe("Due Date Management", () => {
     const tomorrowDate = tomorrow.getDate();
 
     await authenticatedPage.waitForTimeout(500);
-    
-    const dateCell = authenticatedPage.locator(`[data-day*="${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrowDate).padStart(2, '0')}"]`).first();
+
+    const dateCell = authenticatedPage
+      .locator(
+        `[data-day*="${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrowDate).padStart(2, "0")}"]`
+      )
+      .first();
     await expect(dateCell).toBeVisible();
     await dateCell.click();
 
@@ -1577,11 +1581,15 @@ test.describe("Due Date Management", () => {
 
     const tomorrowDate = tomorrow.getDate();
     await authenticatedPage.waitForTimeout(500);
-    
-    const dateCell = authenticatedPage.locator(`[data-day*="${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, '0')}-${String(tomorrowDate).padStart(2, '0')}"]`).first();
+
+    const dateCell = authenticatedPage
+      .locator(
+        `[data-day*="${tomorrow.getFullYear()}-${String(tomorrow.getMonth() + 1).padStart(2, "0")}-${String(tomorrowDate).padStart(2, "0")}"]`
+      )
+      .first();
     await expect(dateCell).toBeVisible();
     await dateCell.click();
-    
+
     await authenticatedPage.waitForTimeout(1000);
 
     await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
