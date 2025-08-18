@@ -69,9 +69,11 @@ test.describe("Home Page", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Finance update by Friday")}`)
     ).toBeVisible();
-    
+
     let initialNotes = await authenticatedPage.getByTestId("new-item").count();
-    const initialCheckedCount = await authenticatedPage.getByRole("checkbox", { checked: true }).count();
+    const initialCheckedCount = await authenticatedPage
+      .getByRole("checkbox", { checked: true })
+      .count();
 
     // Test 1: Add a new note
     const createNoteResponse = authenticatedPage.waitForResponse(
@@ -164,20 +166,20 @@ test.describe("Home Page", () => {
     // Test 4: Edit existing checklist item content
     const originalFinanceText = testContext.prefix("Finance update by Friday");
     const updatedFinanceText = testContext.prefix("Updated Finance deadline");
-    
+
     // Click specifically on the item with ID "101" to edit it
     const itemToEdit = authenticatedPage.getByTestId(testContext.prefix("101"));
     await expect(itemToEdit).toBeVisible();
-    
+
     // Click on the textarea within the specific item
     const itemTextarea = itemToEdit.locator("textarea");
     await expect(itemTextarea).toBeVisible();
     await itemTextarea.click();
-    
+
     // Use the specific item's textarea for editing
     const editInput = itemTextarea;
     await expect(editInput).toBeVisible();
-    
+
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
