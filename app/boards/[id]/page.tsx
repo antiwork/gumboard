@@ -568,9 +568,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         const { board } = await response.json();
         setBoard(board);
 
-        setAllBoards(prevBoards => 
-          prevBoards.map(b => b.id === board.id ? board : b)
-        );
+        setAllBoards((prevBoards) => prevBoards.map((b) => (b.id === board.id ? board : b)));
 
         setBoardSettings({
           name: board.name,
