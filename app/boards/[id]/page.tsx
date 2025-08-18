@@ -652,13 +652,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </Link>
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
+            <div className="relative board-dropdown flex-1 mr-0 sm:flex-none min-w-48 sm:max-w-64">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className={`flex items-center justify-between text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
+                className="flex items-center justify-between text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full"
               >
-                <div>
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
                     {boardId === "all-notes"
                       ? "All notes"
                       : boardId === "archive"
