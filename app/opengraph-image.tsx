@@ -10,6 +10,7 @@ export const contentType = "image/png";
 
 export default async function OpenGraphImage() {
   const geistBold = await readFile(join(process.cwd(), "public/font/Geist-Bold.ttf"));
+  const geistRegular = await readFile(join(process.cwd(), "public/font/Geist-Regular.ttf"));
   return new ImageResponse(
     (
       <div
@@ -20,7 +21,6 @@ export default async function OpenGraphImage() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          fontFamily: "Geist, sans-serif",
         }}
       >
         <div
@@ -74,6 +74,7 @@ export default async function OpenGraphImage() {
               style={{
                 fontSize: "72px",
                 color: "#1e293b",
+                fontFamily: "Geist-Bold, sans-serif",
               }}
             >
               Gumboard
@@ -85,6 +86,7 @@ export default async function OpenGraphImage() {
               color: "#64748b",
               margin: 0,
               maxWidth: "800px",
+              fontFamily: "Geist-Regular, sans-serif",
             }}
           >
             Keep on top of your team&apos;s to-dos
@@ -96,10 +98,16 @@ export default async function OpenGraphImage() {
       ...size,
       fonts: [
         {
-          name: "Geist",
+          name: "Geist-Bold",
           data: geistBold,
           style: "normal",
           weight: 700,
+        },
+        {
+          name: "Geist-Regular",
+          data: geistRegular,
+          style: "normal",
+          weight: 400,
         },
       ],
     }
