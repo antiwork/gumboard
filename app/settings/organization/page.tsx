@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { useUser } from "@/app/contexts/UserContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 
 interface OrganizationInvite {
@@ -540,15 +541,14 @@ export default function OrganizationSettingsPage() {
                 className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
               >
                 <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-10 h-10 ${member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700"} rounded-full flex items-center justify-center`}
-                  >
-                    <span className="text-white font-medium">
+                  <Avatar>
+                    <AvatarImage src={member.image || ''} alt={member.name || member.email} />
+                    <AvatarFallback className={member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700 text-white"}>
                       {member.name
                         ? member.name.charAt(0).toUpperCase()
                         : member.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="font-medium text-zinc-900 dark:text-zinc-100">
