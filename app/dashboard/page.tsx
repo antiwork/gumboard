@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, Suspense } from "react";
 import { Plus, Grid3x3, Archive } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FullPageLoader } from "@/components/ui/loader";
@@ -68,7 +68,7 @@ const formSchema = z.object({
   tags: z.string().optional(),
 });
 
-export default function Dashboard() {
+function DashboardContent() {
   const [boards, setBoards] = useState<DashboardBoard[]>([]);
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,7 +163,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [router, sortBy, selectedTags]);
+  }, [router, sortBy]);
 
   // Handlers for toolbar
   const handleSortChange = (newSort: SortOption) => {
@@ -516,5 +516,13 @@ export default function Dashboard() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+export default function Dashboard() {
+  return (
+    <Suspense fallback={<FullPageLoader />}>
+      <DashboardContent />
+    </Suspense>
   );
 }
