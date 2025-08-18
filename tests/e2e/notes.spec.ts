@@ -967,11 +967,11 @@ test.describe("Note Management", () => {
       await authenticatedPage
         .getByRole("button", { name: "Pick a start date", exact: true })
         .click();
-      await authenticatedPage.getByRole("gridcell", { name: String(yesterday.getDate()) }).click();
+      await authenticatedPage.locator(testContext.getCalendarDateSelector(yesterday)).click();
 
       // End date
       await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
-      await authenticatedPage.getByRole("gridcell", { name: String(today.getDate()) }).click();
+      await authenticatedPage.locator(testContext.getCalendarDateSelector(today)).click();
 
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);
@@ -1416,7 +1416,7 @@ test.describe("Due Date Management", () => {
     const dayAfterTomorrowDate = dayAfterTomorrow.getDate();
 
     await authenticatedPage.waitForTimeout(500);
-    await authenticatedPage.getByRole("gridcell", { name: String(dayAfterTomorrowDate) }).click();
+    await authenticatedPage.locator(testContext.getCalendarDateSelector(dayAfterTomorrow)).click();
 
     const updateResponse = authenticatedPage.waitForResponse(
       (resp) =>

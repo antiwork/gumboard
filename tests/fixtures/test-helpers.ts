@@ -141,6 +141,25 @@ export class TestContext {
   getBoardName(name: string) {
     return `${name}_${this.testId}`;
   }
+
+  // Calendar date selection helpers
+  getCalendarDateSelector(date: Date): string {
+    // Format date as YYYY-MM-DD for data-day attribute
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `[data-day="${year}-${month}-${day}"]`;
+  }
+
+  getCalendarDateAriaLabel(date: Date): string {
+    // Format date as "Weekday, Month Day, Year" for aria-label
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }
 }
 
 export const test = base.extend<{
