@@ -763,7 +763,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   }}
                 />
               </div>
-              
+
               {boardId !== "all-notes" && boardId !== "archive" && (
                 <Button
                   variant="outline"
