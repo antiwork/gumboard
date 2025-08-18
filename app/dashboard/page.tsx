@@ -63,7 +63,10 @@ export type DashboardBoard = Board & {
 };
 
 const formSchema = z.object({
-  name: z.string().min(1, "Board name is required"),
+  name: z
+    .string()
+    .min(1, "Board name is required")
+    .refine((value) => value.trim().length > 0, "Board name cannot be empty"),
   description: z.string().optional(),
   tags: z.string().optional(),
 });
@@ -185,6 +188,7 @@ function DashboardContent() {
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
     const { name, description, tags } = values;
+    const trimmedName = name.trim();
 
     const tagsArray = tags
       ? tags
@@ -200,7 +204,7 @@ function DashboardContent() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name,
+          name: trimmedName,
           description,
           tags: tagsArray,
         }),
@@ -237,7 +241,7 @@ function DashboardContent() {
   };
 
   if (loading) {
-    return <FullPageLoader message="Loading dashboard..." />;
+    return <FullPageLoader />;
   }
 
   return (
@@ -260,8 +264,10 @@ function DashboardContent() {
               }}
               className="flex items-center space-x-1 sm:space-x-2 bg-blue-600 hover:bg-blue-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 border-0 font-medium px-3 sm:px-4 py-2 dark:bg-blue-500 dark:hover:bg-blue-600"
             >
-              <Plus className="w-4 h-4" />
-              <span className="hidden sm:inline">Add Board</span>
+              <div className="flex justify-between items-center sm:space-x-2">
+                <Plus className="w-4 h-4" />
+                <span className="hidden sm:inline">Add Board</span>
+              </div>
             </Button>
 
             <ProfileDropdown user={user} />

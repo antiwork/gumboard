@@ -29,7 +29,9 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import { useUser } from "@/app/contexts/UserContext";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
+import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
 
 interface OrganizationInvite {
   id: string;
@@ -139,6 +141,16 @@ export default function OrganizationSettingsPage() {
   const handleSaveOrganization = async () => {
     setSaving(true);
     try {
+      if (slackWebhookUrl && !SLACK_WEBHOOK_REGEX.test(slackWebhookUrl)) {
+        setErrorDialog({
+          open: true,
+          title: "Invalid Slack Webhook URL",
+          description: "Please enter a valid Slack Webhook URL",
+          variant: "error",
+        });
+        return;
+      }
+
       const response = await fetch("/api/organization", {
         method: "PUT",
         headers: {
@@ -427,8 +439,8 @@ export default function OrganizationSettingsPage() {
   return (
     <div className="space-y-6 min-h-screen px-2 sm:px-0">
       {/* Organization Info */}
-      <Card className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
-        <div className="space-y-6">
+      <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
+        <div className="space-y-3 lg:space-y-6">
           <div>
             <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
               Organization Settings
@@ -467,8 +479,8 @@ export default function OrganizationSettingsPage() {
       </Card>
 
       {/* Slack Integration */}
-      <Card className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
-        <div className="space-y-6">
+      <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
+        <div className="space-y-3 lg:space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
               Slack Integration
@@ -520,8 +532,8 @@ export default function OrganizationSettingsPage() {
       </Card>
 
       {/* Team Members */}
-      <Card className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
-        <div className="space-y-6">
+      <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
+        <div className="space-y-3 lg:space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
               Team Members
@@ -537,18 +549,21 @@ export default function OrganizationSettingsPage() {
             {user?.organization?.members?.map((member) => (
               <div
                 key={member.id}
-                className="flex items-center justify-between p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
+                className="flex items-center justify-between p-2 lg:p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
               >
                 <div className="flex items-center space-x-3">
-                  <div
-                    className={`w-10 h-10 ${member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700"} rounded-full flex items-center justify-center`}
-                  >
-                    <span className="text-white font-medium">
+                  <Avatar>
+                    <AvatarImage src={member.image || ""} alt={member.name || member.email} />
+                    <AvatarFallback
+                      className={
+                        member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700 text-white"
+                      }
+                    >
                       {member.name
                         ? member.name.charAt(0).toUpperCase()
                         : member.email.charAt(0).toUpperCase()}
-                    </span>
-                  </div>
+                    </AvatarFallback>
+                  </Avatar>
                   <div>
                     <div className="flex items-center space-x-2">
                       <p className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -603,8 +618,8 @@ export default function OrganizationSettingsPage() {
       </Card>
 
       {/* Invite Members */}
-      <Card className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
-        <div className="space-y-6">
+      <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
+        <div className="space-y-3 lg:space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
               Invite Team Members
@@ -633,7 +648,13 @@ export default function OrganizationSettingsPage() {
               title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
             >
               <UserPlus className="w-4 h-4 mr-2" />
-              {inviting ? "Inviting..." : "Send Invite"}
+              {inviting ? (
+                "Inviting..."
+              ) : (
+                <>
+                  <span className="hidden lg:inline">Send</span>Invite
+                </>
+              )}
             </Button>
           </form>
 
@@ -647,7 +668,9 @@ export default function OrganizationSettingsPage() {
                   className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
                 >
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">{invite.email}</p>
+                    <p className="font-medium text-zinc-900 dark:text-zinc-100 overflow-hidden text-ellipsis whitespace-nowrap max-w-[95%]">
+                      {invite.email}
+                    </p>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       Invited on {new Date(invite.createdAt).toLocaleDateString()}
                     </p>
@@ -656,7 +679,7 @@ export default function OrganizationSettingsPage() {
                     onClick={() => handleCancelInvite(invite.id)}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900 border-red-600 hover:bg-inherit hover:border-red-600"
                   >
                     Cancel
                   </Button>
@@ -668,8 +691,8 @@ export default function OrganizationSettingsPage() {
       </Card>
 
       {/* Self-Serve Invite Links */}
-      <Card className="p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
-        <div className="space-y-6">
+      <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
+        <div className="space-y-3 lg:space-y-6">
           <div>
             <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
               Self-Serve Invite Links
@@ -702,7 +725,7 @@ export default function OrganizationSettingsPage() {
                   placeholder="e.g., General Invite"
                   required
                   disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
               <div>
@@ -720,7 +743,7 @@ export default function OrganizationSettingsPage() {
                     }))
                   }
                   disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
               <div>
@@ -740,7 +763,7 @@ export default function OrganizationSettingsPage() {
                   }
                   placeholder="Unlimited"
                   disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
             </div>
@@ -766,13 +789,37 @@ export default function OrganizationSettingsPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
-                          {invite.name}
-                        </h5>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                          Active
-                        </span>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
+                            {invite.name}
+                          </h5>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                            Active
+                          </span>
+                        </div>
+                        <div className="flex items-center space-x-2 ml-4">
+                          <Button
+                            onClick={() => copyInviteLink(invite.token)}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-zinc-800"
+                            title="Copy invite link"
+                          >
+                            <Copy className="w-4 h-4" />
+                          </Button>
+                          {user?.isAdmin && (
+                            <Button
+                              onClick={() => handleDeleteSelfServeInvite(invite.token, invite.name)}
+                              variant="outline"
+                              size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                              title="Delete invite link"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                       <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
                         <div className="flex items-center space-x-4">
@@ -794,35 +841,13 @@ export default function OrganizationSettingsPage() {
                           {new Date(invite.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="mt-3 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
+                      <div className="w-fit mt-3 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
                         <code className="text-sm text-zinc-700 dark:text-zinc-200 break-all">
                           {typeof window !== "undefined"
                             ? `${window.location.origin}/join/${invite.token}`
                             : `/join/${invite.token}`}
                         </code>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2 ml-4">
-                      <Button
-                        onClick={() => copyInviteLink(invite.token)}
-                        variant="outline"
-                        size="sm"
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-zinc-800"
-                        title="Copy invite link"
-                      >
-                        <Copy className="w-4 h-4" />
-                      </Button>
-                      {user?.isAdmin && (
-                        <Button
-                          onClick={() => handleDeleteSelfServeInvite(invite.token, invite.name)}
-                          variant="outline"
-                          size="sm"
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
-                          title="Delete invite link"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
                     </div>
                   </div>
                 </div>
@@ -847,9 +872,7 @@ export default function OrganizationSettingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmRemoveMember}
               className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
@@ -875,9 +898,7 @@ export default function OrganizationSettingsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmDeleteSelfServeInvite}
               className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
