@@ -21,6 +21,7 @@ export const metadata: Metadata = {
   icons: {
     icon: "/logo/gumboard.svg",
   },
+  manifest: "/manifest.webmanifest",
 };
 
 export default function RootLayout({
