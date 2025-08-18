@@ -174,7 +174,10 @@ export default function ProfileSettingsPage() {
                           <AlertTriangle className="w-5 h-5" />
                           Delete account?
                         </AlertDialogTitle>
-                        <AlertDialogDescription asChild className="text-foreground dark:text-zinc-100">
+                        <AlertDialogDescription
+                          asChild
+                          className="text-foreground dark:text-zinc-100"
+                        >
                           <div>
                             This will permanently delete your account and related data. This action
                             cannot be undone.
@@ -182,8 +185,8 @@ export default function ProfileSettingsPage() {
                               <li>You will be signed out immediately.</li>
                               <li>Your personal profile will be removed.</li>
                               <li>
-                                Notes and content owned by you may be deleted or reassigned, depending
-                                on organization settings.
+                                Notes and content owned by you may be deleted or reassigned,
+                                depending on organization settings.
                               </li>
                             </ul>
                           </div>
