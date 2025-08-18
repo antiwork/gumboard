@@ -402,7 +402,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const handleCopyNote = async (originalNote: Note) => {
     try {
-      const targetBoardId = boardId === "all-notes" ? (originalNote.board?.id ?? originalNote.boardId) : boardId;
+      const targetBoardId =
+        boardId === "all-notes" ? (originalNote.board?.id ?? originalNote.boardId) : boardId;
       const isAllNotesView = boardId === "all-notes";
 
       const checklistItems =
