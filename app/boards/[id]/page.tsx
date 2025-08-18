@@ -400,6 +400,41 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
+  const handleCopyNote = async (originalNote: Note) => {
+    try {
+      const targetBoardId = boardId === "all-notes" ? originalNote.boardId : boardId;
+      const isAllNotesView = boardId === "all-notes";
+
+      const checklistItems = originalNote.checklistItems?.map((item, index) => ({
+        content: item.content,
+        checked: item.checked,
+        order: index,
+      })) || [];
+
+      const response = await fetch(
+        `/api/boards/${isAllNotesView ? "all-notes" : targetBoardId}/notes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            color: originalNote.color,
+            checklistItems,
+            ...(isAllNotesView && { boardId: targetBoardId }),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const { note } = await response.json();
+        setNotes((prev) => [...prev, note]);
+      }
+    } catch (error) {
+      console.error("Error copying note:", error);
+    }
+  };
+
   const handleDeleteNote = (noteId: string) => {
     const noteToDelete = notes.find((n) => n.id === noteId);
     if (!noteToDelete) return;
@@ -856,6 +891,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
               onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+              onCopy={handleCopyNote}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="shadow-md shadow-black/10"
               style={{
