@@ -501,14 +501,12 @@ export function Note({
             items={visibleItems}
             onItemsChange={(newItems) => {
               if (canEdit) {
-  
-                const hiddenCompletedItems = hideCompleted 
-                  ? (note.checklistItems?.filter(item => item.checked) ?? [])
+                const hiddenCompletedItems = hideCompleted
+                  ? (note.checklistItems?.filter((item) => item.checked) ?? [])
                   : [];
-                
-  
+
                 const allItems = [...newItems, ...hiddenCompletedItems];
-                
+
                 handleReorderChecklistItems(note.id, allItems);
               }
             }}
