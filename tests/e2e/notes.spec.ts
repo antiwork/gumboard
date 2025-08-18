@@ -1474,10 +1474,7 @@ test.describe("Due Date Management", () => {
 
     await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
 
-    const dueAtContainer = authenticatedPage
-      .locator(".group")
-      .filter({ hasText: /Due:/ })
-      .first();
+    const dueAtContainer = authenticatedPage.locator(".group").filter({ hasText: /Due:/ }).first();
     await dueAtContainer.hover();
 
     const removeButton = authenticatedPage.locator('[aria-label="Remove due date"]').first();
