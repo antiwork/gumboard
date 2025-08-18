@@ -75,16 +75,24 @@ const oauthProviders = [
 function SignInContent() {
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [name, setName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isResent, setIsResent] = useState(false);
+  const [mode, setMode] = useState<"signin" | "signup" | "magic">("signin");
+  const [error, setError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
+    const verifiedParam = searchParams.get("verified");
     if (emailParam) {
       setEmail(emailParam);
+    }
+    if (verifiedParam === "true") {
+      setError("");
     }
   }, [searchParams]);
 
@@ -110,6 +118,51 @@ function SignInContent() {
       setIsSubmitted(true);
     } catch (error) {
       console.error("Sign in error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password) return;
+
+    setIsLoading(true);
+    setError("");
+
+    try {
+      if (mode === "signup") {
+        const response = await fetch("/api/auth/signup", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password, name }),
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          setError(data.error || "Signup failed");
+          return;
+        }
+
+        router.push("/auth/verify-email");
+      } else {
+        const result = await signIn("credentials", {
+          email,
+          password,
+          redirect: false,
+          callbackUrl: searchParams.get("callbackUrl") || "/dashboard",
+        });
+
+        if (result?.error) {
+          setError(result.error);
+        } else if (result?.url) {
+          router.push(result.url);
+        }
+      }
+    } catch (error) {
+      console.error("Auth error:", error);
+      setError("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }
@@ -210,18 +263,87 @@ function SignInContent() {
             <BetaBadge />
           </CardTitle>
           <CardDescription className="text-muted-foreground dark:text-zinc-400">
-            {searchParams.get("email")
-              ? "we'll send you a magic link to verify your email address"
-              : "Enter your email address and we'll send you a magic link to sign in"}
+            {mode === "signup"
+              ? "Create your account"
+              : mode === "signin"
+                ? "Sign in to your account"
+                : "Enter your email and we'll send you a magic link"}
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+
+        <div className="px-6 pb-4">
+          <div className="flex bg-gray-100 dark:bg-zinc-800 rounded-lg p-1">
+            <button
+              onClick={() => setMode("signin")}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                mode === "signin"
+                  ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm"
+                  : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200"
+              }`}
+            >
+              Sign in
+            </button>
+            <button
+              onClick={() => setMode("signup")}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                mode === "signup"
+                  ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm"
+                  : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200"
+              }`}
+            >
+              Sign up
+            </button>
+            <button
+              onClick={() => setMode("magic")}
+              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
+                mode === "magic"
+                  ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm"
+                  : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200"
+              }`}
+            >
+              Magic link
+            </button>
+          </div>
+        </div>
+
+        <form onSubmit={mode === "magic" ? handleSubmit : handlePasswordAuth}>
           <CardContent className="space-y-4">
+            {searchParams.get("verified") === "true" && (
+              <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
+                <p className="text-sm text-green-800 dark:text-green-300">
+                  ✅ Email verified successfully! You can now sign in.
+                </p>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-3">
+                <p className="text-sm text-red-800 dark:text-red-300">{error}</p>
+              </div>
+            )}
+
             {searchParams.get("email") && (
               <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
                 <p className="text-sm text-blue-800 dark:text-blue-300">
                   📧 You&apos;re signing in from an organization invitation
                 </p>
+              </div>
+            )}
+
+            {mode === "signup" && (
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-foreground dark:text-zinc-200">
+                  Name (optional)
+                </Label>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Enter your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  disabled={isLoading}
+                  className="h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                />
               </div>
             )}
             <div className="space-y-2">
@@ -236,25 +358,56 @@ function SignInContent() {
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoading || !!searchParams.get("email")}
                 required
-                className="h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400 hover:border-gray-400  transition-colors"
+                className="h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400 hover:border-gray-400 transition-colors"
               />
             </div>
+
+            {mode !== "magic" && (
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-foreground dark:text-zinc-200">
+                  Password
+                </Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder={
+                    mode === "signup"
+                      ? "Create a password (min 8 characters)"
+                      : "Enter your password"
+                  }
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
+                  required
+                  minLength={mode === "signup" ? 8 : undefined}
+                  className="h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400"
+                />
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex flex-col">
             <Button
               type="submit"
               className="w-full h-12 font-medium mt-4 bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
-              disabled={isLoading || !email}
+              disabled={isLoading || !email || (mode !== "magic" && !password)}
               aria-busy={isLoading}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Sending magic link...
+                  {mode === "signup"
+                    ? "Creating account..."
+                    : mode === "signin"
+                      ? "Signing in..."
+                      : "Sending magic link..."}
                 </>
               ) : (
                 <>
-                  Continue with Email
+                  {mode === "signup"
+                    ? "Create account"
+                    : mode === "signin"
+                      ? "Sign in"
+                      : "Continue with email"}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}
