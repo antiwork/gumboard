@@ -88,10 +88,12 @@ function AlertDialogTitle({
 
 function AlertDialogDescription({
   className,
+  asChild = false,
   ...props
 }: React.ComponentProps<typeof AlertDialogPrimitive.Description>) {
   return (
     <AlertDialogPrimitive.Description
+      asChild={asChild}
       data-slot="alert-dialog-description"
       className={cn("text-muted-foreground text-sm", className)}
       {...props}
@@ -112,7 +114,11 @@ function AlertDialogCancel({
 }: React.ComponentProps<typeof AlertDialogPrimitive.Cancel>) {
   return (
     <AlertDialogPrimitive.Cancel
-      className={cn(buttonVariants({ variant: "outline" }), className)}
+      className={cn(
+        buttonVariants({ variant: "outline" }),
+        className,
+        "border-gray-300 dark:border-zinc-700 text-foreground hover:text-foreground dark:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:border-zinc-700 hover:border-gray-300"
+      )}
       {...props}
     />
   );
