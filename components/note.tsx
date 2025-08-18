@@ -12,7 +12,7 @@ import {
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
-import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
+import { Trash2, Archive, ArchiveRestore, Copy, Eye, EyeOff } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -90,8 +90,17 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const [hideCompleted, setHideCompleted] = useState(false);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+
+  const visibleItems = hideCompleted 
+    ? note.checklistItems?.filter(item => !item.checked) ?? []
+    : note.checklistItems ?? [];
+
+  const hiddenCompletedCount = hideCompleted 
+    ? (note.checklistItems?.filter(item => item.checked).length ?? 0)
+    : 0;
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
@@ -376,6 +385,28 @@ export function Note({
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          {/* Hide/Show Completed Toggle - only show if there are completed items */}
+          {(note.checklistItems?.some(item => item.checked) ?? false) && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  aria-label={hideCompleted ? "Show completed items" : "Hide completed items"}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setHideCompleted(!hideCompleted);
+                  }}
+                  className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                  variant="ghost"
+                  size="icon"
+                >
+                  {hideCompleted ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{hideCompleted ? "Show completed items" : "Hide completed items"}</p>
+              </TooltipContent>
+            </Tooltip>
+          )}
           {canEdit && (
             <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <Tooltip>
@@ -471,7 +502,7 @@ export function Note({
         <div className="overflow-y-auto space-y-1">
           {/* Checklist Items */}
           <DraggableRoot
-            items={note.checklistItems ?? []}
+            items={visibleItems}
             onItemsChange={(newItems) => {
               if (canEdit) {
                 handleReorderChecklistItems(note.id, newItems);
@@ -479,7 +510,7 @@ export function Note({
             }}
           >
             <DraggableContainer className="space-y-1">
-              {note.checklistItems?.map((item) => (
+              {visibleItems.map((item) => (
                 <DraggableItem key={item.id} id={item.id} disabled={!canEdit}>
                   <ChecklistItemComponent
                     item={item}
@@ -497,6 +528,8 @@ export function Note({
                 </DraggableItem>
               ))}
             </DraggableContainer>
+
+
 
             {/* Always-available New Item Input */}
             {canEdit && (

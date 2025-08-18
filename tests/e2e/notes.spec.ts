@@ -1299,4 +1299,205 @@ test.describe("Note Management", () => {
     const deleteButton = noteCard.getByRole("button", { name: /Delete Note/i });
     await expect(deleteButton).not.toBeVisible();
   });
+
+  test("should hide and show completed items when eye button is clicked", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Hide Show Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board for hide/show completed"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("item-1"),
+              content: testContext.prefix("Incomplete task 1"),
+              checked: false,
+              order: 0,
+            },
+            {
+              id: testContext.prefix("item-2"),
+              content: testContext.prefix("Completed task 1"),
+              checked: true,
+              order: 1,
+            },
+            {
+              id: testContext.prefix("item-3"),
+              content: testContext.prefix("Incomplete task 2"),
+              checked: false,
+              order: 2,
+            },
+            {
+              id: testContext.prefix("item-4"),
+              content: testContext.prefix("Completed task 2"),
+              checked: true,
+              order: 3,
+            },
+          ],
+        },
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
+    
+    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Completed task 1"))).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Completed task 2"))).toBeVisible();
+
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+    await noteCard.hover();
+
+    const hideButton = noteCard.getByRole("button", { name: /Hide completed items/i });
+    await expect(hideButton).toBeVisible({ timeout: 5000 });
+    await hideButton.click();
+
+    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))).toBeVisible();
+    
+    await expect(authenticatedPage.getByText(testContext.prefix("Completed task 1"))).not.toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Completed task 2"))).not.toBeVisible();
+
+    const showButton = noteCard.getByRole("button", { name: /Show completed items/i });
+    await expect(showButton).toBeVisible({ timeout: 5000 });
+    await showButton.click();
+
+    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Completed task 1"))).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Completed task 2"))).toBeVisible();
+  });
+
+  test("should not show hide/show button when no completed items exist", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("No Completed Items Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board with no completed items"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("incomplete-1"),
+              content: testContext.prefix("Incomplete task only"),
+              checked: false,
+              order: 0,
+            },
+            {
+              id: testContext.prefix("incomplete-2"),
+              content: testContext.prefix("Another incomplete task"),
+              checked: false,
+              order: 1,
+            },
+          ],
+        },
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
+
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+    await noteCard.hover();
+
+    const hideShowButton = noteCard.getByRole("button", { name: /Hide completed items|Show completed items/i });
+    await expect(hideShowButton).not.toBeVisible();
+
+    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task only"))).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Another incomplete task"))).toBeVisible();
+  });
+
+  test("should show hide/show button only after completing an item", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Dynamic Button Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board for dynamic button behavior"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("dynamic-1"),
+              content: testContext.prefix("Task to be completed"),
+              checked: false,
+              order: 0,
+            },
+            {
+              id: testContext.prefix("dynamic-2"),
+              content: testContext.prefix("Another task"),
+              checked: false,
+              order: 1,
+            },
+          ],
+        },
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
+
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+    await noteCard.hover();
+
+    let hideShowButton = noteCard.getByRole("button", { name: /Hide completed items|Show completed items/i });
+    await expect(hideShowButton).not.toBeVisible();
+
+    const firstCheckbox = authenticatedPage.getByTestId(testContext.prefix("dynamic-1")).getByRole("checkbox");
+    await firstCheckbox.click();
+
+    await authenticatedPage.waitForTimeout(1000);
+
+    await noteCard.hover(); // Re-hover to trigger button visibility
+    hideShowButton = noteCard.getByRole("button", { name: /Hide completed items/i });
+    await expect(hideShowButton).toBeVisible({ timeout: 5000 });
+    
+    await hideShowButton.click();
+
+    await expect(authenticatedPage.getByText(testContext.prefix("Task to be completed"))).not.toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.prefix("Another task"))).toBeVisible();
+  });
 });
