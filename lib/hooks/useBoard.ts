@@ -192,18 +192,18 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
 
       if (isPublicView) {
         const boardResponse = await fetch(`/api/boards/${boardId}`);
-        
+
         if (boardResponse.status === 404 || boardResponse.status === 403) {
           setBoard(null);
           setLoading(false);
           return;
         }
-        
+
         if (boardResponse.status === 401) {
           router.push("/auth/signin");
           return;
         }
-        
+
         if (boardResponse.ok) {
           const { board } = await boardResponse.json();
           if (board.isPublic) {
@@ -263,7 +263,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
         if (boardResponse && boardResponse.ok) {
           const { board } = await boardResponse.json();
           setBoard(board);
-          
+
           if (boardId && boardId !== "all-notes" && boardId !== "archive") {
             try {
               localStorage.setItem("gumboard-last-visited-board", boardId);
