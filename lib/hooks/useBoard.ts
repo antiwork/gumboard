@@ -13,6 +13,7 @@ interface UseBoardOptions {
   enableFilters?: boolean;
   enableUrlSync?: boolean;
   enableUserFeatures?: boolean;
+  isPublicView?: boolean; // Add this flag
 }
 
 interface DateRange {
@@ -26,6 +27,7 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
     enableFilters = true,
     enableUrlSync = false,
     enableUserFeatures = true,
+    isPublicView = false,
   } = options;
 
   const router = useRouter();
@@ -177,59 +179,109 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
       setLoading(true);
       setError(null);
 
+      // For public view, don't allow special board IDs
+      if (isPublicView && (boardId === "all-notes" || boardId === "archive")) {
+        setBoard(null);
+        setLoading(false);
+        return;
+      }
+
       let boardResponse: Response | undefined;
       let notesResponse: Response;
-      let allBoardsResponse: Response;
+      let allBoardsResponse: Response | undefined;
 
-      if (boardId === "all-notes") {
-        boardResponse = undefined;
-        [allBoardsResponse, notesResponse] = await Promise.all([
-          fetch("/api/boards"),
-          fetch(`/api/boards/all-notes/notes`),
-        ]);
+      if (isPublicView) {
+        const boardResponse = await fetch(`/api/boards/${boardId}`);
+        
+        if (boardResponse.status === 404 || boardResponse.status === 403) {
+          setBoard(null);
+          setLoading(false);
+          return;
+        }
+        
+        if (boardResponse.status === 401) {
+          router.push("/auth/signin");
+          return;
+        }
+        
+        if (boardResponse.ok) {
+          const { board } = await boardResponse.json();
+          if (board.isPublic) {
+            setBoard(board);
+          } else {
+            setBoard(null);
+            setLoading(false);
+            return;
+          }
+        }
 
-        setBoard({
-          id: "all-notes",
-          name: "All notes",
-          description: "Notes from all boards",
-        });
-      } else if (boardId === "archive") {
-        boardResponse = undefined;
-        [allBoardsResponse, notesResponse] = await Promise.all([
-          fetch("/api/boards"),
-          fetch(`/api/boards/archive/notes`),
-        ]);
-
-        setBoard({
-          id: "archive",
-          name: "Archive",
-          description: "Archived notes from all boards",
-        });
+        if (board || boardResponse.ok) {
+          const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
+          if (notesResponse.ok) {
+            const { notes } = await notesResponse.json();
+            setNotes(notes);
+          }
+        }
       } else {
-        [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
-          fetch("/api/boards"),
-          fetch(`/api/boards/${boardId}`),
-          fetch(`/api/boards/${boardId}/notes`),
-        ]);
-      }
+        if (boardId === "all-notes") {
+          boardResponse = undefined;
+          [allBoardsResponse, notesResponse] = await Promise.all([
+            fetch("/api/boards"),
+            fetch(`/api/boards/all-notes/notes`),
+          ]);
 
-      if (allBoardsResponse.ok) {
-        const { boards } = await allBoardsResponse.json();
-        setAllBoards(boards);
-      }
+          setBoard({
+            id: "all-notes",
+            name: "All notes",
+            description: "Notes from all boards",
+          });
+        } else if (boardId === "archive") {
+          boardResponse = undefined;
+          [allBoardsResponse, notesResponse] = await Promise.all([
+            fetch("/api/boards"),
+            fetch(`/api/boards/archive/notes`),
+          ]);
 
-      if (boardResponse && boardResponse.ok) {
-        const { board } = await boardResponse.json();
-        setBoard(board);
-      }
+          setBoard({
+            id: "archive",
+            name: "Archive",
+            description: "Archived notes from all boards",
+          });
+        } else {
+          [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
+            fetch("/api/boards"),
+            fetch(`/api/boards/${boardId}`),
+            fetch(`/api/boards/${boardId}/notes`),
+          ]);
+        }
 
-      if (notesResponse.ok) {
-        const { notes } = await notesResponse.json();
-        setNotes(notes);
+        if (allBoardsResponse && allBoardsResponse.ok) {
+          const { boards } = await allBoardsResponse.json();
+          setAllBoards(boards);
+        }
+
+        if (boardResponse && boardResponse.ok) {
+          const { board } = await boardResponse.json();
+          setBoard(board);
+          
+          if (boardId && boardId !== "all-notes" && boardId !== "archive") {
+            try {
+              localStorage.setItem("gumboard-last-visited-board", boardId);
+            } catch (error) {
+              console.warn("Failed to save last visited board:", error);
+            }
+          }
+        }
+
+        if (notesResponse && notesResponse.ok) {
+          const { notes } = await notesResponse.json();
+          setNotes(notes);
+        }
       }
     } catch (error) {
       console.error("Error fetching board data:", error);
       setError("Failed to load board data");
+      setBoard(null);
     } finally {
       setLoading(false);
     }
@@ -261,6 +313,9 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
+      if (enableUrlSync) {
+        updateURL(searchTerm);
+      }
     }, 1000);
 
     return () => clearTimeout(timer);

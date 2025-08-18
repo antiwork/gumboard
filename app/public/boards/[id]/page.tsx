@@ -45,6 +45,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     enableFilters: true,
     enableUrlSync: false,
     enableUserFeatures: false,
+    isPublicView: true, // This is the key addition!
   });
 
   if (loading) {
