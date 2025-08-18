@@ -145,7 +145,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     if (!currentNote) return;
 
     // OPTIMISTIC UPDATE: Update UI immediately
-    setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
+    setNotes((prev) => prev.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
   const handleAddNote = async (targetBoardId?: string) => {
@@ -179,7 +179,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes([...notes, note]);
+        setNotes((prev) => [...prev, note]);
         setAddingChecklistItem(note.id);
       }
     } catch (error) {
@@ -246,7 +246,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
-      setNotes(notes.filter((n) => n.id !== noteId));
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -256,7 +256,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (!response.ok) {
         // Revert on error
-        setNotes([...notes, currentNote]);
+        setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
@@ -275,7 +275,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
       if (!targetBoardId) return;
 
-      setNotes(notes.filter((n) => n.id !== noteId));
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -284,7 +284,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       });
 
       if (!response.ok) {
-        setNotes([...notes, currentNote]);
+        setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
           title: "Unarchive Failed",
@@ -598,6 +598,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
+              disabled={boardId === "archive"}
               className="flex items-center justify-center text-white w-fit h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
             >
               <span>Add note</span>
