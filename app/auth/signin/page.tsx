@@ -14,7 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, Loader2, ExternalLink, ArrowRight } from "lucide-react";
+import { Mail, Loader2, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
 const emailProviders = [
@@ -247,49 +247,14 @@ function SignInContent() {
           </CardTitle>
           <CardDescription className="text-muted-foreground dark:text-zinc-400">
             {mode === "signup"
-              ? "Create your account"
+              ? "Create your account."
               : mode === "signin"
-                ? "Sign in to your account"
+                ? "Sign in to your account."
                 : searchParams.get("email")
                   ? "we'll send you a magic link to verify your email address"
-                  : "Enter your email to sign in or choose another option."}
+                  : "Enter your email to sign in and we'll send you a magic link."}
           </CardDescription>
         </CardHeader>
-
-        <div className="px-6 pb-4">
-          <div className="flex bg-gray-100 dark:bg-zinc-800 rounded-lg p-1">
-            <button
-              onClick={() => setMode("signin")}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                mode === "signin"
-                  ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm"
-                  : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200"
-              }`}
-            >
-              Sign in
-            </button>
-            <button
-              onClick={() => setMode("signup")}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                mode === "signup"
-                  ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm"
-                  : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200"
-              }`}
-            >
-              Sign up
-            </button>
-            <button
-              onClick={() => setMode("magic")}
-              className={`flex-1 py-2 px-3 rounded-md text-sm font-medium transition-colors ${
-                mode === "magic"
-                  ? "bg-white dark:bg-zinc-900 text-gray-900 dark:text-zinc-100 shadow-sm"
-                  : "text-gray-600 dark:text-zinc-400 hover:text-gray-900 dark:hover:text-zinc-200"
-              }`}
-            >
-              Magic link
-            </button>
-          </div>
-        </div>
 
         <form onSubmit={mode === "magic" ? handleSubmit : handlePasswordAuth}>
           <CardContent className="space-y-4">
@@ -314,6 +279,38 @@ function SignInContent() {
                 </p>
               </div>
             )}
+
+            {/* OAuth Buttons at top */}
+            <div className="space-y-3 w-full">
+              {oauthProviders.map((provider) => (
+                <Button
+                  key={provider.id}
+                  type="button"
+                  variant="outline"
+                  className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-sky-600 transition-all"
+                  onClick={() => signIn(provider.id, { callbackUrl: "/" })}
+                >
+                  {provider.icon}
+                  Continue with {provider.name}
+                </Button>
+              ))}
+
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-sky-600 transition-all"
+                onClick={() => setMode(mode === "magic" ? "signin" : "magic")}
+              >
+                {mode === "magic" ? "Continue with password" : "Continue with magic link"}
+              </Button>
+            </div>
+
+            {/* Divider: line or line */}
+            <div className="mt-6 w-full flex items-center">
+              <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" />
+              <span className="mx-3 text-sm text-muted-foreground dark:text-zinc-400">or</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" />
+            </div>
 
             {mode === "signup" && (
               <div className="space-y-2">
@@ -392,34 +389,29 @@ function SignInContent() {
                     ? "Create account"
                     : mode === "signin"
                       ? "Sign in"
-                      : "Continue with email"}
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                      : "Continue"}
                 </>
               )}
             </Button>
 
-            <div className="mt-6 w-full flex items-center">
-              <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" />
-              <span className="mx-3 text-sm text-muted-foreground dark:text-zinc-400">
-                or continue with
-              </span>
-              <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" />
-            </div>
-
-            {/* OAuth Buttons */}
-            <div className="space-y-3 w-full mt-4">
-              {oauthProviders.map((provider) => (
-                <Button
-                  key={provider.id}
+            <div className="text-center">
+              {mode === "signin" ? (
+                <button
                   type="button"
-                  variant="outline"
-                  className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-sky-600 transition-all"
-                  onClick={() => signIn(provider.id, { callbackUrl: "/" })}
+                  onClick={() => setMode("signup")}
+                  className="mt-6 text-sm text-gray-600 cursor-pointer hover:text-sky-600 underline-offset-2 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
                 >
-                  {provider.icon}
-                  Continue with {provider.name}
-                </Button>
-              ))}
+                  Don&apos;t have an account? Sign up
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setMode("signin")}
+                  className="mt-6 text-sm text-gray-600 cursor-pointer hover:text-sky-600 underline-offset-2 hover:underline dark:text-zinc-400 dark:hover:text-zinc-200"
+                >
+                  Already have an account? Sign in
+                </button>
+              )}
             </div>
           </CardFooter>
         </form>
