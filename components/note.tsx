@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState } from "react";
 import Link from "next/link";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 
 import {
@@ -14,6 +14,7 @@ import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/u
 import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore } from "lucide-react";
 import { useTheme } from "next-themes";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 // Core domain types
 export interface User {
@@ -41,6 +42,7 @@ export interface Note {
     id: string;
     name: string | null;
     email: string;
+    image?: string | null;
   };
   board?: {
     id: string;
@@ -97,10 +99,7 @@ export function Note({
         item.id === itemId ? { ...item, checked: !item.checked } : item
       );
 
-      const sortedItems = [
-        ...updatedItems.filter((item) => !item.checked).sort((a, b) => a.order - b.order),
-        ...updatedItems.filter((item) => item.checked).sort((a, b) => a.order - b.order),
-      ];
+      const sortedItems = updatedItems.sort((a, b) => a.order - b.order);
 
       const optimisticNote = {
         ...note,
@@ -339,6 +338,7 @@ export function Note({
         "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
         className
       )}
+      data-testid="note-card"
       style={{
         backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
         ...style,
@@ -352,9 +352,13 @@ export function Note({
                 ? note.user.name.charAt(0).toUpperCase()
                 : note.user.email.charAt(0).toUpperCase()}
             </AvatarFallback>
+            <AvatarImage
+              src={note.user.image ? note.user.image : undefined}
+              alt={note.user.name || ""}
+            />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 dark:text-gray-200 truncate max-w-20">
+            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 truncate max-w-20">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
@@ -372,50 +376,71 @@ export function Note({
         <div className="flex items-center space-x-2">
           {canEdit && (
             <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-              <Button
-                aria-label={`Delete Note ${note.id}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete?.(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
-                variant="ghost"
-                size="icon"
-              >
-                <Trash2 className="w-3 h-3" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={`Delete Note ${note.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDelete?.(note.id);
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Delete note</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
           {canEdit && onArchive && (
             <div className="flex items-center">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onArchive(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
-                variant="ghost"
-                size="icon"
-                title="Archive note"
-              >
-                <Archive className="w-3 h-3" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onArchive(note.id);
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Archive note"
+                  >
+                    <Archive className="w-3 h-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Archive note</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
           {canEdit && onUnarchive && (
             <div className="flex items-center">
-              <Button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onUnarchive(note.id);
-                }}
-                className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
-                variant="ghost"
-                size="icon"
-                title="Unarchive note"
-              >
-                <ArchiveRestore className="w-3 h-3" />
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onUnarchive(note.id);
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                    aria-label="Unarchive note"
+                  >
+                    <ArchiveRestore className="w-3 h-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Unarchive note</p>
+                </TooltipContent>
+              </Tooltip>
             </div>
           )}
         </div>
@@ -427,12 +452,14 @@ export function Note({
           <DraggableRoot
             items={note.checklistItems ?? []}
             onItemsChange={(newItems) => {
-              handleReorderChecklistItems(note.id, newItems);
+              if (canEdit) {
+                handleReorderChecklistItems(note.id, newItems);
+              }
             }}
           >
             <DraggableContainer className="space-y-1">
               {note.checklistItems?.map((item) => (
-                <DraggableItem key={item.id} id={item.id}>
+                <DraggableItem key={item.id} id={item.id} disabled={!canEdit}>
                   <ChecklistItemComponent
                     item={item}
                     onToggle={handleToggleChecklistItem}
