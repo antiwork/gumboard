@@ -141,7 +141,7 @@ export default function ProfileSettingsPage() {
               profileName.trim().length === 0 ||
               profileName.trim() === (user?.name || "").trim()
             }
-            className="bg-black hover:bg-zinc-900 text-white dark:bg-zinc-900 dark:hover:bg-zinc-800"
+            className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
           >
             {saving ? "Saving..." : "Save Changes"}
           </Button>
@@ -174,26 +174,26 @@ export default function ProfileSettingsPage() {
                           <AlertTriangle className="w-5 h-5" />
                           Delete account?
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="text-foreground dark:text-zinc-100">
-                          This will permanently delete your account and related data. This action
-                          cannot be undone.
-                          <ul className="list-disc pl-5 mt-2 text-sm">
-                            <li>You will be signed out immediately.</li>
-                            <li>Your personal profile will be removed.</li>
-                            <li>
-                              Notes and content owned by you may be deleted or reassigned, depending
-                              on organization settings.
-                            </li>
-                          </ul>
+                        <AlertDialogDescription
+                          asChild
+                          className="text-foreground dark:text-zinc-100"
+                        >
+                          <div>
+                            This will permanently delete your account and related data. This action
+                            cannot be undone.
+                            <ul className="list-disc pl-5 mt-2 text-sm">
+                              <li>You will be signed out immediately.</li>
+                              <li>Your personal profile will be removed.</li>
+                              <li>
+                                Notes and content owned by you may be deleted or reassigned,
+                                depending on organization settings.
+                              </li>
+                            </ul>
+                          </div>
                         </AlertDialogDescription>
                       </AlertDialogHeader>
                       <AlertDialogFooter>
-                        <AlertDialogCancel
-                          disabled={deleting}
-                          className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800"
-                        >
-                          Cancel
-                        </AlertDialogCancel>
+                        <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                           className="bg-red-600 hover:bg-red-700 text-white"
                           onClick={handleDeleteAccount}
