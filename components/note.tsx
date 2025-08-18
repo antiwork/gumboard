@@ -94,11 +94,9 @@ export function Note({
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
-  const visibleItems = hideCompleted 
-    ? note.checklistItems?.filter(item => !item.checked) ?? []
-    : note.checklistItems ?? [];
-
-
+  const visibleItems = hideCompleted
+    ? (note.checklistItems?.filter((item) => !item.checked) ?? [])
+    : (note.checklistItems ?? []);
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
@@ -384,7 +382,7 @@ export function Note({
         </div>
         <div className="flex items-center space-x-2">
           {/* Hide/Show Completed Toggle - only show if there are completed items */}
-          {(note.checklistItems?.some(item => item.checked) ?? false) && (
+          {(note.checklistItems?.some((item) => item.checked) ?? false) && (
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -526,8 +524,6 @@ export function Note({
                 </DraggableItem>
               ))}
             </DraggableContainer>
-
-
 
             {/* Always-available New Item Input */}
             {canEdit && (
