@@ -743,46 +743,49 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </div>
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
 
-            {/* Filter Popover */}
-            <div className="relative board-dropdown mr-1" data-slot="filter-popover">
-              <FilterPopover
-                startDate={dateRange.startDate}
-                endDate={dateRange.endDate}
-                onDateRangeChange={(startDate, endDate) => {
-                  const newDateRange = { startDate, endDate };
-                  setDateRange(newDateRange);
-                  updateURL(undefined, newDateRange);
-                }}
-                selectedAuthor={selectedAuthor}
-                authors={uniqueAuthors}
-                onAuthorChange={(authorId) => {
-                  setSelectedAuthor(authorId);
-                  updateURL(undefined, undefined, authorId);
-                }}
-                className="w-fit size-9"
-              />
+            {/* Filter + Settings */}
+            <div className="flex items-center gap-1">
+              {/* Filter Popover */}
+              <div className="relative board-dropdown" data-slot="filter-popover">
+                <FilterPopover
+                  startDate={dateRange.startDate}
+                  endDate={dateRange.endDate}
+                  onDateRangeChange={(startDate, endDate) => {
+                    const newDateRange = { startDate, endDate };
+                    setDateRange(newDateRange);
+                    updateURL(undefined, newDateRange);
+                  }}
+                  selectedAuthor={selectedAuthor}
+                  authors={uniqueAuthors}
+                  onAuthorChange={(authorId) => {
+                    setSelectedAuthor(authorId);
+                    updateURL(undefined, undefined, authorId);
+                  }}
+                />
+              </div>
+              
+              {boardId !== "all-notes" && boardId !== "archive" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setBoardSettings({
+                      name: board?.name || "",
+                      description: board?.description || "",
+                      isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+                      sendSlackUpdates:
+                        (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                    });
+                    setBoardSettingsDialog(true);
+                  }}
+                  aria-label="Board settings"
+                  title="Board settings"
+                  className="flex items-center h-9 w-9 p-0 -ml-0"
+                >
+                  <Settings className="size-4" />
+                </Button>
+              )}
             </div>
-            {boardId !== "all-notes" && boardId !== "archive" && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setBoardSettings({
-                    name: board?.name || "",
-                    description: board?.description || "",
-                    isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                    sendSlackUpdates:
-                      (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                  });
-                  setBoardSettingsDialog(true);
-                }}
-                aria-label="Board settings"
-                title="Board settings"
-                className="flex items-center size-9"
-              >
-                <Settings className="size-4" />
-              </Button>
-            )}
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}

@@ -52,14 +52,14 @@ function FilterPopover({
             variant="outline"
             disabled={disabled}
             className={cn(
-              "flex items-center justify-center text-sm rounded-md py-2 cursor-pointer w-full sm:w-auto min-h-[40px]",
+              "flex items-center justify-center text-sm rounded-md cursor-pointer h-9 w-12 p-0",
               disabled && "opacity-50 cursor-not-allowed"
             )}
           >
-            <div className="flex items-center justify-center w-full">
+            <div className="flex items-center justify-center">
               <ListFilter className="w-4 h-4 text-muted-foreground" />
               {filterCount > 0 && (
-                <span className="ml-2 px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-md">
+                <span className="absolute -top-1 -right-1 px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-md">
                   {filterCount}
                 </span>
               )}
