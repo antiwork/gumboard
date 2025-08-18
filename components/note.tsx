@@ -463,7 +463,6 @@ export function Note({
                   key={item.id}
                   id={item.id}
                   disabled={!canEdit}
-                  className="hover:bg-transparent"
                 >
                   <ChecklistItemComponent
                     item={item}
