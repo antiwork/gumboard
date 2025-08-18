@@ -1180,24 +1180,6 @@ test.describe("Note Management", () => {
       },
     });
 
-    const originalNote = await testPrisma.note.create({
-      data: {
-        color: "#dbeafe",
-        boardId: board.id,
-        createdBy: testContext.userId,
-        checklistItems: {
-          create: [
-            {
-              id: testContext.prefix("all-notes-item"),
-              content: testContext.prefix("All notes copy test item"),
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
-      },
-    });
-
     await authenticatedPage.goto(`/boards/all-notes`);
 
     await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
