@@ -14,8 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
-import { BetaBadge } from "@/components/ui/beta-badge";
+import { Mail, Loader2, ExternalLink } from "lucide-react";
 import Image from "next/image";
 
 const emailProviders = [
@@ -35,29 +34,18 @@ const oauthProviders = [
     name: "Google",
     icon: (
       <svg
+        className="w-5 h-5 mr-2"
+        viewBox="0 0 512 512"
         xmlns="http://www.w3.org/2000/svg"
-        x="0px"
-        y="0px"
-        width="100"
-        height="100"
-        viewBox="0 0 48 48"
+        fillRule="evenodd"
+        clipRule="evenodd"
+        strokeLinejoin="round"
+        strokeMiterlimit="2"
       >
         <path
-          fill="#FFC107"
-          d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"
-        ></path>
-        <path
-          fill="#FF3D00"
-          d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"
-        ></path>
-        <path
-          fill="#4CAF50"
-          d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"
-        ></path>
-        <path
-          fill="#1976D2"
-          d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"
-        ></path>
+          d="M32.582 370.734C15.127 336.291 5.12 297.425 5.12 256c0-41.426 10.007-80.291 27.462-114.735C74.705 57.484 161.047 0 261.12 0c69.12 0 126.836 25.367 171.287 66.793l-73.31 73.309c-26.763-25.135-60.276-38.168-97.977-38.168-66.56 0-123.113 44.917-143.36 105.426-5.12 15.36-8.146 31.65-8.146 48.64 0 16.989 3.026 33.28 8.146 48.64l-.303.232h.303c20.247 60.51 76.8 105.426 143.36 105.426 34.443 0 63.534-9.31 86.341-24.67 27.23-18.152 45.382-45.148 51.433-77.032H261.12v-99.142h241.105c3.025 16.757 4.654 34.211 4.654 52.364 0 77.963-27.927 143.592-76.334 188.276-42.356 39.098-100.305 61.905-169.425 61.905-100.073 0-186.415-57.483-228.538-141.032v-.233z"
+          fill="currentColor"
+        />
       </svg>
     ),
   },
@@ -138,7 +126,7 @@ function SignInContent() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
-        <Card className="w-full max-w-sm sm:max-w-md bg-white/95 dark:bg-zinc-900/95 border border-gray-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="w-full max-w-sm sm:max-w-md border-none shadow-none bg-transparent">
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mb-4 ring-1 ring-green-200/60 dark:ring-green-800/40">
               <Mail className="w-6 h-6 text-green-700 dark:text-green-400" />
@@ -152,10 +140,6 @@ function SignInContent() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground text-center mb-4 dark:text-zinc-400">
-              Click the link in the email to sign in to your account. The link will expire in 24
-              hours.
-            </p>
             <p className="text-sm text-gray-500 dark:text-zinc-500 text-center mb-4">
               It may take up to 2 minutes for the email to arrive.
             </p>
@@ -176,7 +160,7 @@ function SignInContent() {
           <CardFooter>
             <Button
               variant="outline"
-              className="w-full bg-white border-gray-200 text-gray-900 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              className="w-full border-gray-200 text-gray-900 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
               onClick={handleResendEmail}
               disabled={isResending}
               aria-busy={isResending}
@@ -200,19 +184,18 @@ function SignInContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
-      <Card className="w-full bg-white max-w-sm sm:max-w-md dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="w-full max-w-sm sm:max-w-md border-none shadow-none bg-transparent">
         <CardHeader className="text-center">
           <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mb-4 ring-1 ring-blue-200/60 dark:ring-blue-800/40">
             <Image src="/logo/gumboard.svg" alt="Gumboard Logo" width={48} height={48} />
           </div>
           <CardTitle className="text-xl sm:text-2xl font-bold text-foreground dark:text-zinc-100 flex items-center gap-2 justify-center">
             Welcome to Gumboard
-            <BetaBadge />
           </CardTitle>
           <CardDescription className="text-muted-foreground dark:text-zinc-400">
             {searchParams.get("email")
               ? "we'll send you a magic link to verify your email address"
-              : "Enter your email address and we'll send you a magic link to sign in"}
+              : "Enter your email to sign in or choose another option."}
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -226,7 +209,7 @@ function SignInContent() {
             )}
             <div className="space-y-2">
               <Label htmlFor="email" className="text-foreground dark:text-zinc-200">
-                Email address
+                Email
               </Label>
               <Input
                 id="email"
@@ -243,7 +226,7 @@ function SignInContent() {
           <CardFooter className="flex flex-col">
             <Button
               type="submit"
-              className="w-full h-12 font-medium mt-4 bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+              className="w-full h-12 font-medium mt-4 bg-sky-600 text-white hover:bg-sky-600/80 active:scale-[0.98] dark:bg-sky-600 dark:text-zinc-100 dark:hover:bg-sky-600/80 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
               disabled={isLoading || !email}
               aria-busy={isLoading}
             >
@@ -253,23 +236,14 @@ function SignInContent() {
                   Sending magic link...
                 </>
               ) : (
-                <>
-                  Continue with Email
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
+                <>Continue</>
               )}
             </Button>
 
-            {/* Divider */}
-            <div className="relative mt-6 w-full">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-200 dark:border-zinc-700" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-muted-foreground dark:bg-zinc-900 dark:text-zinc-400">
-                  or continue with
-                </span>
-              </div>
+            <div className="mt-6 w-full flex items-center">
+              <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" />
+              <span className="mx-3 text-sm text-muted-foreground dark:text-zinc-400">or</span>
+              <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" />
             </div>
 
             {/* OAuth Buttons */}
@@ -279,7 +253,7 @@ function SignInContent() {
                   key={provider.id}
                   type="button"
                   variant="outline"
-                  className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
+                  className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-sky-600 transition-all"
                   onClick={() => signIn(provider.id, { callbackUrl: "/" })}
                 >
                   {provider.icon}
