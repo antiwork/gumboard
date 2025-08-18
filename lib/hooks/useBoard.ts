@@ -13,7 +13,7 @@ interface UseBoardOptions {
   enableFilters?: boolean;
   enableUrlSync?: boolean;
   enableUserFeatures?: boolean;
-  isPublicView?: boolean; // Add this flag
+  isPublicView?: boolean;
 }
 
 interface DateRange {
@@ -186,43 +186,49 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
         return;
       }
 
-      let boardResponse: Response | undefined;
-      let notesResponse: Response;
-      let allBoardsResponse: Response | undefined;
-
       if (isPublicView) {
+        // Fixed: Proper handling of public board fetching
         const boardResponse = await fetch(`/api/boards/${boardId}`);
-
+        
         if (boardResponse.status === 404 || boardResponse.status === 403) {
           setBoard(null);
           setLoading(false);
           return;
         }
-
+        
         if (boardResponse.status === 401) {
           router.push("/auth/signin");
           return;
         }
-
+        
         if (boardResponse.ok) {
-          const { board } = await boardResponse.json();
-          if (board.isPublic) {
-            setBoard(board);
+          const { board: fetchedBoard } = await boardResponse.json();
+          if (fetchedBoard.isPublic) {
+            setBoard(fetchedBoard);
+            
+            // Fetch notes after setting board
+            const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
+            if (notesResponse.ok) {
+              const { notes } = await notesResponse.json();
+              setNotes(notes);
+            } else {
+              setError("Failed to load notes");
+            }
           } else {
             setBoard(null);
             setLoading(false);
             return;
           }
-        }
-
-        if (board || boardResponse.ok) {
-          const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
-          if (notesResponse.ok) {
-            const { notes } = await notesResponse.json();
-            setNotes(notes);
-          }
+        } else {
+          setError("Failed to load board");
+          setBoard(null);
         }
       } else {
+        // Non-public view logic (existing code)
+        let boardResponse: Response | undefined;
+        let notesResponse: Response;
+        let allBoardsResponse: Response | undefined;
+
         if (boardId === "all-notes") {
           boardResponse = undefined;
           [allBoardsResponse, notesResponse] = await Promise.all([
@@ -255,15 +261,15 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
           ]);
         }
 
-        if (allBoardsResponse && allBoardsResponse.ok) {
+        if (allBoardsResponse?.ok) {
           const { boards } = await allBoardsResponse.json();
           setAllBoards(boards);
         }
 
-        if (boardResponse && boardResponse.ok) {
+        if (boardResponse?.ok) {
           const { board } = await boardResponse.json();
           setBoard(board);
-
+          
           if (boardId && boardId !== "all-notes" && boardId !== "archive") {
             try {
               localStorage.setItem("gumboard-last-visited-board", boardId);
@@ -273,9 +279,11 @@ export function useBoard(boardId: string | null, options: UseBoardOptions = {}) 
           }
         }
 
-        if (notesResponse && notesResponse.ok) {
+        if (notesResponse?.ok) {
           const { notes } = await notesResponse.json();
           setNotes(notes);
+        } else {
+          setError("Failed to load notes");
         }
       }
     } catch (error) {
