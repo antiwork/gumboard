@@ -36,7 +36,7 @@ export async function GET() {
         createdAt: true,
         updatedAt: true,
         archivedAt: true,
-        dueDate: true,
+        dueAt: true,
         checklistItems: { orderBy: { order: "asc" } },
         user: {
           select: {

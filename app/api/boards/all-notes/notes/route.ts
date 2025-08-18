@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
         id: true,
         color: true,
         archivedAt: true,
-        dueDate: true,
+        dueAt: true,
         createdAt: true,
         updatedAt: true,
         user: {

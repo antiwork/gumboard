@@ -34,7 +34,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             createdAt: true,
             updatedAt: true,
             archivedAt: true,
-            dueDate: true,
+            dueAt: true,
             user: {
               select: {
                 id: true,

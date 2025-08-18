@@ -49,7 +49,7 @@ export interface Note {
   id: string;
   color: string;
   archivedAt?: string | null;
-  dueDate?: string | null;
+  dueAt?: string | null;
   createdAt: string;
   updatedAt: string;
   checklistItems?: ChecklistItem[];
@@ -107,10 +107,10 @@ export function Note({
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
-  const isPastDue = (dueDate: string) => {
+  const isPastDue = (dueAt: string) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const due = new Date(dueDate);
+    const due = new Date(dueAt);
     due.setHours(0, 0, 0, 0);
     return due < today;
   };
@@ -356,11 +356,11 @@ export function Note({
     }
   };
 
-  const handleDueDateChange = async (date: Date | undefined) => {
+  const handledueAtChange = async (date: Date | undefined) => {
     try {
       const optimisticNote = {
         ...note,
-        dueDate: date ? date.toISOString() : null,
+        dueAt: date ? date.toISOString() : null,
       };
 
       onUpdate?.(optimisticNote);
@@ -372,7 +372,7 @@ export function Note({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            dueDate: date ? date.toISOString() : null,
+            dueAt: date ? date.toISOString() : null,
           }),
         });
 
@@ -462,14 +462,14 @@ export function Note({
                   <TooltipTrigger asChild>
                     <PopoverTrigger asChild>
                       <Button
-                        aria-label={note.dueDate ? "Change due date" : "Set due date"}
+                        aria-label={note.dueAt ? "Change due date" : "Set due date"}
                         onClick={(e) => {
                           e.stopPropagation();
                           setIsDatePickerOpen(!isDatePickerOpen);
                         }}
                         className={cn(
                           "p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded",
-                          note.dueDate && "text-blue-600 dark:text-blue-400"
+                          note.dueAt && "text-blue-600 dark:text-blue-400"
                         )}
                         variant="ghost"
                         size="icon"
@@ -479,22 +479,22 @@ export function Note({
                     </PopoverTrigger>
                   </TooltipTrigger>
                   <TooltipContent>
-                    <p>{note.dueDate ? "Change due date" : "Set due date"}</p>
+                    <p>{note.dueAt ? "Change due date" : "Set due date"}</p>
                   </TooltipContent>
                 </Tooltip>
                 <PopoverContent className="w-auto p-0 text-muted-foreground dark:text-zinc-200">
                   <CalendarComponent
                     mode="single"
-                    selected={note.dueDate ? new Date(note.dueDate) : undefined}
+                    selected={note.dueAt ? new Date(note.dueAt) : undefined}
                     onSelect={(date) => {
                       // Only update if a different date is selected
                       // Don't allow deselecting by clicking the same date
                       if (
                         date &&
-                        (!note.dueDate ||
-                          date.toISOString().split("T")[0] !== note.dueDate.split("T")[0])
+                        (!note.dueAt ||
+                          date.toISOString().split("T")[0] !== note.dueAt.split("T")[0])
                       ) {
-                        handleDueDateChange(date);
+                        handledueAtChange(date);
                       }
                     }}
                     initialFocus
@@ -559,12 +559,12 @@ export function Note({
           )}
         </div>
       </div>
-      {note.dueDate && (
+      {note.dueAt && (
         <div className="flex items-center space-x-2 mb-2 px-2 group">
           <Calendar
             className={cn(
               "w-3 h-3",
-              isPastDue(note.dueDate)
+              isPastDue(note.dueAt)
                 ? "text-red-600 dark:text-red-400"
                 : "text-blue-600 dark:text-blue-400"
             )}
@@ -572,13 +572,13 @@ export function Note({
           <span
             className={cn(
               "text-xs font-medium",
-              isPastDue(note.dueDate)
+              isPastDue(note.dueAt)
                 ? "text-red-600 dark:text-red-400"
                 : "text-blue-600 dark:text-blue-400"
             )}
           >
-            {isPastDue(note.dueDate) ? "Past Due: " : "Due: "}
-            {format(new Date(note.dueDate), "MMM d, yyyy")}
+            {isPastDue(note.dueAt) ? "Past Due: " : "Due: "}
+            {format(new Date(note.dueAt), "MMM d, yyyy")}
           </span>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -586,7 +586,7 @@ export function Note({
                 onClick={(e) => e.stopPropagation()}
                 className={cn(
                   "p-0.5 h-auto w-auto transition-colors opacity-0 group-hover:opacity-100",
-                  isPastDue(note.dueDate)
+                  isPastDue(note.dueAt)
                     ? "text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300"
                     : "text-blue-600 dark:text-blue-400 hover:text-red-600 dark:hover:text-red-400"
                 )}
@@ -612,7 +612,7 @@ export function Note({
                   Cancel
                 </AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => handleDueDateChange(undefined)}
+                  onClick={() => handledueAtChange(undefined)}
                   className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
                 >
                   Remove Due Date

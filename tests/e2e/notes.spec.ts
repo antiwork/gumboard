@@ -1100,7 +1100,7 @@ test.describe("Due Date Management", () => {
       where: { id: note.id },
     });
     expect(updatedNote).not.toBeNull();
-    expect(updatedNote?.dueDate).toBeTruthy();
+    expect(updatedNote?.dueAt).toBeTruthy();
   });
 
   test("should update an existing due date", async ({
@@ -1126,7 +1126,7 @@ test.describe("Due Date Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        dueDate: yesterday.toISOString(),
+        dueAt: yesterday.toISOString(),
       },
     });
 
@@ -1173,8 +1173,8 @@ test.describe("Due Date Management", () => {
       where: { id: note.id },
     });
     expect(updatedNote).not.toBeNull();
-    expect(updatedNote?.dueDate).toBeTruthy();
-    expect(new Date(updatedNote!.dueDate!).getDate()).toBe(dayAfterTomorrowDate);
+    expect(updatedNote?.dueAt).toBeTruthy();
+    expect(new Date(updatedNote!.dueAt!).getDate()).toBe(dayAfterTomorrowDate);
   });
 
   test("should remove a due date from a note", async ({
@@ -1200,7 +1200,7 @@ test.describe("Due Date Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        dueDate: tomorrow.toISOString(),
+        dueAt: tomorrow.toISOString(),
       },
     });
 
@@ -1208,11 +1208,11 @@ test.describe("Due Date Management", () => {
 
     await expect(authenticatedPage.getByText(/Due:/)).toBeVisible();
 
-    const dueDateContainer = authenticatedPage
+    const dueAtContainer = authenticatedPage
       .locator(".group")
       .filter({ hasText: /Due:/ })
       .first();
-    await dueDateContainer.hover();
+    await dueAtContainer.hover();
 
     const removeButton = authenticatedPage.locator('[aria-label="Remove due date"]').first();
     await expect(removeButton).toBeVisible();
@@ -1235,7 +1235,7 @@ test.describe("Due Date Management", () => {
       where: { id: note.id },
     });
     expect(updatedNote).not.toBeNull();
-    expect(updatedNote?.dueDate).toBeNull();
+    expect(updatedNote?.dueAt).toBeNull();
   });
 
   test("should display past due dates correctly", async ({
@@ -1261,7 +1261,7 @@ test.describe("Due Date Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        dueDate: yesterday.toISOString(),
+        dueAt: yesterday.toISOString(),
       },
     });
 
@@ -1269,14 +1269,14 @@ test.describe("Due Date Management", () => {
 
     await expect(authenticatedPage.getByText(/Past Due:/)).toBeVisible();
 
-    const dueDateGroup = authenticatedPage
+    const dueAtGroup = authenticatedPage
       .locator(".group")
       .filter({ hasText: /Past Due:/ })
       .first();
-    const calendarIcon = dueDateGroup.locator('svg[class*="text-red-600"]').first();
+    const calendarIcon = dueAtGroup.locator('svg[class*="text-red-600"]').first();
     await expect(calendarIcon).toBeVisible();
 
-    const pastDueText = dueDateGroup.locator('span[class*="text-red-600"]').first();
+    const pastDueText = dueAtGroup.locator('span[class*="text-red-600"]').first();
     await expect(pastDueText).toBeVisible();
   });
 
@@ -1303,7 +1303,7 @@ test.describe("Due Date Management", () => {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        dueDate: tomorrow.toISOString(),
+        dueAt: tomorrow.toISOString(),
       },
     });
 
