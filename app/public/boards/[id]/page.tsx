@@ -25,7 +25,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     };
     initializeParams();
   }, [params]);
-
+  
   const {
     board,
     loading,
