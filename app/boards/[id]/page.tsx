@@ -400,6 +400,42 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
+  const handleCopyNote = async (originalNote: Note) => {
+    try {
+      const targetBoardId = boardId === "all-notes" ? originalNote.boardId : boardId;
+      const isAllNotesView = boardId === "all-notes";
+
+      const checklistItems =
+        originalNote.checklistItems?.map((item, index) => ({
+          content: item.content,
+          checked: item.checked,
+          order: index,
+        })) || [];
+
+      const response = await fetch(
+        `/api/boards/${isAllNotesView ? "all-notes" : targetBoardId}/notes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            color: originalNote.color,
+            checklistItems,
+            ...(isAllNotesView && { boardId: targetBoardId }),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const { note } = await response.json();
+        setNotes((prev) => [...prev, note]);
+      }
+    } catch (error) {
+      console.error("Error copying note:", error);
+    }
+  };
+
   const handleDeleteNote = (noteId: string) => {
     const noteToDelete = notes.find((n) => n.id === noteId);
     if (!noteToDelete) return;
@@ -624,13 +660,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </Link>
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
+            <div className="relative board-dropdown flex-1 mr-0 sm:flex-none min-w-48 sm:max-w-64">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className={`flex items-center justify-between text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
+                className="flex items-center justify-between text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full"
               >
-                <div>
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
                     {boardId === "all-notes"
                       ? "All notes"
                       : boardId === "archive"
@@ -828,6 +864,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               onDelete={handleDeleteNote}
               onArchive={boardId !== "archive" ? () => handleNoteArchiveStatus(note.id, true) : undefined}
               onUnarchive={boardId === "archive" ? () => handleNoteArchiveStatus(note.id, false) : undefined}
+              onCopy={handleCopyNote}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="shadow-md shadow-black/10"
               style={{

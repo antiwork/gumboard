@@ -1037,4 +1037,266 @@ test.describe("Note Management", () => {
       await expect(authenticatedPage.getByText("1", { exact: true })).not.toBeVisible();
     });
   });
+
+  test("should copy a note with all its checklist items", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Copy Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board for copying notes"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const originalNote = await testPrisma.note.create({
+      data: {
+        color: "#f3e8ff",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("original-item-1"),
+              content: testContext.prefix("First checklist item"),
+              checked: false,
+              order: 0,
+            },
+            {
+              id: testContext.prefix("original-item-2"),
+              content: testContext.prefix("Second checklist item"),
+              checked: true,
+              order: 1,
+            },
+            {
+              id: testContext.prefix("original-item-3"),
+              content: testContext.prefix("Third checklist item"),
+              checked: false,
+              order: 2,
+            },
+          ],
+        },
+      },
+      include: {
+        checklistItems: true,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("First checklist item"))
+    ).toBeVisible();
+
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+
+    await noteCard.hover();
+
+    const copyButton = noteCard.getByRole("button", { name: /Copy Note/i });
+    await expect(copyButton).toBeVisible({ timeout: 5000 });
+
+    const copyNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
+    );
+
+    await copyButton.click();
+    await copyNoteResponse;
+
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(2, {
+      timeout: 10000,
+    });
+
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("First checklist item"))
+    ).toHaveCount(2);
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Second checklist item"))
+    ).toHaveCount(2);
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Third checklist item"))
+    ).toHaveCount(2);
+
+    const allNotes = await testPrisma.note.findMany({
+      where: {
+        boardId: board.id,
+        deletedAt: null,
+      },
+      include: {
+        checklistItems: {
+          orderBy: { order: "asc" },
+        },
+      },
+    });
+
+    expect(allNotes).toHaveLength(2);
+
+    const originalNoteFromDb = allNotes.find((note) => note.id === originalNote.id);
+    const copiedNote = allNotes.find((note) => note.id !== originalNote.id);
+
+    expect(originalNoteFromDb).toBeDefined();
+    expect(copiedNote).toBeDefined();
+
+    expect(copiedNote!.color).toBe(originalNoteFromDb!.color);
+
+    expect(copiedNote!.checklistItems).toHaveLength(3);
+    expect(originalNoteFromDb!.checklistItems).toHaveLength(3);
+
+    const originalItems = originalNoteFromDb!.checklistItems;
+    const copiedItems = copiedNote!.checklistItems;
+
+    for (let i = 0; i < originalItems.length; i++) {
+      expect(copiedItems[i].content).toBe(originalItems[i].content);
+      expect(copiedItems[i].checked).toBe(originalItems[i].checked);
+      expect(copiedItems[i].order).toBe(originalItems[i].order);
+      expect(copiedItems[i].id).not.toBe(originalItems[i].id);
+    }
+
+    expect(copiedNote!.createdBy).toBe(testContext.userId);
+    expect(copiedNote!.boardId).toBe(board.id);
+  });
+
+  test("should copy a note in all-notes view", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("All Notes Copy Test");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board for all-notes copy"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const originalNote = await testPrisma.note.create({
+      data: {
+        color: "#dbeafe",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("all-notes-item"),
+              content: testContext.prefix("All notes copy test item"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/all-notes`);
+
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("All notes copy test item"))
+    ).toBeVisible();
+
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+    await noteCard.hover();
+
+    const copyButton = noteCard.getByRole("button", { name: /Copy Note/i });
+    await expect(copyButton).toBeVisible({ timeout: 5000 });
+
+    const copyNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/all-notes/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
+    );
+
+    await copyButton.click();
+    await copyNoteResponse;
+
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(2, {
+      timeout: 10000,
+    });
+
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("All notes copy test item"))
+    ).toHaveCount(2);
+
+    // Verify in database
+    const allNotes = await testPrisma.note.findMany({
+      where: {
+        boardId: board.id,
+        deletedAt: null,
+      },
+    });
+
+    expect(allNotes).toHaveLength(2);
+  });
+
+  test("should not show copy button for readonly notes", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const otherUser = await testPrisma.user.create({
+      data: {
+        id: testContext.prefix("other-user"),
+        email: testContext.prefix("other@example.com"),
+        name: testContext.prefix("Other User"),
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const boardName = testContext.getBoardName("Readonly Copy Test");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board for readonly copy"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: otherUser.id,
+        checklistItems: {
+          create: [
+            {
+              id: testContext.prefix("readonly-item"),
+              content: testContext.prefix("Readonly note item"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
+
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+    await noteCard.hover();
+
+    const copyButton = noteCard.getByRole("button", { name: /Copy Note/i });
+    await expect(copyButton).not.toBeVisible();
+
+    const deleteButton = noteCard.getByRole("button", { name: /Delete Note/i });
+    await expect(deleteButton).not.toBeVisible();
+  });
 });
