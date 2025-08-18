@@ -201,6 +201,6 @@ test.describe("GitHub Authentication Flow", () => {
     await expect(buttonContainer.locator('button:has-text("Continue with GitHub")')).toBeVisible();
 
     // Verify the "or continue with" text is present
-    await expect(page.locator("text=or")).toBeVisible();
+    await expect(page.getByText("or", { exact: true })).toBeVisible();
   });
 });
