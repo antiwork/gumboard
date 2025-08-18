@@ -542,8 +542,12 @@ export default function OrganizationSettingsPage() {
               >
                 <div className="flex items-center space-x-3">
                   <Avatar>
-                    <AvatarImage src={member.image || ''} alt={member.name || member.email} />
-                    <AvatarFallback className={member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700 text-white"}>
+                    <AvatarImage src={member.image || ""} alt={member.name || member.email} />
+                    <AvatarFallback
+                      className={
+                        member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700 text-white"
+                      }
+                    >
                       {member.name
                         ? member.name.charAt(0).toUpperCase()
                         : member.email.charAt(0).toUpperCase()}
