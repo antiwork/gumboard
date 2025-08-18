@@ -1353,12 +1353,17 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
 
-    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
-    
-    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))).toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))
+    ).toBeVisible();
     await expect(authenticatedPage.getByText(testContext.prefix("Completed task 1"))).toBeVisible();
-    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))).toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))
+    ).toBeVisible();
     await expect(authenticatedPage.getByText(testContext.prefix("Completed task 2"))).toBeVisible();
 
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
@@ -1368,19 +1373,31 @@ test.describe("Note Management", () => {
     await expect(hideButton).toBeVisible({ timeout: 5000 });
     await hideButton.click();
 
-    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))).toBeVisible();
-    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))).toBeVisible();
-    
-    await expect(authenticatedPage.getByText(testContext.prefix("Completed task 1"))).not.toBeVisible();
-    await expect(authenticatedPage.getByText(testContext.prefix("Completed task 2"))).not.toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))
+    ).toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))
+    ).toBeVisible();
+
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Completed task 1"))
+    ).not.toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Completed task 2"))
+    ).not.toBeVisible();
 
     const showButton = noteCard.getByRole("button", { name: /Show completed items/i });
     await expect(showButton).toBeVisible({ timeout: 5000 });
     await showButton.click();
 
-    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))).toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Incomplete task 1"))
+    ).toBeVisible();
     await expect(authenticatedPage.getByText(testContext.prefix("Completed task 1"))).toBeVisible();
-    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))).toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Incomplete task 2"))
+    ).toBeVisible();
     await expect(authenticatedPage.getByText(testContext.prefix("Completed task 2"))).toBeVisible();
   });
 
@@ -1425,16 +1442,24 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
 
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
     await noteCard.hover();
 
-    const hideShowButton = noteCard.getByRole("button", { name: /Hide completed items|Show completed items/i });
+    const hideShowButton = noteCard.getByRole("button", {
+      name: /Hide completed items|Show completed items/i,
+    });
     await expect(hideShowButton).not.toBeVisible();
 
-    await expect(authenticatedPage.getByText(testContext.prefix("Incomplete task only"))).toBeVisible();
-    await expect(authenticatedPage.getByText(testContext.prefix("Another incomplete task"))).toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Incomplete task only"))
+    ).toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Another incomplete task"))
+    ).toBeVisible();
   });
 
   test("should show hide/show button only after completing an item", async ({
@@ -1478,15 +1503,21 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, { timeout: 10000 });
+    await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(1, {
+      timeout: 10000,
+    });
 
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
     await noteCard.hover();
 
-    let hideShowButton = noteCard.getByRole("button", { name: /Hide completed items|Show completed items/i });
+    let hideShowButton = noteCard.getByRole("button", {
+      name: /Hide completed items|Show completed items/i,
+    });
     await expect(hideShowButton).not.toBeVisible();
 
-    const firstCheckbox = authenticatedPage.getByTestId(testContext.prefix("dynamic-1")).getByRole("checkbox");
+    const firstCheckbox = authenticatedPage
+      .getByTestId(testContext.prefix("dynamic-1"))
+      .getByRole("checkbox");
     await firstCheckbox.click();
 
     await authenticatedPage.waitForTimeout(1000);
@@ -1494,10 +1525,12 @@ test.describe("Note Management", () => {
     await noteCard.hover(); // Re-hover to trigger button visibility
     hideShowButton = noteCard.getByRole("button", { name: /Hide completed items/i });
     await expect(hideShowButton).toBeVisible({ timeout: 5000 });
-    
+
     await hideShowButton.click();
 
-    await expect(authenticatedPage.getByText(testContext.prefix("Task to be completed"))).not.toBeVisible();
+    await expect(
+      authenticatedPage.getByText(testContext.prefix("Task to be completed"))
+    ).not.toBeVisible();
     await expect(authenticatedPage.getByText(testContext.prefix("Another task"))).toBeVisible();
   });
 });
