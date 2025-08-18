@@ -452,40 +452,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     });
   };
 
-  const handleArchiveNote = async (noteId: string) => {
-    try {
+  const handleNoteArchiveStatus = async (noteId: string , shouldArchive: boolean) => {
+    try{
       const currentNote = notes.find((n) => n.id === noteId);
       if (!currentNote) return;
 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
-
-      setNotes((prev) => prev.filter((n) => n.id !== noteId));
-
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
-      });
-
-      if (!response.ok) {
-        // Revert on error
-        setNotes((prev) => [...prev, currentNote]);
-        setErrorDialog({
-          open: true,
-          title: "Archive Failed",
-          description: "Failed to archive note. Please try again.",
-        });
-      }
-    } catch (error) {
-      console.error("Error archiving note:", error);
-    }
-  };
-  const handleUnarchiveNote = async (noteId: string) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote) return;
-
-      const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
       if (!targetBoardId) return;
 
       setNotes((prev) => prev.filter((n) => n.id !== noteId));
@@ -493,19 +465,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archivedAt: null }),
+        body: JSON.stringify({ archivedAt: shouldArchive ? new Date().toISOString() : null }),
       });
 
       if (!response.ok) {
         setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
-          title: "Unarchive Failed",
-          description: "Failed to unarchive note. Please try again.",
+          title: `${shouldArchive ? 'Archive' : 'Unarchive'} Failed`,
+          description: `Failed to ${shouldArchive ? 'archive' : 'unarchive'} note. Please try again.`,
         });
       }
     } catch (error) {
-      console.error("Error unarchiving note:", error);
+      console.error("Error updating note archive status:", error);
     }
   };
 
@@ -854,8 +826,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               currentUser={user as User}
               onUpdate={handleUpdateNoteFromComponent}
               onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+              onArchive={boardId !== "archive" ? () => handleNoteArchiveStatus(note.id, true) : undefined}
+              onUnarchive={boardId === "archive" ? () => handleNoteArchiveStatus(note.id, false) : undefined}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
               className="shadow-md shadow-black/10"
               style={{
