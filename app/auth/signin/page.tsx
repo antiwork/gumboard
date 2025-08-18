@@ -400,7 +400,7 @@ function SignInContent() {
 
             <div className="mt-6 w-full flex items-center">
               <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" />
-              <span className="mx-3 text-sm text-muted-foreground dark:text-zinc-400">or</span>
+              <span className="mx-3 text-sm text-muted-foreground dark:text-zinc-400">or continue with</span>
               <div className="h-px flex-1 bg-gray-200 dark:bg-zinc-700" />
             </div>
 
