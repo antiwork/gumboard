@@ -155,6 +155,12 @@ function CalendarDayButton({
       variant="ghost"
       size="icon"
       data-day={day.date.toLocaleDateString()}
+      aria-label={day.date.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&
