@@ -169,9 +169,7 @@ test.describe("Delete User Functionality", () => {
     expect(noteAfterDeletion).toBeNull(); // Note should be cascade deleted
   });
 
-  test("should show loading state during deletion", async ({
-    authenticatedPage,
-  }) => {
+  test("should show loading state during deletion", async ({ authenticatedPage }) => {
     await authenticatedPage.route("**/api/user", async (route) => {
       if (route.request().method() === "DELETE") {
         await new Promise((resolve) => setTimeout(resolve, 2000)); // Reduced from 3000 to 2000
