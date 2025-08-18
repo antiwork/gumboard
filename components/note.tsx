@@ -98,9 +98,7 @@ export function Note({
     ? note.checklistItems?.filter(item => !item.checked) ?? []
     : note.checklistItems ?? [];
 
-  const hiddenCompletedCount = hideCompleted 
-    ? (note.checklistItems?.filter(item => item.checked).length ?? 0)
-    : 0;
+
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
