@@ -112,7 +112,7 @@ export default function OrganizationSettingsPage() {
       setSlackWebhookUrl(slackWebhookValue);
       setOriginalSlackWebhookUrl(slackWebhookValue);
     }
-  }, [user?.organization?.name, user?.organization?.slackWebhookUrl]);
+  }, [user?.organization?.name, user?.organization?.slackWebhookUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!loading && !user) {
