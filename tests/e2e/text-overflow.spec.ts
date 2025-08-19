@@ -25,8 +25,9 @@ test.describe("Text Overflow and Card Expansion", () => {
       },
     });
 
-    const longTextWithoutSpaces = "sihshshsihishsihishsihishsihishsihishsihwosjowsjwsojwojowjsojowsjowsjowsjowjsojowsjoxjsoxjsoxjosxjosxjosxjosxjosjosxjosxjosxjosjosoxjosojsowjsowjsowjsjowsjowjsjwsojw";
-    
+    const longTextWithoutSpaces =
+      "sihshshsihishsihishsihishsihishsihishsihwosjowsjwsojwojowjsojowsjowsjowsjowjsojowsjoxjsoxjsoxjosxjosxjosxjosxjosjosxjosxjosxjosjosoxjosojsowjsowjsowjsjowsjowjsjwsojw";
+
     await testPrisma.checklistItem.create({
       data: {
         id: testContext.prefix("item-1"),
@@ -45,16 +46,19 @@ test.describe("Text Overflow and Card Expansion", () => {
     await expect(noteCard).toBeVisible();
 
     // Check that the note card is using grid layout (parent container)
-    const boardArea = authenticatedPage.locator('.grid').filter({
-      has: authenticatedPage.locator('[data-testid="note-card"]')
-    }).first();
+    const boardArea = authenticatedPage
+      .locator(".grid")
+      .filter({
+        has: authenticatedPage.locator('[data-testid="note-card"]'),
+      })
+      .first();
     await expect(boardArea).toBeVisible();
 
     // Verify the note has h-fit class for dynamic height
     await expect(noteCard).toHaveClass(/h-fit/);
 
     // Get the textarea with long text
-    const textarea = noteCard.locator('textarea').filter({ hasText: longTextWithoutSpaces });
+    const textarea = noteCard.locator("textarea").filter({ hasText: longTextWithoutSpaces });
     await expect(textarea).toBeVisible();
 
     // Verify text wrapping classes are applied
@@ -65,7 +69,7 @@ test.describe("Text Overflow and Card Expansion", () => {
     // Verify no overflow on the textarea
     const textareaBox = await textarea.boundingBox();
     const noteCardBox = await noteCard.boundingBox();
-    
+
     // The textarea should be within the note card bounds
     expect(textareaBox).toBeTruthy();
     expect(noteCardBox).toBeTruthy();
@@ -111,20 +115,20 @@ test.describe("Text Overflow and Card Expansion", () => {
     await authenticatedPage.waitForSelector('[data-testid="note-card"]');
 
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
-    
+
     // Get initial height
     const initialBox = await noteCard.boundingBox();
     expect(initialBox).toBeTruthy();
     const initialHeight = initialBox?.height || 0;
 
     // Find and interact with the textarea
-    const textarea = noteCard.locator('textarea').first();
+    const textarea = noteCard.locator("textarea").first();
     await expect(textarea).toBeVisible();
-    
+
     // Click to edit and add long text
     await textarea.click();
     await textarea.selectText();
-    
+
     // Type very long text that should cause expansion
     const veryLongText = "This is a very long text that will cause the card to expand. ".repeat(20);
     await textarea.type(veryLongText);
@@ -140,5 +144,4 @@ test.describe("Text Overflow and Card Expansion", () => {
     // Verify that the card has expanded
     expect(expandedHeight).toBeGreaterThan(initialHeight);
   });
-
 });
