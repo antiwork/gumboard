@@ -1,9 +1,9 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { env } from "@/lib/env";
 import { stripe } from "@/lib/stripe";
 import { isBillingAdmin, isOrgPaid } from "@/lib/billing";
 import { NextRequest, NextResponse } from "next/server";
+import { getBaseUrl } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
@@ -35,17 +35,28 @@ export async function POST(request: NextRequest) {
       }
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: user.organization.stripeCustomerId,
-        return_url: `${env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL || ""}/settings/organization#billing`,
+        return_url: `${getBaseUrl(request)}/settings/organization#billing`,
       });
       return NextResponse.json({ url: portalSession.url, portal: true });
     }
 
-    const successUrl = `${env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL || ""}/settings/organization#billing`;
-    const cancelUrl = successUrl;
+    const baseUrl = getBaseUrl(request);
+    const successUrl = `${baseUrl}/settings/organization?session_id={CHECKOUT_SESSION_ID}#billing`;
+    const cancelUrl = `${baseUrl}/settings/organization?canceled=1#billing`;
 
     const checkout = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: [{ price: env.STRIPE_PRICE_TEAM_MONTHLY, quantity: 1 }],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: 900,
+            recurring: { interval: "month" },
+            product_data: { name: "Gumboard Team Plan" },
+          },
+          quantity: 1,
+        },
+      ],
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: user.organizationId,

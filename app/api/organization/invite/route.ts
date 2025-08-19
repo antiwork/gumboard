@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
-import { isBillingAdmin, isOrgPaid, PaywallError } from "@/lib/billing";
+import { isBillingAdmin, isOrgPaid } from "@/lib/billing";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 

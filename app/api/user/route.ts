@@ -46,10 +46,13 @@ export async function GET() {
             name: user.organization.name,
             slackWebhookUrl: user.organization.slackWebhookUrl,
             members: user.organization.members,
-            plan: (user.organization as any).plan,
-            subscriptionStatus: (user.organization as any).subscriptionStatus,
-            currentPeriodEnd: (user.organization as any).currentPeriodEnd,
-            stripeCustomerId: (user.organization as any).stripeCustomerId,
+            plan: (user.organization as unknown as { plan?: string }).plan,
+            subscriptionStatus: (user.organization as unknown as { subscriptionStatus?: string | null })
+              .subscriptionStatus,
+            currentPeriodEnd: (user.organization as unknown as { currentPeriodEnd?: Date | null })
+              .currentPeriodEnd,
+            stripeCustomerId: (user.organization as unknown as { stripeCustomerId?: string | null })
+              .stripeCustomerId,
           }
         : null,
     });

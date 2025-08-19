@@ -2,11 +2,14 @@ import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 import { db } from "@/lib/db";
+import { $Enums } from "@prisma/client";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-async function upsertOrgFromSubscription(sub: any) {
+type StripeSubLite = { id: string; status: string; customer: string | { id: string }; current_period_end?: number };
+
+async function upsertOrgFromSubscription(sub: StripeSubLite) {
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
   const org = await db.organization.findFirst({
     where: { OR: [{ stripeCustomerId: customerId }, { stripeSubscriptionId: sub.id }] },
@@ -18,7 +21,7 @@ async function upsertOrgFromSubscription(sub: any) {
       where: { id: org.id },
       data: {
         plan: "TEAM",
-        subscriptionStatus: sub.status,
+        subscriptionStatus: sub.status as $Enums.SubscriptionStatus,
         stripeCustomerId: customerId,
         stripeSubscriptionId: sub.id,
         currentPeriodEnd,
@@ -35,7 +38,8 @@ export async function POST(req: NextRequest) {
     const body = await req.text();
     if (!sig) return NextResponse.json({ error: "Missing signature" }, { status: 400 });
 
-    let event: any;
+    type EventLike = { id: string; type: string; data: { object: unknown } };
+    let event: EventLike;
     try {
       event = stripe.webhooks.constructEvent(body, sig, (env.STRIPE_WEBHOOK_SECRET as string) || "");
     } catch (err) {
@@ -51,7 +55,12 @@ export async function POST(req: NextRequest) {
 
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object;
+        const session = event.data.object as {
+          subscription?: string;
+          customer?: string;
+          metadata?: { orgId?: string };
+          client_reference_id?: string;
+        };
         const subscriptionId = session.subscription;
         const customerId = session.customer;
         const orgId = session.metadata?.orgId || session.client_reference_id;
@@ -71,7 +80,7 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.updated":
       case "customer.subscription.created":
       case "customer.subscription.deleted": {
-        const sub = event.data.object;
+        const sub = event.data.object as StripeSubLite;
         const orgId = await upsertOrgFromSubscription(sub);
         if (orgId && (sub.status === "canceled" || sub.status === "unpaid")) {
           // If period has ended already, deactivate invites

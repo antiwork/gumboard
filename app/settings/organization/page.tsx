@@ -115,6 +115,35 @@ export default function OrganizationSettingsPage() {
     }
   }, [user?.organization]);
 
+  // When returning from Stripe Checkout, Stripe appends ?session_id=cs_...
+  // Detect and call sync to bind the subscription immediately
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const sessionId = url.searchParams.get("session_id");
+    if (!sessionId) return;
+    (async () => {
+      try {
+        setBillingLoading(true);
+        const res = await fetch("/api/billing/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+        if (res.ok) {
+          await refreshUser();
+          // Clean the URL
+          url.searchParams.delete("session_id");
+          window.history.replaceState({}, "", url.toString());
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setBillingLoading(false);
+      }
+    })();
+  }, [refreshUser]);
+
   const fetchInvites = async () => {
     try {
       const response = await fetch("/api/organization/invites");
@@ -541,12 +570,12 @@ export default function OrganizationSettingsPage() {
           <div className="flex items-center justify-between">
             <div className="text-sm text-zinc-700 dark:text-zinc-300">
               <div>
-                Plan: {user?.organization && (user.organization as any).plan ? (user.organization as any).plan : "FREE"}
+                Plan: {user?.organization?.plan ? user.organization.plan : "FREE"}
               </div>
-              <div>Status: {(user?.organization as any)?.subscriptionStatus || "none"}</div>
-              {(user?.organization as any)?.currentPeriodEnd && (
+              <div>Status: {user?.organization?.subscriptionStatus || "none"}</div>
+              {user?.organization?.currentPeriodEnd && (
                 <div>
-                  Renews: {new Date((user!.organization as any).currentPeriodEnd).toLocaleDateString()}
+                  Renews: {new Date(user.organization.currentPeriodEnd).toLocaleDateString()}
                 </div>
               )}
             </div>
@@ -556,7 +585,7 @@ export default function OrganizationSettingsPage() {
                   {billingLoading ? "Loading..." : "Upgrade / Pay now"}
                 </Button>
               )}
-              {(user?.organization as any)?.stripeCustomerId && user?.isAdmin && (
+              {user?.organization?.stripeCustomerId && user?.isAdmin && (
                 <Button onClick={openPortal} variant="outline" disabled={billingLoading}>
                   Manage billing
                 </Button>
@@ -728,13 +757,15 @@ export default function OrganizationSettingsPage() {
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="Enter email address"
                 required
-                disabled={!user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
+                disabled={!user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")}
                 className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
             </div>
             <Button
               type="submit"
-              disabled={inviting || !user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
+              disabled={
+                inviting || !user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")
+              }
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
             >
@@ -815,7 +846,7 @@ export default function OrganizationSettingsPage() {
                   }
                   placeholder="e.g., General Invite"
                   required
-                  disabled={!user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
+                  disabled={!user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")}
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
@@ -833,7 +864,7 @@ export default function OrganizationSettingsPage() {
                       expiresAt: e.target.value,
                     }))
                   }
-                  disabled={!user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
+                  disabled={!user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")}
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
@@ -853,14 +884,16 @@ export default function OrganizationSettingsPage() {
                     }))
                   }
                   placeholder="Unlimited"
-                  disabled={!user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
+                  disabled={!user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")}
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
             </div>
             <Button
               type="submit"
-              disabled={creating || !user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
+              disabled={
+                creating || !user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")
+              }
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can create invite links" : undefined}
             >

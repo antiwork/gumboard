@@ -1,11 +1,11 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { env } from "@/lib/env";
 import { stripe } from "@/lib/stripe";
 import { isBillingAdmin } from "@/lib/billing";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { getBaseUrl } from "@/lib/utils";
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -26,9 +26,10 @@ export async function POST() {
       return NextResponse.json({ error: "No Stripe customer found" }, { status: 400 });
     }
 
+    const baseUrl = getBaseUrl(request);
     const portal = await stripe.billingPortal.sessions.create({
       customer: user.organization.stripeCustomerId,
-      return_url: `${env.NEXT_PUBLIC_APP_URL || process.env.AUTH_URL || ""}/settings/organization#billing`,
+      return_url: `${baseUrl}/settings/organization#billing`,
     });
 
     return NextResponse.json({ url: portal.url });
