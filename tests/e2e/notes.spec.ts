@@ -1180,7 +1180,7 @@ test.describe("Note Management", () => {
       },
     });
 
-    const originalNote = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
         color: "#dbeafe",
         boardId: board.id,
@@ -1299,4 +1299,77 @@ test.describe("Note Management", () => {
     const deleteButton = noteCard.getByRole("button", { name: /Delete Note/i });
     await expect(deleteButton).not.toBeVisible();
   });
+});
+
+test("should dynamically adjust height with new checklist items and content", async ({
+  authenticatedPage,
+  testContext,
+  testPrisma,
+}) => {
+  const boardName = testContext.getBoardName("Height Test Board");
+  const board = await testPrisma.board.create({
+    data: {
+      name: boardName,
+      createdBy: testContext.userId,
+      organizationId: testContext.organizationId,
+    },
+  });
+
+  await authenticatedPage.goto(`/boards/${board.id}`);
+
+  // 1. Create a new note
+  const createNoteResponse = authenticatedPage.waitForResponse(
+    (resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes`) &&
+      resp.request().method() === "POST" &&
+      resp.status() === 201
+  );
+  await authenticatedPage.click('button:has-text("Add Note")');
+  await createNoteResponse;
+
+  const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+  await expect(noteCard).toBeVisible();
+
+  // 2. Get initial height
+  const initialBoundingBox = await noteCard.boundingBox();
+  expect(initialBoundingBox).not.toBeNull();
+  const initialHeight = initialBoundingBox!.height;
+
+  // 3. Add a new checklist item
+  const newItemInput = noteCard.locator('[data-testid="checklist-input"]');
+  await expect(newItemInput).toBeVisible();
+  const addItemResponse = authenticatedPage.waitForResponse(
+    (resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === "PUT" &&
+      resp.ok()
+  );
+  await newItemInput.fill("A new item");
+  await newItemInput.press("Enter");
+  await addItemResponse;
+
+  // 4. Assert height has increased after adding an item
+  await authenticatedPage.waitForTimeout(500); // Wait for UI to update
+  const heightAfterAdd = (await noteCard.boundingBox())!.height;
+  expect(heightAfterAdd).toBeGreaterThan(initialHeight);
+
+  // 5. Add long content to the checklist item to cause wrapping
+  const itemTextarea = noteCard.locator("textarea").first();
+  await expect(itemTextarea).toBeVisible();
+  const longContent =
+    "This is a very long line of text that should definitely wrap to the next line and cause the note to increase in height even more.";
+  const updateContentResponse = authenticatedPage.waitForResponse(
+    (resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+      resp.request().method() === "PUT" &&
+      resp.ok()
+  );
+  await itemTextarea.fill(longContent);
+  await itemTextarea.blur();
+  await updateContentResponse;
+
+  // 6. Assert height has increased again after adding long content
+  await authenticatedPage.waitForTimeout(500); // Wait for UI to update
+  const heightAfterContent = (await noteCard.boundingBox())!.height;
+  expect(heightAfterContent).toBeGreaterThan(heightAfterAdd);
 });

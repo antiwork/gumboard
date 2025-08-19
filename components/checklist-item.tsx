@@ -123,6 +123,7 @@ export function ChecklistItem({
       <textarea
         ref={textareaRef}
         value={editContent ?? item.content}
+        data-testid="checklist-input"
         onChange={(e) => onEditContentChange?.(e.target.value)}
         disabled={readonly}
         className={cn(
