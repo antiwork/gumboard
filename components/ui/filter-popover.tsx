@@ -52,14 +52,14 @@ function FilterPopover({
             variant="outline"
             disabled={disabled}
             className={cn(
-              "flex items-center text-sm gap-0 rounded-md py-2 cursor-pointer w-full sm:w-auto",
+              "flex items-center text-sm gap-0 rounded-md py-2 cursor-pointer w-full",
               disabled && "opacity-50 cursor-not-allowed"
             )}
           >
-            <ListFilter className="w-4 h-4 mr-1 text-muted-foreground" />
+            <ListFilter className="w-4 h-4 text-muted-foreground" />
             <span className="text-foreground">
               {filterCount > 0 && (
-                <span className="px-1.5 py-0.5 text-xs bg-primary/10 text-primary rounded-md">
+                <span className="px-0.5 py-0.5 text-xs bg-primary/10 text-primary rounded-md">
                   {filterCount}
                 </span>
               )}
@@ -95,7 +95,13 @@ function FilterPopover({
                         "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
                     )}
                   >
-                    <User className="w-4 h-4 " />
+                    <Avatar className="w-6 h-6">
+                      <AvatarFallback>
+                        <div className="w-6 h-6 text-primary-foreground rounded-full flex items-center justify-center flex-shrink-0">
+                          <User className="w-4 h-4" />
+                        </div>
+                      </AvatarFallback>
+                    </Avatar>
                     <span className="font-medium">All authors</span>
                   </Button>
                   {authors.map((author) => (
