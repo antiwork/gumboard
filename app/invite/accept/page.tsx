@@ -145,7 +145,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           <div className="max-w-sm sm:max-w-md mx-auto">
             <Card className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-700 dark:text-red-400">Invalid Invitation</CardTitle>
+                <CardTitle className="text-xl text-red-700 dark:text-red-400">
+                  Invalid Invitation
+                </CardTitle>
                 <CardDescription className="text-muted-foreground dark:text-zinc-400">
                   This invitation link is invalid or missing required information.
                 </CardDescription>
@@ -173,8 +175,12 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           <div className="max-w-sm sm:max-w-md mx-auto">
             <Card className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-700 dark:text-red-400">Invalid Invitation</CardTitle>
-                <CardDescription className="text-muted-foreground dark:text-zinc-400">This invitation link is invalid or has expired.</CardDescription>
+                <CardTitle className="text-xl text-red-700 dark:text-red-400">
+                  Invalid Invitation
+                </CardTitle>
+                <CardDescription className="text-muted-foreground dark:text-zinc-400">
+                  This invitation link is invalid or has expired.
+                </CardDescription>
               </CardHeader>
             </Card>
           </div>
