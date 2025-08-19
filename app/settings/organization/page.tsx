@@ -652,7 +652,7 @@ export default function OrganizationSettingsPage() {
                 "Inviting..."
               ) : (
                 <>
-                  <span className="hidden lg:inline">Send</span>Invite
+                  <span className="hidden lg:inline">Send Invite</span>
                 </>
               )}
             </Button>
