@@ -189,7 +189,6 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
       <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
         <div className="container mx-auto px-4 sm:px-6 pt-6 sm:py-8">
           <div className="max-w-sm sm:max-w-md mx-auto space-y-8">
-
             {/* Auto-verification Card */}
             <Card className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm">
               <CardHeader className="text-center">
@@ -198,7 +197,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                     {invite.organization.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <CardTitle className="text-xl text-foreground dark:text-zinc-100">{invite.organization.name}</CardTitle>
+                <CardTitle className="text-xl text-foreground dark:text-zinc-100">
+                  {invite.organization.name}
+                </CardTitle>
                 <CardDescription className="text-base text-muted-foreground dark:text-zinc-400">
                   {invite.user.name || invite.user.email} has invited you to join their organization
                 </CardDescription>
@@ -227,9 +228,13 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           <div className="max-w-sm sm:max-w-md mx-auto">
             <Card className="bg-white dark:bg-zinc-900 border border-yellow-200 dark:border-yellow-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-yellow-700 dark:text-yellow-400">Wrong Account</CardTitle>
+                <CardTitle className="text-xl text-yellow-700 dark:text-yellow-400">
+                  Wrong Account
+                </CardTitle>
                 <CardDescription className="text-muted-foreground dark:text-zinc-400">
-                  This invitation is for {invite.email}, but you&apos;re signed in as {session.user.email}. Please sign out and use the invitation link again to sign in with the correct account.
+                  This invitation is for {invite.email}, but you&apos;re signed in as{" "}
+                  {session.user.email}. Please sign out and use the invitation link again to sign in
+                  with the correct account.
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
