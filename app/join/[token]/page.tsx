@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 async function joinOrganization(token: string) {
   "use server";
@@ -177,20 +178,10 @@ export default async function JoinPage({ params }: JoinPageProps) {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-red-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-600">Invalid Link</CardTitle>
-                <CardDescription>
-                  This invitation link is invalid or missing required information.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <ErrorCard
+        title="Invalid Link"
+        description="This invitation link is invalid or missing required information."
+      />
     );
   }
 
@@ -205,79 +196,40 @@ export default async function JoinPage({ params }: JoinPageProps) {
 
   if (!invite) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-red-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-600">Invalid Invitation</CardTitle>
-                <CardDescription>This invitation link is invalid or has expired.</CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <ErrorCard
+        title="Invalid Invitation"
+        description="This invitation link is invalid or has expired."
+      />
     );
   }
 
   // Check if invite is active
   if (!invite.isActive) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-red-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-600">Invitation Deactivated</CardTitle>
-                <CardDescription>
-                  This invitation link has been deactivated by the organization.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <ErrorCard
+        title="Invitation Deactivated"
+        description="This invitation link has been deactivated by the organization."
+      />
     );
   }
 
   // Check if invite has expired
   if (invite.expiresAt && invite.expiresAt < new Date()) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-red-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-600">Invitation Expired</CardTitle>
-                <CardDescription>
-                  This invitation link expired on {invite.expiresAt.toLocaleDateString()}.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <ErrorCard
+        title="Invitation Expired"
+        description={`This invitation expired on ${invite.expiresAt.toLocaleDateString()}.`}
+      />
     );
   }
 
   // Check if usage limit has been reached
   if (invite.usageLimit && invite.usageCount >= invite.usageLimit) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-red-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-600">Invitation Full</CardTitle>
-                <CardDescription>
-                  This invitation link has reached its maximum usage limit of {invite.usageLimit}{" "}
-                  uses.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <ErrorCard
+        title="Invitation Limit Reached"
+        description={`This invitation has reached its maximum usage limit of ${invite.usageLimit} uses.`}
+      />
     );
   }
 
@@ -378,21 +330,10 @@ export default async function JoinPage({ params }: JoinPageProps) {
 
   if (user?.organizationId) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-yellow-200">
-              <CardHeader className="text-center">
-                <CardTitle className="text-xl text-yellow-600">Already in Organization</CardTitle>
-                <CardDescription>
-                  You are already a member of {user.organization?.name}. You can only be a member of
-                  one organization at a time.
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
-        </div>
-      </div>
+      <ErrorCard
+        title="Already in Organization"
+        description={`You are already a member of ${user.organization?.name}. You can only be a member of one organization at a time.`}
+      />
     );
   }
 
@@ -456,6 +397,26 @@ export default async function JoinPage({ params }: JoinPageProps) {
           </CardContent>
         </Card>
       </div>
+    </div>
+  );
+}
+
+function ErrorCard({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-4 dark:bg-zinc-950">
+      <Card className="w-full max-w-md border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
+        <CardHeader className="text-center space-y-2">
+          <CardTitle className="text-2xl font-semibold text-red-600">{title}</CardTitle>
+          <CardDescription className="text-slate-600 dark:text-slate-400">
+            {description}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-4">
+          <Button asChild className="w-full px-4 py-5">
+            <Link href="/dashboard">Go to Dashboard</Link>
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
