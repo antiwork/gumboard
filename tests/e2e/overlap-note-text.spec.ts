@@ -2,7 +2,11 @@ import { expect } from "@playwright/test";
 import { test } from "../fixtures/test-helpers";
 
 test.describe("Checklist item overflow and note content overflow behaviors", () => {
-  test("collapsed checklist item shows CSS ellipsis, expands on click, dblclick enters edit", async ({ authenticatedPage, testPrisma, testContext }) => {
+  test("collapsed checklist item shows CSS ellipsis, expands on click, dblclick enters edit", async ({
+    authenticatedPage,
+    testPrisma,
+    testContext,
+  }) => {
     // Arrange: seed board, a note with a single long checklist item
     await testContext.ensureAuthInitialized();
     const board = await testPrisma.board.create({
@@ -21,7 +25,10 @@ test.describe("Checklist item overflow and note content overflow behaviors", () 
       },
     });
 
-    const longText = `This is a very long checklist item that should overflow and therefore be truncated with an ellipsis when collapsed. `.repeat(4);
+    const longText =
+      `This is a very long checklist item that should overflow and therefore be truncated with an ellipsis when collapsed. `.repeat(
+        4
+      );
 
     const createdItem = await testPrisma.checklistItem.create({
       data: {
@@ -53,7 +60,9 @@ test.describe("Checklist item overflow and note content overflow behaviors", () 
     await collapsedDisplay.click();
     const expandedDisplay = itemRow.locator('[class*="whitespace-pre-wrap"]').first();
     await expect(expandedDisplay).toBeVisible();
-    const expandedStyle = await expandedDisplay.evaluate((node) => window.getComputedStyle(node as HTMLElement).whiteSpace);
+    const expandedStyle = await expandedDisplay.evaluate(
+      (node) => window.getComputedStyle(node as HTMLElement).whiteSpace
+    );
     expect(expandedStyle).toBe("pre-wrap");
 
     // Double-click to enter edit mode
@@ -63,7 +72,11 @@ test.describe("Checklist item overflow and note content overflow behaviors", () 
     await expect(editor).toHaveValue(longText);
   });
 
-  test("note content scrolls when overflowing to avoid layout overlap", async ({ authenticatedPage, testPrisma, testContext }) => {
+  test("note content scrolls when overflowing to avoid layout overlap", async ({
+    authenticatedPage,
+    testPrisma,
+    testContext,
+  }) => {
     // Arrange: seed board, a note with many items to force overflow
     await testContext.ensureAuthInitialized();
     const board = await testPrisma.board.create({
@@ -94,7 +107,10 @@ test.describe("Checklist item overflow and note content overflow behaviors", () 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     // locate the note that contains our content
-    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').filter({ hasText: "Overflow Item 0" }).first();
+    const noteCard = authenticatedPage
+      .locator('[data-testid="note-card"]')
+      .filter({ hasText: "Overflow Item 0" })
+      .first();
     await expect(noteCard).toBeVisible();
 
     // Assert note container is scrollable (content taller than container)
@@ -112,5 +128,3 @@ test.describe("Checklist item overflow and note content overflow behaviors", () 
     expect(["auto", "scroll"]).toContain(scrollInfo.overflowY);
   });
 });
-
-

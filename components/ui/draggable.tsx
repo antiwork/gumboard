@@ -154,12 +154,7 @@ export function DraggableItem({
   });
 
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={combinedClassName}
-      {...props}
-    >
+    <div ref={setNodeRef} style={style} className={combinedClassName} {...props}>
       {childrenWithProps}
     </div>
   );
