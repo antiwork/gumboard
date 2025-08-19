@@ -277,12 +277,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteClick = (e: React.MouseEvent, boardId: string, boardName: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDeleteConfirmDialog({ open: true, boardId, boardName });
-  };
-
   if (loading) {
     return <DashboardSkeleton />;
   }
