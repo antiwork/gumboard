@@ -61,6 +61,9 @@ interface NoteProps {
   syncDB?: boolean;
   currentUser?: User;
   onUpdate?: (note: Note) => void;
+  onEditingChange?: (itemId: string, content: string) => void;
+  onStopEditingItem?: (itemId: string) => void;
+  onMeasureItemHeight?: (itemId: string, height: number) => void;
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
   onUnarchive?: (noteId: string) => void;
@@ -75,6 +78,9 @@ export function Note({
   note,
   currentUser,
   onUpdate,
+  onEditingChange,
+  onStopEditingItem,
+  onMeasureItemHeight,
   onDelete,
   onArchive,
   onUnarchive,
@@ -467,8 +473,8 @@ export function Note({
         </div>
       </div>
 
-      <div className="flex flex-col flex-1 min-h-0">
-        <div className="overflow-y-auto space-y-1 pr-1">
+      <div className="flex flex-col">
+        <div className="space-y-1">
           {/* Checklist Items */}
           <DraggableRoot
             items={note.checklistItems ?? []}
@@ -488,9 +494,16 @@ export function Note({
                     onDelete={handleDeleteItem}
                     isEditing={editingItem === item.id}
                     editContent={editingItem === item.id ? editingItemContent : undefined}
-                    onEditContentChange={setEditingItemContent}
+                    onEditContentChange={(v) => {
+                      setEditingItemContent(v);
+                      onEditingChange?.(item.id, v);
+                    }}
                     onStartEdit={handleStartEditItem}
-                    onStopEdit={handleStopEditItem}
+                    onStopEdit={() => {
+                      onStopEditingItem?.(item.id);
+                      handleStopEditItem();
+                    }}
+                    onMeasureHeight={(h) => onMeasureItemHeight?.(item.id, h)}
                     readonly={readonly}
                     showDeleteButton={canEdit}
                   />
@@ -507,13 +520,16 @@ export function Note({
                   checked: false,
                   order: 0,
                 }}
-                onEdit={() => {}}
+                onEdit={() => { }}
                 onDelete={() => {
                   setNewItemContent("");
                 }}
                 isEditing={true}
                 editContent={newItemContent}
-                onEditContentChange={setNewItemContent}
+                onEditContentChange={(v) => {
+                  setNewItemContent(v);
+                  onEditingChange?.("new-item", v);
+                }}
                 onStopEdit={() => {
                   if (!newItemContent.trim()) {
                     setNewItemContent("");

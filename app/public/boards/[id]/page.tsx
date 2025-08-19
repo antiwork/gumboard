@@ -15,8 +15,8 @@ import { useUser } from "@/app/contexts/UserContext";
 import {
   getResponsiveConfig,
   getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
+  calculateGridLayoutWithEditing,
+  calculateMobileLayoutWithEditing,
   filterAndSortNotes,
 } from "@/lib/utils";
 
@@ -119,8 +119,8 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const layoutNotes = useMemo(
     () =>
       isMobile
-        ? calculateMobileLayout(filteredNotes, null)
-        : calculateGridLayout(filteredNotes, null),
+        ? calculateMobileLayoutWithEditing(filteredNotes, null, undefined, undefined)
+        : calculateGridLayoutWithEditing(filteredNotes, null, undefined, undefined),
     [isMobile, filteredNotes]
   );
 

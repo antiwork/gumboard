@@ -23,6 +23,7 @@ interface ChecklistItemProps {
   onEditContentChange?: (content: string) => void;
   onStartEdit?: (itemId: string) => void;
   onStopEdit?: () => void;
+  onMeasureHeight?: (height: number) => void;
   readonly?: boolean;
   showDeleteButton?: boolean;
   className?: string;
@@ -40,6 +41,7 @@ export function ChecklistItem({
   onEditContentChange,
   onStartEdit,
   onStopEdit,
+  onMeasureHeight,
   readonly = false,
   showDeleteButton = true,
   className,
@@ -56,8 +58,9 @@ export function ChecklistItem({
   };
 
   React.useEffect(() => {
-    if (isEditing && textareaRef.current) {
+    if (textareaRef.current) {
       adjustTextareaHeight(textareaRef.current);
+      onMeasureHeight?.(textareaRef.current.scrollHeight + 4);
       previousContentRef.current = editContent ?? item.content;
     }
   }, [isEditing, editContent, item.content]);
@@ -128,7 +131,7 @@ export function ChecklistItem({
         onFocus={(e) => {
           if (isEditing) {
             const originalScrollIntoView = e.target.scrollIntoView;
-            e.target.scrollIntoView = () => {};
+            e.target.scrollIntoView = () => { };
             setTimeout(() => {
               e.target.scrollIntoView = originalScrollIntoView;
             }, 100);
@@ -146,6 +149,7 @@ export function ChecklistItem({
 
           if (currentContent !== previousContentRef.current) {
             adjustTextareaHeight(target);
+            onMeasureHeight?.(target.scrollHeight + 4);
             previousContentRef.current = currentContent;
           }
         }}

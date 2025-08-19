@@ -31,8 +31,8 @@ import { useUser } from "@/app/contexts/UserContext";
 import {
   getResponsiveConfig,
   getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
+  calculateGridLayoutWithEditing,
+  calculateMobileLayoutWithEditing,
   filterAndSortNotes,
 } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
@@ -62,6 +62,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
+  const [editingContentOverrides, setEditingContentOverrides] = useState<Record<string, string>>({});
+  const [measuredItemHeights, setMeasuredItemHeights] = useState<Record<string, number>>({});
   // Per-item edit and animations are handled inside Note component now
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
@@ -262,9 +264,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const layoutNotes = useMemo(
     () =>
       isMobile
-        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
-        : calculateGridLayout(filteredNotes, addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem]
+        ? calculateMobileLayoutWithEditing(
+          filteredNotes,
+          addingChecklistItem,
+          editingContentOverrides,
+          measuredItemHeights
+        )
+        : calculateGridLayoutWithEditing(
+          filteredNotes,
+          addingChecklistItem,
+          editingContentOverrides,
+          measuredItemHeights
+        ),
+    [isMobile, filteredNotes, addingChecklistItem, editingContentOverrides, measuredItemHeights]
   );
 
   const boardHeight = useMemo(() => {
@@ -360,6 +372,41 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     // OPTIMISTIC UPDATE: Update UI immediately
     setNotes((prev) => prev.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
+
+  const handleEditingContentChange = (
+    noteId: string,
+    itemId: string,
+    content: string
+  ) => {
+    const key = `${noteId}:${itemId}`;
+    setEditingContentOverrides((prev) => ({ ...prev, [key]: content }));
+  };
+
+  const handleStopEditingItem = (noteId: string, itemId: string) => {
+    const key = `${noteId}:${itemId}`;
+    setEditingContentOverrides((prev) => {
+      const { [key]: _, ...rest } = prev;
+      return rest;
+    });
+  };
+
+  const handleMeasureItemHeight = (noteId: string, itemId: string, height: number) => {
+    const key = `${noteId}:${itemId}`;
+    setMeasuredItemHeights((prev) => ({ ...prev, [key]: height }));
+  };
+
+  // Ensure layout reflows if content changes outside of editing (e.g., initial render)
+  // by deriving overrides from actual note content whenever notes list changes.
+  // This keeps calculated heights in sync with current content when not editing.
+  useEffect(() => {
+    const overrides: Record<string, string> = {};
+    for (const n of filteredNotes) {
+      for (const item of n.checklistItems || []) {
+        overrides[`${n.id}:${item.id}`] = item.content;
+      }
+    }
+    setEditingContentOverrides((prev) => ({ ...overrides, ...prev }));
+  }, [filteredNotes]);
 
   const handleAddNote = async (targetBoardId?: string) => {
     // For all notes view, ensure a board is selected
@@ -721,11 +768,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       <Link
                         key={b.id}
                         href={`/boards/${b.id}`}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${
-                          b.id === boardId
-                            ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
-                            : "text-foreground dark:text-zinc-100"
-                        }`}
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${b.id === boardId
+                          ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
+                          : "text-foreground dark:text-zinc-100"
+                          }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>{b.name}</div>
@@ -739,11 +785,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* All Notes Option */}
                     <Link
                       href="/boards/all-notes"
-                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
-                        boardId === "all-notes"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
+                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${boardId === "all-notes"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                        }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
                       <div>All notes</div>
@@ -752,11 +797,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* Archive Option */}
                     <Link
                       href="/boards/archive"
-                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
-                        boardId === "archive"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
+                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${boardId === "archive"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                        }`}
                       onClick={() => setShowBoardDropdown(false)}
                     >
                       <div>All archived</div>
@@ -891,7 +935,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               note={note as Note}
               currentUser={user as User}
               onUpdate={handleUpdateNoteFromComponent}
+              onEditingChange={(itemId, content) =>
+                handleEditingContentChange(note.id, itemId, content)
+              }
+              onStopEditingItem={(itemId) => handleStopEditingItem(note.id, itemId)}
               onDelete={handleDeleteNote}
+              onMeasureItemHeight={(itemId, h) => handleMeasureItemHeight(note.id, itemId, h)}
               onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
               onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               onCopy={handleCopyNote}

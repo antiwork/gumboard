@@ -61,12 +61,61 @@ export function getUniqueAuthors(notes: Note[]) {
   return Array.from(authorsMap.values()).sort((a, b) => a.name.localeCompare(b.name));
 }
 
+// Estimate multi-line text height for checklist items given available width
+function estimateChecklistContentHeight(
+  note: Note,
+  availableWidth: number,
+  addingChecklistItem?: string | null,
+  editingContentOverrides?: Record<string, string>,
+  measuredItemHeights?: Record<string, number>
+) {
+  const lineHeightPx = 20; // approx for text-sm
+  const verticalPaddingPx = 8; // textarea py-1 => 0.25rem top + bottom
+  const itemSpacingPx = 4; // space-y-1
+  const averageCharWidthPx = 7; // heuristic average
+
+  const charsPerLine = Math.max(1, Math.floor(availableWidth / averageCharWidthPx));
+
+  const items = note.checklistItems ?? [];
+
+  let total = 0;
+  for (const item of items) {
+    const key = `${note.id}:${item.id}`;
+    const measured = measuredItemHeights?.[key];
+    if (typeof measured === "number" && measured > 0) {
+      total += measured;
+      continue;
+    }
+
+    const effectiveContent = editingContentOverrides?.[key] ?? item.content;
+    const segments = effectiveContent.split("\n");
+    let lines = 0;
+    for (const segment of segments) {
+      const len = segment.length === 0 ? 1 : segment.length;
+      lines += Math.max(1, Math.ceil(len / charsPerLine));
+    }
+    total += lines * lineHeightPx + verticalPaddingPx;
+  }
+
+  if (items.length > 1) {
+    total += (items.length - 1) * itemSpacingPx;
+  }
+
+  if (addingChecklistItem === note.id) {
+    total += lineHeightPx + verticalPaddingPx;
+  }
+
+  return total;
+}
+
 // Helper function to calculate note height based on content
 export function calculateNoteHeight(
   note: Note,
   noteWidth?: number,
   notePadding?: number,
-  addingChecklistItem?: string | null
+  addingChecklistItem?: string | null,
+  editingContentOverrides?: Record<string, string>,
+  measuredItemHeights?: Record<string, number>
 ) {
   const config = getResponsiveConfig();
   const actualNotePadding = notePadding || config.notePadding;
@@ -75,23 +124,37 @@ export function calculateNoteHeight(
   const paddingHeight = actualNotePadding * 2;
   const minContentHeight = 60;
 
-  const itemHeight = 32;
-  const itemSpacing = 4;
-  const checklistItemsCount = note.checklistItems?.length || 0;
-  const addingItemHeight = addingChecklistItem === note.id ? 32 : 0;
-  const addTaskButtonHeight = 36;
+  const assumedLeftGutterForCheckboxAndGaps = 40; // checkbox + gap + textarea padding
+  const contentWidth = Math.max(
+    120,
+    (noteWidth || config.noteWidth) - actualNotePadding * 2 - assumedLeftGutterForCheckboxAndGaps
+  );
 
-  const checklistHeight =
-    checklistItemsCount * itemHeight +
-    (checklistItemsCount > 0 ? (checklistItemsCount - 1) * itemSpacing : 0) +
-    addingItemHeight;
-  const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
+  const dynamicChecklistHeight = estimateChecklistContentHeight(
+    note,
+    contentWidth,
+    addingChecklistItem,
+    editingContentOverrides,
+    measuredItemHeights
+  );
 
-  return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
+  const totalChecklistHeight = Math.max(minContentHeight, dynamicChecklistHeight);
+
+  return headerHeight + paddingHeight + totalChecklistHeight;
 }
 
 // Helper function to calculate bin-packed layout for desktop
 export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?: string | null) {
+  // Back-compat overload
+  return calculateGridLayoutWithEditing(filteredNotes, addingChecklistItem, undefined);
+}
+
+export function calculateGridLayoutWithEditing(
+  filteredNotes: Note[],
+  addingChecklistItem?: string | null,
+  editingContentOverrides?: Record<string, string>,
+  measuredItemHeights?: Record<string, number>
+) {
   if (typeof window === "undefined") return [];
 
   const config = getResponsiveConfig();
@@ -115,7 +178,9 @@ export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?:
       note,
       adjustedNoteWidth,
       config.notePadding,
-      addingChecklistItem
+      addingChecklistItem,
+      editingContentOverrides,
+      measuredItemHeights
     );
     let bestColumn = 0;
     let minBottom = columnBottoms[0];
@@ -142,6 +207,16 @@ export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?:
 
 // Helper function to calculate mobile layout (optimized single/double column)
 export function calculateMobileLayout(filteredNotes: Note[], addingChecklistItem?: string | null) {
+  // Back-compat overload
+  return calculateMobileLayoutWithEditing(filteredNotes, addingChecklistItem, undefined);
+}
+
+export function calculateMobileLayoutWithEditing(
+  filteredNotes: Note[],
+  addingChecklistItem?: string | null,
+  editingContentOverrides?: Record<string, string>,
+  measuredItemHeights?: Record<string, number>
+) {
   if (typeof window === "undefined") return [];
 
   const config = getResponsiveConfig();
@@ -162,7 +237,9 @@ export function calculateMobileLayout(filteredNotes: Note[], addingChecklistItem
       note,
       noteWidth,
       config.notePadding,
-      addingChecklistItem
+      addingChecklistItem,
+      editingContentOverrides,
+      measuredItemHeights
     );
 
     let bestColumn = 0;
