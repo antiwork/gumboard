@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -90,6 +90,29 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const [noteHeight, setNoteHeight] = useState<number | undefined>(undefined);
+  const noteRef = useRef<HTMLDivElement>(null);
+
+  const adjustNoteHeight = useCallback(() => {
+    if (noteRef.current) {
+      noteRef.current.style.height = 'auto';
+      const scrollHeight = noteRef.current.scrollHeight;
+      const maxHeight = 500;
+      const newHeight = Math.min(scrollHeight, maxHeight);
+
+      setNoteHeight(newHeight);
+      if (scrollHeight > maxHeight) {
+        noteRef.current.style.overflowY = 'auto';
+      } else {
+        noteRef.current.style.overflowY = 'hidden';
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    adjustNoteHeight();
+  }, [editingItem, newItemContent, note.checklistItems, adjustNoteHeight]);
+
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -309,6 +332,7 @@ export function Note({
     if (item && canEdit) {
       setEditingItem(itemId);
       setEditingItemContent(item.content);
+      setTimeout(adjustNoteHeight, 0);
     }
   };
 
@@ -336,13 +360,18 @@ export function Note({
 
   return (
     <div
+      ref={noteRef}
       className={cn(
         "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "overflow-hidden max-w-full",
         className
       )}
       data-testid="note-card"
       style={{
         backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+        maxWidth: "100%",
+        height: noteHeight ? `${noteHeight}px` : 'auto',
+        minHeight: '100px',
         ...style,
       }}
     >
@@ -467,8 +496,8 @@ export function Note({
         </div>
       </div>
 
-      <div className="flex flex-col">
-        <div className="overflow-y-auto space-y-1">
+      <div className="flex flex-col min-w-0">
+        <div className="overflow-y-auto space-y-1 min-w-0">
           {/* Checklist Items */}
           <DraggableRoot
             items={note.checklistItems ?? []}
@@ -478,7 +507,7 @@ export function Note({
               }
             }}
           >
-            <DraggableContainer className="space-y-1">
+            <DraggableContainer className="space-y-1 min-w-0">
               {note.checklistItems?.map((item) => (
                 <DraggableItem key={item.id} id={item.id} disabled={!canEdit}>
                   <ChecklistItemComponent
@@ -507,7 +536,7 @@ export function Note({
                   checked: false,
                   order: 0,
                 }}
-                onEdit={() => {}}
+                onEdit={() => { }}
                 onDelete={() => {
                   setNewItemContent("");
                 }}
