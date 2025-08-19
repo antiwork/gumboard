@@ -63,8 +63,17 @@ model User {
   invitedOrganizations OrganizationInvite[]
   createdSelfServeInvites OrganizationSelfServeInvite[]
   notes          Note[]
+  
+  // Stripe subscription fields
+  stripeCustomerId      String?   @unique
+  stripeSubscriptionId  String?   @unique
+  subscriptionStatus    String?   // active, past_due, canceled, etc.
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
 
   @@index([organizationId], name: "idx_user_org")
+  @@index([stripeCustomerId], name: "idx_user_stripe_customer")
+  @@index([stripeSubscriptionId], name: "idx_user_stripe_subscription")
   @@map("users")
 }
 

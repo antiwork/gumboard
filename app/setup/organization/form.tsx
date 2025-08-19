@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { X, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/contexts/UserContext";
+import { TeamPlanUpgradeModal } from "@/components/ui/team-plan-upgrade-modal";
 
 interface OrganizationSetupFormProps {
   onSubmit: (
@@ -21,9 +22,11 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { refreshUser } = useUser();
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   const addEmailField = () => {
-    setTeamEmails([...teamEmails, ""]);
+    // Show the upgrade modal when the user tries to add a team member.
+    setIsUpgradeModalOpen(true);
   };
 
   const removeEmailField = (index: number) => {
@@ -46,22 +49,36 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
     e.preventDefault();
     if (!orgName.trim()) return;
 
+    const validEmails = teamEmails.filter((email) => email.trim() && email.includes("@"));
+
+    // If user is trying to invite members, show the upgrade modal first.
+    if (validEmails.length > 0) {
+      setIsUpgradeModalOpen(true);
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const validEmails = teamEmails.filter((email) => email.trim() && email.includes("@"));
-      const result = await onSubmit(orgName.trim(), validEmails);
+      // Pass an empty array for emails since this path is for non-team setup.
+      const result = await onSubmit(orgName.trim(), []);
       if (result?.success) {
         await refreshUser();
         router.push("/dashboard");
       }
     } catch (error) {
       console.error("Error creating organization:", error);
+    } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 dark:text-zinc-400">
+    <>
+      <TeamPlanUpgradeModal
+        isOpen={isUpgradeModalOpen}
+        onClose={() => setIsUpgradeModalOpen(false)}
+      />
+      <form onSubmit={handleSubmit} className="space-y-6 dark:text-zinc-400">
       <div className="space-y-2">
         <Label htmlFor="organizationName">Organization Name</Label>
         <Input
@@ -117,5 +134,6 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
         {isSubmitting ? "Creating..." : hasValidEmails() ? "Save & Send Invites" : "Save"}
       </Button>
     </form>
+   </>
   );
 }
