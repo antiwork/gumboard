@@ -159,28 +159,30 @@ test.describe("Home Page", () => {
     expect(newItem?.content).toBe(newItemContent);
 
     // Test 4: Edit existing checklist item content
-    const originalFinanceText = testContext.prefix("Finance update by Friday");
-    const updatedFinanceText = testContext.prefix("Updated Finance deadline");
-    await authenticatedPage.getByText(originalFinanceText).click();
-    const editInput = authenticatedPage.locator("textarea").first();
-    await expect(editInput).toBeVisible();
-    const editResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await editInput.fill(updatedFinanceText);
-    await editInput.blur(); // Use blur instead of Enter to save the edit
-    await editResponse;
-    await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible();
+      const originalFinanceId = testContext.prefix("101");
+  const originalFinanceText = testContext.prefix("Finance update by Friday");
+  const updatedFinanceText = testContext.prefix("Updated Finance deadline");
 
-    // Verify edit was saved to database
-    const editedItem = await testPrisma.checklistItem.findFirst({
-      where: { content: updatedFinanceText },
-    });
-    expect(editedItem).toBeTruthy();
-    expect(editedItem?.content).toBe(updatedFinanceText);
+  const financeItem = authenticatedPage.getByTestId(originalFinanceId);
+  await financeItem.getByText(originalFinanceText).click();
+  const editInput = financeItem.locator("textarea");
+
+  const editResponse = authenticatedPage.waitForResponse(
+    (resp) =>
+      resp.url().includes(`/api/boards/${demoBoard.id}/notes/${note1.id}`) &&
+      resp.request().method() === "PUT" &&
+      resp.ok()
+  );
+  await editInput.fill(updatedFinanceText);
+  await editInput.blur();
+  await editResponse;
+
+  await expect(financeItem.getByText(updatedFinanceText)).toBeVisible();
+
+  const editedItem = await testPrisma.checklistItem.findUnique({
+    where: { id: originalFinanceId },
+  });
+  expect(editedItem?.content).toBe(updatedFinanceText);
 
     // Test 5: Delete a checklist item
     const deleteItemResponse = authenticatedPage.waitForResponse(
