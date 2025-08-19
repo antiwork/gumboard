@@ -178,8 +178,8 @@ export function Note({
     try {
       if (!note.checklistItems) return;
 
-      const updatedItems = note.checklistItems.map((item) =>
-        item.id === itemId ? { ...item, content } : item
+      const updatedItems = note.checklistItems.map((item, index) =>
+        item.id === itemId ? { ...item, content, order: index } : { ...item, order: index }
       );
 
       const optimisticNote = {
