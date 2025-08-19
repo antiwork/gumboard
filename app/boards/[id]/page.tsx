@@ -28,11 +28,7 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import {
-  getResponsiveConfig,
-  getUniqueAuthors,
-  filterAndSortNotes,
-} from "@/lib/utils";
+import { getResponsiveConfig, getUniqueAuthors, filterAndSortNotes } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
