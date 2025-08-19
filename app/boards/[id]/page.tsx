@@ -262,9 +262,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const layoutNotes = useMemo(
     () =>
       isMobile
-        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
-        : calculateGridLayout(filteredNotes, addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem]
+        ? calculateMobileLayout(filteredNotes, addingChecklistItem, user)
+        : calculateGridLayout(filteredNotes, addingChecklistItem, user),
+    [isMobile, filteredNotes, addingChecklistItem, user]
   );
 
   const boardHeight = useMemo(() => {

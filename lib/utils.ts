@@ -91,7 +91,7 @@ export function calculateNoteHeight(
 }
 
 // Helper function to calculate bin-packed layout for desktop
-export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?: string | null) {
+export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?: string | null, currentUser?: { id: string } | null) {
   if (typeof window === "undefined") return [];
 
   const config = getResponsiveConfig();
@@ -117,15 +117,31 @@ export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?:
       config.notePadding,
       addingChecklistItem
     );
+    
     let bestColumn = 0;
     let minBottom = columnBottoms[0];
 
-    for (let col = 1; col < actualColumnsCount; col++) {
-      if (columnBottoms[col] < minBottom) {
-        minBottom = columnBottoms[col];
-        bestColumn = col;
+    // Priority positioning for user's own notes
+    const isCurrentUserNote = currentUser && note.user.id === currentUser.id;
+    
+    if (isCurrentUserNote) {
+      // For user's own notes, prefer leftmost columns (top-left priority)
+      for (let col = 0; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+    } else {
+      // For other users' notes, use normal shortest column algorithm
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
       }
     }
+    
     const x = offsetX + bestColumn * (adjustedNoteWidth + config.gridGap);
     const y = columnBottoms[bestColumn];
     columnBottoms[bestColumn] = y + noteHeight + config.gridGap;
@@ -141,7 +157,7 @@ export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?:
 }
 
 // Helper function to calculate mobile layout (optimized single/double column)
-export function calculateMobileLayout(filteredNotes: Note[], addingChecklistItem?: string | null) {
+export function calculateMobileLayout(filteredNotes: Note[], addingChecklistItem?: string | null, currentUser?: { id: string } | null) {
   if (typeof window === "undefined") return [];
 
   const config = getResponsiveConfig();
@@ -168,10 +184,24 @@ export function calculateMobileLayout(filteredNotes: Note[], addingChecklistItem
     let bestColumn = 0;
     let minBottom = columnBottoms[0];
 
-    for (let col = 1; col < actualColumnsCount; col++) {
-      if (columnBottoms[col] < minBottom) {
-        minBottom = columnBottoms[col];
-        bestColumn = col;
+    // Priority positioning for user's own notes on mobile too
+    const isCurrentUserNote = currentUser && note.user.id === currentUser.id;
+    
+    if (isCurrentUserNote) {
+      // For user's own notes, prefer leftmost columns (top-left priority)
+      for (let col = 0; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
+      }
+    } else {
+      // For other users' notes, use normal shortest column algorithm
+      for (let col = 1; col < actualColumnsCount; col++) {
+        if (columnBottoms[col] < minBottom) {
+          minBottom = columnBottoms[col];
+          bestColumn = col;
+        }
       }
     }
 

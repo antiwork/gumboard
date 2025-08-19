@@ -119,8 +119,8 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const layoutNotes = useMemo(
     () =>
       isMobile
-        ? calculateMobileLayout(filteredNotes, null)
-        : calculateGridLayout(filteredNotes, null),
+        ? calculateMobileLayout(filteredNotes, null, null)
+        : calculateGridLayout(filteredNotes, null, null),
     [isMobile, filteredNotes]
   );
 
