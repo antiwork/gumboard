@@ -44,14 +44,14 @@ export function ProfileDropdown({ user }: Props) {
         <div className="flex flex-col gap-1">
           <Link
             href={"/settings"}
-            className="rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 text-foreground dark:text-zinc-100"
+            className="rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 text-foreground dark:text-zinc-100"
           >
             Settings
           </Link>
 
           <div
             onClick={handleSignOut}
-            className="rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 cursor-pointer dark:text-white"
+            className="rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 cursor-pointer dark:text-white"
           >
             Sign out
           </div>
