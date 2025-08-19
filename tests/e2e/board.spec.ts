@@ -183,9 +183,7 @@ test.describe("Board Management", () => {
       await expect(page).toHaveURL("/");
     });
 
-    test("should show error dialog for boards api failure", async ({
-      authenticatedPage,
-    }) => {
+    test("should show error dialog for boards api failure", async ({ authenticatedPage }) => {
       // Intercept the API and return a failure
       await authenticatedPage.route("**/api/boards", async (route) => {
         await route.fulfill({
@@ -207,6 +205,5 @@ test.describe("Board Management", () => {
       await expect(authenticatedPage.getByRole("alertdialog")).toBeVisible();
       await expect(authenticatedPage.getByText("Failed to load dashboard")).toBeVisible();
     });
-
   });
 });

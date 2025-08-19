@@ -106,8 +106,7 @@ export default function Dashboard() {
       if (boardsResponse.ok) {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
-      }
-      else {
+      } else {
         const error = await boardsResponse.json();
         throw error;
       }
