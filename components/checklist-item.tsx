@@ -52,6 +52,7 @@ export function ChecklistItem({
   const previousContentRef = React.useRef<string>("");
   const deletingRef = React.useRef<boolean>(false);
   const [isExpanded, setIsExpanded] = React.useState<boolean>(false);
+  const collapseTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
@@ -117,7 +118,6 @@ export function ChecklistItem({
       data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
       data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
     >
-
       {!isNewItem && !readonly && dragHandleProps && (
         <div
           {...dragHandleProps}
@@ -134,53 +134,80 @@ export function ChecklistItem({
         disabled={readonly}
       />
 
-      <textarea
-        ref={textareaRef}
-        value={editContent ?? item.content}
-        onChange={(e) => onEditContentChange?.(e.target.value)}
-        disabled={readonly}
-        className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none outline-none leading-4",
-          item.checked && "text-slate-500 dark:text-zinc-500 line-through",
-          !isEditing && !readonly && "cursor-pointer",
-          !isEditing && readonly && "cursor-pointer",
-          !isEditing && !isExpanded && "overflow-hidden whitespace-nowrap text-ellipsis max-h-5",
-          !isEditing && isExpanded && "overflow-visible whitespace-pre-wrap",
-          isEditing && "overflow-hidden"
-        )}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        onFocus={(e) => {
-          if (isEditing) {
+      {isEditing ? (
+        <textarea
+          ref={textareaRef}
+          value={editContent ?? item.content}
+          onChange={(e) => onEditContentChange?.(e.target.value)}
+          disabled={readonly}
+          className={cn(
+            "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none outline-none leading-4",
+            item.checked && "text-slate-500 dark:text-zinc-500 line-through",
+            "overflow-hidden"
+          )}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          onFocus={(e) => {
             const originalScrollIntoView = e.target.scrollIntoView;
             e.target.scrollIntoView = () => {};
             setTimeout(() => {
               e.target.scrollIntoView = originalScrollIntoView;
             }, 100);
-          }
+          }}
+          rows={1}
+          style={{ height: "auto" }}
+          onInput={(e) => {
+            const target = e.target as HTMLTextAreaElement;
+            const currentContent = target.value;
 
-          if (!isEditing && !readonly) {
-            onStartEdit?.(item.id);
-          }
-        }}
-        onClick={(e) => {
-          if (!isEditing) {
-            e.preventDefault();
-            setIsExpanded(!isExpanded);
-          }
-        }}
-        rows={1}
-        style={{ height: "auto" }}
-        onInput={(e) => {
-          const target = e.target as HTMLTextAreaElement;
-          const currentContent = target.value;
-
-          if (currentContent !== previousContentRef.current) {
-            adjustTextareaHeight(target);
-            previousContentRef.current = currentContent;
-          }
-        }}
-      />
+            if (currentContent !== previousContentRef.current) {
+              adjustTextareaHeight(target);
+              previousContentRef.current = currentContent;
+            }
+          }}
+        />
+      ) : isExpanded ? (
+        <div
+          className={cn(
+            "flex-1 px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 leading-4 whitespace-pre-wrap",
+            item.checked && "text-slate-500 dark:text-zinc-500 line-through",
+            !readonly && "cursor-pointer"
+          )}
+          onClick={() => {
+            if (collapseTimeoutRef.current) {
+              clearTimeout(collapseTimeoutRef.current);
+            }
+            collapseTimeoutRef.current = setTimeout(() => {
+              setIsExpanded(false);
+              collapseTimeoutRef.current = null;
+            }, 200);
+          }}
+          onDoubleClick={() => {
+            if (collapseTimeoutRef.current) {
+              clearTimeout(collapseTimeoutRef.current);
+              collapseTimeoutRef.current = null;
+            }
+            if (!readonly) onStartEdit?.(item.id);
+          }}
+        >
+          {editContent ?? item.content}
+        </div>
+      ) : (
+        <div
+          className={cn(
+            "flex-1 px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 leading-4 overflow-hidden whitespace-nowrap text-ellipsis max-h-5",
+            item.checked && "text-slate-500 dark:text-zinc-500 line-through",
+            !readonly && "cursor-pointer"
+          )}
+          title={editContent ?? item.content}
+          onClick={() => setIsExpanded(true)}
+          onDoubleClick={() => {
+            if (!readonly) onStartEdit?.(item.id);
+          }}
+        >
+          {editContent ?? item.content}
+        </div>
+      )}
 
       {showDeleteButton && !readonly && (
         <Button
