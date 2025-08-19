@@ -168,7 +168,7 @@ export default function OrganizationSettingsPage() {
         showDialog({
           title: "Failed to update organization",
           description: errorData.error || "Failed to update organization",
-          variant: "error"
+          variant: "error",
         });
       }
     } catch (error) {
@@ -176,8 +176,7 @@ export default function OrganizationSettingsPage() {
       showDialog({
         title: "Failed to update organization",
         description: "Failed to update organization",
-          variant: "error"
-
+        variant: "error",
       });
     } finally {
       setSaving(false);
@@ -208,8 +207,7 @@ export default function OrganizationSettingsPage() {
         showDialog({
           title: "Failed to send invite",
           description: errorData.error || "Failed to send invite",
-          variant: "error"
-
+          variant: "error",
         });
       }
     } catch (error) {
@@ -217,8 +215,7 @@ export default function OrganizationSettingsPage() {
       showDialog({
         title: "Failed to send invite",
         description: "Failed to send invite",
-          variant: "error"
-
+        variant: "error",
       });
     } finally {
       setInviting(false);
@@ -246,8 +243,7 @@ export default function OrganizationSettingsPage() {
         showDialog({
           title: "Failed to remove member",
           description: errorData.error || "Failed to remove member",
-          variant: "error"
-
+          variant: "error",
         });
       }
     } catch (error) {
@@ -255,8 +251,7 @@ export default function OrganizationSettingsPage() {
       showDialog({
         title: "Failed to remove member",
         description: "Failed to remove member",
-          variant: "error"
-
+        variant: "error",
       });
     }
   };
@@ -294,8 +289,7 @@ export default function OrganizationSettingsPage() {
         showDialog({
           title: "Failed to update admin status",
           description: errorData.error || "Failed to update admin status",
-          variant: "error"
-
+          variant: "error",
         });
       }
     } catch (error) {
@@ -303,8 +297,7 @@ export default function OrganizationSettingsPage() {
       showDialog({
         title: "Failed to update admin status",
         description: "Failed to update admin status",
-          variant: "error"
-
+        variant: "error",
       });
     }
   };
@@ -351,8 +344,7 @@ export default function OrganizationSettingsPage() {
         showDialog({
           title: "Failed to create invite link",
           description: errorData.error || "Failed to create invite link",
-          variant: "error"
-
+          variant: "error",
         });
       }
     } catch (error) {
@@ -360,8 +352,7 @@ export default function OrganizationSettingsPage() {
       showDialog({
         title: "Failed to create invite link",
         description: "Failed to create invite link",
-          variant: "error"
-
+        variant: "error",
       });
     } finally {
       setCreating(false);
@@ -392,8 +383,7 @@ export default function OrganizationSettingsPage() {
         showDialog({
           title: "Failed to delete invite link",
           description: errorData.error || "Failed to delete invite link",
-          variant: "error"
-
+          variant: "error",
         });
       }
     } catch (error) {
@@ -401,8 +391,7 @@ export default function OrganizationSettingsPage() {
       showDialog({
         title: "Failed to delete invite link",
         description: "Failed to delete invite link",
-          variant: "error"
-
+        variant: "error",
       });
     }
   };

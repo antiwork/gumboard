@@ -144,7 +144,7 @@ export default function Dashboard() {
       showDialog({
         title: "Failed to create board",
         description: "Failed to create board",
-        variant: "error"
+        variant: "error",
       });
     }
   };
