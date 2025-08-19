@@ -20,7 +20,7 @@ export class PaywallError extends Error {
   public payload = {
     code: "PAYWALL" as const,
     upgradeUrl: "/settings/organization#billing",
-    message: "Upgrade to the Team plan to use this feature.",
+    message: "Upgrade to Team to invite more than 2 teammates.",
   };
   constructor(message?: string) {
     super(message || "Paywalled feature");

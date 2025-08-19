@@ -136,7 +136,7 @@ export default function OrganizationSetupForm({ onSubmit, onUpgrade }: Organizat
           <p>{`we'll send invitations to join your organization to these email addresses.`}</p>
           {teamEmails.length >= 2 && (
             <div className="text-orange-600 dark:text-orange-400">
-              Free plan allows up to {FREE_CAP} members. Add more by
+              Free plan: invite up to 2 teammates. Add more by
               {" "}
               <button
                 type="button"

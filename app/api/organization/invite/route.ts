@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
           {
             code: "PAYWALL",
             upgradeUrl: "/settings/organization#billing",
-            message: "Upgrade to Team to add more members.",
+            message: "Upgrade to Team to invite more than 2 teammates.",
           },
           { status: 402 }
         );

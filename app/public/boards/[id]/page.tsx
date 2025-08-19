@@ -51,7 +51,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     if (boardId) {
       fetchBoardData();
     }
-  }, [boardId]);
+  }, [boardId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;

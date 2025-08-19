@@ -7,6 +7,7 @@ import { NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 import { db } from "@/lib/db";
+import { SubscriptionStatus } from "@prisma/client";
 
 export async function POST(req: Request) {
   try {
@@ -23,9 +24,9 @@ export async function POST(req: Request) {
 
     switch (event.type) {
       case "checkout.session.completed": {
-        const s = event.data.object as any;
-        const customer = s.customer as string | null;
-        const subId = s.subscription as string | null;
+        const s = event.data.object as { customer?: string; subscription?: string; metadata?: { orgId?: string } };
+        const customer = s.customer || null;
+        const subId = s.subscription || null;
         const orgByCustomer = customer
           ? await db.organization.findFirst({ where: { stripeCustomerId: customer } })
           : null;
@@ -33,15 +34,16 @@ export async function POST(req: Request) {
         if (!orgId || !subId) break;
 
         const sub = await stripe.subscriptions.retrieve(subId);
+        const subData = sub as { current_period_end?: number };
         await db.organization.update({
           where: { id: orgId },
           data: {
             plan: "TEAM",
-            subscriptionStatus: sub.status as any,
-            stripeCustomerId: customer ?? orgByCustomer?.stripeCustomerId ?? undefined,
+            subscriptionStatus: sub.status as SubscriptionStatus,
+            stripeCustomerId: customer || orgByCustomer?.stripeCustomerId || undefined,
             stripeSubscriptionId: sub.id,
-            currentPeriodEnd: (sub as any).current_period_end
-              ? new Date((sub as any).current_period_end * 1000)
+            currentPeriodEnd: subData.current_period_end
+              ? new Date(subData.current_period_end * 1000)
               : null,
           },
         });
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
 
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        const sub = event.data.object as any;
+        const sub = event.data.object as { id: string; status: string; current_period_end?: number; cancel_at_period_end?: boolean };
         const org = await db.organization.findFirst({
           where: { stripeSubscriptionId: sub.id },
         });
@@ -59,9 +61,9 @@ export async function POST(req: Request) {
         await db.organization.update({
           where: { id: org.id },
           data: {
-            subscriptionStatus: sub.status as any,
-            currentPeriodEnd: (sub as any).current_period_end
-              ? new Date((sub as any).current_period_end * 1000)
+            subscriptionStatus: sub.status as SubscriptionStatus,
+            currentPeriodEnd: sub.current_period_end
+              ? new Date(sub.current_period_end * 1000)
               : org.currentPeriodEnd,
           },
         });
@@ -69,8 +71,8 @@ export async function POST(req: Request) {
         // if ended and period passed → deactivate self-serve links (optional lazy check)
         const ended =
           ["canceled", "unpaid"].includes(sub.status) &&
-          (!(sub as any).cancel_at_period_end ||
-            ((sub as any).current_period_end && Date.now() / 1000 >= (sub as any).current_period_end));
+          (!sub.cancel_at_period_end ||
+            (sub.current_period_end && Date.now() / 1000 >= sub.current_period_end));
         if (ended) {
           await db.organizationSelfServeInvite.updateMany({
             where: { organizationId: org.id, isActive: true },
@@ -82,7 +84,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch {
     return new NextResponse("Invalid webhook", { status: 400 });
   }
 }

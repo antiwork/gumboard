@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
       const memberCount = await db.user.count({ where: { organizationId: user.organizationId } });
       if (memberCount >= FREE_CAP) {
         return NextResponse.json(
-          { code: "PAYWALL", upgradeUrl: "/settings/organization#billing", message: "Upgrade to Team to add more members." },
+          { code: "PAYWALL", upgradeUrl: "/settings/organization#billing", message: "Upgrade to Team to invite more than 2 teammates." },
           { status: 402 }
         );
       }

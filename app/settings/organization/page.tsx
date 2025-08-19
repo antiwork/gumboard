@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -33,6 +33,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
 import { isOrgPaid, FREE_CAP } from "@/lib/billing";
+import { Plan, SubscriptionStatus } from "@prisma/client";
 
 interface OrganizationInvite {
   id: string;
@@ -93,7 +94,7 @@ export default function OrganizationSettingsPage() {
   const [billingLoading, setBillingLoading] = useState(false);
   const isPaid =
     user?.organization && user.organization.plan
-      ? isOrgPaid(user.organization as any)
+      ? isOrgPaid(user.organization as { subscriptionStatus: SubscriptionStatus | null; currentPeriodEnd: Date | null; plan: Plan })
       : false;
 
   useEffect(() => {
@@ -112,13 +113,6 @@ export default function OrganizationSettingsPage() {
       router.push("/auth/signin");
     }
   }, [user, loading, router]);
-
-  useEffect(() => {
-    if (user?.organization) {
-      fetchInvites();
-      fetchSelfServeInvites();
-    }
-  }, [user?.organization]);
 
   // When returning from Stripe Checkout, Stripe appends ?session_id=cs_...
   // Detect and call sync to bind the subscription immediately
@@ -149,7 +143,7 @@ export default function OrganizationSettingsPage() {
     })();
   }, [refreshUser]);
 
-  const fetchInvites = async () => {
+  const fetchInvites = useCallback(async () => {
     try {
       const response = await fetch("/api/organization/invites");
       if (response.ok) {
@@ -159,9 +153,9 @@ export default function OrganizationSettingsPage() {
     } catch (error) {
       console.error("Error fetching invites:", error);
     }
-  };
+  }, []);
 
-  const fetchSelfServeInvites = async () => {
+  const fetchSelfServeInvites = useCallback(async () => {
     try {
       const response = await fetch("/api/organization/self-serve-invites");
       if (response.ok) {
@@ -171,7 +165,14 @@ export default function OrganizationSettingsPage() {
     } catch (error) {
       console.error("Error fetching self-serve invites:", error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (user?.organization) {
+      fetchInvites();
+      fetchSelfServeInvites();
+    }
+  }, [user?.organization, fetchInvites, fetchSelfServeInvites]);
 
   const handleSaveOrganization = async () => {
     setSaving(true);
@@ -607,7 +608,7 @@ export default function OrganizationSettingsPage() {
               <div>
                 Plan: {user?.organization?.plan ? user.organization.plan : "FREE"}
                 {user?.organization && user.organization.plan !== "TEAM" && (
-                                          <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">Free plan allows up to {FREE_CAP} members</span>
+                                          <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">Free plan: invite up to 2 teammates</span>
                 )}
               </div>
               <div>Status: {user?.organization?.subscriptionStatus || "none"}</div>
@@ -814,7 +815,7 @@ export default function OrganizationSettingsPage() {
                 !user?.isAdmin 
                   ? "Only admins can invite new team members" 
                   : (!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
-                    ? `Free plan limit reached (${FREE_CAP} members). Upgrade to invite more.`
+                    ? "Free plan limit reached (2 teammates). Upgrade to Team ($9/mo) to invite more."
                     : undefined
               }
             >
@@ -832,14 +833,21 @@ export default function OrganizationSettingsPage() {
           {/* Show upgrade message when free plan limit is reached */}
           {!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP && (
             <div className="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
-              <strong>Free plan limit reached:</strong> You have {user?.organization?.members?.length || 0} members. 
+              <strong>Free plan limit reached:</strong> You can invite up to 2 teammates on the free plan. 
               <Button 
                 onClick={startCheckout}
                 variant="link" 
                 className="p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline ml-1"
               >
-                Upgrade to invite more team members
+                Upgrade to Team ($9/mo) to invite more
               </Button>
+            </div>
+          )}
+          
+          {/* Show remaining invites count for free plan */}
+          {!isPaid && ((user?.organization?.members?.length || 0) + invites.length) < FREE_CAP && (
+            <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+              <strong>Free plan:</strong> You can invite {Math.max(0, FREE_CAP - (user?.organization?.members?.length || 0) - invites.length)} more teammates.
             </div>
           )}
 
