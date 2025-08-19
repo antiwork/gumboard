@@ -280,16 +280,6 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
       <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
         <div className="max-w-sm sm:max-w-md mx-auto space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-700 dark:text-blue-300">
-              Organization Invitation
-            </h1>
-            <p className="text-muted-foreground dark:text-zinc-400">
-              You&apos;ve been invited to join an organization
-            </p>
-          </div>
-
           {/* Success message if just verified */}
           {isJustVerified && (
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
@@ -333,7 +323,7 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                 </form>
 
                 <form action={declineInvite.bind(null, token)}>
-                  <Button type="submit" variant="outline" className="w-full">
+                  <Button type="submit" className="w-full border border-zinc-100 dark:border-zinc-700 bg-transparent dark:text-white dark:hover:bg-red-500 hover:bg-red-500 hover:text-white text-black">
                     Decline Invitation
                   </Button>
                 </form>
