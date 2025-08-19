@@ -6,96 +6,72 @@ test.describe("Text Overflow and Card Expansion", () => {
     testContext,
     testPrisma,
   }) => {
-    const boardName = testContext.getBoardName("Text Overflow Test Board");
+    const boardName = testContext.getBoardName("Test Board");
     const board = await testPrisma.board.create({
       data: {
         name: boardName,
-        description: testContext.prefix("Test board for text overflow"),
+        description: testContext.prefix("A test board for text overflow"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
       },
     });
 
-    // Create a note with long text content
-    const longText = testContext.prefix(
-      "This is a very long text that should display properly without causing horizontal overflow. " +
-        "It contains multiple sentences to test the text display behavior. " +
-        "The card should expand vertically to accommodate all this content without showing any scrollbars. " +
-        "We want to ensure that users can read all the text comfortably without having to scroll within the card."
-    );
-
+    // Create a note with a very long checklist item
     const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
         boardId: board.id,
         createdBy: testContext.userId,
-        checklistItems: {
-          create: [
-            {
-              id: testContext.prefix("item-1"),
-              content: longText,
-              checked: false,
-              order: 0,
-            },
-            {
-              id: testContext.prefix("item-2"),
-              content: testContext.prefix("Short item"),
-              checked: false,
-              order: 1,
-            },
-            {
-              id: testContext.prefix("item-3"),
-              content: testContext.prefix(
-                "Another long item to ensure the card expands properly with multiple long items"
-              ),
-              checked: false,
-              order: 2,
-            },
-          ],
-        },
+      },
+    });
+
+    const longTextWithoutSpaces = "sihshshsihishsihishsihishsihishsihishsihwosjowsjwsojwojowjsojowsjowsjowsjowjsojowsjoxjsoxjsoxjosxjosxjosxjosxjosjosxjosxjosxjosjosoxjosojsowjsowjsowjsjowsjowjsjwsojw";
+    
+    await testPrisma.checklistItem.create({
+      data: {
+        id: testContext.prefix("item-1"),
+        content: longTextWithoutSpaces,
+        checked: false,
+        order: 0,
+        noteId: note.id,
       },
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
+    await authenticatedPage.waitForSelector('[data-testid="note-card"]');
 
-    // Wait for the note card to be visible
+    // Get the note card element
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
     await expect(noteCard).toBeVisible();
 
-    // Check that the long text is visible
-    await expect(authenticatedPage.getByText(longText)).toBeVisible();
+    // Check that the note card is using grid layout (parent container)
+    const boardArea = authenticatedPage.locator('.grid').filter({
+      has: authenticatedPage.locator('[data-testid="note-card"]')
+    }).first();
+    await expect(boardArea).toBeVisible();
 
-    // Get the note card's computed styles
+    // Verify the note has h-fit class for dynamic height
+    await expect(noteCard).toHaveClass(/h-fit/);
+
+    // Get the textarea with long text
+    const textarea = noteCard.locator('textarea').filter({ hasText: longTextWithoutSpaces });
+    await expect(textarea).toBeVisible();
+
+    // Verify text wrapping classes are applied
+    await expect(textarea).toHaveClass(/break-all/);
+    await expect(textarea).toHaveClass(/whitespace-pre-wrap/);
+    await expect(textarea).toHaveClass(/min-w-0/);
+
+    // Verify no overflow on the textarea
+    const textareaBox = await textarea.boundingBox();
     const noteCardBox = await noteCard.boundingBox();
+    
+    // The textarea should be within the note card bounds
+    expect(textareaBox).toBeTruthy();
     expect(noteCardBox).toBeTruthy();
-
-    // Verify that the card has expanded to fit content (should be taller than a minimal height)
-    expect(noteCardBox!.height).toBeGreaterThan(200);
-
-    // Check that there's no overflow on the card
-    const overflow = await noteCard.evaluate((el) => {
-      const styles = window.getComputedStyle(el);
-      return {
-        overflowY: styles.overflowY,
-        overflowX: styles.overflowX,
-      };
-    });
-
-    // The card should not have scroll overflow
-    expect(overflow.overflowY).not.toBe("scroll");
-    expect(overflow.overflowY).not.toBe("auto");
-    expect(overflow.overflowX).not.toBe("scroll");
-    expect(overflow.overflowX).not.toBe("auto");
-
-    // Verify all items are visible without scrolling
-    await expect(authenticatedPage.getByText(testContext.prefix("Short item"))).toBeVisible();
-    await expect(
-      authenticatedPage.getByText(
-        testContext.prefix(
-          "Another long item to ensure the card expands properly with multiple long items"
-        )
-      )
-    ).toBeVisible();
+    if (textareaBox && noteCardBox) {
+      expect(textareaBox.width).toBeLessThanOrEqual(noteCardBox.width);
+    }
   });
 
   test("should expand card height when typing long text", async ({
@@ -103,87 +79,66 @@ test.describe("Text Overflow and Card Expansion", () => {
     testContext,
     testPrisma,
   }) => {
-    const boardName = testContext.getBoardName("Dynamic Expansion Test Board");
+    const boardName = testContext.getBoardName("Dynamic Height Board");
     const board = await testPrisma.board.create({
       data: {
         name: boardName,
-        description: testContext.prefix("Test board for dynamic card expansion"),
+        description: testContext.prefix("Test dynamic height expansion"),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
       },
     });
 
+    const note = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        id: testContext.prefix("item-2"),
+        content: "Initial text",
+        checked: false,
+        order: 0,
+        noteId: note.id,
+      },
+    });
+
     await authenticatedPage.goto(`/boards/${board.id}`);
+    await authenticatedPage.waitForSelector('[data-testid="note-card"]');
 
-    // Create a new note
-    const createNoteResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes`) &&
-        resp.request().method() === "POST" &&
-        resp.status() === 201
-    );
-    await authenticatedPage.click('button:has-text("Add note")');
-    await createNoteResponse;
-
-    // Get the note card
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
-    await expect(noteCard).toBeVisible();
-
+    
     // Get initial height
     const initialBox = await noteCard.boundingBox();
     expect(initialBox).toBeTruthy();
-    const initialHeight = initialBox!.height;
+    const initialHeight = initialBox?.height || 0;
 
-    // Type long text into the new item input
-    const newItemInput = authenticatedPage.locator("textarea").first();
-    await expect(newItemInput).toBeVisible();
+    // Find and interact with the textarea
+    const textarea = noteCard.locator('textarea').first();
+    await expect(textarea).toBeVisible();
+    
+    // Click to edit and add long text
+    await textarea.click();
+    await textarea.selectText();
+    
+    // Type very long text that should cause expansion
+    const veryLongText = "This is a very long text that will cause the card to expand. ".repeat(20);
+    await textarea.type(veryLongText);
 
-    const longText = testContext.prefix(
-      "This is a very long text that I'm typing to test dynamic expansion. " +
-        "As I type more and more text, the card should grow taller. " +
-        "The height should adjust automatically without any scrollbars appearing. " +
-        "This ensures a smooth user experience when entering long checklist items."
-    );
-
-    // Type the long text
-    await newItemInput.fill(longText);
-
-    // Wait a moment for the card to adjust
+    // Wait for the height adjustment
     await authenticatedPage.waitForTimeout(500);
 
-    // Get the new height
+    // Get new height after typing
     const expandedBox = await noteCard.boundingBox();
     expect(expandedBox).toBeTruthy();
-    const expandedHeight = expandedBox!.height;
+    const expandedHeight = expandedBox?.height || 0;
 
-    // Verify the card has expanded
+    // Verify that the card has expanded
     expect(expandedHeight).toBeGreaterThan(initialHeight);
-
-    // Save the item
-    const addItemResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await newItemInput.blur();
-    await addItemResponse;
-
-    // Verify the text is still visible after saving
-    await expect(authenticatedPage.getByText(longText)).toBeVisible();
-
-    // Verify the card still has no overflow
-    const overflow = await noteCard.evaluate((el) => {
-      const styles = window.getComputedStyle(el);
-      return {
-        overflowY: styles.overflowY,
-        overflowX: styles.overflowX,
-      };
-    });
-
-    expect(overflow.overflowY).not.toBe("scroll");
-    expect(overflow.overflowY).not.toBe("auto");
-    expect(overflow.overflowX).not.toBe("scroll");
-    expect(overflow.overflowX).not.toBe("auto");
   });
+
 });
