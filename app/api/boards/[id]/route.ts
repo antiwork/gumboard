@@ -117,17 +117,29 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       description?: string;
       isPublic?: boolean;
       sendSlackUpdates?: boolean;
+      lastActivityAt?: Date;
     } = {};
     if (name !== undefined) updateData.name = name?.trim() || board.name;
     if (description !== undefined)
       updateData.description = description?.trim() || board.description;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates;
+    updateData.lastActivityAt = new Date();
 
     const updatedBoard = await db.board.update({
       where: { id: boardId },
       data: updateData,
-      include: {
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        isPublic: true,
+        sendSlackUpdates: true,
+        createdBy: true,
+        createdAt: true,
+        updatedAt: true,
+        lastActivityAt: true,
+        organizationId: true,
         _count: {
           select: {
             notes: {

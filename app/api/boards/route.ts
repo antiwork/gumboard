@@ -32,6 +32,7 @@ export async function GET() {
         createdBy: true,
         createdAt: true,
         updatedAt: true,
+        lastActivityAt: true,
         _count: {
           select: {
             notes: {
@@ -43,7 +44,7 @@ export async function GET() {
           },
         },
       },
-      orderBy: { createdAt: "desc" },
+      orderBy: { lastActivityAt: "desc" },
     });
 
     return NextResponse.json({ boards });
@@ -100,6 +101,7 @@ export async function POST(request: NextRequest) {
         createdBy: true,
         createdAt: true,
         updatedAt: true,
+        lastActivityAt: true,
         organizationId: true,
         _count: {
           select: {

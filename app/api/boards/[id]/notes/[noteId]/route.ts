@@ -116,6 +116,11 @@ export async function PUT(
       | undefined;
 
     const updatedNote = await db.$transaction(async (tx) => {
+      await tx.board.update({
+        where: { id: boardId },
+        data: { lastActivityAt: new Date() },
+      });
+
       if (sanitizedChecklistItems !== undefined) {
         const existing = await tx.checklistItem.findMany({
           where: { noteId },
@@ -304,11 +309,18 @@ export async function DELETE(
     }
 
     // Soft delete: set deletedAt timestamp instead of actually deleting
-    await db.note.update({
-      where: { id: noteId },
-      data: {
-        deletedAt: new Date(),
-      },
+    await db.$transaction(async (tx) => {
+      await tx.board.update({
+        where: { id: boardId },
+        data: { lastActivityAt: new Date() },
+      });
+
+      await tx.note.update({
+        where: { id: noteId },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
     });
 
     return NextResponse.json({ success: true });

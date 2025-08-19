@@ -93,10 +93,12 @@ model Board {
   createdBy      String
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
+  lastActivityAt DateTime     @default(now())
   notes          Note[]
 
   // Performance indexes
   @@index([organizationId, createdAt], name: "idx_board_org_created")
+  @@index([organizationId, lastActivityAt], name: "idx_board_org_activity")
   @@map("boards")
 }
 

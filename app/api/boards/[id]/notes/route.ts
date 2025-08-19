@@ -149,29 +149,36 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
     }
 
-    const note = await db.note.create({
-      data: {
-        color: randomColor,
-        boardId,
-        createdBy: session.user.id,
-        checklistItems:
-          initialChecklistItems.length > 0
-            ? {
-                create: initialChecklistItems,
-              }
-            : undefined,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            image: true,
-          },
+    const note = await db.$transaction(async (tx) => {
+      await tx.board.update({
+        where: { id: boardId },
+        data: { lastActivityAt: new Date() },
+      });
+
+      return tx.note.create({
+        data: {
+          color: randomColor,
+          boardId,
+          createdBy: session.user.id,
+          checklistItems:
+            initialChecklistItems.length > 0
+              ? {
+                  create: initialChecklistItems,
+                }
+              : undefined,
         },
-        checklistItems: { orderBy: { order: "asc" } },
-      },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              image: true,
+            },
+          },
+          checklistItems: { orderBy: { order: "asc" } },
+        },
+      });
     });
 
     // Send Slack notification if note has checklist items with content
