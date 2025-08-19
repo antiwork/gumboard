@@ -61,6 +61,18 @@ describe("formatLastActivity utility function", () => {
     expect(result).toBe("2d ago");
   });
 
+  it("should return days and hours for times with partial hours", () => {
+    const date = new Date("2024-01-13T11:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("2d 1h ago");
+  });
+
+  it("should return only days when there are no remaining hours", () => {
+    const date = new Date("2024-01-12T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("3d ago");
+  });
+
   it("should return date for times more than 1 week ago", () => {
     const date = new Date("2024-01-01T12:00:00Z");
     const result = formatLastActivity(date.toISOString());

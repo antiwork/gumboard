@@ -9,22 +9,26 @@ export function cn(...inputs: ClassValue[]) {
 export function formatLastActivity(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
-  const diffInMs = now.getTime() - date.getTime();
-  const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-  const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-  const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+  const diffMs = now.getTime() - date.getTime();
 
-  if (diffInMinutes < 1) {
-    return "Just now";
-  } else if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`;
-  } else if (diffInHours < 24) {
-    return `${diffInHours}h ago`;
-  } else if (diffInDays < 7) {
-    return `${diffInDays}d ago`;
-  } else {
-    return date.toLocaleDateString();
-  }
+  const minute = 60 * 1000;
+  const hour = 60 * minute;
+  const day = 24 * hour;
+
+  if (diffMs < minute) return "Just now";
+  if (diffMs >= 7 * day) return date.toLocaleDateString();
+
+  const days = Math.floor(diffMs / day);
+  const hours = Math.floor((diffMs % day) / hour);
+  const minutes = Math.floor((diffMs % hour) / minute);
+
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0 && parts.length < 2) parts.push(`${hours}h`);
+  if (days === 0 && hours === 0 && minutes > 0) parts.push(`${minutes}m`);
+  if (days === 0 && hours > 0 && minutes > 0 && parts.length < 2) parts.push(`${minutes}m`);
+
+  return `${parts.join(" ")} ago`;
 }
 
 export function getBaseUrl(requestOrHeaders?: Request | Headers): string {
