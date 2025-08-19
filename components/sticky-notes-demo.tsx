@@ -280,26 +280,27 @@ const authors = [
   { name: "Zeta", initial: "Z" },
 ];
 
+// Simple fade animation without staggering to prevent layout shifts
 const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      duration: 0.3,
     },
   },
 };
 
+// Simplified item animation with minimal movement to prevent janky layout shifts
 const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { opacity: 0 },
   visible: {
-    y: 0,
     opacity: 1,
+    transition: { duration: 0.2 }
   },
   exit: {
     opacity: 0,
-    y: -20,
-    transition: { duration: 0.2 },
+    transition: { duration: 0.15 },
   },
 };
 
@@ -307,11 +308,13 @@ export function StickyNotesDemo() {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
 
   const handleUpdateNote = (updatedNote: Note) => {
-    setNotes(notes.map((note) => (note.id === updatedNote.id ? updatedNote : note)));
+    // Use callback form to ensure state updates are batched properly
+    setNotes(prevNotes => prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note)));
   };
 
   const handleDeleteNote = (noteId: string) => {
-    setNotes(notes.filter((note) => note.id !== noteId));
+    // Use callback form to ensure state updates are batched properly
+    setNotes(prevNotes => prevNotes.filter((note) => note.id !== noteId));
   };
 
   const handleAddNote = () => {
@@ -331,7 +334,10 @@ export function StickyNotesDemo() {
       },
       checklistItems: [{ id: `${Date.now() + 1}`, content: "New to-do", checked: false, order: 0 }],
     };
-    setNotes([newNote, ...notes]);
+    
+    // Use a callback to ensure state updates are batched properly
+    // This helps prevent layout thrashing during animations
+    setNotes(prevNotes => [newNote, ...prevNotes]);
   };
 
   return (
@@ -343,35 +349,40 @@ export function StickyNotesDemo() {
         </Button>
       </div>
       <div>
-        <motion.div
-          className="columns-1 gap-4 sm:columns-2"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <AnimatePresence>
-            {notes.map((note) => (
-              <motion.div
-                key={note.id}
-                className="mb-4 break-inside-avoid"
-                variants={itemVariants}
-                exit="exit"
-                layout
-              >
-                <div className="pb-4">
-                  <NoteComponent
-                    className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
-                    note={note}
-                    currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
-                    onUpdate={handleUpdateNote}
-                    onDelete={handleDeleteNote}
-                    syncDB={false}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        {/* Wrap in a fixed height container to prevent layout shifts */}
+        <div className="min-h-[400px]">
+          <motion.div
+            className="columns-1 gap-4 sm:columns-2 w-full"
+            variants={containerVariants}
+            initial="hidden"
+            animate="visible"
+          >
+            {/* Use mode="sync" to prevent layout shifts during animations */}
+            <AnimatePresence mode="sync">
+              {notes.map((note) => (
+                <motion.div
+                  key={note.id}
+                  className="mb-4 break-inside-avoid"
+                  variants={itemVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                >
+                  <div className="pb-4">
+                    <NoteComponent
+                      className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
+                      note={note}
+                      currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
+                      onUpdate={handleUpdateNote}
+                      onDelete={handleDeleteNote}
+                      syncDB={false}
+                    />
+                  </div>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </div>
       </div>
     </div>
   );
