@@ -57,9 +57,14 @@ test.describe("Add Task Button", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
+    // Wait until the notes API returns
+    await authenticatedPage.waitForResponse((resp) =>
+      resp.url().includes(`/api/boards/${board.id}/notes`) && resp.request().method() === "GET"
+    );
+
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix(`Existing task ${suffix}`)}`)
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     const newItemInputs = authenticatedPage.getByTestId("new-item");
     await expect(newItemInputs).toHaveCount(2);
