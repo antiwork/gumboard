@@ -252,3 +252,19 @@ export function filterAndSortNotes(
 
   return filteredNotes;
 }
+
+export function formatLastUpdate(updatedAt: string): string {
+  const now = new Date();
+  const updated = new Date(updatedAt);
+  const diffMs = now.getTime() - updated.getTime();
+
+  const seconds = Math.floor(diffMs / 1000);
+  const minutes = Math.floor(seconds / 60);
+  const hours = Math.floor(minutes / 60);
+  const days = Math.floor(hours / 24);
+
+  if (seconds < 60) return "Last activity: now";
+  if (minutes < 60) return `Last activity: ${minutes}m ago`;
+  if (hours < 24) return `Last activity: ${hours}h ago`;
+  return `Last activity: ${days}d ago`;
+}

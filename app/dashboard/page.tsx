@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import z from "zod";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatLastUpdate } from "@/lib/utils";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -48,6 +49,7 @@ export type DashboardBoard = Board & {
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
+  lastActivity: string;
   _count: { notes: number };
 };
 
@@ -333,6 +335,9 @@ export default function Dashboard() {
                         </p>
                       </CardContent>
                     )}
+                    <CardFooter>
+                      <p className=" text-sm">{formatLastUpdate(board.lastActivity)}</p>
+                    </CardFooter>
                   </Card>
                 </Link>
               ))}

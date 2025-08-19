@@ -175,6 +175,7 @@ export async function PUT(
         data: {
           ...(color !== undefined && { color }),
           ...(archivedAt !== undefined && { archivedAt }),
+          ...(sanitizedChecklistItems !== undefined && { updatedAt: new Date() }),
         },
         include: {
           user: { select: { id: true, name: true, email: true, image: true } },
