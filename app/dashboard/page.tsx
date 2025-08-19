@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatTimeAgo } from "@/lib/utils";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -48,6 +49,7 @@ export type DashboardBoard = Board & {
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
+  lastActivity: string;
   _count: { notes: number };
 };
 
@@ -326,13 +328,16 @@ export default function Dashboard() {
                         </span>
                       </div>
                     </CardHeader>
-                    {board.description && (
-                      <CardContent>
+                    <CardContent className="space-y-2">
+                      {board.description && (
                         <p className="text-slate-600 dark:text-zinc-300 truncate">
                           {board.description}
                         </p>
-                      </CardContent>
-                    )}
+                      )}
+                      <div className="text-xs text-muted-foreground dark:text-zinc-500">
+                        <span>Last activity {formatTimeAgo(board.lastActivity)}</span>
+                      </div>
+                    </CardContent>
                   </Card>
                 </Link>
               ))}

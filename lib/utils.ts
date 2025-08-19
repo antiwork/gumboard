@@ -190,6 +190,41 @@ export function calculateMobileLayout(filteredNotes: Note[], addingChecklistItem
 }
 
 // Filter and sort notes based on search term, date range, and author
+// Format relative time (e.g., "2 hours ago", "3 days ago")
+export function formatTimeAgo(date: Date | string): string {
+  const now = new Date();
+  const past = new Date(date);
+  const diffMs = now.getTime() - past.getTime();
+  
+  // If the date is in the future, return "just now"
+  if (diffMs < 0) {
+    return "just now";
+  }
+  
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  const diffWeeks = Math.floor(diffDays / 7);
+  const diffMonths = Math.floor(diffDays / 30);
+  const diffYears = Math.floor(diffDays / 365);
+  
+  if (diffMinutes < 1) {
+    return "just now";
+  } else if (diffMinutes < 60) {
+    return `${diffMinutes} minute${diffMinutes === 1 ? "" : "s"} ago`;
+  } else if (diffHours < 24) {
+    return `${diffHours} hour${diffHours === 1 ? "" : "s"} ago`;
+  } else if (diffDays < 7) {
+    return `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+  } else if (diffWeeks < 4) {
+    return `${diffWeeks} week${diffWeeks === 1 ? "" : "s"} ago`;
+  } else if (diffMonths < 12) {
+    return `${diffMonths} month${diffMonths === 1 ? "" : "s"} ago`;
+  } else {
+    return `${diffYears} year${diffYears === 1 ? "" : "s"} ago`;
+  }
+}
+
 export function filterAndSortNotes(
   notes: Note[],
   searchTerm: string,
