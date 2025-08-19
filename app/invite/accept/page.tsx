@@ -323,7 +323,10 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                 </form>
 
                 <form action={declineInvite.bind(null, token)}>
-                  <Button type="submit" className="w-full border border-zinc-100 dark:border-zinc-700 bg-transparent dark:text-white dark:hover:bg-red-500 hover:bg-red-500 hover:text-white text-black">
+                  <Button
+                    type="submit"
+                    className="w-full border border-zinc-100 dark:border-zinc-700 bg-transparent dark:text-white dark:hover:bg-red-500 hover:bg-red-500 hover:text-white text-black"
+                  >
                     Decline Invitation
                   </Button>
                 </form>
