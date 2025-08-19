@@ -189,7 +189,7 @@ test.describe("Home Page", () => {
     });
     expect(editedItem).toBeTruthy();
     expect(editedItem?.content).toBe(updatedFinanceText);
-    
+
     // Test 5: Delete a checklist item
     const deleteItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
