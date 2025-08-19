@@ -203,10 +203,9 @@ export function filterAndSortNotes(
   if (searchTerm.trim()) {
     const search = searchTerm.toLowerCase();
     filteredNotes = filteredNotes.filter((note) => {
-      const authorName = (note.user.name || note.user.email).toLowerCase();
       const checklistContent =
         note.checklistItems?.map((item) => item.content.toLowerCase()).join(" ") || "";
-      return authorName.includes(search) || checklistContent.includes(search);
+      return checklistContent.includes(search);
     });
   }
 

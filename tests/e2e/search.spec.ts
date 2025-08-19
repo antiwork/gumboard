@@ -177,29 +177,98 @@ test.describe("Search Functionality", () => {
       authenticatedPage.locator(`text=${testContext.prefix("Project planning")}`)
     ).toBeVisible();
     const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
-    await searchInput.fill("meeting");
+  });
 
+  test("should only search checklist content, not author names", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Search Content Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board for content search"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    // Create a note with content that matches the author name
+    const note1 = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        content: testContext.prefix("Buy groceries"),
+        checked: false,
+        order: 0,
+        noteId: note1.id,
+      },
+    });
+
+    // Create another note with different content
+    const note2 = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        content: testContext.prefix("Meeting with ansh"),
+        checked: false,
+        order: 0,
+        noteId: note2.id,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    // Both notes should be visible initially
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Meeting notes")}`)
+      authenticatedPage.locator(`text=${testContext.prefix("Buy groceries")}`)
+    ).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Meeting with ansh")}`)
     ).toBeVisible();
 
+    // Search for "ansh" - should only show note with "Meeting with ansh"
+    const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
+    await searchInput.fill("ansh");
+    await searchInput.press("Enter");
+
+    // Wait for search to complete
+    await authenticatedPage.waitForTimeout(1000);
+
+    // Note with "Buy groceries" should NOT be visible (no "ansh" in content)
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Buy groceries")}`)
     ).not.toBeVisible();
+
+    // Note with "Meeting with ansh" should be visible (contains "ansh")
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Project planning")}`)
-    ).not.toBeVisible();
+      authenticatedPage.locator(`text=${testContext.prefix("Meeting with ansh")}`)
+    ).toBeVisible();
 
-    await searchInput.fill("");
+    // Clear search
+    await searchInput.clear();
+    await searchInput.press("Enter");
+    await authenticatedPage.waitForTimeout(1000);
 
+    // Both notes should be visible again
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Buy groceries")}`)
     ).toBeVisible();
     await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Meeting notes")}`)
-    ).toBeVisible();
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Project planning")}`)
+      authenticatedPage.locator(`text=${testContext.prefix("Meeting with ansh")}`)
     ).toBeVisible();
   });
 
