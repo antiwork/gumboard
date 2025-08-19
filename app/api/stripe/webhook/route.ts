@@ -1,56 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { stripe } from "@/lib/stripe";
-import { env } from "@/lib/env";
-import { db } from "@/lib/db";
-import { $Enums } from "@prisma/client";
-
+// app/api/stripe/webhook/route.ts
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-type StripeSubLite = { id: string; status: string; customer: string | { id: string }; current_period_end?: number };
+import { headers } from "next/headers";
+import { NextResponse } from "next/server";
+import { stripe } from "@/lib/stripe";
+import { env } from "@/lib/env";
+import { db } from "@/lib/db";
 
-async function upsertOrgFromSubscription(sub: StripeSubLite) {
-  const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
-  
-  // Map org by customer first, fallback to subscription ID
-  const org = await db.organization.findFirst({
-    where: { 
-      OR: [
-        { stripeCustomerId: customerId },
-        { stripeSubscriptionId: sub.id }
-      ]
-    },
-  });
-  
-  // Guard current_period_end conversion
-  const currentPeriodEnd = sub.current_period_end && typeof sub.current_period_end === 'number' 
-    ? new Date(sub.current_period_end * 1000) 
-    : null;
-
-  if (org) {
-    await db.organization.update({
-      where: { id: org.id },
-      data: {
-        plan: "TEAM",
-        subscriptionStatus: sub.status as $Enums.SubscriptionStatus,
-        stripeCustomerId: customerId,
-        stripeSubscriptionId: sub.id,
-        currentPeriodEnd,
-      },
-    });
-    return org.id;
-  }
-  return null;
-}
-
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
     const sig = (await headers()).get("stripe-signature")!;
-    const body = await req.text(); // raw body
+    const body = await req.text(); // RAW body only
     const event = stripe.webhooks.constructEvent(body, sig, env.STRIPE_WEBHOOK_SECRET as string);
 
-    // Idempotency: insert event.id into StripeEvent, if conflict → return 200 early
+    // idempotency: insert-first, early return on conflict
     try {
       await db.stripeEvent.create({ data: { id: event.id, type: event.type } });
     } catch {
@@ -59,53 +23,67 @@ export async function POST(req: NextRequest) {
 
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as {
-          subscription?: string;
-          customer?: string;
-          metadata?: { orgId?: string };
-          client_reference_id?: string;
-        };
-        const subscriptionId = session.subscription;
-        const customerId = session.customer;
-        const orgId = session.metadata?.orgId || session.client_reference_id;
+        const s = event.data.object as any;
+        const customer = s.customer as string | null;
+        const subId = s.subscription as string | null;
+        const orgByCustomer = customer
+          ? await db.organization.findFirst({ where: { stripeCustomerId: customer } })
+          : null;
+        const orgId = orgByCustomer?.id ?? s.metadata?.orgId;
+        if (!orgId || !subId) break;
 
-        if (orgId && customerId) {
-          await db.organization.update({
-            where: { id: orgId },
-            data: { stripeCustomerId: customerId },
-          }).catch(() => null);
-        }
-        if (subscriptionId) {
-          const sub = await stripe.subscriptions.retrieve(subscriptionId);
-          await upsertOrgFromSubscription(sub);
-        }
+        const sub = await stripe.subscriptions.retrieve(subId);
+        await db.organization.update({
+          where: { id: orgId },
+          data: {
+            plan: "TEAM",
+            subscriptionStatus: sub.status as any,
+            stripeCustomerId: customer ?? orgByCustomer?.stripeCustomerId ?? undefined,
+            stripeSubscriptionId: sub.id,
+            currentPeriodEnd: (sub as any).current_period_end
+              ? new Date((sub as any).current_period_end * 1000)
+              : null,
+          },
+        });
         break;
       }
+
       case "customer.subscription.updated":
-      case "customer.subscription.created":
       case "customer.subscription.deleted": {
-        const sub = event.data.object as StripeSubLite;
-        const orgId = await upsertOrgFromSubscription(sub);
-        if (orgId && (sub.status === "canceled" || sub.status === "unpaid")) {
-          // If period has ended already, deactivate invites
-          const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
-          if (!periodEnd || periodEnd <= new Date()) {
-            await db.organizationSelfServeInvite.updateMany({
-              where: { organizationId: orgId, isActive: true },
-              data: { isActive: false },
-            });
-          }
+        const sub = event.data.object as any;
+        const org = await db.organization.findFirst({
+          where: { stripeSubscriptionId: sub.id },
+        });
+        if (!org) break;
+
+        await db.organization.update({
+          where: { id: org.id },
+          data: {
+            subscriptionStatus: sub.status as any,
+            currentPeriodEnd: (sub as any).current_period_end
+              ? new Date((sub as any).current_period_end * 1000)
+              : org.currentPeriodEnd,
+          },
+        });
+
+        // if ended and period passed → deactivate self-serve links (optional lazy check)
+        const ended =
+          ["canceled", "unpaid"].includes(sub.status) &&
+          (!(sub as any).cancel_at_period_end ||
+            ((sub as any).current_period_end && Date.now() / 1000 >= (sub as any).current_period_end));
+        if (ended) {
+          await db.organizationSelfServeInvite.updateMany({
+            where: { organizationId: org.id, isActive: true },
+            data: { isActive: false },
+          });
         }
         break;
       }
-      default:
-        break;
     }
 
-    return NextResponse.json({ received: true });
-  } catch (error) {
-    console.error("Webhook handler error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ ok: true });
+  } catch (e) {
+    return new NextResponse("Invalid webhook", { status: 400 });
   }
 }
 
