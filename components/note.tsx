@@ -95,16 +95,16 @@ export function Note({
 
   const adjustNoteHeight = useCallback(() => {
     if (noteRef.current) {
-      noteRef.current.style.height = 'auto';
+      noteRef.current.style.height = "auto";
       const scrollHeight = noteRef.current.scrollHeight;
       const maxHeight = 500;
       const newHeight = Math.min(scrollHeight, maxHeight);
 
       setNoteHeight(newHeight);
       if (scrollHeight > maxHeight) {
-        noteRef.current.style.overflowY = 'auto';
+        noteRef.current.style.overflowY = "auto";
       } else {
-        noteRef.current.style.overflowY = 'hidden';
+        noteRef.current.style.overflowY = "hidden";
       }
     }
   }, []);
@@ -112,7 +112,6 @@ export function Note({
   useEffect(() => {
     adjustNoteHeight();
   }, [editingItem, newItemContent, note.checklistItems, adjustNoteHeight]);
-
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -370,8 +369,8 @@ export function Note({
       style={{
         backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
         maxWidth: "100%",
-        height: noteHeight ? `${noteHeight}px` : 'auto',
-        minHeight: '100px',
+        height: noteHeight ? `${noteHeight}px` : "auto",
+        minHeight: "100px",
         ...style,
       }}
     >
@@ -536,7 +535,7 @@ export function Note({
                   checked: false,
                   order: 0,
                 }}
-                onEdit={() => { }}
+                onEdit={() => {}}
                 onDelete={() => {
                   setNewItemContent("");
                 }}
