@@ -76,7 +76,7 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   members   User[]
-  userOrganizations UserOrganization[]
+   userOrganizations UserOrganization[]
   invites   OrganizationInvite[]
   boards    Board[]
   selfServeInvites OrganizationSelfServeInvite[]
@@ -84,7 +84,7 @@ model Organization {
   @@map("organizations")
 }
 
-model UserOrganization {
+model UserOrganization {Add a comment on line R87Add diff commentMarkdown input: edit mode selected.WritePreviewAdd a suggestionHeadingBoldItalicQuoteCodeLinkUnordered listNumbered listTask listMentionReferenceSaved repliesAdd FilesPaste, drop, or click to add filesCancelCommentStart a reviewReturn to code
   id             String       @id @default(cuid())
   userId         String
   organizationId String
@@ -100,7 +100,6 @@ model UserOrganization {
 }
 
 enum UserRole {
-  OWNER    // Can manage organization, members, and delete organization
   ADMIN    // Can manage members and organization settings
   MEMBER   // Regular member with basic access
 }
