@@ -150,7 +150,7 @@ test.describe("Archive Functionality", () => {
     testPrisma,
   }) => {
     const suffix = Math.random().toString(36).substring(2, 8);
-  
+
     // Create an archived board
     const board = await testPrisma.board.create({
       data: {
@@ -160,7 +160,7 @@ test.describe("Archive Functionality", () => {
         organizationId: testContext.organizationId,
       },
     });
-  
+
     // Create an archived note inside the archived board
     const note = await testPrisma.note.create({
       data: {
@@ -179,19 +179,20 @@ test.describe("Archive Functionality", () => {
         },
       },
     });
-  
+
     // Go to archive page
     await authenticatedPage.goto("/boards/archive");
-  
+
     // Scope to the note text to avoid picking up another note
-    const noteLocator = authenticatedPage.getByText(testContext.prefix(`Archived note content ${suffix}`));
+    const noteLocator = authenticatedPage.getByText(
+      testContext.prefix(`Archived note content ${suffix}`)
+    );
     await expect(noteLocator).toBeVisible();
-  
+
     // Look for archive button inside this note only
-    const archiveButton = noteLocator.locator('..').locator('[aria-label="Archive note"]');
+    const archiveButton = noteLocator.locator("..").locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
-  
 
   test("should show empty state on Archive board when no archived notes exist", async ({
     authenticatedPage,

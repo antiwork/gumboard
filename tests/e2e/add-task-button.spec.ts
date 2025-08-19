@@ -58,8 +58,9 @@ test.describe("Add Task Button", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     // Wait until the notes API returns
-    await authenticatedPage.waitForResponse((resp) =>
-      resp.url().includes(`/api/boards/${board.id}/notes`) && resp.request().method() === "GET"
+    await authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) && resp.request().method() === "GET"
     );
 
     await expect(

@@ -176,12 +176,13 @@ test.describe("Home Page", () => {
     await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible();
 
     // Verify edit was saved to database
-    await test.expect.poll(async () => {
-      return await testPrisma.checklistItem.findFirst({
-        where: { content: updatedFinanceText },
-      });
-    }).toHaveProperty("content", updatedFinanceText);
-
+    await test.expect
+      .poll(async () => {
+        return await testPrisma.checklistItem.findFirst({
+          where: { content: updatedFinanceText },
+        });
+      })
+      .toHaveProperty("content", updatedFinanceText);
 
     // Test 5: Delete a checklist item
     const deleteItemResponse = authenticatedPage.waitForResponse(
@@ -270,7 +271,7 @@ test.describe("Home Page", () => {
 
     await splitInput.press("Enter");
     await splitInput.blur(); // ensures PUT request triggers
-    
+
     await splitResponse;
 
     // Verify the split created two items
