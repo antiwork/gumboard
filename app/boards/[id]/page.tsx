@@ -862,7 +862,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         {filteredNotes.length === 0 &&
           notes.length > 0 &&
           (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-gray-500 dark:text-gray-400">
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-gray-500 dark:text-gray-400 pointer-events-none">
               <Search className="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500" />
               <div className="text-xl mb-2">No notes found</div>
               <div className="text-sm mb-4 text-center">
@@ -890,7 +890,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   updateURL("", { startDate: null, endDate: null }, null);
                 }}
                 variant="outline"
-                className="flex items-center space-x-2 cursor-pointer"
+                className="flex items-center space-x-2 cursor-pointer pointer-events-auto"
               >
                 <span>Clear All Filters</span>
               </Button>
