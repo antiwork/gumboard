@@ -44,13 +44,14 @@ test.describe("Note card layout", () => {
 
     // Edit item with long content that would overflow if card height fixed
     const longContent = testContext.prefix("Long content ".repeat(20));
-    
+
     await authenticatedPage.getByText(originalContent).click();
     const editInput = authenticatedPage.getByTestId(itemId).getByRole("textbox");
     await expect(editInput).toBeVisible();
 
     const saveEditResponse = authenticatedPage.waitForResponse(
-      (resp) => resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/${note.id}`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
@@ -68,4 +69,3 @@ test.describe("Note card layout", () => {
     expect(hasOverflow).toBe(false);
   });
 });
-

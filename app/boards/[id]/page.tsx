@@ -27,10 +27,7 @@ import type { Note, Board, User } from "@/components/note";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import {
-  getUniqueAuthors,
-  filterAndSortNotes,
-} from "@/lib/utils";
+import { getUniqueAuthors, filterAndSortNotes } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
@@ -210,8 +207,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   // Removed debounce cleanup effect; editing is scoped to Note
 
-
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -229,7 +224,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
-
 
   const fetchBoardData = async () => {
     try {
@@ -829,10 +823,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </div>
 
       {/* Board Area */}
-      <div
-        ref={boardRef}
-        className="w-full min-h-[calc(100vh-64px)] p-3 md:p-5"
-      >
+      <div ref={boardRef} className="w-full min-h-[calc(100vh-64px)] p-3 md:p-5">
         {/* Notes Grid */}
         <div className="grid gap-4 auto-fit-notes">
           {filteredNotes.map((note) => (
