@@ -184,7 +184,7 @@ test.describe("Board Management", () => {
     });
   });
 
-  test.describe("Dashboard delete board", () => {
+  test.describe("Delete board from dashboard", () => {
     test("should show delete button on board card hover and delete board when confirmed", async ({
       authenticatedPage,
       testContext,

@@ -348,44 +348,42 @@ export default function Dashboard() {
               </Link>
 
               {boards.map((board) => (
-                <div key={board.id} className="relative group">
-                  <Link href={`/boards/${board.id}`}>
-                    <Card
-                      data-board-id={board.id}
-                      className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer whitespace-nowrap bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
-                    >
-                      <CardHeader>
-                        <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
-                          <CardTitle
-                            className="text-lg dark:text-zinc-100 truncate"
-                            title={board.name}
+                <Link href={`/boards/${board.id}`} key={board.id}>
+                  <Card
+                    data-board-id={board.id}
+                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer whitespace-nowrap bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 relative"
+                  >
+                    <CardHeader>
+                      <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
+                        <CardTitle
+                          className="text-lg dark:text-zinc-100 truncate"
+                          title={board.name}
+                        >
+                          {board.name}
+                        </CardTitle>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={(e) => handleDeleteClick(e, board.id, board.name)}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-full"
+                            data-testid={`delete-board-${board.id}`}
                           >
-                            {board.name}
-                          </CardTitle>
-                          <div className="flex items-center gap-1">
-                            <button
-                              onClick={(e) => handleDeleteClick(e, board.id, board.name)}
-                              className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded-full"
-                              data-testid={`delete-board-${board.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500 hover:text-red-600" />
-                            </button>
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                              {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                            </span>
-                          </div>
+                            <Trash2 className="h-4 w-4 text-red-500 hover:text-red-600" />
+                          </button>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                            {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                          </span>
                         </div>
-                      </CardHeader>
-                      {board.description && (
-                        <CardContent>
-                          <p className="text-slate-600 dark:text-zinc-300 truncate">
-                            {board.description}
-                          </p>
-                        </CardContent>
-                      )}
-                    </Card>
-                  </Link>
-                </div>
+                      </div>
+                    </CardHeader>
+                    {board.description && (
+                      <CardContent>
+                        <p className="text-slate-600 dark:text-zinc-300 truncate">
+                          {board.description}
+                        </p>
+                      </CardContent>
+                    )}
+                  </Card>
+                </Link>
               ))}
             </div>
           </>
