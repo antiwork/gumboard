@@ -24,3 +24,32 @@ html.dark {
 .dark input[type="date"]::-webkit-calendar-picker-indicator {
   filter: invert(1);
 }
+
+/* Responsive notes grid */
+.auto-fit-notes {
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+@media (min-width: 640px) {
+  .auto-fit-notes {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+@media (min-width: 768px) {
+  .auto-fit-notes {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .auto-fit-notes {
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  }
+}
+
+@media (min-width: 1280px) {
+  .auto-fit-notes {
+    grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  }
+}
