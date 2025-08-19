@@ -140,13 +140,15 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-red-200">
+      <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="max-w-sm sm:max-w-md mx-auto">
+            <Card className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-600">Invalid Invitation</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl text-red-700 dark:text-red-400">
+                  Invalid Invitation
+                </CardTitle>
+                <CardDescription className="text-muted-foreground dark:text-zinc-400">
                   This invitation link is invalid or missing required information.
                 </CardDescription>
               </CardHeader>
@@ -168,13 +170,17 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
 
   if (!invite) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-red-200">
+      <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="max-w-sm sm:max-w-md mx-auto">
+            <Card className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-600">Invalid Invitation</CardTitle>
-                <CardDescription>This invitation link is invalid or has expired.</CardDescription>
+                <CardTitle className="text-xl text-red-700 dark:text-red-400">
+                  Invalid Invitation
+                </CardTitle>
+                <CardDescription className="text-muted-foreground dark:text-zinc-400">
+                  This invitation link is invalid or has expired.
+                </CardDescription>
               </CardHeader>
             </Card>
           </div>
