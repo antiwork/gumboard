@@ -183,4 +183,79 @@ test.describe("Board Management", () => {
       await expect(page).toHaveURL("/");
     });
   });
+
+  test.describe("Dashboard delete board", () => {
+    test("should show delete button on board card hover and delete board when confirmed", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      await authenticatedPage.goto("/dashboard");
+      const boardName = testContext.getBoardName("Test Board to Delete");
+      await authenticatedPage.click('button:has-text("Add Board")');
+      await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
+      await authenticatedPage.click('button:has-text("Create Board")');
+      await expect(
+        authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)
+      ).toBeVisible();
+
+      const boardCard = authenticatedPage.locator(`[data-board-id]`).filter({
+        has: authenticatedPage.locator(`text="${boardName}"`),
+      });
+      await boardCard.hover();
+      const deleteButton = authenticatedPage.locator(`[data-testid*="delete-board"]`).first();
+      await expect(deleteButton).toBeVisible();
+      await deleteButton.click();
+      await expect(authenticatedPage.getByRole("heading", { name: "Delete Board" })).toBeVisible();
+      const deleteConfirmButton = authenticatedPage.getByRole("button", { name: "Delete Board" });
+      await deleteConfirmButton.click();
+      await expect(
+        authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)
+      ).not.toBeVisible();
+      const deletedBoard = await testPrisma.board.findFirst({
+        where: {
+          name: boardName,
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+      expect(deletedBoard).toBeNull();
+    });
+    test("should allow canceling board deletion", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      await authenticatedPage.goto("/dashboard");
+      const boardName = testContext.getBoardName("Test Board to Keep");
+      await authenticatedPage.click('button:has-text("Add Board")');
+      await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
+      await authenticatedPage.click('button:has-text("Create Board")');
+      await expect(
+        authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)
+      ).toBeVisible();
+      const boardCard = authenticatedPage.locator(`[data-board-id]`).filter({
+        has: authenticatedPage.locator(`text="${boardName}"`),
+      });
+      await boardCard.hover();
+      const deleteButton = authenticatedPage.locator(`[data-testid*="delete-board"]`).first();
+      await deleteButton.click();
+      await expect(authenticatedPage.getByRole("heading", { name: "Delete Board" })).toBeVisible();
+      await authenticatedPage.getByRole("button", { name: "Cancel" }).click();
+      await expect(
+        authenticatedPage.getByRole("heading", { name: "Delete Board" })
+      ).not.toBeVisible();
+      await expect(
+        authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)
+      ).toBeVisible();
+      const board = await testPrisma.board.findFirst({
+        where: {
+          name: boardName,
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+      expect(board).toBeTruthy();
+    });
+  });
 });
