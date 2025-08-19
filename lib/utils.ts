@@ -253,3 +253,50 @@ export function filterAndSortNotes(
 
   return filteredNotes;
 }
+
+// Helper function to format relative time with exact differences
+export function formatRelativeTime(date: Date | string): string {
+  const now = new Date();
+  const targetDate = new Date(date);
+  const diffInMs = now.getTime() - targetDate.getTime();
+  
+  // Handle future dates (should not happen for activity, but just in case)
+  if (diffInMs < 0) {
+    return "just now";
+  }
+
+  const diffInSeconds = Math.floor(diffInMs / 1000);
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  const diffInDays = Math.floor(diffInHours / 24);
+
+  // Less than a minute
+  if (diffInSeconds < 60) {
+    return "just now";
+  }
+
+  // Less than an hour - show exact minutes
+  if (diffInMinutes < 60) {
+    return diffInMinutes === 1 ? "1 minute ago" : `${diffInMinutes} minutes ago`;
+  }
+
+  // Less than a day - show exact hours and minutes
+  if (diffInHours < 24) {
+    const remainingMinutes = diffInMinutes % 60;
+    if (remainingMinutes === 0) {
+      return diffInHours === 1 ? "1 hour ago" : `${diffInHours} hours ago`;
+    }
+    return diffInHours === 1 
+      ? `1 hour ${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'} ago`
+      : `${diffInHours} hours ${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'} ago`;
+  }
+
+  // More than a day - show exact days and hours
+  const remainingHours = diffInHours % 24;
+  if (remainingHours === 0) {
+    return diffInDays === 1 ? "1 day ago" : `${diffInDays} days ago`;
+  }
+  return diffInDays === 1
+    ? `1 day ${remainingHours} ${remainingHours === 1 ? 'hour' : 'hours'} ago`
+    : `${diffInDays} days ${remainingHours} ${remainingHours === 1 ? 'hour' : 'hours'} ago`;
+}

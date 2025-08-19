@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatRelativeTime } from "@/lib/utils";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -48,6 +49,7 @@ export type DashboardBoard = Board & {
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
+  lastActivity: string;
   _count: { notes: number };
 };
 
@@ -324,6 +326,11 @@ export default function Dashboard() {
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
                           {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
                         </span>
+                      </div>
+                      <div className="mt-2">
+                        <p className="text-xs text-slate-500 dark:text-zinc-400">
+                          {board._count.notes === 0 ? `Created: ${formatRelativeTime(board.lastActivity)}` : `Last Activity: ${formatRelativeTime(board.lastActivity)}`}
+                        </p>
                       </div>
                     </CardHeader>
                     {board.description && (
