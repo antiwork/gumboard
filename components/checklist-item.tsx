@@ -49,6 +49,7 @@ export function ChecklistItem({
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
   const deletingRef = React.useRef<boolean>(false);
+  const [isExpanded, setIsExpanded] = React.useState<boolean>(false);
 
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
@@ -56,11 +57,18 @@ export function ChecklistItem({
   };
 
   React.useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      adjustTextareaHeight(textareaRef.current);
-      previousContentRef.current = editContent ?? item.content;
+    if (textareaRef.current) {
+      if (isEditing || isExpanded) {
+        adjustTextareaHeight(textareaRef.current);
+        if (isEditing) {
+          previousContentRef.current = editContent ?? item.content;
+        }
+      } else {
+        textareaRef.current.style.height = "auto";
+      }
     }
-  }, [isEditing, editContent, item.content]);
+  }, [isExpanded, isEditing, editContent, item.content]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -120,8 +128,13 @@ export function ChecklistItem({
         onChange={(e) => onEditContentChange?.(e.target.value)}
         disabled={readonly}
         className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
-          item.checked && "text-slate-500 dark:text-zinc-500 line-through"
+          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none outline-none leading-4",
+          item.checked && "text-slate-500 dark:text-zinc-500 line-through",
+          !isEditing && !readonly && "cursor-pointer",
+          !isEditing && readonly && "cursor-pointer",
+          !isEditing && !isExpanded && "overflow-hidden whitespace-nowrap text-ellipsis max-h-5",
+          !isEditing && isExpanded && "overflow-visible whitespace-pre-wrap",
+          isEditing && "overflow-hidden"
         )}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
@@ -136,6 +149,12 @@ export function ChecklistItem({
 
           if (!isEditing && !readonly) {
             onStartEdit?.(item.id);
+          }
+        }}
+        onClick={(e) => {
+          if (!isEditing) {
+            e.preventDefault();
+            setIsExpanded(!isExpanded);
           }
         }}
         rows={1}
