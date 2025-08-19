@@ -6,10 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, Settings, X } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, Settings, X, ChevronUp } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
-import { FullPageLoader } from "@/components/ui/loader";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
 
@@ -30,6 +29,7 @@ import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
 import { getUniqueAuthors, filterAndSortNotes } from "@/lib/utils";
+import { BoardPageSkeleton } from "@/components/board-skeleton";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -343,7 +343,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     if (!currentNote) return;
 
     // OPTIMISTIC UPDATE: Update UI immediately
-    setNotes(notes.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
+    setNotes((prev) => prev.map((n) => (n.id === updatedNote.id ? updatedNote : n)));
   };
 
   const handleAddNote = async (targetBoardId?: string) => {
@@ -377,11 +377,47 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (response.ok) {
         const { note } = await response.json();
-        setNotes([...notes, note]);
+        setNotes((prev) => [...prev, note]);
         setAddingChecklistItem(note.id);
       }
     } catch (error) {
       console.error("Error creating note:", error);
+    }
+  };
+
+  const handleCopyNote = async (originalNote: Note) => {
+    try {
+      const targetBoardId = boardId === "all-notes" ? originalNote.boardId : boardId;
+      const isAllNotesView = boardId === "all-notes";
+
+      const checklistItems =
+        originalNote.checklistItems?.map((item, index) => ({
+          content: item.content,
+          checked: item.checked,
+          order: index,
+        })) || [];
+
+      const response = await fetch(
+        `/api/boards/${isAllNotesView ? "all-notes" : targetBoardId}/notes`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            color: originalNote.color,
+            checklistItems,
+            ...(isAllNotesView && { boardId: targetBoardId }),
+          }),
+        }
+      );
+
+      if (response.ok) {
+        const { note } = await response.json();
+        setNotes((prev) => [...prev, note]);
+      }
+    } catch (error) {
+      console.error("Error copying note:", error);
     }
   };
 
@@ -444,7 +480,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
 
-      setNotes(notes.filter((n) => n.id !== noteId));
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -454,7 +490,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (!response.ok) {
         // Revert on error
-        setNotes([...notes, currentNote]);
+        setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
@@ -473,7 +509,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
       if (!targetBoardId) return;
 
-      setNotes(notes.filter((n) => n.id !== noteId));
+      setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
       const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
         method: "PUT",
@@ -482,7 +518,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       });
 
       if (!response.ok) {
-        setNotes([...notes, currentNote]);
+        setNotes((prev) => [...prev, currentNote]);
         setErrorDialog({
           open: true,
           title: "Unarchive Failed",
@@ -552,6 +588,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { board } = await response.json();
         setBoard(board);
+
+        setAllBoards((prevBoards) => prevBoards.map((b) => (b.id === board.id ? board : b)));
+
         setBoardSettings({
           name: board.name,
           description: board.description || "",
@@ -604,7 +643,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   };
 
   if (userLoading || notesloading) {
-    return <FullPageLoader message="Loading board..." />;
+    return <BoardPageSkeleton />;
   }
 
   if (!board && boardId !== "all-notes" && boardId !== "archive") {
@@ -623,8 +662,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   return (
     <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
-        <div className="mx-2 flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto">
+        <div className="mx-0.5 sm:mx-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center h-auto sm:h-16 p-2 sm:p-0">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 sm:w-fit grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Company Name */}
             <Link href="/dashboard" className="flex-shrink-0 pl-1">
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
@@ -632,15 +671,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 <BetaBadge />
               </h1>
             </Link>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
+            <div className="relative board-dropdown min-w-32 sm:max-w-64 col-span-2 sm:col-span-1">
               <Button
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className={`flex items-center justify-between ${showBoardDropdown ? "bg-zinc-100 dark:bg-zinc-800" : "hover:bg-zinc-100 dark:hover:bg-zinc-800"} text-foreground dark:text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full sm:w-auto`}
+                className="flex items-center justify-between text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full"
               >
-                <div>
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
                     {boardId === "all-notes"
                       ? "All notes"
                       : boardId === "archive"
@@ -648,9 +687,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         : board?.name}
                   </div>
                 </div>
-                <ChevronDown
-                  className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform }`}
-                />
+                {showBoardDropdown ? (
+                  <ChevronUp
+                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
+                  />
+                ) : (
+                  <ChevronDown
+                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
+                  />
+                )}
               </Button>
 
               {showBoardDropdown && (
@@ -713,58 +758,60 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     >
                       <span className="font-medium">Create new board</span>
                     </Button>
-                    {boardId !== "all-notes" && boardId !== "archive" && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setBoardSettings({
-                            name: board?.name || "",
-                            description: board?.description || "",
-                            isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                            sendSlackUpdates:
-                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                          });
-                          setBoardSettingsDialog(true);
-                          setShowBoardDropdown(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2"
-                      >
-                        <Settings className="w-4 h-4 mr-2" />
-                        <span className="font-medium">Board settings</span>
-                      </Button>
-                    )}
                   </div>
                 </div>
               )}
             </div>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
 
             {/* Filter Popover */}
-            <div className="relative board-dropdown mr-0" data-slot="filter-popover">
-              <FilterPopover
-                startDate={dateRange.startDate}
-                endDate={dateRange.endDate}
-                onDateRangeChange={(startDate, endDate) => {
-                  const newDateRange = { startDate, endDate };
-                  setDateRange(newDateRange);
-                  updateURL(undefined, newDateRange);
-                }}
-                selectedAuthor={selectedAuthor}
-                authors={uniqueAuthors}
-                onAuthorChange={(authorId) => {
-                  setSelectedAuthor(authorId);
-                  updateURL(undefined, undefined, authorId);
-                }}
-                className="w-fit"
-              />
+            <div className="flex flex-nowrap space-x-1">
+              <div className="relative board-dropdown" data-slot="filter-popover">
+                <FilterPopover
+                  startDate={dateRange.startDate}
+                  endDate={dateRange.endDate}
+                  onDateRangeChange={(startDate, endDate) => {
+                    const newDateRange = { startDate, endDate };
+                    setDateRange(newDateRange);
+                    updateURL(undefined, newDateRange);
+                  }}
+                  selectedAuthor={selectedAuthor}
+                  authors={uniqueAuthors}
+                  onAuthorChange={(authorId) => {
+                    setSelectedAuthor(authorId);
+                    updateURL(undefined, undefined, authorId);
+                  }}
+                  className="w-fit size-9"
+                />
+              </div>
+              {boardId !== "all-notes" && boardId !== "archive" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setBoardSettings({
+                      name: board?.name || "",
+                      description: board?.description || "",
+                      isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+                      sendSlackUpdates:
+                        (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                    });
+                    setBoardSettingsDialog(true);
+                  }}
+                  aria-label="Board settings"
+                  title="Board settings"
+                  className="flex items-center size-9"
+                >
+                  <Settings className="size-4" />
+                </Button>
+              )}
             </div>
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto gap-2 md:gap-0">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Search Box */}
-            <div className="relative flex-1 sm:flex-none min-w-[150px]">
+            <div className="relative h-9">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
@@ -776,7 +823,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                 }}
-                className="w-full sm:w-64 pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
               {searchTerm && (
                 <Button
@@ -785,9 +832,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setDebouncedSearchTerm("");
                     updateURL("");
                   }}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-foreground dark:hover:text-zinc-100 cursor-pointer"
+                  className="absolute top-[5px] right-1 size-7 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-white dark:hover:text-zinc-100 cursor-pointer bg-transparent"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-4 w-4 " />
                 </Button>
               )}
             </div>
@@ -800,7 +847,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
-              className="flex items-center justify-center text-white w-fit h-10 sm:w-auto sm:h-auto sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
+              disabled={boardId === "archive"}
+              className="flex items-center justify-center text-white h-9 col-span-2 sm:col-span-1 sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
             >
               <span>Add note</span>
             </Button>

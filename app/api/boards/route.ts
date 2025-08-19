@@ -37,6 +37,7 @@ export async function GET() {
             notes: {
               where: {
                 deletedAt: null,
+                archivedAt: null,
               },
             },
           },
@@ -62,9 +63,14 @@ export async function POST(request: NextRequest) {
 
     const { name, description, isPublic } = await request.json();
 
-    if (!name) {
-      return NextResponse.json({ error: "Board name is required" }, { status: 400 });
+    if (!name || typeof name !== "string" || name.trim().length === 0) {
+      return NextResponse.json(
+        { error: "Board name is required and cannot be empty or only whitespace" },
+        { status: 400 }
+      );
     }
+
+    const trimmedName = name.trim();
 
     const user = await db.user.findUnique({
       where: { id: session.user.id },
@@ -80,7 +86,7 @@ export async function POST(request: NextRequest) {
     // Create new board
     const board = await db.board.create({
       data: {
-        name,
+        name: trimmedName,
         description,
         isPublic: Boolean(isPublic || false),
         organizationId: user.organizationId,
@@ -96,7 +102,14 @@ export async function POST(request: NextRequest) {
         updatedAt: true,
         organizationId: true,
         _count: {
-          select: { notes: true },
+          select: {
+            notes: {
+              where: {
+                deletedAt: null,
+                archivedAt: null,
+              },
+            },
+          },
         },
       },
     });

@@ -12,7 +12,7 @@ import {
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
-import { Trash2, Archive, ArchiveRestore } from "lucide-react";
+import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
@@ -64,6 +64,7 @@ interface NoteProps {
   onDelete?: (noteId: string) => void;
   onArchive?: (noteId: string) => void;
   onUnarchive?: (noteId: string) => void;
+  onCopy?: (note: Note) => void;
   readonly?: boolean;
   showBoardName?: boolean;
   className?: string;
@@ -77,6 +78,7 @@ export function Note({
   onDelete,
   onArchive,
   onUnarchive,
+  onCopy,
   readonly = false,
   showBoardName = false,
   className,
@@ -376,6 +378,25 @@ export function Note({
         <div className="flex items-center space-x-2">
           {canEdit && (
             <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    aria-label={`Copy Note ${note.id}`}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onCopy?.(note);
+                    }}
+                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                    variant="ghost"
+                    size="icon"
+                  >
+                    <Copy className="w-3 h-3" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Copy note</p>
+                </TooltipContent>
+              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
