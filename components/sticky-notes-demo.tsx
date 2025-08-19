@@ -306,7 +306,7 @@ const itemVariants = {
     opacity: 0,
     scale: 0.95,
     y: -20,
-    transition: { 
+    transition: {
       duration: 0.3,
       ease: "easeOut" as const,
     },
@@ -333,22 +333,22 @@ const calculateMasonryLayout = (
 ): NotePosition[] => {
   const columns = containerWidth < 640 ? MOBILE_COLUMNS : DESKTOP_COLUMNS;
   const noteWidth = (containerWidth - GAP * (columns - 1)) / columns;
-  
+
   // Track the bottom Y position of each column
   const columnHeights = new Array(columns).fill(0);
-  
+
   return notes.map((note) => {
     // Find the shortest column
     const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
-    
+
     // Calculate position
     const x = shortestColumnIndex * (noteWidth + GAP);
     const y = columnHeights[shortestColumnIndex];
     const height = noteHeights[note.id] || 200; // fallback height
-    
+
     // Update column height
     columnHeights[shortestColumnIndex] = y + height + GAP;
-    
+
     return {
       id: note.id,
       x,
@@ -374,8 +374,8 @@ export function StickyNotesDemo() {
     };
 
     updateLayout();
-    window.addEventListener('resize', updateLayout);
-    return () => window.removeEventListener('resize', updateLayout);
+    window.addEventListener("resize", updateLayout);
+    return () => window.removeEventListener("resize", updateLayout);
   }, []);
 
   // Measure note heights after render
@@ -398,7 +398,7 @@ export function StickyNotesDemo() {
     setNotes(notes.filter((note) => note.id !== noteId));
     // Clean up refs
     delete noteRefs.current[noteId];
-    setNoteHeights(prev => {
+    setNoteHeights((prev) => {
       const newHeights = { ...prev };
       delete newHeights[noteId];
       return newHeights;
@@ -426,12 +426,14 @@ export function StickyNotesDemo() {
   };
 
   // Calculate positions for masonry layout
-  const notePositions = containerWidth > 0 ? calculateMasonryLayout(notes, containerWidth, noteHeights) : [];
-  
+  const notePositions =
+    containerWidth > 0 ? calculateMasonryLayout(notes, containerWidth, noteHeights) : [];
+
   // Calculate container height
-  const containerHeight = notePositions.length > 0 
-    ? Math.max(...notePositions.map(pos => pos.y + pos.height)) + GAP
-    : 0;
+  const containerHeight =
+    notePositions.length > 0
+      ? Math.max(...notePositions.map((pos) => pos.y + pos.height)) + GAP
+      : 0;
 
   return (
     <div className="relative">
@@ -444,20 +446,21 @@ export function StickyNotesDemo() {
       <motion.div
         ref={containerRef}
         className="relative"
-        style={{ height: containerHeight || 'auto' }}
+        style={{ height: containerHeight || "auto" }}
         variants={containerVariants}
         initial="hidden"
         animate="visible"
       >
         <AnimatePresence mode="popLayout">
           {notes.map((note) => {
-            const position = notePositions.find(pos => pos.id === note.id);
-            const noteWidth = containerWidth > 0 
-              ? containerWidth < 640 
-                ? containerWidth 
-                : (containerWidth - GAP) / DESKTOP_COLUMNS
-              : '100%';
-            
+            const position = notePositions.find((pos) => pos.id === note.id);
+            const noteWidth =
+              containerWidth > 0
+                ? containerWidth < 640
+                  ? containerWidth
+                  : (containerWidth - GAP) / DESKTOP_COLUMNS
+                : "100%";
+
             return (
               <motion.div
                 key={note.id}
@@ -466,7 +469,7 @@ export function StickyNotesDemo() {
                 }}
                 className="absolute"
                 style={{
-                  width: typeof noteWidth === 'number' ? `${noteWidth}px` : noteWidth,
+                  width: typeof noteWidth === "number" ? `${noteWidth}px` : noteWidth,
                   left: position?.x || 0,
                   top: position?.y || 0,
                 }}
@@ -481,7 +484,7 @@ export function StickyNotesDemo() {
                     stiffness: 400,
                     damping: 30,
                     duration: 0.4,
-                  }
+                  },
                 }}
               >
                 <NoteComponent
