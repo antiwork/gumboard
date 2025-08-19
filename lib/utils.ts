@@ -263,8 +263,15 @@ export function formatLastUpdate(updatedAt: string): string {
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
 
+  const remainingHours = hours % 24;
+  const remainingMinutes = minutes % 60;
+
   if (seconds < 60) return "Last activity: now";
-  if (minutes < 60) return `Last activity: ${minutes}m ago`;
-  if (hours < 24) return `Last activity: ${hours}h ago`;
-  return `Last activity: ${days}d ago`;
+
+  let result = "Last activity: ";
+  if (days > 0) result += `${days}d `;
+  if (remainingHours > 0) result += `${remainingHours}h `;
+  if (remainingMinutes > 0 && days === 0) result += `${remainingMinutes}m `;
+
+  return result.trim() + "ago";
 }
