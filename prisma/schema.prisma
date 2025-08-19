@@ -84,7 +84,7 @@ model Organization {
   @@map("organizations")
 }
 
-model UserOrganization {Add a comment on line R87Add diff commentMarkdown input: edit mode selected.WritePreviewAdd a suggestionHeadingBoldItalicQuoteCodeLinkUnordered listNumbered listTask listMentionReferenceSaved repliesAdd FilesPaste, drop, or click to add filesCancelCommentStart a reviewReturn to code
+model UserOrganization {
   id             String       @id @default(cuid())
   userId         String
   organizationId String
