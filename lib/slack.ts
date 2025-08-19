@@ -6,27 +6,19 @@ interface SlackMessage {
 
 export function hasValidContent(content: string | null | undefined): boolean {
   if (!content) {
-    console.log(`[Slack] hasValidContent check: "${content}" -> false (null/undefined)`);
     return false;
   }
 
   const trimmed = content.trim();
 
   if (trimmed.length === 0) {
-    console.log(`[Slack] hasValidContent check: "${content}" -> false (empty after trim)`);
     return false;
   }
 
   const hasSubstantiveContent =
     /[a-zA-Z0-9\u00C0-\u017F\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/.test(trimmed);
 
-  if (!hasSubstantiveContent) {
-    console.log(`[Slack] hasValidContent check: "${content}" -> false (no substantive content)`);
-    return false;
-  }
-
-  console.log(`[Slack] hasValidContent check: "${content}" -> true`);
-  return true;
+  return hasSubstantiveContent;
 }
 
 const notificationDebounce = new Map<string, number>();
@@ -39,14 +31,10 @@ export function shouldSendNotification(
   sendSlackUpdates: boolean = true
 ): boolean {
   if (boardName.startsWith("Test")) {
-    console.log(`[Slack] Skipping notification for test board: ${boardName}`);
     return false;
   }
 
   if (!sendSlackUpdates) {
-    console.log(
-      `[Slack] Skipping notification for board with disabled Slack updates: ${boardName}`
-    );
     return false;
   }
 
@@ -55,12 +43,10 @@ export function shouldSendNotification(
   const lastNotification = notificationDebounce.get(key);
 
   if (lastNotification && now - lastNotification < DEBOUNCE_DURATION) {
-    console.log(`[Slack] Debounced notification for ${key} (${now - lastNotification}ms ago)`);
     return false;
   }
 
   notificationDebounce.set(key, now);
-  console.log(`[Slack] Allowing notification for ${key}`);
   return true;
 }
 
@@ -78,13 +64,14 @@ export async function sendSlackMessage(
     });
 
     if (!response.ok) {
-      console.error("Failed to send Slack message:", response.statusText);
+      console.error(`Failed to send Slack message: ${response.status} ${response.statusText}`);
       return null;
     }
 
     return Date.now().toString();
   } catch (error) {
-    console.error("Error sending Slack message:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error(`Error sending Slack message: ${errorMessage}`);
     return null;
   }
 }
@@ -101,7 +88,7 @@ export async function updateSlackMessage(
       ? `:white_check_mark: ${originalText} by ${userName} in ${boardName}`
       : `:heavy_plus_sign: ${originalText} by ${userName} in ${boardName}`;
 
-    await fetch(webhookUrl, {
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -112,8 +99,13 @@ export async function updateSlackMessage(
         icon_emoji: ":clipboard:",
       }),
     });
+
+    if (!response.ok) {
+      console.error(`Failed to update Slack message: ${response.status} ${response.statusText}`);
+    }
   } catch (error) {
-    console.error("Error updating Slack message:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    console.error(`Error updating Slack message: ${errorMessage}`);
   }
 }
 

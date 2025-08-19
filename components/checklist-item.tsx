@@ -61,6 +61,12 @@ export function ChecklistItem({
       previousContentRef.current = editContent ?? item.content;
     }
   }, [isEditing, editContent, item.content]);
+
+  React.useEffect(() => {
+    if (!isEditing && textareaRef.current) {
+      adjustTextareaHeight(textareaRef.current);
+    }
+  }, [item.content, isEditing]);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
