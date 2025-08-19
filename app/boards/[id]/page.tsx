@@ -202,10 +202,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
   }, [showBoardDropdown, showAddBoard]);
 
-  // Removed debounce cleanup effect; editing is scoped to Note
-
-  // Removed responsive resize handling - no longer needed with CSS Grid layout
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
