@@ -271,7 +271,7 @@ export function formatLastUpdate(updatedAt: string): string {
   let result = "Last activity: ";
   if (days > 0) result += `${days}d `;
   if (remainingHours > 0) result += `${remainingHours}h `;
-  if (remainingMinutes > 0 && days === 0) result += `${remainingMinutes}m `;
+  if (remainingMinutes > 0 && days === 0) result += `${remainingMinutes}m ago`;
 
-  return result.trim() + "ago";
+  return result.trim();
 }
