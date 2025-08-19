@@ -144,15 +144,23 @@ export function DraggableItem({
     .filter(Boolean)
     .join(" ");
 
+  const childrenWithProps = React.Children.map(children, (child) => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        dragHandleProps: disabled ? {} : { ...attributes, ...listeners },
+      } as Record<string, unknown>);
+    }
+    return child;
+  });
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={combinedClassName}
-      {...(disabled ? {} : { ...attributes, ...listeners })}
       {...props}
     >
-      {children}
+      {childrenWithProps}
     </div>
   );
 }

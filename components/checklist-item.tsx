@@ -4,7 +4,7 @@ import * as React from "react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Trash2, GripVertical } from "lucide-react";
 
 export interface ChecklistItem {
   id: string;
@@ -28,6 +28,7 @@ interface ChecklistItemProps {
   className?: string;
   isNewItem?: boolean;
   onCreateItem?: (content: string) => void;
+  dragHandleProps?: Record<string, unknown>;
 }
 
 export function ChecklistItem({
@@ -45,6 +46,7 @@ export function ChecklistItem({
   className,
   isNewItem = false,
   onCreateItem,
+  dragHandleProps,
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
@@ -115,6 +117,16 @@ export function ChecklistItem({
       data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
       data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
     >
+
+      {!isNewItem && !readonly && dragHandleProps && (
+        <div
+          {...dragHandleProps}
+          className="cursor-grab active:cursor-grabbing p-0.5 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 mt-1 opacity-0 group-hover/item:opacity-100 transition-opacity flex-shrink-0"
+        >
+          <GripVertical className="h-3 w-3" />
+        </div>
+      )}
+
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
@@ -174,7 +186,7 @@ export function ChecklistItem({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 opacity-50 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500"
+          className="h-6 w-6 opacity-50 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-red-600 dark:text-zinc-400 dark:hover:text-red-500 flex-shrink-0"
           onMouseDown={() => {
             deletingRef.current = true;
           }}
