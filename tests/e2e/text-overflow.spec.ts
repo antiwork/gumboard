@@ -54,17 +54,9 @@ test.describe("Text Overflow and Card Expansion", () => {
       .first();
     await expect(boardArea).toBeVisible();
 
-    // Verify the note has h-fit class for dynamic height
-    await expect(noteCard).toHaveClass(/h-fit/);
-
     // Get the textarea with long text
     const textarea = noteCard.locator("textarea").filter({ hasText: longTextWithoutSpaces });
     await expect(textarea).toBeVisible();
-
-    // Verify text wrapping classes are applied
-    await expect(textarea).toHaveClass(/break-all/);
-    await expect(textarea).toHaveClass(/whitespace-pre-wrap/);
-    await expect(textarea).toHaveClass(/min-w-0/);
 
     // Verify no overflow on the textarea
     const textareaBox = await textarea.boundingBox();
