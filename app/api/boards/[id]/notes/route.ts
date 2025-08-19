@@ -91,12 +91,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const userId = session.user.id;
+
     const { color, checklistItems } = await request.json();
     const boardId = (await params).id;
 
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: {
         organizationId: true,
         organization: {
@@ -159,7 +161,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         data: {
           color: randomColor,
           boardId,
-          createdBy: session.user.id,
+          createdBy: userId,
           checklistItems:
             initialChecklistItems.length > 0
               ? {
@@ -191,7 +193,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (
       user.organization?.slackWebhookUrl &&
       hasContent &&
-      shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)
+      shouldSendNotification(userId, boardId, board.name, board.sendSlackUpdates)
     ) {
       const slackMessage = formatNoteForSlack(noteWithItems, board.name, user.name || user.email);
       const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
