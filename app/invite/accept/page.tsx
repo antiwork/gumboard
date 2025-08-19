@@ -255,18 +255,16 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
   // Check if invite has already been processed
   if (invite.status !== "PENDING") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-blue-200">
+      <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="max-w-sm sm:max-w-md mx-auto">
+            <Card className="bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-blue-600">
-                  Invitation{" "}
-                  {invite.status === "ACCEPTED" ? "Already Accepted" : "Already Declined"}
+                <CardTitle className="text-xl text-blue-700 dark:text-blue-400">
+                  Invitation {invite.status === "ACCEPTED" ? "Already Accepted" : "Already Declined"}
                 </CardTitle>
-                <CardDescription>
-                  You have already {invite.status === "ACCEPTED" ? "accepted" : "declined"} this
-                  invitation.
+                <CardDescription className="text-muted-foreground dark:text-zinc-400">
+                  You have already {invite.status === "ACCEPTED" ? "accepted" : "declined"} this invitation.
                 </CardDescription>
               </CardHeader>
             </Card>
