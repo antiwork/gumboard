@@ -507,7 +507,7 @@ export function Note({
                   checked: false,
                   order: 0,
                 }}
-                onEdit={() => { }}
+                onEdit={() => {}}
                 onDelete={() => {
                   setNewItemContent("");
                 }}

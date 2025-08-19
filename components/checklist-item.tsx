@@ -128,7 +128,7 @@ export function ChecklistItem({
         onFocus={(e) => {
           if (isEditing) {
             const originalScrollIntoView = e.target.scrollIntoView;
-            e.target.scrollIntoView = () => { };
+            e.target.scrollIntoView = () => {};
             setTimeout(() => {
               e.target.scrollIntoView = originalScrollIntoView;
             }, 100);
