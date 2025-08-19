@@ -296,7 +296,7 @@ const itemVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: { duration: 0.2 }
+    transition: { duration: 0.2 },
   },
   exit: {
     opacity: 0,
@@ -309,12 +309,14 @@ export function StickyNotesDemo() {
 
   const handleUpdateNote = (updatedNote: Note) => {
     // Use callback form to ensure state updates are batched properly
-    setNotes(prevNotes => prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note)));
+    setNotes((prevNotes) =>
+      prevNotes.map((note) => (note.id === updatedNote.id ? updatedNote : note))
+    );
   };
 
   const handleDeleteNote = (noteId: string) => {
     // Use callback form to ensure state updates are batched properly
-    setNotes(prevNotes => prevNotes.filter((note) => note.id !== noteId));
+    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== noteId));
   };
 
   const handleAddNote = () => {
@@ -334,10 +336,10 @@ export function StickyNotesDemo() {
       },
       checklistItems: [{ id: `${Date.now() + 1}`, content: "New to-do", checked: false, order: 0 }],
     };
-    
+
     // Use a callback to ensure state updates are batched properly
     // This helps prevent layout thrashing during animations
-    setNotes(prevNotes => [newNote, ...prevNotes]);
+    setNotes((prevNotes) => [newNote, ...prevNotes]);
   };
 
   return (
@@ -372,7 +374,11 @@ export function StickyNotesDemo() {
                     <NoteComponent
                       className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
                       note={note}
-                      currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
+                      currentUser={{
+                        id: "demo-user",
+                        name: "Demo User",
+                        email: "demo@example.com",
+                      }}
                       onUpdate={handleUpdateNote}
                       onDelete={handleDeleteNote}
                       syncDB={false}
