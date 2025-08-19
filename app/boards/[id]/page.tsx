@@ -78,7 +78,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
-  const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -266,16 +265,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         : calculateGridLayout(filteredNotes, addingChecklistItem),
     [isMobile, filteredNotes, addingChecklistItem]
   );
-
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -875,38 +864,31 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </div>
 
       {/* Board Area */}
-      <div
-        ref={boardRef}
-        className="relative w-full"
-        style={{
-          height: boardHeight,
-          minHeight: "calc(100vh - 64px)", // Account for header height
-        }}
-      >
+      <div className="flex-1n mt-4 xl:mt-8 px-4 xl:px-8 gap-4">
         {/* Notes */}
-        <div className="relative w-full h-full">
+        <div className="relative columns-1 sm:columns-2 lg:columns-4 xl:columns-5 [&>div:not(:first-child)]:mt-4">
           {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-              onCopy={handleCopyNote}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
+            <div key={note.id} className="mb-4 break-inside-avoid-column">
+              <NoteCard
+                key={note.id}
+                note={note as Note}
+                currentUser={user as User}
+                onUpdate={handleUpdateNoteFromComponent}
+                onDelete={handleDeleteNote}
+                onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                onCopy={handleCopyNote}
+                showBoardName={boardId === "all-notes" || boardId === "archive"}
+                className="shadow-md shadow-black/10"
+                style={{
+                  left: note.x,
+                  top: note.y,
+                  maxWidth: note.width,
+                  padding: `${getResponsiveConfig().notePadding}px`,
+                  backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                }}
+              />
+            </div>
           ))}
         </div>
 
