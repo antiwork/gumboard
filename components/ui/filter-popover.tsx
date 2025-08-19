@@ -49,17 +49,18 @@ function FilterPopover({
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button
-            variant="outline"
+            variant="ghost"
             disabled={disabled}
             className={cn(
-              "flex items-center text-sm gap-0 rounded-md py-2 cursor-pointer w-full",
+              "flex items-center text-sm py-2",
+              filterCount > 0 ? "gap-1" : "gap-0",
               disabled && "opacity-50 cursor-not-allowed"
             )}
           >
             <ListFilter className="w-4 h-4 text-muted-foreground" />
             <span className="text-foreground">
               {filterCount > 0 && (
-                <span className="px-0.5 py-0.5 text-xs bg-primary/10 text-primary rounded-md">
+                <span className="px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded">
                   {filterCount}
                 </span>
               )}
