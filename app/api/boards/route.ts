@@ -76,7 +76,7 @@ export async function GET() {
       if (board.notes.length > 0) {
         const latestNote = board.notes[0];
         const noteUpdatedAt = new Date(latestNote.updatedAt);
-        
+
         // Check if the note has checklist items and get the most recent one
         if (latestNote.checklistItems.length > 0) {
           const latestChecklistItem = latestNote.checklistItems[0];
@@ -85,7 +85,7 @@ export async function GET() {
         } else {
           lastActivity = noteUpdatedAt;
         }
-        
+
         // Compare with board's own updatedAt
         const boardUpdatedAt = new Date(board.updatedAt);
         lastActivity = lastActivity > boardUpdatedAt ? lastActivity : boardUpdatedAt;
@@ -94,7 +94,7 @@ export async function GET() {
       // Remove the notes field from the response since we only used it for calculation
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { notes, ...boardWithoutNotes } = board;
-      
+
       return {
         ...boardWithoutNotes,
         lastActivity: lastActivity.toISOString(),

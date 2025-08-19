@@ -195,19 +195,19 @@ export function formatTimeAgo(date: Date | string): string {
   const now = new Date();
   const past = new Date(date);
   const diffMs = now.getTime() - past.getTime();
-  
+
   // If the date is in the future, return "just now"
   if (diffMs < 0) {
     return "just now";
   }
-  
+
   const diffMinutes = Math.floor(diffMs / (1000 * 60));
   const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
   const diffWeeks = Math.floor(diffDays / 7);
   const diffMonths = Math.floor(diffDays / 30);
   const diffYears = Math.floor(diffDays / 365);
-  
+
   if (diffMinutes < 1) {
     return "just now";
   } else if (diffMinutes < 60) {
