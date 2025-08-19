@@ -295,11 +295,26 @@ export default function OrganizationSettingsPage() {
         fetchInvites();
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to send invite",
-          description: errorData.error || "Failed to send invite",
-        });
+        
+        // Handle PAYWALL response specifically
+        if (response.status === 402 && errorData.code === "PAYWALL") {
+          setErrorDialog({
+            open: true,
+            title: "Upgrade Required",
+            description: errorData.message || "You've reached the free plan limit. Upgrade to invite more team members.",
+            variant: "error",
+          });
+          // Show upgrade button or redirect to billing
+          setTimeout(() => {
+            window.location.href = errorData.upgradeUrl || "/settings/organization#billing";
+          }, 2000);
+        } else {
+          setErrorDialog({
+            open: true,
+            title: "Failed to send invite",
+            description: errorData.error || "Failed to send invite",
+          });
+        }
       }
     } catch (error) {
       console.error("Error inviting member:", error);
@@ -432,11 +447,26 @@ export default function OrganizationSettingsPage() {
         fetchSelfServeInvites();
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to create invite link",
-          description: errorData.error || "Failed to create invite link",
-        });
+        
+        // Handle PAYWALL response specifically
+        if (response.status === 402 && errorData.code === "PAYWALL") {
+          setErrorDialog({
+            open: true,
+            title: "Upgrade Required",
+            description: errorData.message || "You've reached the free plan limit. Upgrade to create invite links.",
+            variant: "error",
+          });
+          // Show upgrade button or redirect to billing
+          setTimeout(() => {
+            window.location.href = errorData.upgradeUrl || "/settings/organization#billing";
+          }, 2000);
+        } else {
+          setErrorDialog({
+            open: true,
+            title: "Failed to create invite link",
+            description: errorData.error || "Failed to create invite link",
+          });
+        }
       }
     } catch (error) {
       console.error("Error creating self-serve invite:", error);
@@ -768,7 +798,7 @@ export default function OrganizationSettingsPage() {
                 disabled={
                   !user?.isAdmin ||
                   (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
-                    (user?.organization?.members?.length || 0) >= FREE_CAP)
+                    ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
                 }
                 className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
@@ -779,12 +809,19 @@ export default function OrganizationSettingsPage() {
                 inviting ||
                 !user?.isAdmin ||
                 (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
-                  (user?.organization?.members?.length || 0) >= FREE_CAP)
+                  ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
               }
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
-              title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
+              title={
+                !user?.isAdmin 
+                  ? "Only admins can invite new team members" 
+                  : (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
+                     ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
+                    ? `Free plan limit reached (${FREE_CAP} members). Upgrade to invite more.`
+                    : undefined
+              }
             >
-              <UserPlus className="w-4 h-4 mr-2" />
+              <UserPlus className="h-4 w-4 mr-2" />
               {inviting ? (
                 "Inviting..."
               ) : (
@@ -794,6 +831,21 @@ export default function OrganizationSettingsPage() {
               )}
             </Button>
           </form>
+          
+          {/* Show upgrade message when free plan limit is reached */}
+          {!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
+           ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP && (
+            <div className="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
+              <strong>Free plan limit reached:</strong> You have {user?.organization?.members?.length || 0} members and {invites.length} pending invites. 
+              <Button 
+                onClick={startCheckout}
+                variant="link" 
+                className="p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline ml-1"
+              >
+                Upgrade to invite more team members
+              </Button>
+            </div>
+          )}
 
           {/* Pending Invites */}
           {invites.length > 0 && (
