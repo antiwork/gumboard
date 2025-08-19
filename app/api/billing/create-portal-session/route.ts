@@ -35,6 +35,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: portal.url });
   } catch (error) {
     console.error("Portal error:", error);
+    
+    // Check if it's a portal configuration error
+    if (error instanceof Error && error.message.includes("configuration")) {
+      return NextResponse.json({ 
+        error: "Stripe Customer Portal not configured (Dashboard → Billing → Customer portal)" 
+      }, { status: 400 });
+    }
+    
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

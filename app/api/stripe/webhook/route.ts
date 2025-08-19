@@ -12,10 +12,21 @@ type StripeSubLite = { id: string; status: string; customer: string | { id: stri
 
 async function upsertOrgFromSubscription(sub: StripeSubLite) {
   const customerId = typeof sub.customer === "string" ? sub.customer : sub.customer?.id;
+  
+  // Map org by customer first, fallback to subscription ID
   const org = await db.organization.findFirst({
-    where: { OR: [{ stripeCustomerId: customerId }, { stripeSubscriptionId: sub.id }] },
+    where: { 
+      OR: [
+        { stripeCustomerId: customerId },
+        { stripeSubscriptionId: sub.id }
+      ]
+    },
   });
-  const currentPeriodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000) : null;
+  
+  // Guard current_period_end conversion
+  const currentPeriodEnd = sub.current_period_end && typeof sub.current_period_end === 'number' 
+    ? new Date(sub.current_period_end * 1000) 
+    : null;
 
   if (org) {
     await db.organization.update({

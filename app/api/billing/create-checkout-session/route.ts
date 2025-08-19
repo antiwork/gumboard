@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
       cancel_url: cancelUrl,
       client_reference_id: user.organizationId,
       metadata: { orgId: user.organizationId },
+      automatic_tax: { enabled: false },
       ...(user.organization.stripeCustomerId
         ? { customer: user.organization.stripeCustomerId }
         : { customer_email: user.email }),

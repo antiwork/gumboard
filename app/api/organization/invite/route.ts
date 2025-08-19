@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
           {
             code: "PAYWALL",
             upgradeUrl: "/settings/organization#billing",
-            message: `Free plan limit reached (${FREE_CAP} members). Upgrade to invite more teammates.`,
+            message: "Upgrade to Team to add more members.",
           },
           { status: 402 }
         );
