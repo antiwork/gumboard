@@ -89,6 +89,7 @@ export default function OrganizationSettingsPage() {
     variant?: "default" | "success" | "error";
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
+  const [billingLoading, setBillingLoading] = useState(false);
 
   useEffect(() => {
     if (user?.organization) {
@@ -184,6 +185,58 @@ export default function OrganizationSettingsPage() {
       });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const startCheckout = async () => {
+    try {
+      setBillingLoading(true);
+      const res = await fetch("/api/billing/create-checkout-session", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url as string;
+        return;
+      }
+      if (res.ok && data.portal && data.url) {
+        window.location.href = data.url as string;
+        return;
+      }
+      setErrorDialog({ open: true, title: "Billing", description: data.error || "Unable to start checkout" });
+    } catch (e) {
+      console.error(e);
+      setErrorDialog({ open: true, title: "Billing", description: "Unable to start checkout" });
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const openPortal = async () => {
+    try {
+      setBillingLoading(true);
+      const res = await fetch("/api/billing/create-portal-session", { method: "POST" });
+      const data = await res.json();
+      if (res.ok && data.url) {
+        window.location.href = data.url as string;
+        return;
+      }
+      setErrorDialog({ open: true, title: "Billing", description: data.error || "Unable to open portal" });
+    } catch (e) {
+      console.error(e);
+      setErrorDialog({ open: true, title: "Billing", description: "Unable to open portal" });
+    } finally {
+      setBillingLoading(false);
+    }
+  };
+
+  const refreshBilling = async () => {
+    try {
+      setBillingLoading(true);
+      await fetch("/api/billing/sync", { method: "POST" });
+      await refreshUser();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setBillingLoading(false);
     }
   };
 
@@ -478,6 +531,44 @@ export default function OrganizationSettingsPage() {
         </div>
       </Card>
 
+      {/* Billing */}
+      <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
+        <div className="space-y-3 lg:space-y-6">
+          <div>
+            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">Billing</h3>
+            <p className="text-zinc-600 dark:text-zinc-400">Manage your subscription.</p>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="text-sm text-zinc-700 dark:text-zinc-300">
+              <div>
+                Plan: {user?.organization && (user.organization as any).plan ? (user.organization as any).plan : "FREE"}
+              </div>
+              <div>Status: {(user?.organization as any)?.subscriptionStatus || "none"}</div>
+              {(user?.organization as any)?.currentPeriodEnd && (
+                <div>
+                  Renews: {new Date((user!.organization as any).currentPeriodEnd).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {user?.isAdmin && (
+                <Button onClick={startCheckout} disabled={billingLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                  {billingLoading ? "Loading..." : "Upgrade / Pay now"}
+                </Button>
+              )}
+              {(user?.organization as any)?.stripeCustomerId && user?.isAdmin && (
+                <Button onClick={openPortal} variant="outline" disabled={billingLoading}>
+                  Manage billing
+                </Button>
+              )}
+              <Button onClick={refreshBilling} variant="outline" disabled={billingLoading}>
+                Refresh status
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Card>
+
       {/* Slack Integration */}
       <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
         <div className="space-y-3 lg:space-y-6">
@@ -637,13 +728,13 @@ export default function OrganizationSettingsPage() {
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="Enter email address"
                 required
-                disabled={!user?.isAdmin}
+                disabled={!user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
                 className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
             </div>
             <Button
               type="submit"
-              disabled={inviting || !user?.isAdmin}
+              disabled={inviting || !user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
             >
@@ -724,7 +815,7 @@ export default function OrganizationSettingsPage() {
                   }
                   placeholder="e.g., General Invite"
                   required
-                  disabled={!user?.isAdmin}
+                  disabled={!user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
@@ -742,7 +833,7 @@ export default function OrganizationSettingsPage() {
                       expiresAt: e.target.value,
                     }))
                   }
-                  disabled={!user?.isAdmin}
+                  disabled={!user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
@@ -762,14 +853,14 @@ export default function OrganizationSettingsPage() {
                     }))
                   }
                   placeholder="Unlimited"
-                  disabled={!user?.isAdmin}
+                  disabled={!user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
             </div>
             <Button
               type="submit"
-              disabled={creating || !user?.isAdmin}
+              disabled={creating || !user?.isAdmin || !((user?.organization as any)?.plan === "TEAM")}
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can create invite links" : undefined}
             >

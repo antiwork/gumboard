@@ -14,6 +14,11 @@ export type Organization = {
   name: string;
   slackWebhookUrl?: string | null;
   members: User[];
+  // Billing (optional in payload)
+  plan?: "FREE" | "TEAM";
+  subscriptionStatus?: string | null;
+  currentPeriodEnd?: string | null;
+  stripeCustomerId?: string | null;
 };
 
 export type User = {

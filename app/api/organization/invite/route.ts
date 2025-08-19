@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
+import { isBillingAdmin, isOrgPaid, PaywallError } from "@/lib/billing";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
@@ -40,9 +41,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Only admins can invite new members
-    if (!user.isAdmin) {
+    // Only billing admins can invite new members
+    if (!isBillingAdmin(user)) {
       return NextResponse.json({ error: "Only admins can invite new members" }, { status: 403 });
+    }
+
+    // Enforce paywall for invites
+    if (!isOrgPaid(user.organization)) {
+      return NextResponse.json(
+        { code: "PAYWALL", upgradeUrl: "/settings/organization#billing", message: "Upgrade to invite your team." },
+        { status: 402 }
+      );
     }
 
     // Check if user is already in the organization

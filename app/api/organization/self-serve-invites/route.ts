@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
+import { isBillingAdmin, isOrgPaid } from "@/lib/billing";
 
 // Generate a cryptographically secure token using nanoid
 function generateSecureToken(): string {
@@ -83,11 +84,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Only admins can create self-serve invites
-    if (!user.isAdmin) {
+    // Only billing admins can create self-serve invites
+    if (!isBillingAdmin(user)) {
+      return NextResponse.json({ error: "Only admins can create self-serve invites" }, { status: 403 });
+    }
+
+    // Enforce paywall
+    if (!isOrgPaid(user.organization)) {
       return NextResponse.json(
-        { error: "Only admins can create self-serve invites" },
-        { status: 403 }
+        { code: "PAYWALL", upgradeUrl: "/settings/organization#billing", message: "Upgrade to create invite links." },
+        { status: 402 }
       );
     }
 

@@ -46,6 +46,10 @@ export async function GET() {
             name: user.organization.name,
             slackWebhookUrl: user.organization.slackWebhookUrl,
             members: user.organization.members,
+            plan: (user.organization as any).plan,
+            subscriptionStatus: (user.organization as any).subscriptionStatus,
+            currentPeriodEnd: (user.organization as any).currentPeriodEnd,
+            stripeCustomerId: (user.organization as any).stripeCustomerId,
           }
         : null,
     });

@@ -1,5 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { isBillingAdmin } from "@/lib/billing";
 import { NextRequest, NextResponse } from "next/server";
 
 // Update member (toggle admin role)
@@ -25,7 +26,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Only admins or the first user (organization creator) can change admin roles
-    if (!currentUser.isAdmin) {
+    if (!isBillingAdmin(currentUser)) {
       return NextResponse.json({ error: "Only admins can change member roles" }, { status: 403 });
     }
 
@@ -86,7 +87,7 @@ export async function DELETE(
     }
 
     // Only admins can remove members
-    if (!currentUser.isAdmin) {
+    if (!isBillingAdmin(currentUser)) {
       return NextResponse.json({ error: "Only admins can remove members" }, { status: 403 });
     }
 

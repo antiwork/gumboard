@@ -3,6 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { isOrgPaid } from "@/lib/billing";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -55,16 +56,26 @@ async function joinOrganization(token: string) {
     );
   }
 
-  // Join the organization
-  await db.user.update({
-    where: { id: session.user.id },
-    data: { organizationId: invite.organizationId },
-  });
-
-  // Increment usage count
-  await db.organizationSelfServeInvite.update({
-    where: { token: token },
-    data: { usageCount: { increment: 1 } },
+  // Join within a transaction and enforce free-plan seat cap under lock
+  await db.$transaction(async (tx) => {
+    // Lock org row to prevent concurrent joins bypassing cap
+    await tx.$queryRaw`SELECT 1 FROM "organizations" WHERE id=${invite.organizationId} FOR UPDATE`;
+    const org = await tx.organization.findUnique({ where: { id: invite.organizationId } });
+    if (!org) throw new Error("Organization not found");
+    const memberCount = await tx.user.count({ where: { organizationId: invite.organizationId } });
+    const canJoinUnlimited = isOrgPaid(org);
+    const limit = canJoinUnlimited ? Number.MAX_SAFE_INTEGER : 1;
+    if (memberCount >= limit) {
+      throw new Error("This organization has reached the free plan member limit. Please ask an admin to upgrade.");
+    }
+    await tx.user.update({
+      where: { id: session!.user!.id as string },
+      data: { organizationId: invite.organizationId },
+    });
+    await tx.organizationSelfServeInvite.update({
+      where: { token: token },
+      data: { usageCount: { increment: 1 } },
+    });
   });
 
   redirect("/dashboard");
