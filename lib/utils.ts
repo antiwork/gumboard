@@ -79,7 +79,6 @@ export function calculateNoteHeight(
   const itemSpacing = 4;
   const checklistItemsCount = note.checklistItems?.length || 0;
   const addingItemHeight = addingChecklistItem === note.id ? 32 : 0;
-  const addTaskButtonHeight = 36;
 
   const checklistHeight =
     checklistItemsCount * itemHeight +
@@ -87,7 +86,7 @@ export function calculateNoteHeight(
     addingItemHeight;
   const totalChecklistHeight = Math.max(minContentHeight, checklistHeight);
 
-  return headerHeight + paddingHeight + totalChecklistHeight + addTaskButtonHeight;
+  return headerHeight + paddingHeight + totalChecklistHeight;
 }
 
 // Helper function to calculate bin-packed layout for desktop
