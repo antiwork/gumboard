@@ -341,9 +341,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
-<<<<<<< HEAD
-=======
-        setAddingChecklistItem(note.id);
         if (searchTerm.trim() || dateRange.startDate || dateRange.endDate || selectedAuthor) {
           setSearchTerm("");
           setDebouncedSearchTerm("");
@@ -351,7 +348,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           setSelectedAuthor(null);
           updateURL("", { startDate: null, endDate: null }, null);
         }
->>>>>>> main
       }
     } catch (error) {
       console.error("Error creating note:", error);
