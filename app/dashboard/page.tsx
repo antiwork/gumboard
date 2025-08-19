@@ -13,15 +13,6 @@ import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
 import { Plus, Grid3x3, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import type { User, Board } from "@/components/note";
 import {
   Dialog,
@@ -41,6 +32,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDialog } from "../contexts/AlertContext";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -64,12 +56,7 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
-
-  const [errorDialog, setErrorDialog] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-  }>({ open: false, title: "", description: "" });
+  const { showDialog } = useDialog();
 
   const router = useRouter();
 
@@ -109,11 +96,11 @@ export default function Dashboard() {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Failed to load dashboard",
         description:
           "Unable to fetch your boards and user data. Please refresh the page or try again later.",
+        variant: "error",
       });
     } finally {
       setLoading(false);
@@ -146,18 +133,18 @@ export default function Dashboard() {
         setIsAddBoardDialogOpen(false);
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showDialog({
           title: "Failed to create board",
           description: errorData.error || "Failed to create board",
+          variant: "error",
         });
       }
     } catch (error) {
       console.error("Error adding board:", error);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Failed to create board",
         description: "Failed to create board",
+        variant: "error"
       });
     }
   };
@@ -362,30 +349,6 @@ export default function Dashboard() {
           </div>
         )}
       </div>
-
-      <AlertDialog
-        open={errorDialog.open}
-        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              {errorDialog.title}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              {errorDialog.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              OK
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

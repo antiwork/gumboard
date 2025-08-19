@@ -32,6 +32,7 @@ import { useUser } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
+import { useDialog } from "@/app/contexts/AlertContext";
 
 interface OrganizationInvite {
   id: string;
@@ -82,12 +83,8 @@ export default function OrganizationSettingsPage() {
     inviteToken: string;
     inviteName: string;
   }>({ open: false, inviteToken: "", inviteName: "" });
-  const [errorDialog, setErrorDialog] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-    variant?: "default" | "success" | "error";
-  }>({ open: false, title: "", description: "", variant: "error" });
+
+  const { showDialog } = useDialog();
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
@@ -142,8 +139,7 @@ export default function OrganizationSettingsPage() {
     setSaving(true);
     try {
       if (slackWebhookUrl && !SLACK_WEBHOOK_REGEX.test(slackWebhookUrl)) {
-        setErrorDialog({
-          open: true,
+        showDialog({
           title: "Invalid Slack Webhook URL",
           description: "Please enter a valid Slack Webhook URL",
           variant: "error",
@@ -169,18 +165,19 @@ export default function OrganizationSettingsPage() {
         refreshUser();
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showDialog({
           title: "Failed to update organization",
           description: errorData.error || "Failed to update organization",
+          variant: "error"
         });
       }
     } catch (error) {
       console.error("Error updating organization:", error);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Failed to update organization",
         description: "Failed to update organization",
+          variant: "error"
+
       });
     } finally {
       setSaving(false);
@@ -208,18 +205,20 @@ export default function OrganizationSettingsPage() {
         fetchInvites();
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showDialog({
           title: "Failed to send invite",
           description: errorData.error || "Failed to send invite",
+          variant: "error"
+
         });
       }
     } catch (error) {
       console.error("Error inviting member:", error);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Failed to send invite",
         description: "Failed to send invite",
+          variant: "error"
+
       });
     } finally {
       setInviting(false);
@@ -244,18 +243,20 @@ export default function OrganizationSettingsPage() {
         await refreshUser();
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showDialog({
           title: "Failed to remove member",
           description: errorData.error || "Failed to remove member",
+          variant: "error"
+
         });
       }
     } catch (error) {
       console.error("Error removing member:", error);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Failed to remove member",
         description: "Failed to remove member",
+          variant: "error"
+
       });
     }
   };
@@ -290,18 +291,20 @@ export default function OrganizationSettingsPage() {
         await refreshUser();
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showDialog({
           title: "Failed to update admin status",
           description: errorData.error || "Failed to update admin status",
+          variant: "error"
+
         });
       }
     } catch (error) {
       console.error("Error toggling admin status:", error);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Failed to update admin status",
         description: "Failed to update admin status",
+          variant: "error"
+
       });
     }
   };
@@ -345,18 +348,20 @@ export default function OrganizationSettingsPage() {
         fetchSelfServeInvites();
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showDialog({
           title: "Failed to create invite link",
           description: errorData.error || "Failed to create invite link",
+          variant: "error"
+
         });
       }
     } catch (error) {
       console.error("Error creating self-serve invite:", error);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Failed to create invite link",
         description: "Failed to create invite link",
+          variant: "error"
+
       });
     } finally {
       setCreating(false);
@@ -384,18 +389,20 @@ export default function OrganizationSettingsPage() {
         fetchSelfServeInvites();
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showDialog({
           title: "Failed to delete invite link",
           description: errorData.error || "Failed to delete invite link",
+          variant: "error"
+
         });
       }
     } catch (error) {
       console.error("Error deleting self-serve invite:", error);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Failed to delete invite link",
         description: "Failed to delete invite link",
+          variant: "error"
+
       });
     }
   };
@@ -404,8 +411,7 @@ export default function OrganizationSettingsPage() {
     const inviteUrl = `${window.location.origin}/join/${inviteToken}`;
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Success",
         description: "Invite link copied to clipboard!",
         variant: "success",
@@ -419,8 +425,7 @@ export default function OrganizationSettingsPage() {
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      setErrorDialog({
-        open: true,
+      showDialog({
         title: "Success",
         description: "Invite link copied to clipboard!",
         variant: "success",
@@ -904,38 +909,6 @@ export default function OrganizationSettingsPage() {
               className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               Delete invite link
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={errorDialog.open}
-        onOpenChange={(open) =>
-          setErrorDialog({ open, title: "", description: "", variant: "error" })
-        }
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              {errorDialog.title}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              {errorDialog.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              onClick={() =>
-                setErrorDialog({ open: false, title: "", description: "", variant: "error" })
-              }
-              className={
-                errorDialog.variant === "success"
-                  ? "bg-green-600 hover:bg-green-700 text-white dark:bg-green-600 dark:hover:bg-green-700"
-                  : "bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-              }
-            >
-              OK
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
