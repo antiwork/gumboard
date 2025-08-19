@@ -681,7 +681,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </Link>
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown flex-1 mr-0 sm:flex-none">
+            <div className="board-dropdown flex-1 mr-0 sm:flex-none">
               <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
                 <PopoverTrigger asChild>
                   <Button
