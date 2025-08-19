@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
-import { isBillingAdmin, isOrgPaid } from "@/lib/billing";
+import { isBillingAdmin, isOrgPaid, FREE_CAP } from "@/lib/billing";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
@@ -46,16 +46,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only admins can invite new members" }, { status: 403 });
     }
 
-    // Free plan seat limit: allow up to 2 members total (including owner)
+    // Free plan seat limit: allow up to FREE_CAP members total (including owner)
     if (!isOrgPaid(user.organization)) {
       const memberCount = await db.user.count({ where: { organizationId: user.organizationId } });
-      const FREE_SEAT_LIMIT = 2;
-      if (memberCount >= FREE_SEAT_LIMIT) {
+      if (memberCount >= FREE_CAP) {
         return NextResponse.json(
           {
             code: "PAYWALL",
             upgradeUrl: "/settings/organization#billing",
-            message: `Free plan limit reached (${FREE_SEAT_LIMIT} members). Upgrade to invite more teammates.`,
+            message: `Free plan limit reached (${FREE_CAP} members). Upgrade to invite more teammates.`,
           },
           { status: 402 }
         );

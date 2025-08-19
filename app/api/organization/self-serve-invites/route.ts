@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { nanoid } from "nanoid";
-import { isBillingAdmin, isOrgPaid } from "@/lib/billing";
+import { isBillingAdmin, isOrgPaid, FREE_CAP } from "@/lib/billing";
 
 // Generate a cryptographically secure token using nanoid
 function generateSecureToken(): string {
@@ -89,12 +89,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only admins can create self-serve invites" }, { status: 403 });
     }
 
-    // Enforce paywall
+    // Free plan seat limit: check member count before paywall
     if (!isOrgPaid(user.organization)) {
-      return NextResponse.json(
-        { code: "PAYWALL", upgradeUrl: "/settings/organization#billing", message: "Upgrade to create invite links." },
-        { status: 402 }
-      );
+      const memberCount = await db.user.count({ where: { organizationId: user.organizationId } });
+      if (memberCount >= FREE_CAP) {
+        return NextResponse.json(
+          { code: "PAYWALL", upgradeUrl: "/settings/organization#billing", message: "Free plan limit reached. Upgrade to create invite links." },
+          { status: 402 }
+        );
+      }
     }
 
     // Parse expiration date if provided

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { headers } from "next/headers";
 import { stripe } from "@/lib/stripe";
 import { env } from "@/lib/env";
 import { db } from "@/lib/db";
@@ -34,23 +35,15 @@ async function upsertOrgFromSubscription(sub: StripeSubLite) {
 
 export async function POST(req: NextRequest) {
   try {
-    const sig = req.headers.get("stripe-signature");
-    const body = await req.text();
-    if (!sig) return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+    const sig = (await headers()).get("stripe-signature")!;
+    const body = await req.text(); // raw body
+    const event = stripe.webhooks.constructEvent(body, sig, env.STRIPE_WEBHOOK_SECRET as string);
 
-    type EventLike = { id: string; type: string; data: { object: unknown } };
-    let event: EventLike;
+    // Idempotency: insert event.id into StripeEvent, if conflict → return 200 early
     try {
-      event = stripe.webhooks.constructEvent(body, sig, (env.STRIPE_WEBHOOK_SECRET as string) || "");
-    } catch (err) {
-      console.error("Webhook signature verification failed.", err);
-      return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
-    }
-
-    // Idempotency: ignore already-processed events
-    const exists = await db.stripeEvent.findUnique({ where: { id: event.id } });
-    if (exists) {
-      return NextResponse.json({ received: true });
+      await db.stripeEvent.create({ data: { id: event.id, type: event.type } });
+    } catch {
+      return NextResponse.json({ ok: true, duplicate: true });
     }
 
     switch (event.type) {
@@ -98,7 +91,6 @@ export async function POST(req: NextRequest) {
         break;
     }
 
-    await db.stripeEvent.create({ data: { id: event.id, type: event.type } });
     return NextResponse.json({ received: true });
   } catch (error) {
     console.error("Webhook handler error:", error);

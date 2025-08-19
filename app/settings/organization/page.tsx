@@ -32,7 +32,7 @@ import { useUser } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
-import { isOrgPaid } from "@/lib/billing";
+import { isOrgPaid, FREE_CAP } from "@/lib/billing";
 
 interface OrganizationInvite {
   id: string;
@@ -577,7 +577,7 @@ export default function OrganizationSettingsPage() {
               <div>
                 Plan: {user?.organization?.plan ? user.organization.plan : "FREE"}
                 {user?.organization && user.organization.plan !== "TEAM" && (
-                  <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">Free plan allows up to 2 members</span>
+                                          <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">Free plan allows up to {FREE_CAP} members</span>
                 )}
               </div>
               <div>Status: {user?.organization?.subscriptionStatus || "none"}</div>
@@ -768,7 +768,7 @@ export default function OrganizationSettingsPage() {
                 disabled={
                   !user?.isAdmin ||
                   (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
-                    (user?.organization?.members?.length || 0) >= 2)
+                    (user?.organization?.members?.length || 0) >= FREE_CAP)
                 }
                 className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
@@ -779,7 +779,7 @@ export default function OrganizationSettingsPage() {
                 inviting ||
                 !user?.isAdmin ||
                 (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
-                  (user?.organization?.members?.length || 0) >= 2)
+                  (user?.organization?.members?.length || 0) >= FREE_CAP)
               }
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}

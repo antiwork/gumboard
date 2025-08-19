@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { X, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/contexts/UserContext";
+import { FREE_CAP } from "@/lib/billing";
 
 interface OrganizationSetupFormProps {
   onSubmit: (
@@ -24,8 +25,8 @@ export default function OrganizationSetupForm({ onSubmit, onUpgrade }: Organizat
   const { refreshUser } = useUser();
 
   const addEmailField = () => {
-    // Free onboarding goal: allow up to 2 total emails (owner + 1 teammate) before upgrade
-    if (teamEmails.length >= 2) return;
+    // Free onboarding goal: allow up to FREE_CAP total emails (owner + teammates) before upgrade
+    if (teamEmails.length >= FREE_CAP) return;
     setTeamEmails([...teamEmails, ""]);
   };
 
@@ -126,16 +127,16 @@ export default function OrganizationSetupForm({ onSubmit, onUpgrade }: Organizat
           ))}
         </div>
 
-        <Button type="button" variant="outline" onClick={addEmailField} className="w-full" disabled={teamEmails.length >= 2}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Team Member
-        </Button>
+                        <Button type="button" variant="outline" onClick={addEmailField} className="w-full" disabled={teamEmails.length >= FREE_CAP}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Team Member
+                </Button>
 
         <div className="text-xs text-muted-foreground space-y-1">
           <p>{`we'll send invitations to join your organization to these email addresses.`}</p>
           {teamEmails.length >= 2 && (
             <div className="text-orange-600 dark:text-orange-400">
-              Free plan allows up to 2 members. Add more by
+              Free plan allows up to {FREE_CAP} members. Add more by
               {" "}
               <button
                 type="button"

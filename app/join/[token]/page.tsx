@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { isOrgPaid } from "@/lib/billing";
+import { isOrgPaid, FREE_CAP } from "@/lib/billing";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
@@ -64,7 +64,7 @@ async function joinOrganization(token: string) {
     if (!org) throw new Error("Organization not found");
     const memberCount = await tx.user.count({ where: { organizationId: invite.organizationId } });
     const canJoinUnlimited = isOrgPaid(org);
-    const limit = canJoinUnlimited ? Number.MAX_SAFE_INTEGER : 2; // Free plan allows up to 2 members
+    const limit = canJoinUnlimited ? Number.MAX_SAFE_INTEGER : FREE_CAP; // Free plan allows up to FREE_CAP members
     if (memberCount >= limit) {
       throw new Error("This organization has reached the free plan member limit. Please ask an admin to upgrade.");
     }
