@@ -66,7 +66,9 @@ async function joinOrganization(token: string) {
     const canJoinUnlimited = isOrgPaid(org);
     const limit = canJoinUnlimited ? Number.MAX_SAFE_INTEGER : FREE_CAP; // Free plan allows up to FREE_CAP members
     if (memberCount >= limit) {
-      throw new Error("This organization has reached the free plan member limit. Please ask an admin to upgrade.");
+      throw new Error(
+        "This organization has reached the free plan member limit. Please ask an admin to upgrade."
+      );
     }
     await tx.user.update({
       where: { id: session!.user!.id as string },

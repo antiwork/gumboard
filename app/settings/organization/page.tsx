@@ -94,7 +94,13 @@ export default function OrganizationSettingsPage() {
   const [billingLoading, setBillingLoading] = useState(false);
   const isPaid =
     user?.organization && user.organization.plan
-      ? isOrgPaid(user.organization as { subscriptionStatus: SubscriptionStatus | null; currentPeriodEnd: Date | null; plan: Plan })
+      ? isOrgPaid(
+          user.organization as {
+            subscriptionStatus: SubscriptionStatus | null;
+            currentPeriodEnd: Date | null;
+            plan: Plan;
+          }
+        )
       : false;
 
   useEffect(() => {
@@ -236,7 +242,11 @@ export default function OrganizationSettingsPage() {
         window.location.href = data.url as string;
         return;
       }
-      setErrorDialog({ open: true, title: "Billing", description: data.error || "Unable to start checkout" });
+      setErrorDialog({
+        open: true,
+        title: "Billing",
+        description: data.error || "Unable to start checkout",
+      });
     } catch (e) {
       console.error(e);
       setErrorDialog({ open: true, title: "Billing", description: "Unable to start checkout" });
@@ -254,7 +264,11 @@ export default function OrganizationSettingsPage() {
         window.location.href = data.url as string;
         return;
       }
-      setErrorDialog({ open: true, title: "Billing", description: data.error || "Unable to open portal" });
+      setErrorDialog({
+        open: true,
+        title: "Billing",
+        description: data.error || "Unable to open portal",
+      });
     } catch (e) {
       console.error(e);
       setErrorDialog({ open: true, title: "Billing", description: "Unable to open portal" });
@@ -296,13 +310,15 @@ export default function OrganizationSettingsPage() {
         fetchInvites();
       } else {
         const errorData = await response.json();
-        
+
         // Handle PAYWALL response specifically
         if (response.status === 402 && errorData.code === "PAYWALL") {
           setErrorDialog({
             open: true,
             title: "Upgrade Required",
-            description: errorData.message || "You've reached the free plan limit. Upgrade to invite more team members.",
+            description:
+              errorData.message ||
+              "You've reached the free plan limit. Upgrade to invite more team members.",
             variant: "error",
           });
           // Show upgrade button or redirect to billing
@@ -448,13 +464,15 @@ export default function OrganizationSettingsPage() {
         fetchSelfServeInvites();
       } else {
         const errorData = await response.json();
-        
+
         // Handle PAYWALL response specifically
         if (response.status === 402 && errorData.code === "PAYWALL") {
           setErrorDialog({
             open: true,
             title: "Upgrade Required",
-            description: errorData.message || "You've reached the free plan limit. Upgrade to create invite links.",
+            description:
+              errorData.message ||
+              "You've reached the free plan limit. Upgrade to create invite links.",
             variant: "error",
           });
           // Show upgrade button or redirect to billing
@@ -608,7 +626,9 @@ export default function OrganizationSettingsPage() {
               <div>
                 Plan: {user?.organization?.plan ? user.organization.plan : "FREE"}
                 {user?.organization && user.organization.plan !== "TEAM" && (
-                                          <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">Free plan: invite up to 2 teammates</span>
+                  <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">
+                    Free plan: invite up to 2 teammates
+                  </span>
                 )}
               </div>
               <div>Status: {user?.organization?.subscriptionStatus || "none"}</div>
@@ -620,7 +640,11 @@ export default function OrganizationSettingsPage() {
             </div>
             <div className="flex items-center gap-2">
               {user?.isAdmin && !isPaid && (
-                <Button onClick={startCheckout} disabled={billingLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button
+                  onClick={startCheckout}
+                  disabled={billingLoading}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
                   {billingLoading ? "Loading..." : "Upgrade / Pay now"}
                 </Button>
               )}
@@ -798,7 +822,8 @@ export default function OrganizationSettingsPage() {
                 required
                 disabled={
                   !user?.isAdmin ||
-                  (!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
+                  (!isPaid &&
+                    (user?.organization?.members?.length || 0) + invites.length >= FREE_CAP)
                 }
                 className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
@@ -808,13 +833,14 @@ export default function OrganizationSettingsPage() {
               disabled={
                 inviting ||
                 !user?.isAdmin ||
-                (!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
+                (!isPaid && (user?.organization?.members?.length || 0) + invites.length >= FREE_CAP)
               }
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={
-                !user?.isAdmin 
-                  ? "Only admins can invite new team members" 
-                  : (!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
+                !user?.isAdmin
+                  ? "Only admins can invite new team members"
+                  : !isPaid &&
+                      (user?.organization?.members?.length || 0) + invites.length >= FREE_CAP
                     ? "Free plan limit reached (2 teammates). Upgrade to Team ($9/mo) to invite more."
                     : undefined
               }
@@ -829,25 +855,28 @@ export default function OrganizationSettingsPage() {
               )}
             </Button>
           </form>
-          
+
           {/* Show upgrade message when free plan limit is reached */}
-          {!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP && (
+          {!isPaid && (user?.organization?.members?.length || 0) + invites.length >= FREE_CAP && (
             <div className="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
-              <strong>Free plan limit reached:</strong> You can invite up to 2 teammates on the free plan. 
-              <Button 
+              <strong>Free plan limit reached:</strong> You can invite up to 2 teammates on the free
+              plan.
+              <Button
                 onClick={startCheckout}
-                variant="link" 
+                variant="link"
                 className="p-0 h-auto text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline ml-1"
               >
                 Upgrade to Team ($9/mo) to invite more
               </Button>
             </div>
           )}
-          
+
           {/* Show remaining invites count for free plan */}
-          {!isPaid && ((user?.organization?.members?.length || 0) + invites.length) < FREE_CAP && (
+          {!isPaid && (user?.organization?.members?.length || 0) + invites.length < FREE_CAP && (
             <div className="text-sm text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
-              <strong>Free plan:</strong> You can invite {Math.max(0, FREE_CAP - (user?.organization?.members?.length || 0) - invites.length)} more teammates.
+              <strong>Free plan:</strong> You can invite{" "}
+              {Math.max(0, FREE_CAP - (user?.organization?.members?.length || 0) - invites.length)}{" "}
+              more teammates.
             </div>
           )}
 
@@ -917,7 +946,10 @@ export default function OrganizationSettingsPage() {
                   }
                   placeholder="e.g., General Invite"
                   required
-                  disabled={!user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")}
+                  disabled={
+                    !user?.isAdmin ||
+                    !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")
+                  }
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
@@ -935,7 +967,10 @@ export default function OrganizationSettingsPage() {
                       expiresAt: e.target.value,
                     }))
                   }
-                  disabled={!user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")}
+                  disabled={
+                    !user?.isAdmin ||
+                    !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")
+                  }
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
@@ -955,7 +990,10 @@ export default function OrganizationSettingsPage() {
                     }))
                   }
                   placeholder="Unlimited"
-                  disabled={!user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")}
+                  disabled={
+                    !user?.isAdmin ||
+                    !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")
+                  }
                   className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
@@ -963,7 +1001,9 @@ export default function OrganizationSettingsPage() {
             <Button
               type="submit"
               disabled={
-                creating || !user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")
+                creating ||
+                !user?.isAdmin ||
+                !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")
               }
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can create invite links" : undefined}

@@ -86,7 +86,10 @@ export async function POST(request: NextRequest) {
 
     // Only billing admins can create self-serve invites
     if (!isBillingAdmin(user)) {
-      return NextResponse.json({ error: "Only admins can create self-serve invites" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Only admins can create self-serve invites" },
+        { status: 403 }
+      );
     }
 
     // Free plan seat limit: check member count before paywall
@@ -94,7 +97,11 @@ export async function POST(request: NextRequest) {
       const memberCount = await db.user.count({ where: { organizationId: user.organizationId } });
       if (memberCount >= FREE_CAP) {
         return NextResponse.json(
-          { code: "PAYWALL", upgradeUrl: "/settings/organization#billing", message: "Upgrade to Team to invite more than 2 teammates." },
+          {
+            code: "PAYWALL",
+            upgradeUrl: "/settings/organization#billing",
+            message: "Upgrade to Team to invite more than 2 teammates.",
+          },
           { status: 402 }
         );
       }

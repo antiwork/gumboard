@@ -24,7 +24,11 @@ export async function POST(req: Request) {
 
     switch (event.type) {
       case "checkout.session.completed": {
-        const s = event.data.object as { customer?: string; subscription?: string; metadata?: { orgId?: string } };
+        const s = event.data.object as {
+          customer?: string;
+          subscription?: string;
+          metadata?: { orgId?: string };
+        };
         const customer = s.customer || null;
         const subId = s.subscription || null;
         const orgByCustomer = customer
@@ -52,7 +56,12 @@ export async function POST(req: Request) {
 
       case "customer.subscription.updated":
       case "customer.subscription.deleted": {
-        const sub = event.data.object as { id: string; status: string; current_period_end?: number; cancel_at_period_end?: boolean };
+        const sub = event.data.object as {
+          id: string;
+          status: string;
+          current_period_end?: number;
+          cancel_at_period_end?: boolean;
+        };
         const org = await db.organization.findFirst({
           where: { stripeSubscriptionId: sub.id },
         });
@@ -88,5 +97,3 @@ export async function POST(req: Request) {
     return new NextResponse("Invalid webhook", { status: 400 });
   }
 }
-
-

@@ -47,8 +47,9 @@ export async function GET() {
             slackWebhookUrl: user.organization.slackWebhookUrl,
             members: user.organization.members,
             plan: (user.organization as unknown as { plan?: string }).plan,
-            subscriptionStatus: (user.organization as unknown as { subscriptionStatus?: string | null })
-              .subscriptionStatus,
+            subscriptionStatus: (
+              user.organization as unknown as { subscriptionStatus?: string | null }
+            ).subscriptionStatus,
             currentPeriodEnd: (user.organization as unknown as { currentPeriodEnd?: Date | null })
               .currentPeriodEnd,
             stripeCustomerId: (user.organization as unknown as { stripeCustomerId?: string | null })

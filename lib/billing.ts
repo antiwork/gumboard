@@ -3,7 +3,9 @@ import { Organization, SubscriptionStatus } from "@prisma/client";
 // Free plan member limit constant
 export const FREE_CAP = 3;
 
-export function isOrgPaid(org: Pick<Organization, "subscriptionStatus" | "currentPeriodEnd" | "plan">): boolean {
+export function isOrgPaid(
+  org: Pick<Organization, "subscriptionStatus" | "currentPeriodEnd" | "plan">
+): boolean {
   const status = org.subscriptionStatus as SubscriptionStatus | null;
   const withinPeriod = !org.currentPeriodEnd || org.currentPeriodEnd > new Date();
   // Only allow "active" or "trialing" status for paid plans
@@ -26,5 +28,3 @@ export class PaywallError extends Error {
     super(message || "Paywalled feature");
   }
 }
-
-

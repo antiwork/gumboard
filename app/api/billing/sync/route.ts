@@ -22,7 +22,9 @@ export async function POST(request: NextRequest) {
     if (!isBillingAdmin(user)) {
       return NextResponse.json({ error: "Only admins can manage billing" }, { status: 403 });
     }
-    const body: { sessionId?: string } = await request.json().catch(() => ({} as { sessionId?: string }));
+    const body: { sessionId?: string } = await request
+      .json()
+      .catch(() => ({}) as { sessionId?: string });
     const sessionId: string | undefined = body?.sessionId;
 
     // If we have a Checkout session id, use it to bind customer/subscription to this org
@@ -70,9 +72,11 @@ export async function POST(request: NextRequest) {
         subscriptionStatus: (sub?.status as unknown as $Enums.SubscriptionStatus) ?? null,
         stripeCustomerId: user.organization.stripeCustomerId,
         stripeSubscriptionId: sub?.id ?? null,
-        currentPeriodEnd: sub && typeof (sub as unknown as { current_period_end?: number }).current_period_end === "number"
-          ? new Date(((sub as unknown as { current_period_end: number }).current_period_end) * 1000)
-          : null,
+        currentPeriodEnd:
+          sub &&
+          typeof (sub as unknown as { current_period_end?: number }).current_period_end === "number"
+            ? new Date((sub as unknown as { current_period_end: number }).current_period_end * 1000)
+            : null,
       },
     });
 
@@ -82,5 +86,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-
-

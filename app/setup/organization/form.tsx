@@ -46,7 +46,7 @@ export default function OrganizationSetupForm({ onSubmit, onUpgrade }: Organizat
     return teamEmails.filter((email) => email.trim() && email.includes("@")).length > 0;
   };
 
-    const handleUpgrade = async () => {
+  const handleUpgrade = async () => {
     if (!orgName.trim()) {
       alert("Please enter an organization name first.");
       return;
@@ -127,17 +127,22 @@ export default function OrganizationSetupForm({ onSubmit, onUpgrade }: Organizat
           ))}
         </div>
 
-                        <Button type="button" variant="outline" onClick={addEmailField} className="w-full" disabled={teamEmails.length >= FREE_CAP}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Team Member
-                </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={addEmailField}
+          className="w-full"
+          disabled={teamEmails.length >= FREE_CAP}
+        >
+          <Plus className="h-4 w-4 mr-2" />
+          Add Team Member
+        </Button>
 
         <div className="text-xs text-muted-foreground space-y-1">
           <p>{`we'll send invitations to join your organization to these email addresses.`}</p>
           {teamEmails.length >= 2 && (
             <div className="text-orange-600 dark:text-orange-400">
-              Free plan: invite up to 2 teammates. Add more by
-              {" "}
+              Free plan: invite up to 2 teammates. Add more by{" "}
               <button
                 type="button"
                 onClick={handleUpgrade}

@@ -5,5 +5,3 @@ export const stripe = new Stripe(env.STRIPE_SECRET_KEY || "", {
   // Use the version bundled with the SDK to avoid TS mismatch errors
   apiVersion: undefined,
 });
-
-

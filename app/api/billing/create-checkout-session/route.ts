@@ -34,7 +34,10 @@ export async function POST(request: NextRequest) {
     // Duplicate subscription guard
     if (isOrgPaid(user.organization)) {
       if (!user.organization.stripeCustomerId) {
-        return NextResponse.json({ error: "Already subscribed, but no customer found" }, { status: 400 });
+        return NextResponse.json(
+          { error: "Already subscribed, but no customer found" },
+          { status: 400 }
+        );
       }
       const portalSession = await stripe.billingPortal.sessions.create({
         customer: user.organization.stripeCustomerId,
@@ -83,5 +86,3 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
-
-
