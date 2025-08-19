@@ -23,6 +23,7 @@ const schema = z.object({
   // Stripe
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
+  STRIPE_PRICE_ID: z.string().optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().optional(),
 });
 

@@ -46,17 +46,24 @@ export async function POST(request: NextRequest) {
 
     const checkout = await stripe.checkout.sessions.create({
       mode: "subscription",
-      line_items: [
-        {
-          price_data: {
-            currency: "usd",
-            unit_amount: 900,
-            recurring: { interval: "month" },
-            product_data: { name: "Gumboard Team Plan" },
-          },
-          quantity: 1,
-        },
-      ],
+      line_items: env.STRIPE_PRICE_ID
+        ? [
+            {
+              price: env.STRIPE_PRICE_ID,
+              quantity: 1,
+            },
+          ]
+        : [
+            {
+              price_data: {
+                currency: "usd",
+                unit_amount: 900,
+                recurring: { interval: "month" },
+                product_data: { name: "Gumboard Team Plan" },
+              },
+              quantity: 1,
+            },
+          ],
       success_url: successUrl,
       cancel_url: cancelUrl,
       client_reference_id: user.organizationId,

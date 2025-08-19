@@ -13,9 +13,10 @@ interface OrganizationSetupFormProps {
     orgName: string,
     teamEmails: string[]
   ) => Promise<{ success: boolean; organization?: unknown }>;
+  onUpgrade: (orgName: string, teamEmails: string[]) => Promise<{ url?: string | null }>;
 }
 
-export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFormProps) {
+export default function OrganizationSetupForm({ onSubmit, onUpgrade }: OrganizationSetupFormProps) {
   const [orgName, setOrgName] = useState("");
   const [teamEmails, setTeamEmails] = useState<string[]>([""]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -42,6 +43,26 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
 
   const hasValidEmails = () => {
     return teamEmails.filter((email) => email.trim() && email.includes("@")).length > 0;
+  };
+
+    const handleUpgrade = async () => {
+    if (!orgName.trim()) {
+      alert("Please enter an organization name first.");
+      return;
+    }
+    setIsSubmitting(true);
+    try {
+      const validEmails = teamEmails.filter((email) => email.trim() && email.includes("@"));
+      const result = await onUpgrade(orgName.trim(), validEmails);
+      if (result?.url) {
+        window.location.href = result.url;
+      } else {
+        throw new Error("Could not create checkout session");
+      }
+    } catch (error) {
+      console.error("Error starting upgrade process:", error);
+      setIsSubmitting(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,12 +137,14 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
             <div className="text-orange-600 dark:text-orange-400">
               Free plan allows up to 2 members. Add more by
               {" "}
-              <a
-                href="/settings/organization#billing"
-                className="underline text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              <button
+                type="button"
+                onClick={handleUpgrade}
+                disabled={isSubmitting}
+                className="underline text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 disabled:opacity-50"
               >
                 upgrading here
-              </a>
+              </button>
               .
             </div>
           )}

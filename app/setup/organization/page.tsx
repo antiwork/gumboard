@@ -76,6 +76,30 @@ async function createOrganization(orgName: string, teamEmails: string[]) {
   return { success: true, organization };
 }
 
+async function createOrganizationAndStartCheckout(orgName: string, teamEmails: string[]) {
+  "use server";
+
+  const result = await createOrganization(orgName, teamEmails);
+  if (!result.success) {
+    throw new Error("Failed to create organization");
+  }
+
+  // Call our centralized billing endpoint to create a Checkout session
+  const baseUrl = getBaseUrl(await headers());
+  const res = await fetch(`${baseUrl}/api/billing/create-checkout-session`, {
+    method: "POST",
+    // Forward cookies for auth
+    headers: { Cookie: (await headers()).get("cookie") || "" },
+    // no body needed; org inferred from session
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data?.error || "Failed to start checkout session");
+  }
+  const data = await res.json();
+  return { url: data.url as string };
+}
+
 export default async function OrganizationSetup() {
   const session = await auth();
 
@@ -123,7 +147,10 @@ export default async function OrganizationSetup() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <OrganizationSetupForm onSubmit={createOrganization} />
+              <OrganizationSetupForm
+                onSubmit={createOrganization}
+                onUpgrade={createOrganizationAndStartCheckout}
+              />
             </CardContent>
           </Card>
         </div>
