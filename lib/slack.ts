@@ -70,7 +70,7 @@ export async function sendSlackMessage(
 
     return Date.now().toString();
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`Error sending Slack message: ${errorMessage}`);
     return null;
   }
@@ -104,7 +104,7 @@ export async function updateSlackMessage(
       console.error(`Failed to update Slack message: ${response.status} ${response.statusText}`);
     }
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`Error updating Slack message: ${errorMessage}`);
   }
 }
