@@ -71,15 +71,16 @@ export function calculateNoteHeight(
   const config = getResponsiveConfig();
   const actualNotePadding = notePadding || config.notePadding;
 
-  const headerHeight = 60;
+  // Slightly reduced to lower overall note height and blank space
+  const headerHeight = 52;
   const paddingHeight = actualNotePadding * 2;
-  const minContentHeight = 60;
+  const minContentHeight = 48;
 
-  const itemHeight = 32;
-  const itemSpacing = 4;
+  const itemHeight = 30;
+  const itemSpacing = 2;
   const checklistItemsCount = note.checklistItems?.length || 0;
   const addingItemHeight = addingChecklistItem === note.id ? 32 : 0;
-  const addTaskButtonHeight = 36;
+  const addTaskButtonHeight = 32;
 
   const checklistHeight =
     checklistItemsCount * itemHeight +
