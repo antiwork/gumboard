@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // If we have a Checkout session id, use it to bind customer/subscription to this org
     if (sessionId) {
-      const checkout = await stripe.checkout.sessions.retrieve(sessionId);
+      const checkout = await stripe().checkout.sessions.retrieve(sessionId);
       const customerId = (checkout.customer as string) || undefined;
       const subscriptionId = (checkout.subscription as string) || undefined;
       if (customerId) {
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
         });
       }
       if (subscriptionId) {
-        const sub = await stripe.subscriptions.retrieve(subscriptionId);
+        const sub = await stripe().subscriptions.retrieve(subscriptionId);
         const unixEnd = (sub as unknown as { current_period_end?: number }).current_period_end;
         await db.organization.update({
           where: { id: user.organizationId },
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find active subscription for the customer
-    const subs = await stripe.subscriptions.list({
+    const subs = await stripe().subscriptions.list({
       customer: user.organization.stripeCustomerId!,
       status: "all",
       limit: 1,

@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     }
 
     const baseUrl = getBaseUrl(request);
-    const portal = await stripe.billingPortal.sessions.create({
+    const portal = await stripe().billingPortal.sessions.create({
       customer: user.organization.stripeCustomerId,
       return_url: `${baseUrl}/settings/organization#billing`,
     });

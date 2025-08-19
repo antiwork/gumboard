@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   try {
     const sig = (await headers()).get("stripe-signature")!;
     const body = await req.text(); // RAW body only
-    const event = stripe.webhooks.constructEvent(body, sig, env.STRIPE_WEBHOOK_SECRET as string);
+    const event = stripe().webhooks.constructEvent(body, sig, env.STRIPE_WEBHOOK_SECRET as string);
 
     // idempotency: insert-first, early return on conflict
     try {
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         const orgId = orgByCustomer?.id ?? s.metadata?.orgId;
         if (!orgId || !subId) break;
 
-        const sub = await stripe.subscriptions.retrieve(subId);
+        const sub = await stripe().subscriptions.retrieve(subId);
         const subData = sub as { current_period_end?: number };
         await db.organization.update({
           where: { id: orgId },

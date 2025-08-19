@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
           { status: 400 }
         );
       }
-      const portalSession = await stripe.billingPortal.sessions.create({
+      const portalSession = await stripe().billingPortal.sessions.create({
         customer: user.organization.stripeCustomerId,
         return_url: `${getBaseUrl(request)}/settings/organization#billing`,
       });
@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     const successUrl = `${baseUrl}/settings/organization?session_id={CHECKOUT_SESSION_ID}#billing`;
     const cancelUrl = `${baseUrl}/settings/organization?canceled=1#billing`;
 
-    const checkout = await stripe.checkout.sessions.create({
+    const checkout = await stripe().checkout.sessions.create({
       mode: "subscription",
       line_items: env.STRIPE_PRICE_ID
         ? [
