@@ -125,8 +125,8 @@ test.describe("Text Overflow and Card Expansion", () => {
     const veryLongText = "This is a very long text that will cause the card to expand. ".repeat(20);
     await textarea.type(veryLongText);
 
-    // Wait for the height adjustment
-    await authenticatedPage.waitForTimeout(500);
+    // Wait for the textarea to contain the new text (ensures the DOM has updated)
+    await expect(textarea).toHaveValue(veryLongText);
 
     // Get new height after typing
     const expandedBox = await noteCard.boundingBox();
