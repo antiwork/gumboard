@@ -261,10 +261,12 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
             <Card className="bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800 shadow-sm">
               <CardHeader className="text-center">
                 <CardTitle className="text-xl text-blue-700 dark:text-blue-400">
-                  Invitation {invite.status === "ACCEPTED" ? "Already Accepted" : "Already Declined"}
+                  Invitation{" "}
+                  {invite.status === "ACCEPTED" ? "Already Accepted" : "Already Declined"}
                 </CardTitle>
                 <CardDescription className="text-muted-foreground dark:text-zinc-400">
-                  You have already {invite.status === "ACCEPTED" ? "accepted" : "declined"} this invitation.
+                  You have already {invite.status === "ACCEPTED" ? "accepted" : "declined"} this
+                  invitation.
                 </CardDescription>
               </CardHeader>
             </Card>
