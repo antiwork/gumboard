@@ -145,7 +145,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           <div className="max-w-sm sm:max-w-md mx-auto">
             <Card className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-700 dark:text-red-400">Invalid Invitation</CardTitle>
+                <CardTitle className="text-xl text-red-700 dark:text-red-400">
+                  Invalid Invitation
+                </CardTitle>
                 <CardDescription className="text-muted-foreground dark:text-zinc-400">
                   This invitation link is invalid or missing required information.
                 </CardDescription>
@@ -173,8 +175,12 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           <div className="max-w-sm sm:max-w-md mx-auto">
             <Card className="bg-white dark:bg-zinc-900 border border-red-200 dark:border-red-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-red-600 dark:text-red-400">Invalid Invitation</CardTitle>
-                <CardDescription className="text-muted-foreground dark:text-zinc-400">This invitation link is invalid or has expired.</CardDescription>
+                <CardTitle className="text-xl text-red-600 dark:text-red-400">
+                  Invalid Invitation
+                </CardTitle>
+                <CardDescription className="text-muted-foreground dark:text-zinc-400">
+                  This invitation link is invalid or has expired.
+                </CardDescription>
               </CardHeader>
             </Card>
           </div>
@@ -191,7 +197,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           <div className="max-w-sm sm:max-w-md mx-auto space-y-8">
             {/* Header */}
             <div className="text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-700 dark:text-blue-300">Organization Invitation</h1>
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-700 dark:text-blue-300">
+                Organization Invitation
+              </h1>
             </div>
 
             {/* Auto-verification Card */}
@@ -202,7 +210,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                     {invite.organization.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <CardTitle className="text-xl text-foreground dark:text-zinc-100">{invite.organization.name}</CardTitle>
+                <CardTitle className="text-xl text-foreground dark:text-zinc-100">
+                  {invite.organization.name}
+                </CardTitle>
                 <CardDescription className="text-base text-muted-foreground dark:text-zinc-400">
                   {invite.user.name || invite.user.email} has invited you to join their organization
                 </CardDescription>
@@ -231,9 +241,13 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           <div className="max-w-sm sm:max-w-md mx-auto">
             <Card className="bg-white dark:bg-zinc-900 border border-yellow-200 dark:border-yellow-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-yellow-700 dark:text-yellow-400">Wrong Account</CardTitle>
+                <CardTitle className="text-xl text-yellow-700 dark:text-yellow-400">
+                  Wrong Account
+                </CardTitle>
                 <CardDescription className="text-muted-foreground dark:text-zinc-400">
-                  This invitation is for {invite.email}, but you&apos;re signed in as {session.user.email}. Please sign out and use the invitation link again to sign in with the correct account.
+                  This invitation is for {invite.email}, but you&apos;re signed in as{" "}
+                  {session.user.email}. Please sign out and use the invitation link again to sign in
+                  with the correct account.
                 </CardDescription>
               </CardHeader>
               <CardContent className="pt-4">
@@ -259,10 +273,12 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
             <Card className="bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800 shadow-sm">
               <CardHeader className="text-center">
                 <CardTitle className="text-xl text-blue-700 dark:text-blue-400">
-                  Invitation {invite.status === "ACCEPTED" ? "Already Accepted" : "Already Declined"}
+                  Invitation{" "}
+                  {invite.status === "ACCEPTED" ? "Already Accepted" : "Already Declined"}
                 </CardTitle>
                 <CardDescription className="text-muted-foreground dark:text-zinc-400">
-                  You have already {invite.status === "ACCEPTED" ? "accepted" : "declined"} this invitation.
+                  You have already {invite.status === "ACCEPTED" ? "accepted" : "declined"} this
+                  invitation.
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -278,7 +294,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
         <div className="max-w-sm sm:max-w-md mx-auto space-y-8">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-700 dark:text-blue-300">Organization Invitation</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-700 dark:text-blue-300">
+              Organization Invitation
+            </h1>
             <p className="text-muted-foreground dark:text-zinc-400">
               You&apos;ve been invited to join an organization
             </p>
@@ -288,7 +306,8 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           {isJustVerified && (
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
               <p className="text-sm text-green-700 dark:text-green-300 text-center">
-                ✅ Account verified successfully! You can now accept or decline the invitation below.
+                ✅ Account verified successfully! You can now accept or decline the invitation
+                below.
               </p>
             </div>
           )}
@@ -301,7 +320,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                   {invite.organization.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <CardTitle className="text-xl text-foreground dark:text-zinc-100">{invite.organization.name}</CardTitle>
+              <CardTitle className="text-xl text-foreground dark:text-zinc-100">
+                {invite.organization.name}
+              </CardTitle>
               <CardDescription className="text-base text-muted-foreground dark:text-zinc-400">
                 {invite.user.name || invite.user.email} has invited you to join their organization
               </CardDescription>
@@ -311,7 +332,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                 <p className="text-sm text-muted-foreground dark:text-zinc-400">
                   Invited: {invite.createdAt.toLocaleDateString()}
                 </p>
-                <p className="text-sm text-muted-foreground dark:text-zinc-400">Your email: {invite.email}</p>
+                <p className="text-sm text-muted-foreground dark:text-zinc-400">
+                  Your email: {invite.email}
+                </p>
               </div>
 
               <div className="flex flex-col space-y-3">
