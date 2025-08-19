@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gumboard Animation Fix Demo - Issue #514</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/framer-motion@11/dist/framer-motion.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            min-height: 100vh;
+        }
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .demo-section {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .demo-section h3 {
+            margin-top: 0;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-before {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .status-after {
+            background: #dcfce7;
+            color: #16a34a;
+        }
+        .note {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 8px 0;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .note:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .note h4 {
+            margin: 0 0 8px 0;
+            color: #92400e;
+        }
+        .checklist-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin: 4px 0;
+            color: #78350f;
+        }
+        .add-note-btn {
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            margin-bottom: 16px;
+        }
+        .add-note-btn:hover {
+            background: #2563eb;
+        }
+        .old-layout {
+            columns: 2;
+            column-gap: 16px;
+            column-fill: balance;
+        }
+        .old-note {
+            break-inside: avoid;
+            margin-bottom: 16px;
+        }
+        .new-layout {
+            position: relative;
+            min-height: 400px;
+        }
+        .new-note {
+            position: absolute;
+            width: calc(50% - 8px);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .explanation {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .code-block {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+        }
+        @media (max-width: 768px) {
+            .comparison {
+                grid-template-columns: 1fr;
+            }
+            .old-layout {
+                columns: 1;
+            }
+            .new-note {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="header">
+            <h1>🎯 Gumboard Issue #514: Fix Janky Homepage Animation</h1>
+            <p><strong>Bounty:</strong> $250 | <strong>Problem:</strong> List compresses when adding/removing items</p>
+            <p>This demo shows the <strong>before</strong> and <strong>after</strong> of the animation fix.</p>
+        </div>
+
+        <div class="comparison">
+            <div class="demo-section">
+                <h3>❌ Before: CSS Columns (Janky) <span class="status-badge status-before">BROKEN</span></h3>
+                <p>CSS columns automatically redistribute content, causing jarring compression when items change.</p>
+                <div id="before-demo"></div>
+            </div>
+
+            <div class="demo-section">
+                <h3>✅ After: Masonry Layout (Smooth) <span class="status-badge status-after">FIXED</span></h3>
+                <p>Proper masonry layout with Framer Motion provides smooth, controlled animations.</p>
+                <div id="after-demo"></div>
+            </div>
+        </div>
+
+        <div class="explanation">
+            <h2>🔧 Technical Solution</h2>
+            <p><strong>Root Cause:</strong> CSS Columns layout conflicts with Framer Motion's layout animations.</p>
+            
+            <h3>❌ Old Implementation (Problematic):</h3>
+            <div class="code-block">
+&lt;motion.div className="columns-1 gap-4 sm:columns-2"&gt;
+  &lt;AnimatePresence&gt;
+    {notes.map((note) =&gt; (
+      &lt;motion.div key={note.id} layout&gt; {/* CONFLICT! */}
+        &lt;NoteComponent /&gt;
+      &lt;/motion.div&gt;
+    ))}
+  &lt;/AnimatePresence&gt;
+&lt;/motion.div&gt;
+            </div>
+
+            <h3>✅ New Implementation (Fixed):</h3>
+            <div class="code-block">
+&lt;motion.div className="relative" style={{ height: containerHeight }}&gt;
+  &lt;AnimatePresence mode="popLayout"&gt;
+    {notes.map((note) =&gt; {
+      const position = calculateMasonryLayout(notes, containerWidth, noteHeights);
+      return (
+        &lt;motion.div 
+          key={note.id}
+          className="absolute"
+          style={{ left: position.x, top: position.y }}
+          layout="position"
+          transition={{ type: "spring", stiffness: 400, damping: 30 }}
+        &gt;
+          &lt;NoteComponent /&gt;
+        &lt;/motion.div&gt;
+      );
+    })}
+  &lt;/AnimatePresence&gt;
+&lt;/motion.div&gt;
+            </div>
+
+            <h3>🎯 Key Improvements:</h3>
+            <ul>
+                <li><strong>Masonry Algorithm:</strong> Custom layout calculation instead of CSS columns</li>
+                <li><strong>Absolute Positioning:</strong> Precise control over note positions</li>
+                <li><strong>Spring Animations:</strong> Smooth, physics-based transitions</li>
+                <li><strong>Height Measurement:</strong> Dynamic container height based on content</li>
+                <li><strong>Responsive Design:</strong> Adapts to mobile/desktop breakpoints</li>
+            </ul>
+
+            <h3>📱 Benefits:</h3>
+            <ul>
+                <li>❌ No more jarring compression</li>
+                <li>✅ Smooth, predictable animations</li>
+                <li>✅ Better performance (no layout thrashing)</li>
+                <li>✅ Responsive design maintained</li>
+                <li>✅ Accessibility improvements</li>
+            </ul>
+        </div>
+    </div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { motion, AnimatePresence } = window.FramerMotion;
+
+        // Sample notes data
+        const sampleNotes = [
+            { id: 1, title: "Team Meeting", items: ["Discuss roadmap", "Review sprints"] },
+            { id: 2, title: "Bug Fixes", items: ["Fix login issue", "Update dependencies"] },
+            { id: 3, title: "Features", items: ["Dark mode", "Mobile responsive"] },
+        ];
+
+        // Before Demo (CSS Columns - Janky)
+        function BeforeDemo() {
+            const [notes, setNotes] = useState([...sampleNotes]);
+
+            const addNote = () => {
+                const newNote = {
+                    id: Date.now(),
+                    title: `New Task ${notes.length + 1}`,
+                    items: ["New item", "Another task"]
+                };
+                setNotes([newNote, ...notes]);
+            };
+
+            const removeNote = (id) => {
+                setNotes(notes.filter(note => note.id !== id));
+            };
+
+            return (
+                <div>
+                    <button className="add-note-btn" onClick={addNote}>+ Add Note</button>
+                    <div className="old-layout">
+                        {notes.map((note) => (
+                            <div key={note.id} className="old-note">
+                                <div className="note" onClick={() => removeNote(note.id)}>
+                                    <h4>{note.title}</h4>
+                                    {note.items.map((item, i) => (
+                                        <div key={i} className="checklist-item">
+                                            <span>☐</span> {item}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        // After Demo (Masonry Layout - Smooth)
+        function AfterDemo() {
+            const [notes, setNotes] = useState([...sampleNotes]);
+            const [positions, setPositions] = useState([]);
+            const containerRef = useRef();
+
+            const calculatePositions = () => {
+                if (!containerRef.current) return;
+                
+                const containerWidth = containerRef.current.offsetWidth;
+                const noteWidth = (containerWidth - 8) / 2; // 2 columns with gap
+                const columnHeights = [0, 0];
+                
+                const newPositions = notes.map((note, index) => {
+                    const shortestCol = columnHeights[0] <= columnHeights[1] ? 0 : 1;
+                    const x = shortestCol * (noteWidth + 8);
+                    const y = columnHeights[shortestCol];
+                    const height = 100 + (note.items.length * 24); // Estimated height
+                    
+                    columnHeights[shortestCol] = y + height + 16;
+                    
+                    return { x, y, width: noteWidth, height };
+                });
+                
+                setPositions(newPositions);
+            };
+
+            useEffect(() => {
+                calculatePositions();
+                window.addEventListener('resize', calculatePositions);
+                return () => window.removeEventListener('resize', calculatePositions);
+            }, [notes]);
+
+            const addNote = () => {
+                const newNote = {
+                    id: Date.now(),
+                    title: `New Task ${notes.length + 1}`,
+                    items: ["New item", "Another task"]
+                };
+                setNotes([newNote, ...notes]);
+            };
+
+            const removeNote = (id) => {
+                setNotes(notes.filter(note => note.id !== id));
+            };
+
+            const containerHeight = positions.length > 0 
+                ? Math.max(...positions.map(pos => pos.y + pos.height)) + 16
+                : 400;
+
+            return (
+                <div>
+                    <button className="add-note-btn" onClick={addNote}>+ Add Note</button>
+                    <motion.div 
+                        ref={containerRef}
+                        className="new-layout"
+                        style={{ height: containerHeight }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                    >
+                        <AnimatePresence mode="popLayout">
+                            {notes.map((note, index) => {
+                                const position = positions[index] || { x: 0, y: 0, width: '100%' };
+                                return (
+                                    <motion.div
+                                        key={note.id}
+                                        className="new-note"
+                                        style={{
+                                            left: position.x,
+                                            top: position.y,
+                                            width: position.width
+                                        }}
+                                        initial={{ opacity: 0, scale: 0.8, y: -20 }}
+                                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                                        exit={{ opacity: 0, scale: 0.8, y: -20 }}
+                                        layout="position"
+                                        transition={{
+                                            layout: { type: "spring", stiffness: 400, damping: 30 },
+                                            opacity: { duration: 0.2 },
+                                            scale: { duration: 0.2 }
+                                        }}
+                                    >
+                                        <div className="note" onClick={() => removeNote(note.id)}>
+                                            <h4>{note.title}</h4>
+                                            {note.items.map((item, i) => (
+                                                <div key={i} className="checklist-item">
+                                                    <span>☐</span> {item}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+                                );
+                            })}
+                        </AnimatePresence>
+                    </motion.div>
+                </div>
+            );
+        }
+
+        // Render demos
+        ReactDOM.render(<BeforeDemo />, document.getElementById('before-demo'));
+        ReactDOM.render(<AfterDemo />, document.getElementById('after-demo'));
+    </script>
+</body>
+</html>

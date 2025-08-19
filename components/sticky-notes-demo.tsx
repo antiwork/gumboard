@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useRef, useLayoutEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Note as NoteComponent } from "@/components/note";
 import type { Note } from "@/components/note";
@@ -285,26 +285,110 @@ const containerVariants = {
   visible: {
     opacity: 1,
     transition: {
-      staggerChildren: 0.15,
+      staggerChildren: 0.1,
     },
   },
 };
 
 const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
+  hidden: { y: 20, opacity: 0, scale: 0.95 },
   visible: {
     y: 0,
     opacity: 1,
+    scale: 1,
+    transition: {
+      type: "spring" as const,
+      stiffness: 400,
+      damping: 25,
+    },
   },
   exit: {
     opacity: 0,
+    scale: 0.95,
     y: -20,
-    transition: { duration: 0.2 },
+    transition: { 
+      duration: 0.3,
+      ease: "easeOut" as const,
+    },
   },
+};
+
+// Masonry layout configuration
+const MOBILE_COLUMNS = 1;
+const DESKTOP_COLUMNS = 2;
+const GAP = 16; // 1rem = 16px
+
+interface NotePosition {
+  id: string;
+  x: number;
+  y: number;
+  height: number;
+}
+
+// Calculate masonry layout positions
+const calculateMasonryLayout = (
+  notes: Note[],
+  containerWidth: number,
+  noteHeights: Record<string, number>
+): NotePosition[] => {
+  const columns = containerWidth < 640 ? MOBILE_COLUMNS : DESKTOP_COLUMNS;
+  const noteWidth = (containerWidth - GAP * (columns - 1)) / columns;
+  
+  // Track the bottom Y position of each column
+  const columnHeights = new Array(columns).fill(0);
+  
+  return notes.map((note) => {
+    // Find the shortest column
+    const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+    
+    // Calculate position
+    const x = shortestColumnIndex * (noteWidth + GAP);
+    const y = columnHeights[shortestColumnIndex];
+    const height = noteHeights[note.id] || 200; // fallback height
+    
+    // Update column height
+    columnHeights[shortestColumnIndex] = y + height + GAP;
+    
+    return {
+      id: note.id,
+      x,
+      y,
+      height,
+    };
+  });
 };
 
 export function StickyNotesDemo() {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [noteHeights, setNoteHeights] = useState<Record<string, number>>({});
+  const [containerWidth, setContainerWidth] = useState(0);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const noteRefs = useRef<Record<string, HTMLDivElement>>({});
+
+  // Handle window resize and initial setup
+  useLayoutEffect(() => {
+    const updateLayout = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+
+    updateLayout();
+    window.addEventListener('resize', updateLayout);
+    return () => window.removeEventListener('resize', updateLayout);
+  }, []);
+
+  // Measure note heights after render
+  useLayoutEffect(() => {
+    const newHeights: Record<string, number> = {};
+    notes.forEach((note) => {
+      const element = noteRefs.current[note.id];
+      if (element) {
+        newHeights[note.id] = element.offsetHeight;
+      }
+    });
+    setNoteHeights(newHeights);
+  }, [notes]);
 
   const handleUpdateNote = (updatedNote: Note) => {
     setNotes(notes.map((note) => (note.id === updatedNote.id ? updatedNote : note)));
@@ -312,6 +396,13 @@ export function StickyNotesDemo() {
 
   const handleDeleteNote = (noteId: string) => {
     setNotes(notes.filter((note) => note.id !== noteId));
+    // Clean up refs
+    delete noteRefs.current[noteId];
+    setNoteHeights(prev => {
+      const newHeights = { ...prev };
+      delete newHeights[noteId];
+      return newHeights;
+    });
   };
 
   const handleAddNote = () => {
@@ -334,6 +425,14 @@ export function StickyNotesDemo() {
     setNotes([newNote, ...notes]);
   };
 
+  // Calculate positions for masonry layout
+  const notePositions = containerWidth > 0 ? calculateMasonryLayout(notes, containerWidth, noteHeights) : [];
+  
+  // Calculate container height
+  const containerHeight = notePositions.length > 0 
+    ? Math.max(...notePositions.map(pos => pos.y + pos.height)) + GAP
+    : 0;
+
   return (
     <div className="relative">
       <div className="mb-4 flex items-center justify-end">
@@ -342,37 +441,62 @@ export function StickyNotesDemo() {
           Add Note
         </Button>
       </div>
-      <div>
-        <motion.div
-          className="columns-1 gap-4 sm:columns-2"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <AnimatePresence>
-            {notes.map((note) => (
+      <motion.div
+        ref={containerRef}
+        className="relative"
+        style={{ height: containerHeight || 'auto' }}
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+      >
+        <AnimatePresence mode="popLayout">
+          {notes.map((note) => {
+            const position = notePositions.find(pos => pos.id === note.id);
+            const noteWidth = containerWidth > 0 
+              ? containerWidth < 640 
+                ? containerWidth 
+                : (containerWidth - GAP) / DESKTOP_COLUMNS
+              : '100%';
+            
+            return (
               <motion.div
                 key={note.id}
-                className="mb-4 break-inside-avoid"
+                ref={(el) => {
+                  if (el) noteRefs.current[note.id] = el;
+                }}
+                className="absolute"
+                style={{
+                  width: typeof noteWidth === 'number' ? `${noteWidth}px` : noteWidth,
+                  left: position?.x || 0,
+                  top: position?.y || 0,
+                }}
                 variants={itemVariants}
+                initial="hidden"
+                animate="visible"
                 exit="exit"
-                layout
+                layout="position"
+                transition={{
+                  layout: {
+                    type: "spring" as const,
+                    stiffness: 400,
+                    damping: 30,
+                    duration: 0.4,
+                  }
+                }}
               >
-                <div className="pb-4">
-                  <NoteComponent
-                    className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
-                    note={note}
-                    currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
-                    onUpdate={handleUpdateNote}
-                    onDelete={handleDeleteNote}
-                    syncDB={false}
-                  />
-                </div>
+                <NoteComponent
+                  className={`${note.color} bg-white dark:bg-zinc-900 p-4 shadow-sm hover:shadow-md transition-shadow duration-200`}
+                  note={note}
+                  currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
+                  onUpdate={handleUpdateNote}
+                  onDelete={handleDeleteNote}
+                  syncDB={false}
+                />
               </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      </div>
+            );
+          })}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }
