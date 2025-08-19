@@ -356,7 +356,8 @@ export function StickyNotesDemo() {
                 className="mb-4 break-inside-avoid"
                 variants={itemVariants}
                 exit="exit"
-                layout
+                layout="position"
+                layoutId={note.id}
               >
                 <div className="pb-4">
                   <NoteComponent

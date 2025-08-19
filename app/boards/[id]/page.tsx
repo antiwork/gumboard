@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, Settings, X, ChevronUp } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, X, ChevronUp, EllipsisVertical } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
@@ -89,37 +89,40 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }, [user, userLoading, router]);
 
   // Update URL with current filter state
-  const updateURL = (
-    newSearchTerm?: string,
-    newDateRange?: { startDate: Date | null; endDate: Date | null },
-    newAuthor?: string | null
-  ) => {
-    const params = new URLSearchParams();
+  const updateURL = useCallback(
+    (
+      newSearchTerm?: string,
+      newDateRange?: { startDate: Date | null; endDate: Date | null },
+      newAuthor?: string | null
+    ) => {
+      const params = new URLSearchParams();
 
-    const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
-    const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
-    const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
+      const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
+      const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
+      const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
 
-    if (currentSearchTerm) {
-      params.set("search", currentSearchTerm);
-    }
+      if (currentSearchTerm) {
+        params.set("search", currentSearchTerm);
+      }
 
-    if (currentDateRange.startDate) {
-      params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
-    }
+      if (currentDateRange.startDate) {
+        params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
+      }
 
-    if (currentDateRange.endDate) {
-      params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
-    }
+      if (currentDateRange.endDate) {
+        params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
+      }
 
-    if (currentAuthor) {
-      params.set("author", currentAuthor);
-    }
+      if (currentAuthor) {
+        params.set("author", currentAuthor);
+      }
 
-    const queryString = params.toString();
-    const newURL = queryString ? `?${queryString}` : window.location.pathname;
-    router.replace(newURL, { scroll: false });
-  };
+      const queryString = params.toString();
+      const newURL = queryString ? `?${queryString}` : window.location.pathname;
+      router.replace(newURL, { scroll: false });
+    },
+    [searchTerm, dateRange, selectedAuthor, router]
+  );
 
   // Initialize filters from URL parameters
   const initializeFiltersFromURL = () => {
@@ -249,7 +252,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, updateURL]);
 
   // Get unique authors for dropdown
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
@@ -394,6 +397,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
         setAddingChecklistItem(note.id);
+        if (searchTerm.trim() || dateRange.startDate || dateRange.endDate || selectedAuthor) {
+          setSearchTerm("");
+          setDebouncedSearchTerm("");
+          setDateRange({ startDate: null, endDate: null });
+          setSelectedAuthor(null);
+          updateURL("", { startDate: null, endDate: null }, null);
+        }
       }
     } catch (error) {
       console.error("Error creating note:", error);
@@ -690,8 +700,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             {/* Board Selector Dropdown */}
             <div className="relative board-dropdown min-w-32 sm:max-w-64 col-span-2 sm:col-span-1">
               <Button
+                variant="ghost"
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center justify-between text-zinc-100 hover:text-foreground dark:hover:text-zinc-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:focus-visible:ring-sky-600 rounded-lg px-2 py-2 cursor-pointer w-full"
+                className="flex items-center justify-between px-2 py-2 w-full"
               >
                 <div className="min-w-0">
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
@@ -721,9 +732,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       <Link
                         key={b.id}
                         href={`/boards/${b.id}`}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600  dark:hover:text-white ${
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
                           b.id === boardId
-                            ? "bg-zinc-100 dark:bg-zinc-800 text-foreground dark:text-zinc-100 font-semibold"
+                            ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
                             : "text-foreground dark:text-zinc-100"
                         }`}
                         onClick={() => setShowBoardDropdown(false)}
@@ -739,7 +750,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* All Notes Option */}
                     <Link
                       href="/boards/all-notes"
-                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
+                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
                         boardId === "all-notes"
                           ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                           : "text-foreground dark:text-white"
@@ -752,7 +763,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* Archive Option */}
                     <Link
                       href="/boards/archive"
-                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:text-white hover:bg-sky-600 dark:hover:bg-sky-600 ${
+                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
                         boardId === "archive"
                           ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                           : "text-foreground dark:text-white"
@@ -796,12 +807,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     setSelectedAuthor(authorId);
                     updateURL(undefined, undefined, authorId);
                   }}
-                  className="w-fit size-9"
+                  className="h-9"
                 />
               </div>
               {boardId !== "all-notes" && boardId !== "archive" && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="sm"
                   onClick={() => {
                     setBoardSettings({
@@ -817,7 +828,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   title="Board settings"
                   className="flex items-center size-9"
                 >
-                  <Settings className="size-4" />
+                  <EllipsisVertical className="size-4" />
                 </Button>
               )}
             </div>
@@ -863,7 +874,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 }
               }}
               disabled={boardId === "archive"}
-              className="flex items-center justify-center text-white h-9 col-span-2 sm:col-span-1 sm:space-x-2 bg-sky-600 hover:bg-sky-500 transition-all duration-200 cursor-pointer font-medium"
             >
               <span>Add note</span>
             </Button>
