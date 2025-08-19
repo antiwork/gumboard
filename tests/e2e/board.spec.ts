@@ -182,5 +182,31 @@ test.describe("Board Management", () => {
       // Should navigate to the home page
       await expect(page).toHaveURL("/");
     });
+
+    test("should show error dialog for boards api failure", async ({
+      authenticatedPage,
+    }) => {
+      // Intercept the API and return a failure
+      await authenticatedPage.route("**/api/boards", async (route) => {
+        await route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "Internal Server Error" }),
+        });
+      });
+
+      await authenticatedPage.goto("/dashboard");
+
+      const responsePromise = authenticatedPage.waitForResponse(
+        (resp) => resp.url().includes("/api/boards") && resp.status() !== 200
+      );
+      const failedResponse = await responsePromise;
+
+      expect(failedResponse.status()).not.toBe(200);
+
+      await expect(authenticatedPage.getByRole("alertdialog")).toBeVisible();
+      await expect(authenticatedPage.getByText("Failed to load dashboard")).toBeVisible();
+    });
+
   });
 });

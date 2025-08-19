@@ -107,6 +107,10 @@ export default function Dashboard() {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
       }
+      else {
+        const error = await boardsResponse.json();
+        throw error;
+      }
     } catch (error) {
       console.error("Error fetching data:", error);
       setErrorDialog({
