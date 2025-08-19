@@ -79,7 +79,7 @@ export function calculateNoteHeight(
   const itemSpacing = 4;
   const checklistItemsCount = note.checklistItems?.length || 0;
   const addingItemHeight = addingChecklistItem === note.id ? 32 : 0;
-  const addTaskButtonHeight = 32;
+  const addTaskButtonHeight = 0;
 
   const checklistHeight =
     checklistItemsCount * itemHeight +
