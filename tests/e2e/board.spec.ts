@@ -185,7 +185,7 @@ test.describe("Board Management", () => {
   });
 
   test.describe("Delete board from dashboard", () => {
-    test("should show delete button on board card hover and delete board when confirmed", async ({
+    test("should show settings button on board card hover and delete board from board settings modal", async ({
       authenticatedPage,
       testContext,
       testPrisma,
@@ -203,8 +203,13 @@ test.describe("Board Management", () => {
         has: authenticatedPage.locator(`text="${boardName}"`),
       });
       await boardCard.hover();
-      const deleteButton = authenticatedPage.locator(`[data-testid*="delete-board"]`).first();
-      await expect(deleteButton).toBeVisible();
+      const settingsButton = authenticatedPage.locator(`[data-testid*="board-settings"]`).first();
+      await expect(settingsButton).toBeVisible();
+      await settingsButton.click();
+      await expect(
+        authenticatedPage.getByRole("heading", { name: "Board settings" })
+      ).toBeVisible();
+      const deleteButton = authenticatedPage.getByRole("button", { name: /Delete.*Board/ });
       await deleteButton.click();
       await expect(authenticatedPage.getByRole("heading", { name: "Delete Board" })).toBeVisible();
       const deleteConfirmButton = authenticatedPage.getByRole("button", { name: "Delete Board" });
@@ -221,7 +226,7 @@ test.describe("Board Management", () => {
       });
       expect(deletedBoard).toBeNull();
     });
-    test("should allow canceling board deletion", async ({
+    test("should allow canceling board deletion from settings modal", async ({
       authenticatedPage,
       testContext,
       testPrisma,
@@ -238,7 +243,13 @@ test.describe("Board Management", () => {
         has: authenticatedPage.locator(`text="${boardName}"`),
       });
       await boardCard.hover();
-      const deleteButton = authenticatedPage.locator(`[data-testid*="delete-board"]`).first();
+      const settingsButton = authenticatedPage.locator(`[data-testid*="board-settings"]`).first();
+      await settingsButton.click();
+      await expect(
+        authenticatedPage.getByRole("heading", { name: "Board settings" })
+      ).toBeVisible();
+
+      const deleteButton = authenticatedPage.getByRole("button", { name: /Delete.*Board/ });
       await deleteButton.click();
       await expect(authenticatedPage.getByRole("heading", { name: "Delete Board" })).toBeVisible();
       await authenticatedPage.getByRole("button", { name: "Cancel" }).click();
@@ -256,6 +267,51 @@ test.describe("Board Management", () => {
         },
       });
       expect(board).toBeTruthy();
+    });
+
+    test("should allow editing board settings from dashboard", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      await authenticatedPage.goto("/dashboard");
+      const boardName = testContext.getBoardName("Test Board to Edit");
+      const newBoardName = testContext.getBoardName("Edited Board Name");
+      const newDescription = "Updated description";
+      await authenticatedPage.click('button:has-text("Add Board")');
+      await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
+      await authenticatedPage.click('button:has-text("Create Board")');
+      await expect(
+        authenticatedPage.locator(`[data-slot="card-title"]:has-text("${boardName}")`)
+      ).toBeVisible();
+      const boardCard = authenticatedPage.locator(`[data-board-id]`).filter({
+        has: authenticatedPage.locator(`text="${boardName}"`),
+      });
+      await boardCard.hover();
+      const settingsButton = authenticatedPage.locator(`[data-testid*="board-settings"]`).first();
+      await settingsButton.click();
+      await expect(
+        authenticatedPage.getByRole("heading", { name: "Board settings" })
+      ).toBeVisible();
+      const nameInput = authenticatedPage.locator('input[placeholder*="board name"]');
+      const descriptionInput = authenticatedPage.locator('input[placeholder*="board description"]');
+
+      await nameInput.clear();
+      await nameInput.fill(newBoardName);
+      await descriptionInput.fill(newDescription);
+      await authenticatedPage.getByRole("button", { name: "Save settings" }).click();
+      await expect(
+        authenticatedPage.locator(`[data-slot="card-title"]:has-text("${newBoardName}")`)
+      ).toBeVisible();
+      const board = await testPrisma.board.findFirst({
+        where: {
+          name: newBoardName,
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+      expect(board).toBeTruthy();
+      expect(board?.description).toBe(newDescription);
     });
   });
 });
