@@ -186,24 +186,21 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
   // If user is not authenticated, auto-verify them
   if (!session?.user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto space-y-8">
-            {/* Header */}
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mb-2">Organization Invitation</h1>
-            </div>
-
+      <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
+        <div className="container mx-auto px-4 sm:px-6 pt-6 sm:py-8">
+          <div className="max-w-sm sm:max-w-md mx-auto space-y-8">
             {/* Auto-verification Card */}
-            <Card className="border-2">
+            <Card className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm">
               <CardHeader className="text-center">
-                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 dark:from-zinc-800 dark:to-blue-900 rounded-full mx-auto mb-4 flex items-center justify-center">
                   <span className="text-2xl font-bold text-white">
                     {invite.organization.name.charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <CardTitle className="text-xl">{invite.organization.name}</CardTitle>
-                <CardDescription className="text-base">
+                <CardTitle className="text-xl text-foreground dark:text-zinc-100">
+                  {invite.organization.name}
+                </CardTitle>
+                <CardDescription className="text-base text-muted-foreground dark:text-zinc-400">
                   {invite.user.name || invite.user.email} has invited you to join their organization
                 </CardDescription>
               </CardHeader>
@@ -226,13 +223,15 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
   // Check if the invite is for the current user's email
   if (invite.email !== session.user.email) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-yellow-200">
+      <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="max-w-sm sm:max-w-md mx-auto">
+            <Card className="bg-white dark:bg-zinc-900 border border-yellow-200 dark:border-yellow-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-yellow-600">Wrong Account</CardTitle>
-                <CardDescription>
+                <CardTitle className="text-xl text-yellow-700 dark:text-yellow-400">
+                  Wrong Account
+                </CardTitle>
+                <CardDescription className="text-muted-foreground dark:text-zinc-400">
                   This invitation is for {invite.email}, but you&apos;re signed in as{" "}
                   {session.user.email}. Please sign out and use the invitation link again to sign in
                   with the correct account.
@@ -255,16 +254,16 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
   // Check if invite has already been processed
   if (invite.status !== "PENDING") {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-        <div className="container mx-auto px-4 py-8">
-          <div className="max-w-md mx-auto">
-            <Card className="border-2 border-blue-200">
+      <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
+        <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+          <div className="max-w-sm sm:max-w-md mx-auto">
+            <Card className="bg-white dark:bg-zinc-900 border border-blue-200 dark:border-blue-800 shadow-sm">
               <CardHeader className="text-center">
-                <CardTitle className="text-xl text-blue-600">
+                <CardTitle className="text-xl text-blue-700 dark:text-blue-400">
                   Invitation{" "}
                   {invite.status === "ACCEPTED" ? "Already Accepted" : "Already Declined"}
                 </CardTitle>
-                <CardDescription>
+                <CardDescription className="text-muted-foreground dark:text-zinc-400">
                   You have already {invite.status === "ACCEPTED" ? "accepted" : "declined"} this
                   invitation.
                 </CardDescription>
