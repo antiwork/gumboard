@@ -100,7 +100,7 @@ export function ChecklistItem({
   return (
     <div
       className={cn(
-        "flex items-start group/item rounded gap-2 transition-all duration-200",
+        "flex items-start group/item rounded gap-2 transition-all duration-200 w-full overflow-hidden",
         className
       )}
       // To avoid flaky test locators
@@ -120,7 +120,7 @@ export function ChecklistItem({
         onChange={(e) => onEditContentChange?.(e.target.value)}
         disabled={readonly}
         className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
+          "flex-1 min-w-0 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none outline-none break-all whitespace-pre-wrap",
           item.checked && "text-slate-500 dark:text-zinc-500 line-through"
         )}
         onBlur={handleBlur}
@@ -139,7 +139,7 @@ export function ChecklistItem({
           }
         }}
         rows={1}
-        style={{ height: "auto" }}
+        style={{ height: "auto", overflowWrap: "break-word" }}
         onInput={(e) => {
           const target = e.target as HTMLTextAreaElement;
           const currentContent = target.value;

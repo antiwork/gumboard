@@ -31,8 +31,6 @@ import { useUser } from "@/app/contexts/UserContext";
 import {
   getResponsiveConfig,
   getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
   filterAndSortNotes,
 } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
@@ -50,7 +48,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -61,7 +58,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     endDate: null,
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
   // Per-item edit and animations are handled inside Note component now
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
@@ -191,9 +187,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (addingChecklistItem) {
-          setAddingChecklistItem(null);
-        }
         if (showBoardDropdown) {
           setShowBoardDropdown(false);
         }
@@ -211,36 +204,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
+  }, [showBoardDropdown, showAddBoard]);
 
   // Removed debounce cleanup effect; editing is scoped to Note
 
-  // Enhanced responsive handling with debounced resize and better breakpoints
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768); // Tablet breakpoint
-
-        // Force re-render of notes layout after screen size change
-        // This ensures notes are properly repositioned
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50); // Debounce resize events - reduced for real-time feel
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
+  // Removed responsive resize handling - no longer needed with CSS Grid layout
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -259,23 +227,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
-  const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
-        : calculateGridLayout(filteredNotes, addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem]
-  );
-
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
+  // Use filteredNotes directly - CSS Grid handles layout automatically
+  const layoutNotes = filteredNotes;
 
   const fetchBoardData = async () => {
     try {
@@ -393,7 +346,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
-        setAddingChecklistItem(note.id);
       }
     } catch (error) {
       console.error("Error creating note:", error);
@@ -877,14 +829,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       {/* Board Area */}
       <div
         ref={boardRef}
-        className="relative w-full"
+        className="w-full p-4 md:p-6"
         style={{
-          height: boardHeight,
           minHeight: "calc(100vh - 64px)", // Account for header height
         }}
       >
-        {/* Notes */}
-        <div className="relative w-full h-full">
+        {/* Notes Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 auto-rows-min">
           {layoutNotes.map((note) => (
             <NoteCard
               key={note.id}
@@ -896,13 +847,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
               onCopy={handleCopyNote}
               showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10"
+              className="shadow-md shadow-black/10 h-fit"
               style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
                 padding: `${getResponsiveConfig().notePadding}px`,
                 backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
               }}
