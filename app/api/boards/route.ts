@@ -92,6 +92,7 @@ export async function GET() {
       }
 
       // Remove the notes field from the response since we only used it for calculation
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { notes, ...boardWithoutNotes } = board;
       
       return {
