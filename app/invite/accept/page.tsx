@@ -282,7 +282,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
         <div className="max-w-sm sm:max-w-md mx-auto space-y-8">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-700 dark:text-blue-300">Organization Invitation</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold mb-2 text-blue-700 dark:text-blue-300">
+              Organization Invitation
+            </h1>
             <p className="text-muted-foreground dark:text-zinc-400">
               You&apos;ve been invited to join an organization
             </p>
@@ -306,7 +308,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                   {invite.organization.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <CardTitle className="text-xl text-foreground dark:text-zinc-100">{invite.organization.name}</CardTitle>
+              <CardTitle className="text-xl text-foreground dark:text-zinc-100">
+                {invite.organization.name}
+              </CardTitle>
               <CardDescription className="text-base text-muted-foreground dark:text-zinc-400">
                 {invite.user.name || invite.user.email} has invited you to join their organization
               </CardDescription>
@@ -316,7 +320,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                 <p className="text-sm text-muted-foreground dark:text-zinc-400">
                   Invited: {invite.createdAt.toLocaleDateString()}
                 </p>
-                <p className="text-sm text-muted-foreground dark:text-zinc-400">Your email: {invite.email}</p>
+                <p className="text-sm text-muted-foreground dark:text-zinc-400">
+                  Your email: {invite.email}
+                </p>
               </div>
 
               <div className="flex flex-col space-y-3">
