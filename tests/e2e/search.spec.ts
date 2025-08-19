@@ -244,4 +244,68 @@ test.describe("Search Functionality", () => {
       authenticatedPage.locator(`text=${testContext.prefix("User task")}`)
     ).toBeVisible();
   });
+
+  test("should clear search when adding a new note", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Add Note Search Clear Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board description"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+    const existingNote = await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+      },
+    });
+
+    await testPrisma.checklistItem.create({
+      data: {
+        content: testContext.prefix("Existing task"),
+        checked: false,
+        order: 0,
+        noteId: existingNote.id,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
+    ).toBeVisible();
+    const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
+    await searchInput.fill("nonexistent");
+    await expect(authenticatedPage.locator("text=No notes found")).toBeVisible();
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
+    ).toBeHidden();
+
+    const createNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
+    );
+
+    const addNoteButton = authenticatedPage.getByRole("button", { name: "Add note", exact: true });
+    await expect(addNoteButton).toBeVisible();
+    await expect(addNoteButton).toBeEnabled();
+    await addNoteButton.click();
+    await createNoteResponse;
+    await expect(searchInput).toHaveValue("");
+    await expect(
+      authenticatedPage.locator(`text=${testContext.prefix("Existing task")}`)
+    ).toBeVisible();
+    await expect(authenticatedPage.locator("text=No notes found")).toBeHidden();
+
+    const newNoteTextarea = authenticatedPage.locator("textarea").first();
+    await expect(newNoteTextarea).toBeVisible();
+  });
 });
