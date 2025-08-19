@@ -797,8 +797,7 @@ export default function OrganizationSettingsPage() {
                 required
                 disabled={
                   !user?.isAdmin ||
-                  (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
-                    ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
+                  (!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
                 }
                 className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
@@ -808,15 +807,13 @@ export default function OrganizationSettingsPage() {
               disabled={
                 inviting ||
                 !user?.isAdmin ||
-                (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
-                  ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
+                (!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
               }
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={
                 !user?.isAdmin 
                   ? "Only admins can invite new team members" 
-                  : (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
-                     ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
+                  : (!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP)
                     ? `Free plan limit reached (${FREE_CAP} members). Upgrade to invite more.`
                     : undefined
               }
@@ -833,10 +830,9 @@ export default function OrganizationSettingsPage() {
           </form>
           
           {/* Show upgrade message when free plan limit is reached */}
-          {!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
-           ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP && (
+          {!isPaid && ((user?.organization?.members?.length || 0) + invites.length) >= FREE_CAP && (
             <div className="text-sm text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-900/20 p-3 rounded-lg border border-orange-200 dark:border-orange-800">
-              <strong>Free plan limit reached:</strong> You have {user?.organization?.members?.length || 0} members and {invites.length} pending invites. 
+              <strong>Free plan limit reached:</strong> You have {user?.organization?.members?.length || 0} members. 
               <Button 
                 onClick={startCheckout}
                 variant="link" 
