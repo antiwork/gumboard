@@ -4,6 +4,7 @@ import { stripe } from "@/lib/stripe";
 import { isBillingAdmin, isOrgPaid } from "@/lib/billing";
 import { NextRequest, NextResponse } from "next/server";
 import { getBaseUrl } from "@/lib/utils";
+import { env } from "@/lib/env";
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +13,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    // Try to get orgId from body, but it's optional since org is inferred from session
     const { orgId } = await request.json().catch(() => ({ orgId: null }));
 
     const user = await db.user.findUnique({
@@ -21,6 +23,7 @@ export async function POST(request: NextRequest) {
     if (!user?.organizationId || !user.organization) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
+    // Only validate orgId if it was provided in the request
     if (orgId && orgId !== user.organizationId) {
       return NextResponse.json({ error: "Invalid organization" }, { status: 403 });
     }
