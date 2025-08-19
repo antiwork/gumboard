@@ -120,7 +120,7 @@ export function ChecklistItem({
         onChange={(e) => onEditContentChange?.(e.target.value)}
         disabled={readonly}
         className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
+          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none break-words whitespace-pre-wrap",
           item.checked && "text-slate-500 dark:text-zinc-500 line-through"
         )}
         onBlur={handleBlur}
@@ -128,7 +128,7 @@ export function ChecklistItem({
         onFocus={(e) => {
           if (isEditing) {
             const originalScrollIntoView = e.target.scrollIntoView;
-            e.target.scrollIntoView = () => {};
+            e.target.scrollIntoView = () => { };
             setTimeout(() => {
               e.target.scrollIntoView = originalScrollIntoView;
             }, 100);

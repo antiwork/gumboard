@@ -337,7 +337,7 @@ export function Note({
   return (
     <div
       className={cn(
-        "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border overflow-hidden",
         className
       )}
       data-testid="note-card"
@@ -467,8 +467,8 @@ export function Note({
         </div>
       </div>
 
-      <div className="flex flex-col">
-        <div className="overflow-y-auto space-y-1">
+      <div className="flex flex-col flex-1 min-h-0">
+        <div className="overflow-y-auto space-y-1 pr-1">
           {/* Checklist Items */}
           <DraggableRoot
             items={note.checklistItems ?? []}
@@ -507,7 +507,7 @@ export function Note({
                   checked: false,
                   order: 0,
                 }}
-                onEdit={() => {}}
+                onEdit={() => { }}
                 onDelete={() => {
                   setNewItemContent("");
                 }}
