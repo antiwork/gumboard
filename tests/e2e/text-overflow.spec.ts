@@ -19,9 +19,9 @@ test.describe("Text Overflow and Card Expansion", () => {
     // Create a note with long text content
     const longText = testContext.prefix(
       "This is a very long text that should display properly without causing horizontal overflow. " +
-      "It contains multiple sentences to test the text display behavior. " +
-      "The card should expand vertically to accommodate all this content without showing any scrollbars. " +
-      "We want to ensure that users can read all the text comfortably without having to scroll within the card."
+        "It contains multiple sentences to test the text display behavior. " +
+        "The card should expand vertically to accommodate all this content without showing any scrollbars. " +
+        "We want to ensure that users can read all the text comfortably without having to scroll within the card."
     );
 
     const note = await testPrisma.note.create({
@@ -82,16 +82,18 @@ test.describe("Text Overflow and Card Expansion", () => {
     });
 
     // The card should not have scroll overflow
-    expect(overflow.overflowY).not.toBe('scroll');
-    expect(overflow.overflowY).not.toBe('auto');
-    expect(overflow.overflowX).not.toBe('scroll');
-    expect(overflow.overflowX).not.toBe('auto');
+    expect(overflow.overflowY).not.toBe("scroll");
+    expect(overflow.overflowY).not.toBe("auto");
+    expect(overflow.overflowX).not.toBe("scroll");
+    expect(overflow.overflowX).not.toBe("auto");
 
     // Verify all items are visible without scrolling
     await expect(authenticatedPage.getByText(testContext.prefix("Short item"))).toBeVisible();
     await expect(
       authenticatedPage.getByText(
-        testContext.prefix("Another long item to ensure the card expands properly with multiple long items")
+        testContext.prefix(
+          "Another long item to ensure the card expands properly with multiple long items"
+        )
       )
     ).toBeVisible();
   });
@@ -138,9 +140,9 @@ test.describe("Text Overflow and Card Expansion", () => {
 
     const longText = testContext.prefix(
       "This is a very long text that I'm typing to test dynamic expansion. " +
-      "As I type more and more text, the card should grow taller. " +
-      "The height should adjust automatically without any scrollbars appearing. " +
-      "This ensures a smooth user experience when entering long checklist items."
+        "As I type more and more text, the card should grow taller. " +
+        "The height should adjust automatically without any scrollbars appearing. " +
+        "This ensures a smooth user experience when entering long checklist items."
     );
 
     // Type the long text
@@ -179,9 +181,9 @@ test.describe("Text Overflow and Card Expansion", () => {
       };
     });
 
-    expect(overflow.overflowY).not.toBe('scroll');
-    expect(overflow.overflowY).not.toBe('auto');
-    expect(overflow.overflowX).not.toBe('scroll');
-    expect(overflow.overflowX).not.toBe('auto');
+    expect(overflow.overflowY).not.toBe("scroll");
+    expect(overflow.overflowY).not.toBe("auto");
+    expect(overflow.overflowX).not.toBe("scroll");
+    expect(overflow.overflowX).not.toBe("auto");
   });
 });
