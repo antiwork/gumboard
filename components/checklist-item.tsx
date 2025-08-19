@@ -55,14 +55,14 @@ export function ChecklistItem({
     textarea.style.height = textarea.scrollHeight + "px";
   };
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (isEditing && textareaRef.current) {
       adjustTextareaHeight(textareaRef.current);
       previousContentRef.current = editContent ?? item.content;
     }
   }, [isEditing, editContent, item.content]);
 
-  React.useEffect(() => {
+  React.useLayoutEffect(() => {
     if (!isEditing && textareaRef.current) {
       adjustTextareaHeight(textareaRef.current);
     }

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -49,11 +49,6 @@ export interface Note {
     name: string;
   };
   boardId: string;
-  // Optional positioning properties for board layout
-  x?: number;
-  y?: number;
-  width?: number;
-  height?: number;
 }
 
 interface NoteProps {
@@ -90,6 +85,12 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const checklistItemsCount = note.checklistItems?.length ?? 0;
+
+  useEffect(() => {
+    // When a new item is added via props, clear the input.
+    setNewItemContent("");
+  }, [checklistItemsCount]);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -330,7 +331,6 @@ export function Note({
   const handleCreateNewItem = (content: string) => {
     if (content.trim()) {
       handleAddChecklistItem(content.trim());
-      setNewItemContent("");
     }
   };
 

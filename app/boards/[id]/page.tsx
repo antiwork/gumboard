@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -28,14 +28,9 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import {
-  getResponsiveConfig,
-  getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
-  filterAndSortNotes,
-} from "@/lib/utils";
+import { getUniqueAuthors, filterAndSortNotes } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -50,7 +45,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -89,37 +83,40 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }, [user, userLoading, router]);
 
   // Update URL with current filter state
-  const updateURL = (
-    newSearchTerm?: string,
-    newDateRange?: { startDate: Date | null; endDate: Date | null },
-    newAuthor?: string | null
-  ) => {
-    const params = new URLSearchParams();
+  const updateURL = useCallback(
+    (
+      newSearchTerm?: string,
+      newDateRange?: { startDate: Date | null; endDate: Date | null },
+      newAuthor?: string | null
+    ) => {
+      const params = new URLSearchParams();
 
-    const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
-    const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
-    const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
+      const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
+      const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
+      const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
 
-    if (currentSearchTerm) {
-      params.set("search", currentSearchTerm);
-    }
+      if (currentSearchTerm) {
+        params.set("search", currentSearchTerm);
+      }
 
-    if (currentDateRange.startDate) {
-      params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
-    }
+      if (currentDateRange.startDate) {
+        params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
+      }
 
-    if (currentDateRange.endDate) {
-      params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
-    }
+      if (currentDateRange.endDate) {
+        params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
+      }
 
-    if (currentAuthor) {
-      params.set("author", currentAuthor);
-    }
+      if (currentAuthor) {
+        params.set("author", currentAuthor);
+      }
 
-    const queryString = params.toString();
-    const newURL = queryString ? `?${queryString}` : window.location.pathname;
-    router.replace(newURL, { scroll: false });
-  };
+      const queryString = params.toString();
+      const newURL = queryString ? `?${queryString}` : window.location.pathname;
+      router.replace(newURL, { scroll: false });
+    },
+    [searchTerm, dateRange, selectedAuthor, router]
+  );
 
   // Initialize filters from URL parameters
   const initializeFiltersFromURL = () => {
@@ -215,33 +212,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   // Removed debounce cleanup effect; editing is scoped to Note
 
-  // Enhanced responsive handling with debounced resize and better breakpoints
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768); // Tablet breakpoint
-
-        // Force re-render of notes layout after screen size change
-        // This ensures notes are properly repositioned
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50); // Debounce resize events - reduced for real-time feel
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -249,7 +219,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, updateURL]);
 
   // Get unique authors for dropdown
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
@@ -259,23 +229,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
-  const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
-        : calculateGridLayout(filteredNotes, addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem]
-  );
-
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -875,40 +828,38 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </div>
 
       {/* Board Area */}
-      <div
-        ref={boardRef}
-        className="relative w-full"
-        style={{
-          height: boardHeight,
-          minHeight: "calc(100vh - 64px)", // Account for header height
-        }}
-      >
+      <div ref={boardRef} className="relative w-full p-4">
         {/* Notes */}
-        <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-              onCopy={handleCopyNote}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
-          ))}
-        </div>
+        <AnimatePresence>
+          <div className="masonry-grid">
+            {filteredNotes.map((note) => (
+              <motion.div
+                key={note.id}
+                layout="position"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.5 }}
+                transition={{ duration: 0.3 }}
+                className="masonry-grid-item"
+              >
+                <NoteCard
+                  note={note as Note}
+                  currentUser={user as User}
+                  onUpdate={handleUpdateNoteFromComponent}
+                  onDelete={handleDeleteNote}
+                  onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                  onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                  onCopy={handleCopyNote}
+                  showBoardName={boardId === "all-notes" || boardId === "archive"}
+                  className="shadow-md shadow-black/10 w-full h-full p-4"
+                  style={{
+                    backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                  }}
+                />
+              </motion.div>
+            ))}
+          </div>
+        </AnimatePresence>
 
         {/* Empty State */}
         {filteredNotes.length === 0 &&
