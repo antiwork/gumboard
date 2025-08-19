@@ -64,7 +64,7 @@ async function joinOrganization(token: string) {
     if (!org) throw new Error("Organization not found");
     const memberCount = await tx.user.count({ where: { organizationId: invite.organizationId } });
     const canJoinUnlimited = isOrgPaid(org);
-    const limit = canJoinUnlimited ? Number.MAX_SAFE_INTEGER : 1;
+    const limit = canJoinUnlimited ? Number.MAX_SAFE_INTEGER : 2; // Free plan allows up to 2 members
     if (memberCount >= limit) {
       throw new Error("This organization has reached the free plan member limit. Please ask an admin to upgrade.");
     }

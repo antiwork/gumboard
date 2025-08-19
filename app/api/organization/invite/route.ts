@@ -46,12 +46,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only admins can invite new members" }, { status: 403 });
     }
 
-    // Enforce paywall for invites
+    // Free plan seat limit: allow up to 2 members total (including owner)
     if (!isOrgPaid(user.organization)) {
-      return NextResponse.json(
-        { code: "PAYWALL", upgradeUrl: "/settings/organization#billing", message: "Upgrade to invite your team." },
-        { status: 402 }
-      );
+      const memberCount = await db.user.count({ where: { organizationId: user.organizationId } });
+      const FREE_SEAT_LIMIT = 2;
+      if (memberCount >= FREE_SEAT_LIMIT) {
+        return NextResponse.json(
+          {
+            code: "PAYWALL",
+            upgradeUrl: "/settings/organization#billing",
+            message: `Free plan limit reached (${FREE_SEAT_LIMIT} members). Upgrade to invite more teammates.`,
+          },
+          { status: 402 }
+        );
+      }
     }
 
     // Check if user is already in the organization

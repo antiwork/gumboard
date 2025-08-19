@@ -32,6 +32,7 @@ import { useUser } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
+import { isOrgPaid } from "@/lib/billing";
 
 interface OrganizationInvite {
   id: string;
@@ -90,6 +91,10 @@ export default function OrganizationSettingsPage() {
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
   const [billingLoading, setBillingLoading] = useState(false);
+  const isPaid =
+    user?.organization && user.organization.plan
+      ? isOrgPaid(user.organization as any)
+      : false;
 
   useEffect(() => {
     if (user?.organization) {
@@ -571,6 +576,9 @@ export default function OrganizationSettingsPage() {
             <div className="text-sm text-zinc-700 dark:text-zinc-300">
               <div>
                 Plan: {user?.organization?.plan ? user.organization.plan : "FREE"}
+                {user?.organization && user.organization.plan !== "TEAM" && (
+                  <span className="ml-2 text-xs text-orange-600 dark:text-orange-400">Free plan allows up to 2 members</span>
+                )}
               </div>
               <div>Status: {user?.organization?.subscriptionStatus || "none"}</div>
               {user?.organization?.currentPeriodEnd && (
@@ -580,7 +588,7 @@ export default function OrganizationSettingsPage() {
               )}
             </div>
             <div className="flex items-center gap-2">
-              {user?.isAdmin && (
+              {user?.isAdmin && !isPaid && (
                 <Button onClick={startCheckout} disabled={billingLoading} className="bg-blue-600 hover:bg-blue-700 text-white">
                   {billingLoading ? "Loading..." : "Upgrade / Pay now"}
                 </Button>
@@ -757,14 +765,21 @@ export default function OrganizationSettingsPage() {
                 onChange={(e) => setInviteEmail(e.target.value)}
                 placeholder="Enter email address"
                 required
-                disabled={!user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")}
+                disabled={
+                  !user?.isAdmin ||
+                  (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
+                    (user?.organization?.members?.length || 0) >= 2)
+                }
                 className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               />
             </div>
             <Button
               type="submit"
               disabled={
-                inviting || !user?.isAdmin || !((user?.organization as unknown as { plan?: string })?.plan === "TEAM")
+                inviting ||
+                !user?.isAdmin ||
+                (!((user?.organization as unknown as { plan?: string })?.plan === "TEAM") &&
+                  (user?.organization?.members?.length || 0) >= 2)
               }
               className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}

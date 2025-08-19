@@ -23,6 +23,8 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
   const { refreshUser } = useUser();
 
   const addEmailField = () => {
+    // Free onboarding goal: allow up to 2 total emails (owner + 1 teammate) before upgrade
+    if (teamEmails.length >= 2) return;
     setTeamEmails([...teamEmails, ""]);
   };
 
@@ -103,14 +105,27 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
           ))}
         </div>
 
-        <Button type="button" variant="outline" onClick={addEmailField} className="w-full">
+        <Button type="button" variant="outline" onClick={addEmailField} className="w-full" disabled={teamEmails.length >= 2}>
           <Plus className="h-4 w-4 mr-2" />
           Add Team Member
         </Button>
 
-        <p className="text-xs text-muted-foreground">
-          {`we'll send invitations to join your organization to these email addresses.`}
-        </p>
+        <div className="text-xs text-muted-foreground space-y-1">
+          <p>{`we'll send invitations to join your organization to these email addresses.`}</p>
+          {teamEmails.length >= 2 && (
+            <div className="text-orange-600 dark:text-orange-400">
+              Free plan allows up to 2 members. Add more by
+              {" "}
+              <a
+                href="/settings/organization#billing"
+                className="underline text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+              >
+                upgrading here
+              </a>
+              .
+            </div>
+          )}
+        </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
