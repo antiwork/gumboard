@@ -397,7 +397,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
         setAddingChecklistItem(note.id);
-        if (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) {
+        if (searchTerm.trim() || dateRange.startDate || dateRange.endDate || selectedAuthor) {
           setSearchTerm("");
           setDebouncedSearchTerm("");
           setDateRange({ startDate: null, endDate: null });
