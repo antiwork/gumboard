@@ -74,8 +74,7 @@ export default function Dashboard() {
 
   const boardSettingsRef = useRef<BoardSettingsModalRef>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleBoardUpdate = (updatedBoard: any) => {
+  const handleBoardUpdate = (updatedBoard: Partial<DashboardBoard> & { id: string }) => {
     setBoards((prevBoards) =>
       prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
     );
