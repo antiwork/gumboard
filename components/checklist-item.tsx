@@ -51,7 +51,6 @@ export function ChecklistItem({
   const previousContentRef = React.useRef<string>("");
   const deletingRef = React.useRef<boolean>(false);
 
-
   const adjustContentHeight = (element: HTMLTextAreaElement | HTMLDivElement) => {
     element.style.height = "auto";
     element.style.height = element.scrollHeight + "px";
@@ -131,24 +130,24 @@ export function ChecklistItem({
     e.preventDefault();
     const paste = e.clipboardData.getData("text");
     const urlRegex = /^https?:\/\/.+/;
-    
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) return;
-    
+
     const range = selection.getRangeAt(0);
     const selectedText = selection.toString();
-    
+
     if (urlRegex.test(paste) && selectedText) {
       const linkHtml = `<a href="${paste}">${selectedText}</a>`;
       range.deleteContents();
       range.insertNode(document.createRange().createContextualFragment(linkHtml));
       selection.removeAllRanges();
-      
+
       const target = e.target as HTMLDivElement;
       const sanitizedContent = sanitizeChecklistContent(target.innerHTML);
       onEditContentChange?.(sanitizedContent);
     } else {
-      document.execCommand('insertText', false, paste);
+      document.execCommand("insertText", false, paste);
     }
   };
 
@@ -183,7 +182,7 @@ export function ChecklistItem({
       />
 
       <div className="relative flex-1">
-        {(isEditing || isNewItem) ? (
+        {isEditing || isNewItem ? (
           <textarea
             ref={contentRef as React.RefObject<HTMLTextAreaElement>}
             value={editContent ?? item.content}
