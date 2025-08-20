@@ -93,23 +93,29 @@ export function ChecklistItem({
 
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement | HTMLTextAreaElement>) => {
     e.preventDefault();
-    const paste = e.clipboardData.getData('text');
+    const paste = e.clipboardData.getData("text");
     const urlRegex = /^https?:\/\/.+/;
-    
+
     if (isNewItem) {
       const textarea = e.target as HTMLTextAreaElement;
       const selectionStart = textarea.selectionStart || 0;
       const selectionEnd = textarea.selectionEnd || 0;
       const selectedText = textarea.value.substring(selectionStart, selectionEnd);
-      
+
       if (urlRegex.test(paste) && selectedText) {
         const linkHtml = `<a href="${paste}">${selectedText}</a>`;
         const currentContent = textarea.value;
-        const newContent = currentContent.substring(0, selectionStart) + linkHtml + currentContent.substring(selectionEnd);
+        const newContent =
+          currentContent.substring(0, selectionStart) +
+          linkHtml +
+          currentContent.substring(selectionEnd);
         onEditContentChange?.(sanitizeChecklistContent(newContent));
       } else {
         const currentContent = textarea.value;
-        const newContent = currentContent.substring(0, selectionStart) + paste + currentContent.substring(selectionEnd);
+        const newContent =
+          currentContent.substring(0, selectionStart) +
+          paste +
+          currentContent.substring(selectionEnd);
         onEditContentChange?.(newContent);
       }
     } else {
@@ -117,17 +123,17 @@ export function ChecklistItem({
       if (selection && selection.rangeCount > 0) {
         const range = selection.getRangeAt(0);
         const selectedText = range.toString();
-        
+
         if (urlRegex.test(paste) && selectedText) {
           const link = `<a href="${paste}">${selectedText}</a>`;
           range.deleteContents();
           range.insertNode(document.createRange().createContextualFragment(link));
           selection.removeAllRanges();
-          
+
           const newContent = (e.target as HTMLDivElement).innerHTML;
           onEditContentChange?.(sanitizeChecklistContent(newContent));
         } else {
-          document.execCommand('insertText', false, paste);
+          document.execCommand("insertText", false, paste);
         }
       }
     }
@@ -215,7 +221,7 @@ export function ChecklistItem({
               adjustContentHeight(target);
               previousContentRef.current = currentContent;
             }
-            
+
             onEditContentChange?.(sanitizeChecklistContent(content));
           }}
           onPaste={handlePaste}
