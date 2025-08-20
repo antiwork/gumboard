@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 export default function BillingStatusPage() {
   const sp = useSearchParams();
   const router = useRouter();
-  const upgrade = sp.get("upgrade");          // "success" | "cancel"
-  const sessionId = sp.get("session_id");     // from Stripe
+  const upgrade = sp.get("upgrade"); // "success" | "cancel"
+  const sessionId = sp.get("session_id"); // from Stripe
 
-  const [status, setStatus] = useState<"idle"|"syncing"|"ok"|"error">("idle");
+  const [status, setStatus] = useState<"idle" | "syncing" | "ok" | "error">("idle");
   const [message, setMessage] = useState("");
 
   useEffect(() => {
@@ -18,7 +18,7 @@ export default function BillingStatusPage() {
     if (upgrade === "success" && sessionId) {
       setStatus("syncing");
       fetch(`/api/billing/sync?session_id=${encodeURIComponent(sessionId)}`)
-        .then(r => r.json())
+        .then((r) => r.json())
         .then((j) => {
           if (j?.ok) {
             setStatus("ok");

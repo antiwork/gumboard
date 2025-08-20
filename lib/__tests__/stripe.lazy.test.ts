@@ -17,7 +17,7 @@ describe("getStripe lazy loader", () => {
     delete process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
     const { getStripe } = await import("../stripe");
-    expect(getStripe()).toBeNull();        // ← was toBeUndefined()
+    expect(getStripe()).toBeNull(); // ← was toBeUndefined()
   });
 
   it("returns a Stripe instance when enabled with keys", async () => {

@@ -172,9 +172,7 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
           className="flex items-center justify-between rounded-lg border p-3"
           data-testid="upgrade-banner"
         >
-          <span className="text-sm">
-            Free plan: {FREE_INVITES_LIMIT} team member limit
-          </span>
+          <span className="text-sm">Free plan: {FREE_INVITES_LIMIT} team member limit</span>
           <Button size="sm" onClick={onUpgrade} data-testid="upgrade-cta">
             Upgrade
           </Button>

@@ -16,11 +16,7 @@ export async function POST(req: NextRequest) {
 
     if (stripe && process.env.STRIPE_WEBHOOK_SECRET && sig) {
       // Verify when billing is enabled and signature is present
-      event = stripe.webhooks.constructEvent(
-        raw,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
+      event = stripe.webhooks.constructEvent(raw, sig, process.env.STRIPE_WEBHOOK_SECRET);
     } else {
       // CI/disabled-billing fallback: accept payload without verification
       event = JSON.parse(raw.toString() || "{}");
