@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Search } from "lucide-react";
@@ -39,44 +39,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const { user } = useUser();
 
-  useEffect(() => {
-    const initializeParams = async () => {
-      const resolvedParams = await params;
-      setBoardId(resolvedParams.id);
-    };
-    initializeParams();
-  }, [params]);
-
-  useEffect(() => {
-    if (boardId) {
-      fetchBoardData();
-    }
-  }, [boardId]);
-
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768);
-
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50);
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
-
-  const fetchBoardData = async () => {
+  const fetchBoardData = useCallback(async () => {
     try {
       const boardResponse = await fetch(`/api/boards/${boardId}`);
       if (boardResponse.status === 404 || boardResponse.status === 403) {
@@ -107,7 +70,44 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     } finally {
       setLoading(false);
     }
-  };
+  }, [boardId, router]);
+
+  useEffect(() => {
+    const initializeParams = async () => {
+      const resolvedParams = await params;
+      setBoardId(resolvedParams.id);
+    };
+    initializeParams();
+  }, [params]);
+
+  useEffect(() => {
+    if (boardId) {
+      fetchBoardData();
+    }
+  }, [boardId, fetchBoardData]);
+
+  useEffect(() => {
+    let resizeTimeout: NodeJS.Timeout;
+
+    const checkResponsive = () => {
+      if (typeof window !== "undefined") {
+        const width = window.innerWidth;
+        setIsMobile(width < 768);
+
+        clearTimeout(resizeTimeout);
+        resizeTimeout = setTimeout(() => {
+          setNotes((prevNotes) => [...prevNotes]);
+        }, 50);
+      }
+    };
+
+    checkResponsive();
+    window.addEventListener("resize", checkResponsive);
+    return () => {
+      window.removeEventListener("resize", checkResponsive);
+      clearTimeout(resizeTimeout);
+    };
+  }, []);
 
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 

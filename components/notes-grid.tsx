@@ -183,12 +183,16 @@ export function NotesGrid({
     },
   };
 
+  // Memoize the column distribution to prevent unnecessary re-calculations
+  const columns = useMemo(() => {
+    if (isBoardMasonry) {
+      return distributeNotesToColumns(notes, columnCount);
+    }
+    return [];
+  }, [isBoardMasonry, notes, columnCount]);
+
   // For board masonry layout (JavaScript-based), distribute notes into columns
   if (isBoardMasonry) {
-    // Memoize the column distribution to prevent unnecessary re-calculations
-    const columns = useMemo(() => {
-      return distributeNotesToColumns(notes, columnCount);
-    }, [notes, columnCount]);
     
     return (
       <div className={className} data-testid="notes-grid">
