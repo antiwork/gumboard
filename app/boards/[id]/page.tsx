@@ -80,7 +80,7 @@ export default function BoardPage() {
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-    const { id: boardId } = useParams<{ id: string }>();
+  const { id: boardId } = useParams<{ id: string }>();
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -155,8 +155,6 @@ export default function BoardPage() {
     setSelectedAuthor(urlAuthor);
   };
 
-
-
   // Initialize filters from URL on mount
   useEffect(() => {
     initializeFiltersFromURL();
@@ -164,7 +162,7 @@ export default function BoardPage() {
   }, []);
 
   useEffect(() => {
-  fetchBoardData();
+    fetchBoardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
