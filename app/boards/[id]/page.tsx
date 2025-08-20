@@ -858,7 +858,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
                   onCopy={handleCopyNote}
                   showBoardName={boardId === "all-notes" || boardId === "archive"}
-                  className="shadow-md shadow-black/10 w-full h-full p-4"
+                  className="w-full h-full"
                   style={{
                     backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
                   }}
