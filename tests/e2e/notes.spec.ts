@@ -1180,7 +1180,7 @@ test.describe("Note Management", () => {
       },
     });
 
-    const originalNote = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
         color: "#dbeafe",
         boardId: board.id,
@@ -1298,5 +1298,194 @@ test.describe("Note Management", () => {
 
     const deleteButton = noteCard.getByRole("button", { name: /Delete Note/i });
     await expect(deleteButton).not.toBeVisible();
+  });
+
+  // Tests for Issue #636 functionality
+  test.describe("Issue #636: Homepage to-do functionality", () => {
+    test("should auto-focus new to-do when note is created", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Auto Focus Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board for auto-focus"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+
+      // Create a new note
+      const createNoteResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes`) &&
+          resp.request().method() === "POST" &&
+          resp.status() === 201
+      );
+      await authenticatedPage.click('button:has-text("Add note")');
+      await createNoteResponse;
+
+      // The new item input should be auto-focused
+      const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
+      await expect(newItemInput).toBeVisible({ timeout: 5000 });
+      await expect(newItemInput).toBeFocused({ timeout: 2000 });
+    });
+
+    test("should auto-add empty to-do underneath when typing", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Auto Add Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board for auto-add"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+
+      // Create a new note
+      const createNoteResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes`) &&
+          resp.request().method() === "POST" &&
+          resp.status() === 201
+      );
+      await authenticatedPage.click('button:has-text("Add note")');
+      await createNoteResponse;
+
+      // Get the first new item input
+      const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
+      await expect(newItemInput).toBeVisible();
+
+      // Initially, there should be only one new item input (the additional one shouldn't show)
+      const additionalNewItem = authenticatedPage.getByTestId("new-item-additional");
+      await expect(additionalNewItem).not.toBeVisible();
+
+      // Type some content in the first new item
+      const testContent = testContext.prefix("First item");
+      await newItemInput.fill(testContent);
+
+      // Now the additional new item should appear
+      await expect(additionalNewItem).toBeVisible({ timeout: 2000 });
+      await expect(additionalNewItem.locator("textarea")).toBeVisible();
+
+      // Clear the content - additional item should disappear
+      await newItemInput.fill("");
+      await expect(additionalNewItem).not.toBeVisible({ timeout: 2000 });
+
+      // Type content again - additional item should reappear
+      await newItemInput.fill(testContent);
+      await expect(additionalNewItem).toBeVisible({ timeout: 2000 });
+    });
+
+    test("should allow tabbing between new item inputs", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Tab Navigation Test");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board for tab navigation"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+
+      // Create a new note
+      const createNoteResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes`) &&
+          resp.request().method() === "POST" &&
+          resp.status() === 201
+      );
+      await authenticatedPage.click('button:has-text("Add note")');
+      await createNoteResponse;
+
+      // Get the first new item input and type content
+      const firstNewItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
+      await expect(firstNewItemInput).toBeVisible();
+      
+      const testContent = testContext.prefix("First item");
+      await firstNewItemInput.fill(testContent);
+
+      // Additional new item should appear
+      const additionalNewItem = authenticatedPage.getByTestId("new-item-additional").locator("textarea");
+      await expect(additionalNewItem).toBeVisible();
+
+      // Tab from first to second input
+      await firstNewItemInput.press("Tab");
+      await expect(additionalNewItem).toBeFocused({ timeout: 2000 });
+
+      // Type in the second input
+      const secondContent = testContext.prefix("Second item");
+      await additionalNewItem.fill(secondContent);
+
+      // Submit the second item by pressing Enter
+      const addSecondItemResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+          resp.request().method() === "PUT" &&
+          resp.ok()
+      );
+      await additionalNewItem.press("Enter");
+      await addSecondItemResponse;
+
+      // Verify the second item was created
+      await expect(authenticatedPage.getByText(secondContent)).toBeVisible();
+    });
+
+    test("should work on normal boards (not just homepage)", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Normal Board Test");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Normal board for testing"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      // Navigate directly to the specific board (not homepage/all-notes)
+      await authenticatedPage.goto(`/boards/${board.id}`);
+
+      // Create a new note
+      const createNoteResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes`) &&
+          resp.request().method() === "POST" &&
+          resp.status() === 201
+      );
+      await authenticatedPage.click('button:has-text("Add note")');
+      await createNoteResponse;
+
+      // Verify auto-focus works
+      const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
+      await expect(newItemInput).toBeVisible();
+      await expect(newItemInput).toBeFocused({ timeout: 2000 });
+
+      // Verify auto-add works
+      const testContent = testContext.prefix("Normal board item");
+      await newItemInput.fill(testContent);
+      
+      const additionalNewItem = authenticatedPage.getByTestId("new-item-additional");
+      await expect(additionalNewItem).toBeVisible({ timeout: 2000 });
+    });
   });
 });
