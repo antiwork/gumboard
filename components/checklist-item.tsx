@@ -95,16 +95,14 @@ export function ChecklistItem({
     e.preventDefault();
     const paste = e.clipboardData.getData("text");
     const urlRegex = /^https?:\/\/.+/;
-    
+
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
       document.execCommand('insertText', false, paste);
       return;
     }
-    
     const range = selection.getRangeAt(0);
     const selectedText = selection.toString().trim();
-    
     if (urlRegex.test(paste) && selectedText) {
       const linkHtml = `<a href="${paste}">${selectedText}</a>`;
       range.deleteContents();
@@ -127,7 +125,7 @@ export function ChecklistItem({
         onEditContentChange?.(sanitizedContent);
       }, 0);
     } else {
-      document.execCommand('insertText', false, paste);
+      document.execCommand("insertText", false, paste);
     }
   };
 
