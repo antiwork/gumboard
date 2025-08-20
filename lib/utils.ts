@@ -297,8 +297,7 @@ export function formateDate(updatedAt: string): string {
   } else if (hours > 0) {
     result += `${hours}h`;
     const remainingMinutes = minutes % 60;
-    if (remainingMinutes > 0) result += ` ${remainingMinutes}m`;
-    result += " ago";
+    if (remainingMinutes > 0) result += ` ${remainingMinutes}m ago`;
   } else {
     result += `${minutes}m ago`;
   }
