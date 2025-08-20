@@ -38,6 +38,8 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gumboard_test
       EMAIL_FROM: noreply@example.com
       AUTH_RESEND_KEY: dummy-resend-key
+      NEXT_PUBLIC_ENABLE_STRIPE: "0"
+      NODE_ENV: test
 
     steps:
       - uses: actions/checkout@v4
