@@ -51,9 +51,7 @@ export default function OrganizationBillingPage() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-gray-700 dark:text-gray-300 font-medium">
-              Current Plan:
-            </span>
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Current Plan:</span>
             <span
               className={`px-3 py-1 text-sm font-semibold rounded-full uppercase ${badgeClasses(
                 "plan"
@@ -64,9 +62,7 @@ export default function OrganizationBillingPage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-gray-700 dark:text-gray-300 font-medium">
-              Status:
-            </span>
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Status:</span>
             <span
               className={`px-3 py-1 text-sm font-semibold rounded-full uppercase ${badgeClasses(
                 "status"

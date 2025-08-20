@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
       });
       break;
     }
-    
+
     // A payment failed charged
     case "invoice.payment_failed": {
       console.log("a payment failed");

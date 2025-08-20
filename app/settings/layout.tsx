@@ -19,7 +19,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   const isProfileActive = pathname === "/settings";
   const isOrganizationActive = pathname === "/settings/organization";
   const isBillingActive = pathname === "/settings/billing";
-  
+
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
       <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">

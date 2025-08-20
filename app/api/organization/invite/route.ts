@@ -49,15 +49,15 @@ export async function POST(request: NextRequest) {
     const organizationInvites = await db.organizationInvite.count({
       where: { organizationId: user.organizationId },
     });
-    console.log('user.organization.planName ',user.organization.planName )
-    console.log('organizationInvites + 1 ',organizationInvites  )
+    console.log("user.organization.planName ", user.organization.planName);
+    console.log("organizationInvites + 1 ", organizationInvites);
     if (user.organization.planName === "Free" && organizationInvites + 1 > FREE_INVITES_LIMIT) {
       return NextResponse.json(
         { error: "Please upgrade plan to add more members" },
         { status: 403 }
       );
     }
-    
+
     // Check if user is already in the organization
     const existingUser = await db.user.findUnique({
       where: { email: cleanEmail },
