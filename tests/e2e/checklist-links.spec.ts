@@ -36,28 +36,33 @@ test.describe("Checklist HTML Links", () => {
     await initialInput.fill(testItemContent);
 
     await initialInput.focus();
-    await authenticatedPage.keyboard.press('Control+a'); // Select all
+    await authenticatedPage.keyboard.press("Control+a"); // Select all
     await authenticatedPage.keyboard.type(testItemContent);
-    
-    const startIndex = testItemContent.indexOf('GitHub');
+
+    const startIndex = testItemContent.indexOf("GitHub");
     await initialInput.focus();
-    await initialInput.evaluate((textarea, { start, end }) => {
-      (textarea as HTMLTextAreaElement).setSelectionRange(start, end);
-    }, { start: startIndex, end: startIndex + 6 });
-    
+    await initialInput.evaluate(
+      (textarea, { start, end }) => {
+        (textarea as HTMLTextAreaElement).setSelectionRange(start, end);
+      },
+      { start: startIndex, end: startIndex + 6 }
+    );
+
     await authenticatedPage.evaluate(
       ({ url }) => {
-        const textarea = document.querySelector('[data-testid="new-item"] textarea') as HTMLTextAreaElement;
+        const textarea = document.querySelector(
+          '[data-testid="new-item"] textarea'
+        ) as HTMLTextAreaElement;
         if (textarea) {
           const pasteData = new DataTransfer();
-          pasteData.setData('text/plain', url);
-          
-          const pasteEvent = new ClipboardEvent('paste', {
+          pasteData.setData("text/plain", url);
+
+          const pasteEvent = new ClipboardEvent("paste", {
             clipboardData: pasteData,
             bubbles: true,
-            cancelable: true
+            cancelable: true,
           });
-          
+
           textarea.dispatchEvent(pasteEvent);
         }
       },
@@ -70,7 +75,7 @@ test.describe("Checklist HTML Links", () => {
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    await initialInput.press('Enter');
+    await initialInput.press("Enter");
     await createItemResponse;
 
     const linkElement = authenticatedPage.locator('a[href="https://github.com/antiwork/gumboard"]');
@@ -85,7 +90,9 @@ test.describe("Checklist HTML Links", () => {
 
     expect(notes).toHaveLength(1);
     expect(notes[0].checklistItems).toHaveLength(1);
-    expect(notes[0].checklistItems[0].content).toContain('<a target="_blank" rel="noopener noreferrer" href="https://github.com/antiwork/gumboard">GitHub</a>');
+    expect(notes[0].checklistItems[0].content).toContain(
+      '<a target="_blank" rel="noopener noreferrer" href="https://github.com/antiwork/gumboard">GitHub</a>'
+    );
   });
 
   test("should sanitize HTML content to allow only anchor tags", async ({
@@ -124,8 +131,9 @@ test.describe("Checklist HTML Links", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const maliciousContent = 'Test <script>alert("xss")</script> <b>bold</b> <a href="https://example.com">link</a> text';
-    
+    const maliciousContent =
+      'Test <script>alert("xss")</script> <b>bold</b> <a href="https://example.com">link</a> text';
+
     await authenticatedPage.request.put(`http://localhost:3000/api/boards/${board.id}/notes/${note.id}`, {
       data: {
         checklistItems: [
@@ -143,12 +151,12 @@ test.describe("Checklist HTML Links", () => {
       where: { id: itemId },
     });
 
-    expect(updatedItem?.content).not.toContain('<script>');
-    expect(updatedItem?.content).not.toContain('<b>');
-    expect(updatedItem?.content).toContain('<a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a>');
-    expect(updatedItem?.content).toContain('Test');
-    expect(updatedItem?.content).toContain('bold');
-    expect(updatedItem?.content).toContain('text');
+    expect(updatedItem?.content).not.toContain("<script>");
+    expect(updatedItem?.content).not.toContain("<b>");
+    expect(updatedItem?.content).toContain(
+      '<a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a>'
+    );
+    expect(updatedItem?.content).toContain("Test  bold  text"); // Tags stripped but content preserved
   });
 
   test("should render links as clickable elements", async ({
@@ -175,9 +183,10 @@ test.describe("Checklist HTML Links", () => {
     });
 
     const itemId = testContext.prefix("link-item");
-    const linkContent = 'Check out <a href="https://github.com/antiwork/gumboard">GitHub</a> repository';
+    const linkContent =
+      'Check out <a href="https://github.com/antiwork/gumboard">GitHub</a> repository';
     const sanitizedContent = sanitizeChecklistContent(linkContent);
-    
+
     await testPrisma.checklistItem.create({
       data: {
         id: itemId,
@@ -225,7 +234,7 @@ test.describe("Checklist HTML Links", () => {
     const itemId = testContext.prefix("func-item");
     const linkContent = 'Task with <a href="https://example.com">link</a>';
     const sanitizedContent = sanitizeChecklistContent(linkContent);
-    
+
     await testPrisma.checklistItem.create({
       data: {
         id: itemId,
@@ -240,7 +249,7 @@ test.describe("Checklist HTML Links", () => {
 
     const checkbox = authenticatedPage.locator('[data-state="unchecked"]').first();
     await expect(checkbox).toBeVisible();
-    
+
     const toggleResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
@@ -255,35 +264,36 @@ test.describe("Checklist HTML Links", () => {
     });
     expect(updatedItem?.checked).toBe(true);
 
-    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] [contenteditable="true"]`);
+    const editableElement = authenticatedPage.locator(
+      `[data-testid="${itemId}"] [contenteditable="true"]`
+    );
     await editableElement.click();
-    
+
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    
-    await authenticatedPage.evaluate(
-      (itemId) => {
-        const element = document.querySelector(`[data-testid="${itemId}"] [contenteditable="true"]`);
-        if (element) {
-          element.innerHTML = element.innerHTML + ' - updated';
-          element.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      },
-      itemId
-    );
-    
+
+    await authenticatedPage.evaluate((itemId) => {
+      const element = document.querySelector(`[data-testid="${itemId}"] [contenteditable="true"]`);
+      if (element) {
+        element.innerHTML = element.innerHTML + " - updated";
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    }, itemId);
+
     await authenticatedPage.click("body");
     await editResponse;
 
     const editedItem = await testPrisma.checklistItem.findUnique({
       where: { id: itemId },
     });
-    expect(editedItem?.content).toContain('updated');
-    expect(editedItem?.content).toContain('<a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a>');
+    expect(editedItem?.content).toContain("updated");
+    expect(editedItem?.content).toContain(
+      '<a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a>'
+    );
   });
 
   test("should handle link removal by deleting link text", async ({
@@ -310,9 +320,10 @@ test.describe("Checklist HTML Links", () => {
     });
 
     const itemId = testContext.prefix("removal-item");
-    const linkContent = 'Check out <a href="https://github.com/antiwork/gumboard">GitHub</a> repository';
+    const linkContent =
+      'Check out <a href="https://github.com/antiwork/gumboard">GitHub</a> repository';
     const sanitizedContent = sanitizeChecklistContent(linkContent);
-    
+
     await testPrisma.checklistItem.create({
       data: {
         id: itemId,
@@ -325,35 +336,34 @@ test.describe("Checklist HTML Links", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] [contenteditable="true"]`);
+    const editableElement = authenticatedPage.locator(
+      `[data-testid="${itemId}"] [contenteditable="true"]`
+    );
     await editableElement.click();
-    
+
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    
-    await authenticatedPage.evaluate(
-      (itemId) => {
-        const element = document.querySelector(`[data-testid="${itemId}"] [contenteditable="true"]`);
-        if (element) {
-          element.innerHTML = 'Check out repository';
-          element.dispatchEvent(new Event('input', { bubbles: true }));
-        }
-      },
-      itemId
-    );
-    
+
+    await authenticatedPage.evaluate((itemId) => {
+      const element = document.querySelector(`[data-testid="${itemId}"] [contenteditable="true"]`);
+      if (element) {
+        element.innerHTML = "Check out repository";
+        element.dispatchEvent(new Event("input", { bubbles: true }));
+      }
+    }, itemId);
+
     await authenticatedPage.click("body");
     await editResponse;
 
     const updatedItem = await testPrisma.checklistItem.findUnique({
       where: { id: itemId },
     });
-    expect(updatedItem?.content).toBe('Check out repository');
-    expect(updatedItem?.content).not.toContain('<a');
+    expect(updatedItem?.content).toBe("Check out repository");
+    expect(updatedItem?.content).not.toContain("<a");
 
     const linkElement = authenticatedPage.locator('a[href="https://github.com/antiwork/gumboard"]');
     await expect(linkElement).not.toBeVisible();
