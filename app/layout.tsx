@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 import Toaster from "@/components/ui/sonner";
 import { UserProvider } from "./contexts/UserContext";
+import { AlertDialogProvider } from "@/components/alert-dialog-provider";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -34,8 +35,10 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
           <SessionProvider>
             <UserProvider>
-              {children}
-              <Toaster richColors position="bottom-right" />
+              <AlertDialogProvider>
+                {children}
+                <Toaster richColors position="bottom-right" />
+              </AlertDialogProvider>
             </UserProvider>
           </SessionProvider>
         </ThemeProvider>

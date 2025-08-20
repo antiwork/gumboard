@@ -28,6 +28,7 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
+import { useAlertDialog } from "@/components/alert-dialog-provider";
 import {
   getResponsiveConfig,
   getUniqueAuthors,
@@ -63,11 +64,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
   const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
   // Per-item edit and animations are handled inside Note component now
-  const [errorDialog, setErrorDialog] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-  }>({ open: false, title: "", description: "" });
+  const { showAlert } = useAlertDialog();
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
   const [boardSettings, setBoardSettings] = useState({
@@ -367,10 +364,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const handleAddNote = async (targetBoardId?: string) => {
     // For all notes view, ensure a board is selected
     if (boardId === "all-notes" && !targetBoardId) {
-      setErrorDialog({
-        open: true,
+      showAlert({
         title: "Board selection required",
         description: "Please select a board to add the note to",
+        variant: "error",
       });
       return;
     }
@@ -462,19 +459,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         if (!response.ok) {
           setNotes((prev) => [noteToDelete, ...prev]);
           const errorData = await response.json().catch(() => null);
-          setErrorDialog({
-            open: true,
+          showAlert({
             title: "Failed to delete note",
             description: errorData?.error || "Failed to delete note",
+            variant: "error",
           });
         }
       } catch (error) {
         console.error("Error deleting note:", error);
         setNotes((prev) => [noteToDelete, ...prev]);
-        setErrorDialog({
-          open: true,
+        showAlert({
           title: "Failed to delete note",
           description: "Failed to delete note",
+          variant: "error",
         });
       } finally {
         delete pendingDeleteTimeoutsRef.current[noteId];
@@ -516,10 +513,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (!response.ok) {
         // Revert on error
         setNotes((prev) => [...prev, currentNote]);
-        setErrorDialog({
-          open: true,
+        showAlert({
           title: "Archive Failed",
           description: "Failed to archive note. Please try again.",
+          variant: "error",
         });
       }
     } catch (error) {
@@ -544,10 +541,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       if (!response.ok) {
         setNotes((prev) => [...prev, currentNote]);
-        setErrorDialog({
-          open: true,
+        showAlert({
           title: "Unarchive Failed",
           description: "Failed to unarchive note. Please try again.",
+          variant: "error",
         });
       }
     } catch (error) {
@@ -581,18 +578,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         router.push(`/boards/${board.id}`);
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showAlert({
           title: "Failed to create board",
           description: errorData.error || "Failed to create board",
+          variant: "error",
         });
       }
     } catch (error) {
       console.error("Error creating board:", error);
-      setErrorDialog({
-        open: true,
+      showAlert({
         title: "Failed to create board",
         description: "Failed to create board",
+        variant: "error",
       });
     }
   };
@@ -650,18 +647,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         router.push("/dashboard");
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
+        showAlert({
           title: "Failed to delete board",
           description: errorData.error || "Failed to delete board",
+          variant: "error",
         });
       }
     } catch (error) {
       console.error("Error deleting board:", error);
-      setErrorDialog({
-        open: true,
+      showAlert({
         title: "Failed to delete board",
         description: "Failed to delete board",
+        variant: "error",
       });
     }
     setDeleteConfirmDialog(false);
@@ -1029,29 +1026,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-      <AlertDialog
-        open={errorDialog.open}
-        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              {errorDialog.title}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              {errorDialog.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              OK
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">

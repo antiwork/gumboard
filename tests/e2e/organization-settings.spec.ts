@@ -145,6 +145,35 @@ test.describe("Organization Settings", () => {
     expect(org?.slackWebhookUrl).toBeNull();
   });
 
+  test("should show success alert when copying invite link", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Create a self-serve invite
+    await testPrisma.organizationSelfServeInvite.create({
+      data: {
+        id: `invite_${testContext.testId}`,
+        token: `token_${testContext.testId}`,
+        name: "Test Invite",
+        organizationId: testContext.organizationId,
+        createdBy: testContext.userId,
+      },
+    });
+
+    await authenticatedPage.goto("/settings/organization");
+    await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
+
+    // Copy invite link
+    await authenticatedPage.getByTitle("Copy invite link").click();
+
+    await expect(
+      authenticatedPage.locator("text=Invite link copied to clipboard!")
+    ).toBeVisible();
+
+    await authenticatedPage.locator('button:has-text("OK")').click();
+  });
+
   test("should not allow non-admin users to modify Slack webhook URL", async ({
     authenticatedPage,
     testContext,
