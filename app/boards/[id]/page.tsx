@@ -229,7 +229,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
 
-  const columnsData = useMemo(() => {
+  useMemo(() => {
     return getBoardColumns(columnMeta.count, filteredNotes);
   }, [columnMeta, filteredNotes]);
 

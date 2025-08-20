@@ -89,7 +89,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     [notes, searchTerm, dateRange, selectedAuthor]
   );
 
-  const columnsData = useMemo(() => {
+  useMemo(() => {
     return getBoardColumns(columnMeta.count, filteredNotes);
   }, [columnMeta, filteredNotes]);
 
