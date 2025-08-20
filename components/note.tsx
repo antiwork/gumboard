@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { ReactionBar } from "./ReactionBar";
 
 // Core domain types
 export interface User {
@@ -337,7 +338,7 @@ export function Note({
   return (
     <div
       className={cn(
-        "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border relative", // Add 'relative'
         className
       )}
       data-testid="note-card"
@@ -467,8 +468,8 @@ export function Note({
         </div>
       </div>
 
-      <div className="flex flex-col">
-        <div className="overflow-y-auto space-y-1">
+      <div className="flex flex-col flex-1">
+        <div className="overflow-y-auto space-y-1 flex-1">
           {/* Checklist Items */}
           <DraggableRoot
             items={note.checklistItems ?? []}
@@ -528,6 +529,9 @@ export function Note({
             )}
           </DraggableRoot>
         </div>
+      </div>
+      <div className="absolute bottom-4 right-4 z-10">
+        <ReactionBar noteId={note.id} />
       </div>
     </div>
   );

@@ -59,6 +59,7 @@ model User {
   updatedAt      DateTime     @updatedAt
   organizationId String?
   isAdmin        Boolean      @default(false) // Admin role for organization
+  reactions Reaction[]
   organization   Organization? @relation(fields: [organizationId], references: [id])
   invitedOrganizations OrganizationInvite[]
   createdSelfServeInvites OrganizationSelfServeInvite[]
@@ -110,6 +111,7 @@ model Note {
   board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
   createdBy String
   user      User   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  reactions Reaction[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   deletedAt DateTime? // Soft delete timestamp
@@ -135,6 +137,19 @@ model ChecklistItem {
   @@map("checklist_items")
   @@index([noteId])
   @@index([noteId, order])
+}
+
+model Reaction {
+  id        String   @id @default(cuid())
+  emoji     String   
+  noteId    String
+  userId    String
+  note      Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  @@unique([noteId, userId, emoji])
+  @@index([noteId])
+  @@map("reactions")
 }
 
 model OrganizationInvite {
