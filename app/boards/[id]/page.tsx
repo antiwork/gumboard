@@ -483,6 +483,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     pendingDeleteTimeoutsRef.current[noteId] = timeoutId;
 
     toast("Note deleted", {
+      id: noteId,
       action: {
         label: "Undo",
         onClick: () => {
