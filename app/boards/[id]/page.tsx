@@ -11,7 +11,6 @@ import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
-
 import {
   AlertDialog,
   AlertDialogAction,
