@@ -211,12 +211,14 @@ export function ChecklistItem({
             const content = target.innerHTML;
             const currentContent = target.textContent || "";
 
+
             if (currentContent !== previousContentRef.current) {
               adjustContentHeight(target);
               previousContentRef.current = currentContent;
             }
             
-            onEditContentChange?.(sanitizeChecklistContent(content));
+            const sanitizedContent = sanitizeChecklistContent(content);
+            onEditContentChange?.(sanitizedContent);
           }}
           onPaste={handlePaste}
           className={cn(
@@ -225,6 +227,12 @@ export function ChecklistItem({
           )}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
+          onKeyUp={(e) => {
+            const target = e.target as HTMLDivElement;
+            const content = target.innerHTML;
+            const sanitizedContent = sanitizeChecklistContent(content);
+            onEditContentChange?.(sanitizedContent);
+          }}
           onFocus={(e) => {
             if (isEditing) {
               const originalScrollIntoView = e.target.scrollIntoView;

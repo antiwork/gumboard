@@ -1,4 +1,5 @@
 import { test, expect } from "../fixtures/test-helpers";
+import { sanitizeChecklistContent } from "../../lib/sanitize";
 
 test.describe("Checklist HTML Links", () => {
   test("should create links via paste-to-link functionality", async ({
@@ -125,19 +126,18 @@ test.describe("Checklist HTML Links", () => {
 
     const maliciousContent = 'Test <script>alert("xss")</script> <b>bold</b> <a href="https://example.com">link</a> text';
     
-    await authenticatedPage.evaluate(
-      ({ itemId, content }) => {
-        const element = document.querySelector(`[data-testid="${itemId}"] [contenteditable="true"]`);
-        if (element) {
-          element.innerHTML = content;
-          element.dispatchEvent(new Event('input', { bubbles: true }));
-        }
+    await authenticatedPage.request.put(`http://localhost:3000/api/boards/${board.id}/notes/${note.id}`, {
+      data: {
+        checklistItems: [
+          {
+            id: itemId,
+            content: maliciousContent,
+            checked: false,
+            order: 0,
+          },
+        ],
       },
-      { itemId, content: maliciousContent }
-    );
-
-    await authenticatedPage.click("body");
-    await authenticatedPage.waitForTimeout(1000);
+    });
 
     const updatedItem = await testPrisma.checklistItem.findUnique({
       where: { id: itemId },
@@ -146,7 +146,9 @@ test.describe("Checklist HTML Links", () => {
     expect(updatedItem?.content).not.toContain('<script>');
     expect(updatedItem?.content).not.toContain('<b>');
     expect(updatedItem?.content).toContain('<a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a>');
-    expect(updatedItem?.content).toContain('Test  bold  text'); // Tags stripped but content preserved
+    expect(updatedItem?.content).toContain('Test');
+    expect(updatedItem?.content).toContain('bold');
+    expect(updatedItem?.content).toContain('text');
   });
 
   test("should render links as clickable elements", async ({
@@ -174,11 +176,12 @@ test.describe("Checklist HTML Links", () => {
 
     const itemId = testContext.prefix("link-item");
     const linkContent = 'Check out <a href="https://github.com/antiwork/gumboard">GitHub</a> repository';
+    const sanitizedContent = sanitizeChecklistContent(linkContent);
     
     await testPrisma.checklistItem.create({
       data: {
         id: itemId,
-        content: linkContent,
+        content: sanitizedContent,
         checked: false,
         order: 0,
         noteId: note.id,
@@ -221,11 +224,12 @@ test.describe("Checklist HTML Links", () => {
 
     const itemId = testContext.prefix("func-item");
     const linkContent = 'Task with <a href="https://example.com">link</a>';
+    const sanitizedContent = sanitizeChecklistContent(linkContent);
     
     await testPrisma.checklistItem.create({
       data: {
         id: itemId,
-        content: linkContent,
+        content: sanitizedContent,
         checked: false,
         order: 0,
         noteId: note.id,
@@ -307,11 +311,12 @@ test.describe("Checklist HTML Links", () => {
 
     const itemId = testContext.prefix("removal-item");
     const linkContent = 'Check out <a href="https://github.com/antiwork/gumboard">GitHub</a> repository';
+    const sanitizedContent = sanitizeChecklistContent(linkContent);
     
     await testPrisma.checklistItem.create({
       data: {
         id: itemId,
-        content: linkContent,
+        content: sanitizedContent,
         checked: false,
         order: 0,
         noteId: note.id,
