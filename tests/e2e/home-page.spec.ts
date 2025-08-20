@@ -159,30 +159,30 @@ test.describe("Home Page", () => {
     expect(newItem?.content).toBe(newItemContent);
 
     // Test 4: Edit existing checklist item content
-      const originalFinanceId = testContext.prefix("101");
-  const originalFinanceText = testContext.prefix("Finance update by Friday");
-  const updatedFinanceText = testContext.prefix("Updated Finance deadline");
+    const originalFinanceId = testContext.prefix("101");
+    const originalFinanceText = testContext.prefix("Finance update by Friday");
+    const updatedFinanceText = testContext.prefix("Updated Finance deadline");
 
-  const financeItem = authenticatedPage.getByTestId(originalFinanceId);
-  await financeItem.getByText(originalFinanceText).click();
-  const editInput = financeItem.locator("textarea");
+    const financeItem = authenticatedPage.getByTestId(originalFinanceId);
+    await financeItem.getByText(originalFinanceText).click();
+    const editInput = financeItem.locator("textarea");
 
-  const editResponse = authenticatedPage.waitForResponse(
-    (resp) =>
-      resp.url().includes(`/api/boards/${demoBoard.id}/notes/${note1.id}`) &&
-      resp.request().method() === "PUT" &&
-      resp.ok()
-  );
-  await editInput.fill(updatedFinanceText);
-  await editInput.blur();
-  await editResponse;
+    const editResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${demoBoard.id}/notes/${note1.id}`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await editInput.fill(updatedFinanceText);
+    await editInput.blur();
+    await editResponse;
 
-  await expect(financeItem.getByText(updatedFinanceText)).toBeVisible();
+    await expect(financeItem.getByText(updatedFinanceText)).toBeVisible();
 
-  const editedItem = await testPrisma.checklistItem.findUnique({
-    where: { id: originalFinanceId },
-  });
-  expect(editedItem?.content).toBe(updatedFinanceText);
+    const editedItem = await testPrisma.checklistItem.findUnique({
+      where: { id: originalFinanceId },
+    });
+    expect(editedItem?.content).toBe(updatedFinanceText);
 
     // Test 5: Delete a checklist item
     const deleteItemResponse = authenticatedPage.waitForResponse(
