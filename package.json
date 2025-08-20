@@ -51,6 +51,7 @@
     "date-fns": "^4.1.0",
     "dompurify": "^3.2.6",
     "framer-motion": "^12.23.7",
+    "isomorphic-dompurify": "^2.26.0",
     "lucide-react": "^0.525.0",
     "nanoid": "^5.1.5",
     "next": "15.3.4",
