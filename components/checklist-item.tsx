@@ -217,7 +217,6 @@ export function ChecklistItem({
             const content = target.innerHTML;
             const currentContent = target.textContent || "";
 
-
             if (currentContent !== previousContentRef.current) {
               adjustContentHeight(target);
               previousContentRef.current = currentContent;
