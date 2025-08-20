@@ -97,20 +97,35 @@ export function ChecklistItem({
     const urlRegex = /^https?:\/\/.+/;
     
     const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    if (!selection || selection.rangeCount === 0) {
+      document.execCommand('insertText', false, paste);
+      return;
+    }
     
     const range = selection.getRangeAt(0);
-    const selectedText = selection.toString();
+    const selectedText = selection.toString().trim();
     
     if (urlRegex.test(paste) && selectedText) {
       const linkHtml = `<a href="${paste}">${selectedText}</a>`;
       range.deleteContents();
-      range.insertNode(document.createRange().createContextualFragment(linkHtml));
-      selection.removeAllRanges();
       
-      const target = e.target as HTMLDivElement;
-      const sanitizedContent = sanitizeChecklistContent(target.innerHTML);
-      onEditContentChange?.(sanitizedContent);
+      const tempDiv = document.createElement('div');
+      tempDiv.innerHTML = linkHtml;
+      const linkNode = tempDiv.firstChild;
+      
+      if (linkNode) {
+        range.insertNode(linkNode);
+        range.setStartAfter(linkNode);
+        range.setEndAfter(linkNode);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+      
+      setTimeout(() => {
+        const target = e.target as HTMLDivElement;
+        const sanitizedContent = sanitizeChecklistContent(target.innerHTML);
+        onEditContentChange?.(sanitizedContent);
+      }, 0);
     } else {
       document.execCommand('insertText', false, paste);
     }
@@ -119,8 +134,12 @@ export function ChecklistItem({
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
     const content = target.innerHTML;
-    const sanitizedContent = sanitizeChecklistContent(content);
-    onEditContentChange?.(sanitizedContent);
+    if (content.includes('<')) {
+      const sanitizedContent = sanitizeChecklistContent(content);
+      onEditContentChange?.(sanitizedContent);
+    } else {
+      onEditContentChange?.(content);
+    }
   };
 
   const handleBlur = () => {
