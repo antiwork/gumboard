@@ -165,7 +165,9 @@ test.describe("Home Page", () => {
     const originalFinanceText = testContext.prefix("Finance update by Friday");
     const updatedFinanceText = testContext.prefix("Updated Finance deadline");
     await authenticatedPage.getByText(originalFinanceText).click();
-    const editInput = authenticatedPage.getByTestId(testContext.prefix("101")).locator("div[contenteditable]");
+    const editInput = authenticatedPage
+      .getByTestId(testContext.prefix("101"))
+      .locator("div[contenteditable]");
     await expect(editInput).toBeVisible();
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
