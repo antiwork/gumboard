@@ -305,7 +305,7 @@ test.describe("Search Functionality", () => {
     ).toBeVisible();
     await expect(authenticatedPage.locator("text=No notes found")).toBeHidden();
 
-    const newNoteTextarea = authenticatedPage.locator("textarea").first();
+    const newNoteTextarea = authenticatedPage.locator("div[contenteditable]").first();
     await expect(newNoteTextarea).toBeVisible();
   });
 });

@@ -31,7 +31,7 @@ test.describe("Checklist HTML Links", () => {
     const testItemContent = "Check out GitHub repository";
     const testUrl = "https://github.com/antiwork/gumboard";
 
-    const initialInput = authenticatedPage.locator('[data-testid="new-item"] textarea').first();
+    const initialInput = authenticatedPage.locator('[data-testid="new-item"] div[contenteditable]').first();
     await expect(initialInput).toBeVisible({ timeout: 10000 });
     await initialInput.fill(testItemContent);
 
@@ -42,18 +42,26 @@ test.describe("Checklist HTML Links", () => {
     const startIndex = testItemContent.indexOf("GitHub");
     await initialInput.focus();
     await initialInput.evaluate(
-      (textarea, { start, end }) => {
-        (textarea as HTMLTextAreaElement).setSelectionRange(start, end);
+      (element, { start, end }) => {
+        const range = document.createRange();
+        const selection = window.getSelection();
+        const textNode = element.firstChild;
+        if (textNode && selection) {
+          range.setStart(textNode, start);
+          range.setEnd(textNode, end);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
       },
       { start: startIndex, end: startIndex + 6 }
     );
 
     await authenticatedPage.evaluate(
       ({ url }) => {
-        const textarea = document.querySelector(
-          '[data-testid="new-item"] textarea'
-        ) as HTMLTextAreaElement;
-        if (textarea) {
+        const element = document.querySelector(
+          '[data-testid="new-item"] div[contenteditable]'
+        ) as HTMLDivElement;
+        if (element) {
           const pasteData = new DataTransfer();
           pasteData.setData("text/plain", url);
 
@@ -63,7 +71,7 @@ test.describe("Checklist HTML Links", () => {
             cancelable: true,
           });
 
-          textarea.dispatchEvent(pasteEvent);
+          element.dispatchEvent(pasteEvent);
         }
       },
       { url: testUrl }
@@ -268,7 +276,7 @@ test.describe("Checklist HTML Links", () => {
     });
     expect(updatedItem?.checked).toBe(true);
 
-    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] textarea`);
+    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] div[contenteditable]`);
     await editableElement.click();
 
     const editResponse = authenticatedPage.waitForResponse(
@@ -334,7 +342,7 @@ test.describe("Checklist HTML Links", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] textarea`);
+    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] div[contenteditable]`);
     await editableElement.click();
 
     const editResponse = authenticatedPage.waitForResponse(

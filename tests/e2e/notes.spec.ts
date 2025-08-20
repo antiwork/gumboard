@@ -31,14 +31,14 @@ test.describe("Note Management", () => {
     // Since the note is empty, it should show the new-item input automatically
     const testItemContent = testContext.prefix("Test checklist item");
 
-    // Look for any textarea in the note (the initial empty item input)
-    const initialTextarea = authenticatedPage.locator("textarea").first();
-    await expect(initialTextarea).toBeVisible({ timeout: 10000 });
+    // Look for any contenteditable div in the note (the initial empty item input)
+    const initialInput = authenticatedPage.locator("div[contenteditable]").first();
+    await expect(initialInput).toBeVisible({ timeout: 10000 });
 
-    await initialTextarea.fill(testItemContent);
+    await initialInput.fill(testItemContent);
 
     // Use Tab key to move focus away and trigger blur
-    await initialTextarea.press("Tab");
+    await initialInput.press("Tab");
 
     // Wait for the content to appear in the UI (this means at least one submission worked)
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
@@ -182,7 +182,7 @@ test.describe("Note Management", () => {
     expect(toggledItem?.checked).toBe(true);
 
     // Test 2: Add a new checklist item using always-available input
-    const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
+    const newItemInput = authenticatedPage.getByTestId("new-item").locator("div[contenteditable]");
     await expect(newItemInput).toBeVisible();
     const newItemContent = testContext.prefix("New test item");
     const addItemResponse = authenticatedPage.waitForResponse(
@@ -208,7 +208,7 @@ test.describe("Note Management", () => {
     await existingItem.dblclick();
     const editInput = authenticatedPage
       .getByTestId(testContext.prefix("item-1"))
-      .locator("textarea");
+      .locator("div[contenteditable]");
     await expect(editInput).toBeVisible();
     const editedContent = testContext.prefix("Edited test item");
     const editResponse = authenticatedPage.waitForResponse(
@@ -273,7 +273,7 @@ test.describe("Note Management", () => {
     await authenticatedPage.click('button:has-text("Add Note")');
     await createNoteResponse;
 
-    const initialInput = authenticatedPage.locator("textarea.bg-transparent").first();
+    const initialInput = authenticatedPage.locator("div[contenteditable].bg-transparent").first();
     const firstItemContent = testContext.prefix("First item");
     const addFirstItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -285,7 +285,7 @@ test.describe("Note Management", () => {
     await initialInput.blur();
     await addFirstItemResponse;
 
-    const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
+    const newItemInput = authenticatedPage.getByTestId("new-item").locator("div[contenteditable]");
     await expect(newItemInput).toBeVisible();
 
     await newItemInput.click();
@@ -831,7 +831,7 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.getByText(testItemContent).click();
 
-      const itemInput = authenticatedPage.locator(`textarea`).filter({ hasText: testItemContent });
+      const itemInput = authenticatedPage.locator(`div[contenteditable]`).filter({ hasText: testItemContent });
       await expect(itemInput).toBeVisible();
 
       await itemInput.focus();
@@ -897,7 +897,7 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.getByText(testItemContent).click();
 
-      const itemInput = authenticatedPage.locator(`textarea`).filter({ hasText: testItemContent });
+      const itemInput = authenticatedPage.locator(`div[contenteditable]`).filter({ hasText: testItemContent });
       await expect(itemInput).toBeVisible();
 
       await itemInput.focus();

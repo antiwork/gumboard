@@ -109,8 +109,8 @@ test.describe("Archive Functionality", () => {
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
     await expect(noteCard).toBeVisible();
 
-    const textarea = noteCard.locator("textarea").first();
-    await expect(textarea).toHaveValue(noteContent);
+    const contentDiv = noteCard.locator("div[contenteditable]").first();
+    await expect(contentDiv).toHaveText(noteContent);
 
     // Reveal actions
     await noteCard.hover();
@@ -439,17 +439,17 @@ test.describe("Archive Functionality", () => {
     await expect(noteCard).toBeVisible();
 
     // Verify all items are visible and in correct order
-    // Note: Archive board notes are still editable by the owner, so we expect 4 textareas (3 items + 1 new item input)
-    const textareas = noteCard.locator("textarea");
-    await expect(textareas).toHaveCount(4);
+    // Note: Archive board notes are still editable by the owner, so we expect 4 contentEditable divs (3 items + 1 new item input)
+    const contentDivs = noteCard.locator("div[contenteditable]");
+    await expect(contentDivs).toHaveCount(4);
 
-    const firstTextarea = await textareas.nth(0).inputValue();
-    const secondTextarea = await textareas.nth(1).inputValue();
-    const thirdTextarea = await textareas.nth(2).inputValue();
+    const firstContent = await contentDivs.nth(0).textContent();
+    const secondContent = await contentDivs.nth(1).textContent();
+    const thirdContent = await contentDivs.nth(2).textContent();
 
-    expect(firstTextarea).toContain(testContext.prefix("First item"));
-    expect(secondTextarea).toContain(testContext.prefix("Second item"));
-    expect(thirdTextarea).toContain(testContext.prefix("Third item"));
+    expect(firstContent).toContain(testContext.prefix("First item"));
+    expect(secondContent).toContain(testContext.prefix("Second item"));
+    expect(thirdContent).toContain(testContext.prefix("Third item"));
   });
 
   test("should disable Add note button on Archive board", async ({

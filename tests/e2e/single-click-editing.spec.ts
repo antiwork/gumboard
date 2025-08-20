@@ -43,7 +43,7 @@ test.describe("Single-Click Note Editing", () => {
     ).toBeVisible();
 
     const checklistItemElement = authenticatedPage
-      .locator("textarea")
+      .locator("div[contenteditable]")
       .filter({ hasText: testContext.prefix("Test checklist item") });
     await expect(checklistItemElement).toBeVisible();
 
@@ -94,7 +94,7 @@ test.describe("Single-Click Note Editing", () => {
     ).toBeVisible();
 
     const checklistItemElement = authenticatedPage
-      .locator("textarea")
+      .locator("div[contenteditable]")
       .filter({ hasText: testContext.prefix("Test checklist item") });
     await expect(checklistItemElement).toBeVisible();
 
@@ -178,7 +178,7 @@ test.describe("Single-Click Note Editing", () => {
     ).toBeVisible();
 
     const checklistItemElement = authenticatedPage
-      .locator("textarea")
+      .locator("div[contenteditable]")
       .filter({ hasText: testContext.prefix("Test checklist item") });
     await expect(checklistItemElement).toBeVisible();
 
@@ -229,7 +229,7 @@ test.describe("Single-Click Note Editing", () => {
     ).toBeVisible();
 
     const checklistItemElement = authenticatedPage
-      .locator("textarea")
+      .locator("div[contenteditable]")
       .filter({ hasText: testContext.prefix("Original item content") });
     await expect(checklistItemElement).toBeVisible();
 

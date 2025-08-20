@@ -137,7 +137,7 @@ test.describe("Home Page", () => {
     expect(untoggledItem?.checked).toBe(false);
 
     // Test 3: Add a new checklist item using always-available input
-    const newItemInput = authenticatedPage.getByTestId("new-item").first().locator("textarea");
+    const newItemInput = authenticatedPage.getByTestId("new-item").first().locator("div[contenteditable]");
     const newItemContent = testContext.prefix("Brand new task item");
     const addItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -162,7 +162,7 @@ test.describe("Home Page", () => {
     const originalFinanceText = testContext.prefix("Finance update by Friday");
     const updatedFinanceText = testContext.prefix("Updated Finance deadline");
     await authenticatedPage.getByText(originalFinanceText).click();
-    const editInput = authenticatedPage.locator("textarea").first();
+    const editInput = authenticatedPage.locator("div[contenteditable]").first();
     await expect(editInput).toBeVisible();
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -236,7 +236,7 @@ test.describe("Home Page", () => {
     expect(notesAfterDelete).toBe(2); // 3 - 1 deleted
 
     // Test 7: Split checklist item (Enter in middle of text) - use the third note we created
-    const splitNewItemInput = authenticatedPage.getByTestId("new-item").first().locator("textarea");
+    const splitNewItemInput = authenticatedPage.getByTestId("new-item").first().locator("div[contenteditable]");
     const splitTestContent = testContext.prefix("Split this item here");
     const addSplitItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -252,7 +252,7 @@ test.describe("Home Page", () => {
 
     // Now split the item
     await authenticatedPage.getByText(splitTestContent).click();
-    const splitInput = authenticatedPage.locator("textarea").first();
+    const splitInput = authenticatedPage.locator("div[contenteditable]").first();
     await expect(splitInput).toBeVisible();
 
     // Move cursor to split point

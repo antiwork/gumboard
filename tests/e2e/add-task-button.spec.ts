@@ -149,7 +149,7 @@ test.describe("Add Task Button", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
+    const newItemInput = authenticatedPage.getByTestId("new-item").locator("div[contenteditable]");
     const newTaskContent = testContext.prefix(`New task ${suffix}`);
 
     await newItemInput.fill(newTaskContent);
@@ -213,11 +213,11 @@ test.describe("Add Task Button", () => {
     const newItemInput = authenticatedPage.getByTestId("new-item");
     await expect(newItemInput).toBeVisible();
 
-    const textarea = newItemInput.locator("textarea");
-    await textarea.fill(`Test content ${suffix}`);
+    const contentEditable = newItemInput.locator("div[contenteditable]");
+    await contentEditable.fill(`Test content ${suffix}`);
     await expect(newItemInput).toBeVisible();
 
-    await textarea.blur();
+    await contentEditable.blur();
     await expect(newItemInput).toBeVisible();
   });
 
