@@ -1363,14 +1363,12 @@ test.describe("Note Management", () => {
       const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
       await expect(noteCard).toBeVisible();
 
-      // Check that the note card is using grid layout (parent container)
-      const boardArea = authenticatedPage
-        .locator(".grid")
-        .filter({
-          has: authenticatedPage.locator('[data-testid="note-card"]'),
-        })
-        .first();
-      await expect(boardArea).toBeVisible();
+      // Check that the note card is properly rendered in the notes grid container
+      const notesGrid = authenticatedPage.locator('[data-testid="notes-grid"]');
+      await expect(notesGrid).toBeVisible();
+      
+      const notesGridContainer = authenticatedPage.locator('[data-testid="notes-grid-container"]');
+      await expect(notesGridContainer).toBeVisible();
 
       // Get the textarea with long text
       const textarea = noteCard.locator("textarea").filter({ hasText: longTextWithoutSpaces });
