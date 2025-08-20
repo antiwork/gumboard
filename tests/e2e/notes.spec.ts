@@ -1366,7 +1366,7 @@ test.describe("Note Management", () => {
       // Check that the note card is properly rendered in the notes grid container
       const notesGrid = authenticatedPage.locator('[data-testid="notes-grid"]');
       await expect(notesGrid).toBeVisible();
-      
+
       const notesGridContainer = authenticatedPage.locator('[data-testid="notes-grid-container"]');
       await expect(notesGridContainer).toBeVisible();
 

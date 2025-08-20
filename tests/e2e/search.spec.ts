@@ -47,7 +47,9 @@ test.describe("Search Functionality", () => {
     const getNotesPositions = async () => {
       const positions: { text: string; x: number; y: number }[] = [];
       for (let i = 1; i <= 3; i++) {
-        const element = authenticatedPage.locator(`text=${testContext.prefix(`Test item ${i}`)}`).first();
+        const element = authenticatedPage
+          .locator(`text=${testContext.prefix(`Test item ${i}`)}`)
+          .first();
         if (await element.isVisible()) {
           const box = await element.boundingBox();
           if (box) {

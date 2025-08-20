@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 
 /**
  * Hook to detect mobile vs desktop and trigger layout updates on resize
@@ -6,19 +6,19 @@ import { useState, useEffect, useCallback } from 'react';
  */
 export function useResponsiveLayout() {
   const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return false;
+    if (typeof window === "undefined") return false;
     // Use a more flexible mobile detection that matches the lib/utils.ts breakpoint
     return window.innerWidth < 768;
   });
   const [windowWidth, setWindowWidth] = useState(() => {
-    if (typeof window === 'undefined') return 0;
+    if (typeof window === "undefined") return 0;
     return window.innerWidth;
   });
 
   const handleResize = useCallback(() => {
     const newWidth = window.innerWidth;
     const newIsMobile = newWidth < 768;
-    
+
     // Update both width and mobile state
     setWindowWidth(newWidth);
     setIsMobile(newIsMobile);
@@ -26,19 +26,19 @@ export function useResponsiveLayout() {
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     const debouncedHandleResize = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(handleResize, 150); // Debounce resize events
     };
 
-    window.addEventListener('resize', debouncedHandleResize, { passive: true });
-    
+    window.addEventListener("resize", debouncedHandleResize, { passive: true });
+
     // Run initial check
     handleResize();
-    
+
     return () => {
-      window.removeEventListener('resize', debouncedHandleResize);
+      window.removeEventListener("resize", debouncedHandleResize);
       clearTimeout(timeoutId);
     };
   }, [handleResize]);
@@ -72,7 +72,7 @@ export function useDebounce<T>(value: T, delay: number): T {
  */
 export function useWindowSize() {
   const [windowSize, setWindowSize] = useState(() => {
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return { width: 0, height: 0 };
     }
     return {
@@ -90,16 +90,16 @@ export function useWindowSize() {
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     const debouncedHandleResize = () => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(handleResize, 100);
     };
 
-    window.addEventListener('resize', debouncedHandleResize, { passive: true });
-    
+    window.addEventListener("resize", debouncedHandleResize, { passive: true });
+
     return () => {
-      window.removeEventListener('resize', debouncedHandleResize);
+      window.removeEventListener("resize", debouncedHandleResize);
       clearTimeout(timeoutId);
     };
   }, [handleResize]);
