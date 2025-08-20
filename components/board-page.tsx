@@ -263,7 +263,14 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
   const filteredNotes = useMemo(
-    () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, isPublic ? null : user),
+    () =>
+      filterAndSortNotes(
+        notes,
+        debouncedSearchTerm,
+        dateRange,
+        selectedAuthor,
+        isPublic ? null : user
+      ),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user, isPublic]
   );
 
@@ -708,13 +715,10 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
           <p className="text-gray-600 dark:text-gray-400 mb-4">
             {isPublic
               ? "This board doesn't exist or is not publicly accessible."
-              : "This board doesn't exist or you don't have access to it."
-            }
+              : "This board doesn't exist or you don't have access to it."}
           </p>
           <Button asChild>
-            <Link href={"/"}>
-              Go to Gumboard
-            </Link>
+            <Link href={"/"}>Go to Gumboard</Link>
           </Button>
         </div>
       </div>
@@ -776,10 +780,11 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
                         <Link
                           key={b.id}
                           href={`/boards/${b.id}`}
-                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${b.id === boardId
-                            ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
-                            : "text-foreground dark:text-zinc-100"
-                            }`}
+                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                            b.id === boardId
+                              ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
+                              : "text-foreground dark:text-zinc-100"
+                          }`}
                           onClick={() => setShowBoardDropdown(false)}
                         >
                           <div>{b.name}</div>
@@ -792,10 +797,11 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
 
                       <Link
                         href="/boards/all-notes"
-                        className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "all-notes"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                          }`}
+                        className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                          boardId === "all-notes"
+                            ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                            : "text-foreground dark:text-white"
+                        }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>All notes</div>
@@ -803,10 +809,11 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
 
                       <Link
                         href="/boards/archive"
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "archive"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                          }`}
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                          boardId === "archive"
+                            ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                            : "text-foreground dark:text-white"
+                        }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>All archived</div>
@@ -980,21 +987,22 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
                   : "This board doesn't have any notes yet."}
               </p>
 
-              {!isPublic && (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
-                <Button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setDebouncedSearchTerm("");
-                    setDateRange({ startDate: null, endDate: null });
-                    setSelectedAuthor(null);
-                    updateURL("", { startDate: null, endDate: null }, null);
-                  }}
-                  variant="outline"
-                  className="flex items-center space-x-2 cursor-pointer mt-4"
-                >
-                  <span>Clear All Filters</span>
-                </Button>
-              )}
+              {!isPublic &&
+                (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
+                  <Button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setDebouncedSearchTerm("");
+                      setDateRange({ startDate: null, endDate: null });
+                      setSelectedAuthor(null);
+                      updateURL("", { startDate: null, endDate: null }, null);
+                    }}
+                    variant="outline"
+                    className="flex items-center space-x-2 cursor-pointer mt-4"
+                  >
+                    <span>Clear All Filters</span>
+                  </Button>
+                )}
             </div>
           </div>
         )}
@@ -1090,7 +1098,9 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
                   <Input
                     type="text"
                     value={boardSettings.name}
-                    onChange={(e) => setBoardSettings((prev) => ({ ...prev, name: e.target.value }))}
+                    onChange={(e) =>
+                      setBoardSettings((prev) => ({ ...prev, name: e.target.value }))
+                    }
                     placeholder="Enter board name"
                     className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
                   />
@@ -1170,7 +1180,10 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
                     id="sendSlackUpdates"
                     checked={boardSettings.sendSlackUpdates}
                     onCheckedChange={(checked) =>
-                      setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
+                      setBoardSettings((prev) => ({
+                        ...prev,
+                        sendSlackUpdates: checked as boolean,
+                      }))
                     }
                     className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
                   />
