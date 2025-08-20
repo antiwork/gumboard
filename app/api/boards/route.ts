@@ -21,7 +21,7 @@ export async function GET() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Get all boards for the organization
+    // Get all boards for the organization 
     const boards = await db.board.findMany({
       where: { organizationId: user.organizationId },
       select: {
@@ -42,11 +42,65 @@ export async function GET() {
             },
           },
         },
+        notes: {
+          where: {
+            deletedAt: null,
+            archivedAt: null,
+          },
+          select: {
+            updatedAt: true,
+            checklistItems: {
+              select: {
+                updatedAt: true,
+              },
+              orderBy: {
+                updatedAt: "desc",
+              },
+              take: 1,
+            },
+          },
+          orderBy: {
+            updatedAt: "desc",
+          },
+          take: 1,
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ boards });
+    const boardsWithActivity = boards.map((board) => {
+      let lastActivityAt = board.updatedAt;
+      
+      if (board.notes.length > 0) {
+        const latestNote = board.notes[0];
+        const noteUpdatedAt = new Date(latestNote.updatedAt);
+        
+        if (latestNote.checklistItems.length > 0) {
+          const latestChecklistItem = latestNote.checklistItems[0];
+          const checklistUpdatedAt = new Date(latestChecklistItem.updatedAt);
+
+          lastActivityAt = checklistUpdatedAt > noteUpdatedAt 
+            ? latestChecklistItem.updatedAt 
+            : latestNote.updatedAt;
+        } else {
+          lastActivityAt = latestNote.updatedAt;
+        }
+        
+
+        if (new Date(lastActivityAt) < new Date(board.updatedAt)) {
+          lastActivityAt = board.updatedAt;
+        }
+      }
+
+      const { notes, ...boardWithoutNotes } = board;
+      
+      return {
+        ...boardWithoutNotes,
+        lastActivityAt,
+      };
+    });
+
+    return NextResponse.json({ boards: boardsWithActivity });
   } catch (error) {
     console.error("Error fetching boards:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
