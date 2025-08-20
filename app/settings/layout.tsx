@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { User as UserIcon, Building2, ArrowLeft } from "lucide-react";
+import { User as UserIcon, Building2, ArrowLeft, CreditCardIcon } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { ProfileDropdown } from "@/components/profile-dropdown";
@@ -18,7 +18,8 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   const isProfileActive = pathname === "/settings";
   const isOrganizationActive = pathname === "/settings/organization";
-
+  const isBillingActive = pathname === "/settings/billing";
+  
   return (
     <div className="min-h-screen bg-background dark:bg-zinc-900">
       <nav className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
@@ -72,6 +73,17 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
               >
                 <Building2 className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
                 <span className="text-sm sm:text-base whitespace-nowrap">Organization</span>
+              </Link>
+              <Link
+                href="/settings/billing"
+                className={`flex-shrink-0 lg:w-full flex items-center px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors ${
+                  isBillingActive
+                    ? "bg-blue-50 dark:bg-blue-900/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-900"
+                    : "text-foreground dark:text-zinc-100 hover:bg-accent dark:hover:bg-zinc-800"
+                }`}
+              >
+                <CreditCardIcon className="w-4 h-4 sm:w-5 sm:h-5 mr-2 sm:mr-3" />
+                <span className="text-sm sm:text-base whitespace-nowrap">Billing</span>
               </Link>
             </nav>
           </div>

@@ -4,6 +4,7 @@ import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
+import { FREE_INVITES_LIMIT } from "@/lib/billing";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
@@ -45,6 +46,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Only admins can invite new members" }, { status: 403 });
     }
 
+    const organizationInvites = await db.organizationInvite.count({
+      where: { organizationId: user.organizationId },
+    });
+    console.log('user.organization.planName ',user.organization.planName )
+    console.log('organizationInvites + 1 ',organizationInvites  )
+    if (user.organization.planName === "Free" && organizationInvites + 1 > FREE_INVITES_LIMIT) {
+      return NextResponse.json(
+        { error: "Please upgrade plan to add more members" },
+        { status: 403 }
+      );
+    }
+    
     // Check if user is already in the organization
     const existingUser = await db.user.findUnique({
       where: { email: cleanEmail },

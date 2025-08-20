@@ -46,6 +46,8 @@ export async function GET() {
             name: user.organization.name,
             slackWebhookUrl: user.organization.slackWebhookUrl,
             members: user.organization.members,
+            planName: user.organization.planName,
+            subscriptionStatus: user.organization.subscriptionStatus 
           }
         : null,
     });

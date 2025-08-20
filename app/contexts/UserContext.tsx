@@ -14,6 +14,8 @@ export type Organization = {
   name: string;
   slackWebhookUrl?: string | null;
   members: User[];
+  planName: string;
+  subscriptionStatus: string;
 };
 
 export type User = {
