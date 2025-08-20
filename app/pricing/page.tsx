@@ -8,9 +8,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { pl } from "date-fns/locale";
 import { Check, Loader2 } from "lucide-react";
-import { redirect, useRouter } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -99,7 +98,7 @@ export default function PricingPage() {
           Simple, transparent pricing
         </h2>
         <p className="mt-4 text-xl text-gray-600 dark:text-gray-300">
-          Choose the plan that's right for your team
+          Choose the plan that&apos;s right for your team
         </p>
       </div>
       <div className="mt-16 grid gap-8 justify-center lg:grid-cols-2">
