@@ -58,6 +58,7 @@ export async function GET() {
     const result = boards.map((board) => ({
       ...board,
       updatedAt: board.notes[0]?.updatedAt ?? board.updatedAt,
+      notes: undefined,
     }));
 
     return NextResponse.json({ boards: result });
