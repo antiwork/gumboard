@@ -8,6 +8,7 @@ import {
   shouldSendNotification,
 } from "@/lib/slack";
 import { NOTE_COLORS } from "@/lib/constants";
+import { sanitizeChecklistContent } from "@/lib/sanitize";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     if (checklistItems && Array.isArray(checklistItems)) {
       checklistItems.forEach((item, index) => {
         initialChecklistItems.push({
-          content: item.content || "",
+          content: sanitizeChecklistContent(item.content || ""),
           checked: item.checked || false,
           order: item.order !== undefined ? item.order : index,
         });

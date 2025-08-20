@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
+import { sanitizeChecklistContent } from "@/lib/sanitize";
 
 export interface ChecklistItem {
   id: string;
@@ -46,40 +47,40 @@ export function ChecklistItem({
   isNewItem = false,
   onCreateItem,
 }: ChecklistItemProps) {
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
   const previousContentRef = React.useRef<string>("");
   const deletingRef = React.useRef<boolean>(false);
 
-  const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
-    textarea.style.height = "auto";
-    textarea.style.height = textarea.scrollHeight + "px";
+  const adjustContentHeight = (element: HTMLDivElement) => {
+    element.style.height = "auto";
+    element.style.height = element.scrollHeight + "px";
   };
 
   React.useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      adjustTextareaHeight(textareaRef.current);
+    if (isEditing && contentRef.current) {
+      adjustContentHeight(contentRef.current);
       previousContentRef.current = editContent ?? item.content;
     }
   }, [isEditing, editContent, item.content]);
 
   React.useEffect(() => {
-    if (!isEditing && textareaRef.current) {
-      adjustTextareaHeight(textareaRef.current);
+    if (!isEditing && contentRef.current) {
+      adjustContentHeight(contentRef.current);
     }
   }, [item.content, isEditing]);
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (isNewItem && editContent?.trim() && onCreateItem) {
         onCreateItem(editContent.trim());
       } else {
-        const target = e.target as HTMLTextAreaElement;
+        const target = e.target as HTMLDivElement;
         target.blur();
       }
     }
     if (e.key === "Enter" && e.shiftKey) {
-      const target = e.target as HTMLTextAreaElement;
-      setTimeout(() => adjustTextareaHeight(target), 0);
+      const target = e.target as HTMLDivElement;
+      setTimeout(() => adjustContentHeight(target), 0);
     }
     if (e.key === "Escape") {
       onStopEdit?.();
@@ -87,6 +88,30 @@ export function ChecklistItem({
     if (e.key === "Backspace" && editContent?.trim() === "") {
       e.preventDefault();
       onDelete?.(item.id);
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const paste = e.clipboardData.getData('text');
+    const selection = window.getSelection();
+    
+    if (selection && selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      const selectedText = range.toString();
+      
+      const urlRegex = /^https?:\/\/.+/;
+      if (urlRegex.test(paste) && selectedText) {
+        const link = `<a href="${paste}">${selectedText}</a>`;
+        range.deleteContents();
+        range.insertNode(document.createRange().createContextualFragment(link));
+        selection.removeAllRanges();
+        
+        const newContent = (e.target as HTMLDivElement).innerHTML;
+        onEditContentChange?.(sanitizeChecklistContent(newContent));
+      } else {
+        document.execCommand('insertText', false, paste);
+      }
     }
   };
 
@@ -120,13 +145,25 @@ export function ChecklistItem({
         disabled={readonly}
       />
 
-      <textarea
-        ref={textareaRef}
-        value={editContent ?? item.content}
-        onChange={(e) => onEditContentChange?.(e.target.value)}
-        disabled={readonly}
+      <div
+        ref={contentRef}
+        contentEditable={!readonly}
+        dangerouslySetInnerHTML={{ __html: editContent ?? item.content }}
+        onInput={(e) => {
+          const target = e.target as HTMLDivElement;
+          const content = target.innerHTML;
+          const currentContent = target.textContent || "";
+
+          if (currentContent !== previousContentRef.current) {
+            adjustContentHeight(target);
+            previousContentRef.current = currentContent;
+          }
+          
+          onEditContentChange?.(sanitizeChecklistContent(content));
+        }}
+        onPaste={handlePaste}
         className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
+          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none min-h-[1.5rem]",
           item.checked && "text-slate-500 dark:text-zinc-500 line-through"
         )}
         onBlur={handleBlur}
@@ -144,17 +181,7 @@ export function ChecklistItem({
             onStartEdit?.(item.id);
           }
         }}
-        rows={1}
-        style={{ height: "auto" }}
-        onInput={(e) => {
-          const target = e.target as HTMLTextAreaElement;
-          const currentContent = target.value;
-
-          if (currentContent !== previousContentRef.current) {
-            adjustTextareaHeight(target);
-            previousContentRef.current = currentContent;
-          }
-        }}
+        style={{ minHeight: "auto" }}
       />
 
       {showDeleteButton && !readonly && (

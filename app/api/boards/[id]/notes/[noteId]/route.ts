@@ -7,6 +7,7 @@ import {
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";
+import { sanitizeChecklistContent } from "@/lib/sanitize";
 
 // Update a note
 export async function PUT(
@@ -98,7 +99,11 @@ export async function PUT(
 
       sanitizedChecklistItems = [...checklistItems]
         .sort((a, b) => a.order - b.order)
-        .map((item, i) => ({ ...item, order: i }));
+        .map((item, i) => ({ 
+          ...item, 
+          order: i,
+          content: sanitizeChecklistContent(item.content)
+        }));
     }
 
     let checklistChanges:
