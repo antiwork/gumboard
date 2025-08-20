@@ -3,15 +3,12 @@
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Search } from "lucide-react";
 import Link from "next/link";
-import { BetaBadge } from "@/components/ui/beta-badge";
 import { FullPageLoader } from "@/components/ui/loader";
-import { FilterPopover } from "@/components/ui/filter-popover";
 import type { Note, Board } from "@/components/note";
 import { Note as NoteCard } from "@/components/note";
-import { ProfileDropdown } from "@/components/profile-dropdown";
 import { useUser } from "@/app/contexts/UserContext";
+import { BoardTopbar } from "@/components/board-topbar";
 import {
   getResponsiveConfig,
   getUniqueAuthors,
@@ -142,7 +139,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
 
   if (!board) {
     return (
-      <div className="min-h-screen dark:bg-zinc-950 dark:text-zinc-100 flex items-center justify-center">
+      <div className="min-h-screen dark:bg-zinc-950 dark:text-zinc-100 flex items-center justify-center ">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Board not found</h1>
           <p className="text-muted-foreground mb-4">
@@ -158,69 +155,21 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-background dark:bg-zinc-950">
-      <div className="bg-card dark:bg-zinc-900 border-b border-gray-200 dark:border-zinc-800 shadow-sm">
-        <div className="flex justify-between items-center h-16">
-          <div className="flex items-center space-x-3">
-            <Link href="/" className="flex-shrink-0 pl-4 sm:pl-2 lg:pl-4">
-              <h1 className="text-2xl font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">
-                Gumboard
-                <BetaBadge />
-              </h1>
-            </Link>
-
-            <div className="flex items-center space-x-2">
-              <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
-                {board.name}
-              </div>
-              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                Public
-              </span>
-            </div>
-
-            <div className="hidden md:block">
-              <FilterPopover
-                startDate={dateRange.startDate}
-                endDate={dateRange.endDate}
-                onDateRangeChange={(startDate, endDate) => {
-                  setDateRange({ startDate, endDate });
-                }}
-                selectedAuthor={selectedAuthor}
-                authors={uniqueAuthors}
-                onAuthorChange={(authorId) => {
-                  setSelectedAuthor(authorId);
-                }}
-                className="min-w-fit"
-              />
-            </div>
-          </div>
-
-          <div className="flex items-center space-x-2 px-3">
-            <div className="relative hidden sm:block">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
-              </div>
-              <input
-                aria-label="Search notes"
-                type="text"
-                placeholder="Search notes..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-64 pl-10 pr-4 py-2 border border-gray-200 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-zinc-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
-              />
-            </div>
-
-            {user ? (
-              <ProfileDropdown user={user} />
-            ) : (
-              <Link href="/auth/signin">
-                <Button variant="outline" size="sm">
-                  Sign in
-                </Button>
-              </Link>
-            )}
-          </div>
-        </div>
+    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
+      <div className="">
+        <BoardTopbar
+          boardId={boardId}
+          board={board}
+          user={user}
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          dateRange={dateRange}
+          setDateRange={setDateRange}
+          selectedAuthor={selectedAuthor}
+          setSelectedAuthor={setSelectedAuthor}
+          uniqueAuthors={uniqueAuthors}
+          isPublic={true}
+        />
       </div>
 
       <div className="relative" style={{ height: boardHeight }} ref={boardRef}>
