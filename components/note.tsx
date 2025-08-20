@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -69,6 +69,8 @@ interface NoteProps {
   showBoardName?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  autoFocusNewItem?: boolean;
+  onAutoFocusComplete?: () => void;
 }
 
 export function Note({
@@ -84,14 +86,29 @@ export function Note({
   className,
   syncDB = true,
   style,
+  autoFocusNewItem = false,
+  onAutoFocusComplete,
 }: NoteProps) {
   const { resolvedTheme } = useTheme();
 
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const newItemRef = useRef<HTMLTextAreaElement>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
+
+  // Auto-focus new item when autoFocusNewItem prop is true
+  useEffect(() => {
+    if (autoFocusNewItem && canEdit && newItemRef.current) {
+      // Small delay to ensure DOM is ready
+      const timeoutId = setTimeout(() => {
+        newItemRef.current?.focus();
+        onAutoFocusComplete?.();
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [autoFocusNewItem, canEdit, onAutoFocusComplete]);
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
@@ -500,31 +517,61 @@ export function Note({
 
             {/* Always-available New Item Input */}
             {canEdit && (
-              <ChecklistItemComponent
-                item={{
-                  id: "new-item",
-                  content: newItemContent,
-                  checked: false,
-                  order: 0,
-                }}
-                onEdit={() => {}}
-                onDelete={() => {
-                  setNewItemContent("");
-                }}
-                isEditing={true}
-                editContent={newItemContent}
-                onEditContentChange={setNewItemContent}
-                onStopEdit={() => {
-                  if (!newItemContent.trim()) {
+              <>
+                <ChecklistItemComponent
+                  item={{
+                    id: "new-item",
+                    content: newItemContent,
+                    checked: false,
+                    order: 0,
+                  }}
+                  onEdit={() => {}}
+                  onDelete={() => {
                     setNewItemContent("");
-                  }
-                }}
-                isNewItem={true}
-                onCreateItem={handleCreateNewItem}
-                readonly={false}
-                showDeleteButton={false}
-                className="gap-3"
-              />
+                  }}
+                  isEditing={true}
+                  editContent={newItemContent}
+                  onEditContentChange={setNewItemContent}
+                  onStopEdit={() => {
+                    if (!newItemContent.trim()) {
+                      setNewItemContent("");
+                    }
+                  }}
+                  isNewItem={true}
+                  onCreateItem={handleCreateNewItem}
+                  readonly={false}
+                  showDeleteButton={false}
+                  className="gap-3"
+                  textareaRef={newItemRef}
+                />
+                
+                {/* Additional empty new item when current has content */}
+                {newItemContent.trim().length > 0 && (
+                  <ChecklistItemComponent
+                    item={{
+                      id: "new-item-additional",
+                      content: "",
+                      checked: false,
+                      order: 1,
+                    }}
+                    onEdit={() => {}}
+                    onDelete={() => {}}
+                    isEditing={true}
+                    editContent=""
+                    onEditContentChange={() => {}}
+                    onStopEdit={() => {}}
+                    isNewItem={true}
+                    onCreateItem={(content) => {
+                      if (content.trim()) {
+                        handleCreateNewItem(content.trim());
+                      }
+                    }}
+                    readonly={false}
+                    showDeleteButton={false}
+                    className="gap-3"
+                  />
+                )}
+              </>
             )}
           </DraggableRoot>
         </div>

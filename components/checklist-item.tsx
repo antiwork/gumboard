@@ -28,6 +28,7 @@ interface ChecklistItemProps {
   className?: string;
   isNewItem?: boolean;
   onCreateItem?: (content: string) => void;
+  textareaRef?: React.RefObject<HTMLTextAreaElement | null>;
 }
 
 export function ChecklistItem({
@@ -45,8 +46,10 @@ export function ChecklistItem({
   className,
   isNewItem = false,
   onCreateItem,
+  textareaRef,
 }: ChecklistItemProps) {
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const internalTextareaRef = React.useRef<HTMLTextAreaElement>(null);
+  const actualTextareaRef = textareaRef || internalTextareaRef;
   const previousContentRef = React.useRef<string>("");
   const deletingRef = React.useRef<boolean>(false);
 
@@ -56,17 +59,17 @@ export function ChecklistItem({
   };
 
   React.useEffect(() => {
-    if (isEditing && textareaRef.current) {
-      adjustTextareaHeight(textareaRef.current);
+    if (isEditing && actualTextareaRef.current) {
+      adjustTextareaHeight(actualTextareaRef.current);
       previousContentRef.current = editContent ?? item.content;
     }
-  }, [isEditing, editContent, item.content]);
+  }, [isEditing, editContent, item.content, actualTextareaRef]);
 
   React.useEffect(() => {
-    if (!isEditing && textareaRef.current) {
-      adjustTextareaHeight(textareaRef.current);
+    if (!isEditing && actualTextareaRef.current) {
+      adjustTextareaHeight(actualTextareaRef.current);
     }
-  }, [item.content, isEditing]);
+  }, [item.content, isEditing, actualTextareaRef]);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -121,7 +124,7 @@ export function ChecklistItem({
       />
 
       <textarea
-        ref={textareaRef}
+        ref={actualTextareaRef}
         value={editContent ?? item.content}
         onChange={(e) => onEditContentChange?.(e.target.value)}
         disabled={readonly}
