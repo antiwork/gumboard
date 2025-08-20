@@ -33,27 +33,29 @@ test.describe("Checklist HTML Links", () => {
 
     const initialInput = authenticatedPage.locator('[data-testid="new-item"] div[contenteditable]').first();
     await expect(initialInput).toBeVisible({ timeout: 10000 });
+    
+    await initialInput.focus();
     await initialInput.fill(testItemContent);
 
-    await initialInput.focus();
-    await authenticatedPage.keyboard.press("Control+a"); // Select all
-    await authenticatedPage.keyboard.type(testItemContent);
-
-    const startIndex = testItemContent.indexOf("GitHub");
-    await initialInput.focus();
-    await initialInput.evaluate(
-      (element, { start, end }) => {
-        const range = document.createRange();
-        const selection = window.getSelection();
-        const textNode = element.firstChild;
-        if (textNode && selection) {
-          range.setStart(textNode, start);
-          range.setEnd(textNode, end);
-          selection.removeAllRanges();
-          selection.addRange(range);
+    await authenticatedPage.evaluate(
+      ({ content }) => {
+        const element = document.querySelector(
+          '[data-testid="new-item"] div[contenteditable]'
+        ) as HTMLDivElement;
+        if (element) {
+          const range = document.createRange();
+          const selection = window.getSelection();
+          const textNode = element.firstChild;
+          if (textNode && selection) {
+            const startIndex = content.indexOf("GitHub");
+            range.setStart(textNode, startIndex);
+            range.setEnd(textNode, startIndex + 6);
+            selection.removeAllRanges();
+            selection.addRange(range);
+          }
         }
       },
-      { start: startIndex, end: startIndex + 6 }
+      { content: testItemContent }
     );
 
     await authenticatedPage.evaluate(
