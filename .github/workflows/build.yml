@@ -32,8 +32,6 @@ jobs:
           - 5432:5432
 
     env:
-      GITHUB_CLIENT_ID: dummy-client-id
-      GITHUB_CLIENT_SECRET: dummy-client-secret
       AUTH_SECRET: sample-auth-secret
       AUTH_URL: http://localhost:3000
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gumboard_test
