@@ -134,18 +134,21 @@ test.describe("Checklist HTML Links", () => {
     const maliciousContent =
       'Test <script>alert("xss")</script> <b>bold</b> <a href="https://example.com">link</a> text';
 
-    await authenticatedPage.request.put(`http://localhost:3000/api/boards/${board.id}/notes/${note.id}`, {
-      data: {
-        checklistItems: [
-          {
-            id: itemId,
-            content: maliciousContent,
-            checked: false,
-            order: 0,
-          },
-        ],
-      },
-    });
+    await authenticatedPage.request.put(
+      `http://localhost:3000/api/boards/${board.id}/notes/${note.id}`,
+      {
+        data: {
+          checklistItems: [
+            {
+              id: itemId,
+              content: maliciousContent,
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
+      }
+    );
 
     const updatedItem = await testPrisma.checklistItem.findUnique({
       where: { id: itemId },
