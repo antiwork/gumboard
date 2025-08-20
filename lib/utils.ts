@@ -1,6 +1,15 @@
 import { Note } from "@/components/note";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import {
+  differenceInYears,
+  differenceInMonths,
+  differenceInWeeks,
+  differenceInDays,
+  differenceInHours,
+  differenceInMinutes,
+  differenceInSeconds,
+} from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -254,24 +263,44 @@ export function filterAndSortNotes(
 }
 
 export function formateDate(updatedAt: string): string {
-  const now = new Date();
   const updated = new Date(updatedAt);
-  const diffMs = now.getTime() - updated.getTime();
+  const now = new Date();
 
-  const seconds = Math.floor(diffMs / 1000);
-  const minutes = Math.floor(seconds / 60);
-  const hours = Math.floor(minutes / 60);
-  const days = Math.floor(hours / 24);
-
-  const remainingHours = hours % 24;
-  const remainingMinutes = minutes % 60;
-
+  const seconds = differenceInSeconds(now, updated);
   if (seconds < 60) return "Last activity: now";
 
+  const minutes = differenceInMinutes(now, updated);
+  const hours = differenceInHours(now, updated);
+  const days = differenceInDays(now, updated);
+  const weeks = differenceInWeeks(now, updated);
+  const months = differenceInMonths(now, updated);
+  const years = differenceInYears(now, updated);
+
   let result = "Last activity: ";
-  if (days > 0) result += `${days}d `;
-  if (remainingHours > 0) result += `${remainingHours}h `;
-  if (remainingMinutes > 0 && days === 0) result += `${remainingMinutes}m ago`;
+
+  if (years > 0) {
+    result += `${years}y`;
+    const remainingMonths = months % 12;
+    if (remainingMonths > 0) result += ` ${remainingMonths}mon`;
+  } else if (months > 0) {
+    result += `${months}m`;
+    const remainingWeeks = weeks % 4;
+    if (remainingWeeks > 0) result += ` ${remainingWeeks}w`;
+  } else if (weeks > 0) {
+    result += `${weeks}w`;
+    const remainingDays = days % 7;
+    if (remainingDays > 0) result += ` ${remainingDays}d`;
+  } else if (days > 0) {
+    result += `${days}d`;
+    const remainingHours = hours % 24;
+    if (remainingHours > 0) result += ` ${remainingHours}h`;
+  } else if (hours > 0) {
+    result += `${hours}h`;
+    const remainingMinutes = minutes % 60;
+    if (remainingMinutes > 0) result += ` ${remainingMinutes}m`;
+  } else {
+    result += `${minutes}m ago`;
+  }
 
   return result.trim();
 }
