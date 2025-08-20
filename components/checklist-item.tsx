@@ -148,7 +148,7 @@ export function ChecklistItem({
     if (isNewItem && editContent?.trim() && onCreateItem) {
       onCreateItem(editContent.trim());
     } else if (isEditing && onEdit) {
-      const contentToSave = editContent !== undefined ? editContent : contentRef.current?.innerHTML || '';
+      const contentToSave = editContent !== undefined ? editContent : (contentRef.current?.textContent || contentRef.current?.innerHTML || '');
       const sanitizedContent = sanitizeChecklistContent(contentToSave);
       onEdit(item.id, sanitizedContent);
     }

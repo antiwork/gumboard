@@ -174,7 +174,7 @@ test.describe("Home Page", () => {
         resp.ok()
     );
     await editInput.fill(updatedFinanceText);
-    await editInput.blur(); // Use blur instead of Enter to save the edit
+    await authenticatedPage.click("body"); // Use same blur pattern as notes.spec.ts
     await editResponse;
     await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible();
 
