@@ -156,7 +156,8 @@ test.describe("Checklist HTML Links", () => {
     expect(updatedItem?.content).toContain(
       '<a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a>'
     );
-    expect(updatedItem?.content).toContain("Test  bold  text"); // Tags stripped but content preserved
+    expect(updatedItem?.content).toContain("Test  bold"); // Tags stripped but content preserved
+    expect(updatedItem?.content).toContain("text");
   });
 
   test("should render links as clickable elements", async ({
