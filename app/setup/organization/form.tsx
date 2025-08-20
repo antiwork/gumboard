@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { X, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/contexts/UserContext";
-import { invitesAllowedForPlan, FREE_INVITES_LIMIT } from "@/lib/billing";
+import { invitesAllowedForPlan, FREE_INVITES_LIMIT } from "@/lib/paymets/billing";
 
 interface OrganizationSetupFormProps {
   onSubmit: (

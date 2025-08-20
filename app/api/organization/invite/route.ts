@@ -4,7 +4,7 @@ import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
-import { FREE_INVITES_LIMIT } from "@/lib/billing";
+import { FREE_INVITES_LIMIT } from "@/lib/paymets/billing";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 

@@ -2,11 +2,14 @@ import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
-import { stripe } from "../checkout/route";
+import { getStripe } from "@/lib/paymets/stripe";
 
 const webhookSecret = env.STRIPE_WEBHOOK_SECRET!;
+const stripe = getStripe();
 
 export async function POST(request: NextRequest) {
+  if (!stripe) return NextResponse.json({ error: "Billing is disabled" }, { status: 501 });
+
   const payload = await request.text();
   const signature = request.headers.get("stripe-signature") as string;
 

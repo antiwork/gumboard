@@ -1,14 +1,14 @@
-import Stripe from "stripe";
 import { NextRequest, NextResponse } from "next/server";
 import { db as prisma } from "@/lib/db";
 import { getBaseUrl } from "@/lib/utils";
 import { headers } from "next/headers";
 import { env } from "@/lib/env";
+import { getStripe } from "@/lib/paymets/stripe";
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2025-07-30.basil",
-});
+const stripe = getStripe();
 export async function POST(req: NextRequest) {
+  if (!stripe) return NextResponse.json({ error: "Billing is disabled" }, { status: 501 });
+
   const { organizationId } = await req.json();
 
   const org = await prisma.organization.findUnique({ where: { id: organizationId } });
