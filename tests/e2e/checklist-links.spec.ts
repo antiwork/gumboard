@@ -268,9 +268,7 @@ test.describe("Checklist HTML Links", () => {
     });
     expect(updatedItem?.checked).toBe(true);
 
-    const editableElement = authenticatedPage.locator(
-      `[data-testid="${itemId}"] textarea`
-    );
+    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] textarea`);
     await editableElement.click();
 
     const editResponse = authenticatedPage.waitForResponse(
@@ -281,7 +279,9 @@ test.describe("Checklist HTML Links", () => {
     );
 
     await editableElement.focus();
-    await editableElement.fill("Task with <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://example.com\">link</a> - updated");
+    await editableElement.fill(
+      'Task with <a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a> - updated'
+    );
     await editableElement.blur();
     await editResponse;
 
@@ -334,9 +334,7 @@ test.describe("Checklist HTML Links", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const editableElement = authenticatedPage.locator(
-      `[data-testid="${itemId}"] textarea`
-    );
+    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] textarea`);
     await editableElement.click();
 
     const editResponse = authenticatedPage.waitForResponse(

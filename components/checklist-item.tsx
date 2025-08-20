@@ -100,12 +100,12 @@ export function ChecklistItem({
     e.preventDefault();
     const paste = e.clipboardData.getData("text");
     const urlRegex = /^https?:\/\/.+/;
-    
+
     const textarea = e.target as HTMLTextAreaElement;
     const selectionStart = textarea.selectionStart || 0;
     const selectionEnd = textarea.selectionEnd || 0;
     const selectedText = textarea.value.substring(selectionStart, selectionEnd);
-    
+
     if (urlRegex.test(paste) && selectedText) {
       const linkHtml = `<a href="${paste}">${selectedText}</a>`;
       const currentContent = textarea.value;
