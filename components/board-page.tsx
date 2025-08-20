@@ -37,11 +37,14 @@ import {
 import { BoardPageSkeleton } from "@/components/board-skeleton";
 
 interface BoardPageProps {
-  params: Promise<{ id: string }>;
-  isPublic?: boolean;
+  params: {
+    id: string,
+    isPublic?: boolean;
+  };
 }
 
-export default function BoardPage({ params, isPublic = false }: BoardPageProps) {
+export default function BoardPage({ params }: BoardPageProps) {
+  const { isPublic } = params;
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
@@ -780,11 +783,10 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
                         <Link
                           key={b.id}
                           href={`/boards/${b.id}`}
-                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
-                            b.id === boardId
+                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${b.id === boardId
                               ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
                               : "text-foreground dark:text-zinc-100"
-                          }`}
+                            }`}
                           onClick={() => setShowBoardDropdown(false)}
                         >
                           <div>{b.name}</div>
@@ -797,11 +799,10 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
 
                       <Link
                         href="/boards/all-notes"
-                        className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                          boardId === "all-notes"
+                        className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "all-notes"
                             ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                             : "text-foreground dark:text-white"
-                        }`}
+                          }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>All notes</div>
@@ -809,11 +810,10 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
 
                       <Link
                         href="/boards/archive"
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                          boardId === "archive"
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "archive"
                             ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                             : "text-foreground dark:text-white"
-                        }`}
+                          }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>All archived</div>
