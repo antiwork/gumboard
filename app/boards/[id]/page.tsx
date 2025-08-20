@@ -26,6 +26,7 @@ import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
 import { BoardSettingsModal } from "@/components/board-settings-modal";
+import { useBoardSettings } from "@/hooks/useBoardSettings";
 import {
   getResponsiveConfig,
   getUniqueAuthors,
@@ -67,14 +68,27 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: string;
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
-  const [boardSettings, setBoardSettings] = useState({
-    name: "",
-    description: "",
-    isPublic: false,
-    sendSlackUpdates: true,
+
+  const {
+    boardSettingsDialog,
+    setBoardSettingsDialog,
+    boardSettings,
+    setBoardSettings,
+    copiedPublicUrl,
+    openBoardSettings,
+    handleUpdateBoardSettings,
+    handleDeleteBoard,
+    handleCopyPublicUrl,
+  } = useBoardSettings({
+    onBoardUpdate: (updatedBoard) => {
+      setBoard((prevBoard) => (prevBoard ? { ...prevBoard, ...updatedBoard } : null));
+      setAllBoards((prevBoards) =>
+        prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
+      );
+    },
+    redirectAfterDelete: "/dashboard",
   });
-  const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
+
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -324,12 +338,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (boardResponse && boardResponse.ok) {
         const { board } = await boardResponse.json();
         setBoard(board);
-        setBoardSettings({
-          name: board.name,
-          description: board.description || "",
-          isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-          sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-        });
       }
 
       if (notesResponse && notesResponse.ok) {
@@ -594,75 +602,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  const handleUpdateBoardSettings = async (settings: {
-    name?: string;
-    description?: string;
-    isPublic?: boolean;
-    sendSlackUpdates: boolean;
-  }) => {
-    try {
-      const response = await fetch(`/api/boards/${boardId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(settings),
-      });
-
-      if (response.ok) {
-        const { board } = await response.json();
-        setBoard(board);
-
-        setAllBoards((prevBoards) => prevBoards.map((b) => (b.id === board.id ? board : b)));
-
-        setBoardSettings({
-          name: board.name,
-          description: board.description || "",
-          isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-          sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-        });
-        setBoardSettingsDialog(false);
-      }
-    } catch (error) {
-      console.error("Error updating board settings:", error);
-    }
-  };
-
-  const handleCopyPublicUrl = async () => {
-    const publicUrl = `${window.location.origin}/public/boards/${boardId}`;
-    try {
-      await navigator.clipboard.writeText(publicUrl);
-      setCopiedPublicUrl(true);
-      setTimeout(() => setCopiedPublicUrl(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy URL:", error);
-    }
-  };
-
-  const handleDeleteBoard = async () => {
-    try {
-      const response = await fetch(`/api/boards/${boardId}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        router.push("/dashboard");
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to delete board",
-          description: errorData.error || "Failed to delete board",
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting board:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to delete board",
-        description: "Failed to delete board",
-      });
-    }
-  };
-
   if (userLoading || notesloading) {
     return <BoardPageSkeleton />;
   }
@@ -811,14 +750,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setBoardSettings({
-                      name: board?.name || "",
-                      description: board?.description || "",
-                      isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                      sendSlackUpdates:
-                        (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                    });
-                    setBoardSettingsDialog(true);
+                    if (board) {
+                      openBoardSettings({
+                        id: board.id,
+                        name: board.name,
+                        description: board.description || undefined,
+                        isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+                        sendSlackUpdates:
+                          (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                      });
+                    }
                   }}
                   aria-label="Board settings"
                   title="Board settings"

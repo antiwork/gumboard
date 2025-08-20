@@ -42,6 +42,7 @@ import {
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BoardSettingsModal } from "@/components/board-settings-modal";
+import { useBoardSettings } from "@/hooks/useBoardSettings";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -67,21 +68,28 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
 
-  const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
-  const [boardSettings, setBoardSettings] = useState({
-    id: "",
-    name: "",
-    description: "",
-    isPublic: false,
-    sendSlackUpdates: true,
+  const {
+    boardSettingsDialog,
+    setBoardSettingsDialog,
+    boardSettings,
+    setBoardSettings,
+    copiedPublicUrl,
+    errorDialog,
+    setErrorDialog,
+    openBoardSettings,
+    handleUpdateBoardSettings,
+    handleDeleteBoard,
+    handleCopyPublicUrl,
+  } = useBoardSettings({
+    onBoardUpdate: (updatedBoard) => {
+      setBoards((prevBoards) =>
+        prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
+      );
+    },
+    onBoardDelete: (boardId) => {
+      setBoards(boards.filter((board) => board.id !== boardId));
+    },
   });
-  const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
-
-  const [errorDialog, setErrorDialog] = useState<{
-    open: boolean;
-    title: string;
-    description: string;
-  }>({ open: false, title: "", description: "" });
 
   const router = useRouter();
 
@@ -130,7 +138,7 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [router]);
+  }, [router, setErrorDialog]);
 
   useEffect(() => {
     fetchUserAndBoards();
@@ -181,92 +189,16 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteBoard = async () => {
-    try {
-      const response = await fetch(`/api/boards/${boardSettings.id}`, {
-        method: "DELETE",
-      });
-
-      if (response.ok) {
-        setBoards(boards.filter((board) => board.id !== boardSettings.id));
-        setBoardSettingsDialog(false);
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to delete board",
-          description: errorData.error || "Failed to delete board",
-        });
-      }
-    } catch (error) {
-      console.error("Error deleting board:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to delete board",
-        description: "Failed to delete board",
-      });
-    }
-  };
-
   const handleBoardSettingsClick = (e: React.MouseEvent, board: DashboardBoard) => {
     e.preventDefault();
     e.stopPropagation();
-    setBoardSettings({
+    openBoardSettings({
       id: board.id,
       name: board.name,
-      description: board.description || "",
-      isPublic: board.isPublic ?? false,
-      sendSlackUpdates: board.sendSlackUpdates ?? true,
+      description: board.description || undefined,
+      isPublic: board.isPublic,
+      sendSlackUpdates: board.sendSlackUpdates,
     });
-    setBoardSettingsDialog(true);
-  };
-
-  const handleUpdateBoardSettings = async (settings: {
-    name: string;
-    description: string;
-    isPublic: boolean;
-    sendSlackUpdates: boolean;
-  }) => {
-    try {
-      const response = await fetch(`/api/boards/${boardSettings.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(settings),
-      });
-
-      if (response.ok) {
-        const { board } = await response.json();
-        setBoards((prevBoards) => prevBoards.map((b) => (b.id === board.id ? board : b)));
-        setBoardSettingsDialog(false);
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to update board",
-          description: errorData.error || "Failed to update board",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating board settings:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to update board",
-        description: "Failed to update board",
-      });
-    }
-  };
-
-  const handleCopyPublicUrl = async () => {
-    const publicUrl = `${window.location.origin}/public/boards/${boardSettings.id}`;
-    try {
-      await navigator.clipboard.writeText(publicUrl);
-      setCopiedPublicUrl(true);
-      setTimeout(() => setCopiedPublicUrl(false), 2000);
-    } catch (error) {
-      console.error("Failed to copy URL:", error);
-    }
   };
 
   if (loading) {
