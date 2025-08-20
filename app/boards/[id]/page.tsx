@@ -486,11 +486,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       id: noteId,
       action: {
         label: "Undo",
-        onClick: () => {
+        onClick: async () => {
           const t = pendingDeleteTimeoutsRef.current[noteId];
           if (t) {
             clearTimeout(t);
             delete pendingDeleteTimeoutsRef.current[noteId];
+          }
+          try {
+            await fetch(`/api/boards/${targetBoardId}/notes/${noteId}/restore`, {
+              method: "POST",
+            });
+          } catch (error) {
+            console.error("Error restoring note:", error);
           }
           setNotes((prev) => [noteToDelete, ...prev]);
         },

@@ -813,15 +813,20 @@ test.describe("Note Management", () => {
       });
 
       const deleteCalls: string[] = [];
+      const restoreCalls: string[] = [];
 
       await authenticatedPage.route(`**/api/boards/${board.id}/notes/**`, async (route) => {
-        if (route.request().method() === "DELETE") {
-          deleteCalls.push(route.request().url());
+        const req = route.request();
+        if (req.method() === "DELETE") {
+          deleteCalls.push(req.url());
           await route.fulfill({
             status: 200,
             contentType: "application/json",
             body: JSON.stringify({}),
           });
+        } else if (req.method() === "POST" && req.url().includes("/restore")) {
+          restoreCalls.push(req.url());
+          await route.continue();
         } else {
           await route.continue();
         }
@@ -838,8 +843,10 @@ test.describe("Note Management", () => {
       const undoButtons = authenticatedPage.getByRole("button", { name: "Undo" });
       await expect(undoButtons).toHaveCount(2);
 
-      await undoButtons.nth(0).click();
-      await undoButtons.nth(1).click();
+      await undoButtons.first().click();
+      await undoButtons.first().click();
+
+      await authenticatedPage.reload();
 
       await expect(
         authenticatedPage.getByRole("button", { name: `Delete Note ${note1.id}`, exact: true })
@@ -850,6 +857,7 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.waitForTimeout(500);
       expect(deleteCalls).toHaveLength(0);
+      expect(restoreCalls).toHaveLength(2);
     });
   });
 
