@@ -282,17 +282,9 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto px-4 py-8">
-        <div className="max-w-md mx-auto space-y-8">
-          {/* Header */}
-          <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2">Organization Invitation</h1>
-            <p className="text-muted-foreground">
-              You&apos;ve been invited to join an organization
-            </p>
-          </div>
-
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
+      <div className="container mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="max-w-sm sm:max-w-md mx-auto space-y-8">
           {/* Success message if just verified */}
           {isJustVerified && (
             <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md p-3">
@@ -304,24 +296,28 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
           )}
 
           {/* Invitation Details Card */}
-          <Card className="border-2">
+          <Card className="bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm">
             <CardHeader className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 dark:from-zinc-800 dark:to-blue-900 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <span className="text-2xl font-bold text-white">
                   {invite.organization.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <CardTitle className="text-xl">{invite.organization.name}</CardTitle>
-              <CardDescription className="text-base">
+              <CardTitle className="text-xl text-foreground dark:text-zinc-100">
+                {invite.organization.name}
+              </CardTitle>
+              <CardDescription className="text-base text-muted-foreground dark:text-zinc-400">
                 {invite.user.name || invite.user.email} has invited you to join their organization
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-center space-y-2">
-                <p className="text-sm text-muted-foreground">
+                <p className="text-sm text-muted-foreground dark:text-zinc-400">
                   Invited: {invite.createdAt.toLocaleDateString()}
                 </p>
-                <p className="text-sm text-muted-foreground">Your email: {invite.email}</p>
+                <p className="text-sm text-muted-foreground dark:text-zinc-400">
+                  Your email: {invite.email}
+                </p>
               </div>
 
               <div className="flex flex-col space-y-3">
@@ -332,7 +328,10 @@ export default async function InviteAcceptPage({ searchParams }: InviteAcceptPag
                 </form>
 
                 <form action={declineInvite.bind(null, token)}>
-                  <Button type="submit" variant="outline" className="w-full">
+                  <Button
+                    type="submit"
+                    className="w-full border border-zinc-100 dark:border-zinc-700 bg-transparent dark:text-white dark:hover:bg-red-500 hover:bg-red-500 hover:text-white text-black"
+                  >
                     Decline Invitation
                   </Button>
                 </form>
