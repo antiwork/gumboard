@@ -92,6 +92,7 @@ export async function GET() {
         }
       }
 
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { notes: _, ...boardData } = board;
       
       return {
