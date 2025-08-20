@@ -27,11 +27,8 @@ interface BoardSettings {
 }
 
 interface BoardSettingsModalProps {
-  onBoardUpdate?: (
-    updatedBoard: BoardSettings & { createdAt?: string; updatedAt?: string }
-  ) => void;
-  onBoardDelete?: (boardId: string) => void;
   redirectAfterDelete?: string;
+  onSuccess?: () => void;
 }
 
 export interface BoardSettingsModalRef {
@@ -45,7 +42,7 @@ export interface BoardSettingsModalRef {
 }
 
 export const BoardSettingsModal = forwardRef<BoardSettingsModalRef, BoardSettingsModalProps>(
-  ({ onBoardUpdate, onBoardDelete, redirectAfterDelete }, ref) => {
+  ({ redirectAfterDelete, onSuccess }, ref) => {
     const router = useRouter();
 
     const [open, setOpen] = useState(false);
@@ -101,9 +98,9 @@ export const BoardSettingsModal = forwardRef<BoardSettingsModalRef, BoardSetting
         });
 
         if (response.ok) {
-          const { board } = await response.json();
+          await response.json();
           setOpen(false);
-          onBoardUpdate?.(board);
+          onSuccess?.();
         } else {
           const errorData = await response.json();
           setErrorDialog({
@@ -130,7 +127,7 @@ export const BoardSettingsModal = forwardRef<BoardSettingsModalRef, BoardSetting
 
         if (response.ok) {
           setOpen(false);
-          onBoardDelete?.(boardSettings.id);
+          onSuccess?.();
           if (redirectAfterDelete) {
             router.push(redirectAfterDelete);
           }

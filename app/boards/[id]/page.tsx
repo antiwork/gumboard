@@ -67,18 +67,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: string;
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-
   const boardSettingsRef = useRef<BoardSettingsModalRef>(null);
 
-  const handleBoardUpdate = (updatedBoard: Partial<Board> & { id: string }) => {
-    setBoard((prevBoard) => (prevBoard ? { ...prevBoard, ...updatedBoard } : null));
-    setAllBoards((prevBoards) =>
-      prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
-    );
-  };
-
-  const handleBoardDelete = () => {
-    // Redirect will be handled by the modal itself
+  const handleBoardSettingsSuccess = () => {
+    fetchBoardData();
   };
 
   const boardRef = useRef<HTMLDivElement>(null);
@@ -984,8 +976,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       <BoardSettingsModal
         ref={boardSettingsRef}
-        onBoardUpdate={handleBoardUpdate}
-        onBoardDelete={handleBoardDelete}
+        onSuccess={handleBoardSettingsSuccess}
         redirectAfterDelete="/dashboard"
       />
     </div>

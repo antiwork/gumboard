@@ -74,14 +74,8 @@ export default function Dashboard() {
 
   const boardSettingsRef = useRef<BoardSettingsModalRef>(null);
 
-  const handleBoardUpdate = (updatedBoard: Partial<DashboardBoard> & { id: string }) => {
-    setBoards((prevBoards) =>
-      prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
-    );
-  };
-
-  const handleBoardDelete = (boardId: string) => {
-    setBoards(boards.filter((board) => board.id !== boardId));
+  const handleBoardSettingsSuccess = () => {
+    fetchUserAndBoards();
   };
 
   const router = useRouter();
@@ -398,11 +392,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <BoardSettingsModal
-        ref={boardSettingsRef}
-        onBoardUpdate={handleBoardUpdate}
-        onBoardDelete={handleBoardDelete}
-      />
+      <BoardSettingsModal ref={boardSettingsRef} onSuccess={handleBoardSettingsSuccess} />
 
       <AlertDialog
         open={errorDialog.open}
