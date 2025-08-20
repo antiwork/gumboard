@@ -15,15 +15,7 @@ import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-
-// Core domain types
-export interface User {
-  id: string;
-  name: string | null;
-  image?: string | null;
-  email: string;
-  isAdmin?: boolean;
-}
+import type { User } from "@/types/types";
 
 export interface Board {
   id: string;

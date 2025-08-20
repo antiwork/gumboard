@@ -6,11 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, X, ChevronUp, EllipsisVertical } from "lucide-react";
+import { Copy, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { BetaBadge } from "@/components/ui/beta-badge";
-import { FilterPopover } from "@/components/ui/filter-popover";
-import { Note as NoteCard } from "@/components/note";
+import { BoardHeader } from "@/components/board-header";
+import { BoardLayout } from "@/components/board-layout";
+import { BoardNotesDisplay } from "@/components/board-notes-display";
 
 import {
   AlertDialog,
@@ -22,14 +22,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-// Use shared types from components
-import type { Note, Board, User } from "@/components/note";
+import type { Note, Board } from "@/components/note";
 import { useTheme } from "next-themes";
-import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
 import {
-  getResponsiveConfig,
   getUniqueAuthors,
   calculateGridLayout,
   calculateMobileLayout,
@@ -78,7 +75,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
-  const boardRef = useRef<HTMLDivElement>(null);
+
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -526,6 +523,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       console.error("Error archiving note:", error);
     }
   };
+
   const handleUnarchiveNote = async (noteId: string) => {
     try {
       const currentNote = notes.find((n) => n.id === noteId);
@@ -685,280 +683,78 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
-      <div>
-        <div className="mx-0.5 sm:mx-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 sm:w-fit grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
-            {/* Company Name */}
-            <Link href="/dashboard" className="flex-shrink-0 pl-1">
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
-                Gumboard
-                <BetaBadge />
-              </h1>
-            </Link>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
-            {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown min-w-32 sm:max-w-64 col-span-2 sm:col-span-1">
-              <Button
-                variant="ghost"
-                onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center justify-between px-2 py-2 w-full"
-              >
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
-                    {boardId === "all-notes"
-                      ? "All notes"
-                      : boardId === "archive"
-                        ? "Archive"
-                        : board?.name}
-                  </div>
-                </div>
-                {showBoardDropdown ? (
-                  <ChevronUp
-                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
-                  />
-                ) : (
-                  <ChevronDown
-                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
-                  />
-                )}
-              </Button>
-
-              {showBoardDropdown && (
-                <div className="fixed sm:absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
-                  <div className="p-2 flex flex-col gap-1">
-                    {/* Boards */}
-                    {allBoards.map((b) => (
-                      <Link
-                        key={b.id}
-                        href={`/boards/${b.id}`}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
-                          b.id === boardId
-                            ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
-                            : "text-foreground dark:text-zinc-100"
-                        }`}
-                        onClick={() => setShowBoardDropdown(false)}
-                      >
-                        <div>{b.name}</div>
-                      </Link>
-                    ))}
-
-                    {allBoards.length > 0 && (
-                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
-                    )}
-
-                    {/* All Notes Option */}
-                    <Link
-                      href="/boards/all-notes"
-                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                        boardId === "all-notes"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
-                      onClick={() => setShowBoardDropdown(false)}
-                    >
-                      <div>All notes</div>
-                    </Link>
-
-                    {/* Archive Option */}
-                    <Link
-                      href="/boards/archive"
-                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                        boardId === "archive"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
-                      onClick={() => setShowBoardDropdown(false)}
-                    >
-                      <div>All archived</div>
-                    </Link>
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setShowAddBoard(true);
-                        setShowBoardDropdown(false);
-                      }}
-                      className="flex items-center w-full px-4 py-2"
-                    >
-                      <span className="font-medium">Create new board</span>
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
-
-            {/* Filter Popover */}
-            <div className="flex flex-nowrap space-x-1">
-              <div className="relative board-dropdown" data-slot="filter-popover">
-                <FilterPopover
-                  startDate={dateRange.startDate}
-                  endDate={dateRange.endDate}
-                  onDateRangeChange={(startDate, endDate) => {
-                    const newDateRange = { startDate, endDate };
-                    setDateRange(newDateRange);
-                    updateURL(undefined, newDateRange);
-                  }}
-                  selectedAuthor={selectedAuthor}
-                  authors={uniqueAuthors}
-                  onAuthorChange={(authorId) => {
-                    setSelectedAuthor(authorId);
-                    updateURL(undefined, undefined, authorId);
-                  }}
-                  className="h-9"
-                />
-              </div>
-              {boardId !== "all-notes" && boardId !== "archive" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setBoardSettings({
-                      name: board?.name || "",
-                      description: board?.description || "",
-                      isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                      sendSlackUpdates:
-                        (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                    });
-                    setBoardSettingsDialog(true);
-                  }}
-                  aria-label="Board settings"
-                  title="Board settings"
-                  className="flex items-center size-9"
-                >
-                  <EllipsisVertical className="size-4" />
-                </Button>
-              )}
-            </div>
-          </div>
-
-          {/* Right side - Search, Add Note and User dropdown */}
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
-            {/* Search Box */}
-            <div className="relative h-9">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
-              </div>
-              <input
-                aria-label="Search notes"
-                type="text"
-                placeholder="Search notes..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
-                className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
-              />
-              {searchTerm && (
-                <Button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setDebouncedSearchTerm("");
-                    updateURL("");
-                  }}
-                  className="absolute top-[5px] right-1 size-7 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-white dark:hover:text-zinc-100 cursor-pointer bg-transparent"
-                >
-                  <X className="h-4 w-4 " />
-                </Button>
-              )}
-            </div>
-
-            <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else {
-                  handleAddNote();
-                }
-              }}
-              disabled={boardId === "archive"}
-            >
-              <span>Add note</span>
-            </Button>
-
-            {/* User Dropdown */}
-            <ProfileDropdown user={user} />
-          </div>
-        </div>
-      </div>
-
-      {/* Board Area */}
-      <div
-        ref={boardRef}
-        className="relative w-full"
-        style={{
-          height: boardHeight,
-          minHeight: "calc(100vh - 64px)", // Account for header height
+    <BoardLayout isPublicView={false}>
+      <BoardHeader
+        board={board}
+        isPublicView={false}
+        user={user}
+        searchTerm={searchTerm}
+        onSearchChange={(term) => setSearchTerm(term)}
+        dateRange={dateRange}
+        onDateRangeChange={(newDateRange) => {
+          setDateRange(newDateRange);
+          updateURL(undefined, newDateRange);
         }}
-      >
-        {/* Notes */}
-        <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-              onCopy={handleCopyNote}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
-          ))}
-        </div>
+        selectedAuthor={selectedAuthor}
+        authors={uniqueAuthors}
+        onAuthorChange={(authorId) => {
+          setSelectedAuthor(authorId);
+          updateURL(undefined, undefined, authorId);
+        }}
+        showSettings={true}
+        onSettingsClick={() => {
+          setBoardSettings({
+            name: board?.name || "",
+            description: board?.description || "",
+            isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+            sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+          });
+          setBoardSettingsDialog(true);
+        }}
+        boardId={boardId}
+        allBoards={allBoards}
+        showBoardDropdown={showBoardDropdown}
+        onBoardDropdownToggle={() => setShowBoardDropdown(!showBoardDropdown)}
+        onAddBoardClick={() => {
+          setShowAddBoard(true);
+          setShowBoardDropdown(false);
+        }}
+        onAddNoteClick={() => {
+          if (boardId === "all-notes" && allBoards.length > 0) {
+            handleAddNote(allBoards[0].id);
+          } else {
+            handleAddNote();
+          }
+        }}
+      />
 
-        {/* Empty State */}
-        {filteredNotes.length === 0 &&
-          notes.length > 0 &&
-          (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
-            <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-gray-500 dark:text-gray-400">
-              <Search className="w-12 h-12 mb-4 text-gray-400 dark:text-gray-500" />
-              <div className="text-xl mb-2">No notes found</div>
-              <div className="text-sm mb-4 text-center">
-                No notes match your current filters
-                {searchTerm && <div>Search: &quot;{searchTerm}&quot;</div>}
-                {selectedAuthor && (
-                  <div>
-                    Author: {uniqueAuthors.find((a) => a.id === selectedAuthor)?.name || "Unknown"}
-                  </div>
-                )}
-                {(dateRange.startDate || dateRange.endDate) && (
-                  <div>
-                    Date range:{" "}
-                    {dateRange.startDate ? dateRange.startDate.toLocaleDateString() : "..."} -{" "}
-                    {dateRange.endDate ? dateRange.endDate.toLocaleDateString() : "..."}
-                  </div>
-                )}
-              </div>
-              <Button
-                onClick={() => {
-                  setSearchTerm("");
-                  setDebouncedSearchTerm("");
-                  setDateRange({ startDate: null, endDate: null });
-                  setSelectedAuthor(null);
-                  updateURL("", { startDate: null, endDate: null }, null);
-                }}
-                variant="outline"
-                className="flex items-center space-x-2 cursor-pointer"
-              >
-                <span>Clear All Filters</span>
-              </Button>
-            </div>
-          )}
-      </div>
+      <BoardNotesDisplay
+        layoutNotes={layoutNotes}
+        filteredNotes={filteredNotes}
+        boardHeight={boardHeight}
+        searchTerm={searchTerm}
+        selectedAuthor={selectedAuthor}
+        dateRange={dateRange}
+        uniqueAuthors={uniqueAuthors}
+        onClearFilters={() => {
+          setSearchTerm("");
+          setDebouncedSearchTerm("");
+          setDateRange({ startDate: null, endDate: null });
+          setSelectedAuthor(null);
+          updateURL("", { startDate: null, endDate: null }, null);
+        }}
+        isReadonly={false}
+        currentUser={user || undefined}
+        onUpdate={handleUpdateNoteFromComponent}
+        onDelete={handleDeleteNote}
+        onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+        onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+        onCopy={handleCopyNote}
+        showBoardName={boardId === "all-notes" || boardId === "archive"}
+        resolvedTheme={resolvedTheme}
+        isPrivateBoard={true}
+        noteClassName="shadow-md shadow-black/10"
+      />
 
       {showAddBoard && (
         <div
@@ -1217,6 +1013,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </BoardLayout>
   );
 }

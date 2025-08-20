@@ -8,22 +8,7 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-
-export type Organization = {
-  id: string;
-  name: string;
-  slackWebhookUrl?: string | null;
-  members: User[];
-};
-
-export type User = {
-  id: string;
-  name: string | null;
-  email: string;
-  image?: string | null;
-  isAdmin?: boolean;
-  organization: Organization | null;
-};
+import type { User } from "@/types/types";
 
 interface UserContextType {
   user: User | null;
