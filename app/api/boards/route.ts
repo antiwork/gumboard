@@ -92,10 +92,10 @@ export async function GET() {
         }
       }
 
-      const { notes, ...boardWithoutNotes } = board;
+      const { notes: _, ...boardData } = board;
       
       return {
-        ...boardWithoutNotes,
+        ...boardData,
         lastActivityAt,
       };
     });
