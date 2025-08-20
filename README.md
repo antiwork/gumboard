@@ -91,6 +91,31 @@ GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
 ```
 
+
+## 💳 Stripe Integration
+
+To enable paid plans and billing, set up Stripe:
+
+### 1. Create a Stripe Account & Products
+
+1. Go to [Stripe Dashboard](https://dashboard.stripe.com/)
+2. Create a product and a recurring price for your Team plan (e.g., $9/month)
+3. Copy the **Price ID** (e.g., `price_123abc...`)
+
+### 2. Add Environment Variables
+
+In your  or `.env` file, add:
+
+```env
+STRIPE_SECRET_KEY=your_stripe_secret_key
+STRIPE_TEAM_PLAN_PRICE_ID=your_team_plan_price_id
+STRIPE_WEBHOOK_SECRET=your_stripe_webhook_secret # (if using webhooks)
+```
+
+You can find your secret key in the Stripe dashboard under Developers > API keys.
+The webhook secret is needed if you configure Stripe webhooks for billing events.
+
+---
 ## 🔐 GitHub OAuth Setup
 
 To enable login with GitHub, follow these steps:
