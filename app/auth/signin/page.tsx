@@ -159,13 +159,13 @@ function SignInContent() {
             </div>
             <Skeleton className="h-12 w-full" />
             <div className="relative mt-6 w-full">
-               <div className="absolute inset-0 flex items-center">
-                 <Skeleton className="h-px w-full" />
-               </div>
-               <div className="relative flex justify-center text-sm">
-                 <Skeleton className="h-4 w-24" />
-               </div>
-             </div>
+              <div className="absolute inset-0 flex items-center">
+                <Skeleton className="h-px w-full" />
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <Skeleton className="h-4 w-24" />
+              </div>
+            </div>
             <div className="space-y-3">
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
