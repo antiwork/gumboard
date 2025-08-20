@@ -12,13 +12,15 @@ import type { Note, Board } from "@/components/note";
 import { Note as NoteCard } from "@/components/note";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { useUser } from "@/app/contexts/UserContext";
-import { getUniqueAuthors, filterAndSortNotes } from "@/lib/utils";
+import { getUniqueAuthors, filterAndSortNotes, getBoardColumns } from "@/lib/utils";
+import { useBoardColumnMeta } from "@/lib/hooks";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
+  const columnMeta = useBoardColumnMeta();
   const [boardId, setBoardId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -86,6 +88,10 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     () => filterAndSortNotes(notes, searchTerm, dateRange, selectedAuthor, null),
     [notes, searchTerm, dateRange, selectedAuthor]
   );
+
+  const columnsData = useMemo(() => {
+    return getBoardColumns(columnMeta.count, filteredNotes);
+  }, [columnMeta, filteredNotes]);
 
   if (loading) {
     return <FullPageLoader message="Loading board..." />;

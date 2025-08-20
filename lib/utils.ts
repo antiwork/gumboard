@@ -104,3 +104,15 @@ export function filterAndSortNotes(
 
   return filteredNotes;
 }
+
+export function getBoardColumns(columnCount: number, notes: Note[]) {
+  let columns: Note[][] = [];
+  if (notes.length > 0) {
+    columns = Array.from({ length: columnCount }, () => []);
+    notes.forEach((note, index) => {
+      const columnIndex = index % columnCount;
+      columns[columnIndex].push(note);
+    });
+  }
+  return columns;
+}

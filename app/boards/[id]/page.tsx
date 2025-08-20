@@ -27,15 +27,17 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import { getUniqueAuthors, filterAndSortNotes } from "@/lib/utils";
-import { BoardPageSkeleton } from "@/components/board-skeleton";
 import { motion, AnimatePresence } from "framer-motion";
+import { getUniqueAuthors, filterAndSortNotes, getBoardColumns } from "@/lib/utils";
+import { BoardPageSkeleton } from "@/components/board-skeleton";
+import { useBoardColumnMeta } from "@/lib/hooks";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
+  const columnMeta = useBoardColumnMeta();
   const [notesloading, setNotesLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
   // Inline editing state removed; handled within Note component
@@ -209,8 +211,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
   }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
-  // Removed debounce cleanup effect; editing is scoped to Note
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -228,6 +228,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
+
+  const columnsData = useMemo(() => {
+    return getBoardColumns(columnMeta.count, filteredNotes);
+  }, [columnMeta, filteredNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -676,24 +680,25 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </Button>
 
               {showBoardDropdown && (
-                <div className="fixed sm:absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
+                <div className="absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 ">
                   <div className="p-2 flex flex-col gap-1">
                     {/* Boards */}
-                    {allBoards.map((b) => (
-                      <Link
-                        key={b.id}
-                        href={`/boards/${b.id}`}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
-                          b.id === boardId
-                            ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
-                            : "text-foreground dark:text-zinc-100"
-                        }`}
-                        onClick={() => setShowBoardDropdown(false)}
-                      >
-                        <div>{b.name}</div>
-                      </Link>
-                    ))}
-
+                    <div className=" max-h-50 overflow-y-auto">
+                      {allBoards.map((b) => (
+                        <Link
+                          key={b.id}
+                          href={`/boards/${b.id}`}
+                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                            b.id === boardId
+                              ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
+                              : "text-foreground dark:text-zinc-100"
+                          }`}
+                          onClick={() => setShowBoardDropdown(false)}
+                        >
+                          <div>{b.name}</div>
+                        </Link>
+                      ))}
+                    </div>
                     {allBoards.length > 0 && (
                       <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
                     )}
