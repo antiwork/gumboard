@@ -826,7 +826,13 @@ test.describe("Note Management", () => {
           });
         } else if (req.method() === "POST" && req.url().includes("/restore")) {
           restoreCalls.push(req.url());
-          await route.continue();
+          // Simulate slow network so the restore request is still pending when the page reloads
+          await new Promise((r) => setTimeout(r, 200));
+          await route.fulfill({
+            status: 200,
+            contentType: "application/json",
+            body: JSON.stringify({}),
+          });
         } else {
           await route.continue();
         }
@@ -846,7 +852,7 @@ test.describe("Note Management", () => {
       await undoButtons.first().click();
       await undoButtons.first().click();
 
-      await authenticatedPage.reload();
+      await authenticatedPage.reload({ waitUntil: "domcontentloaded" });
 
       await expect(
         authenticatedPage.getByRole("button", { name: `Delete Note ${note1.id}`, exact: true })

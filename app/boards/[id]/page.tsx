@@ -493,11 +493,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             delete pendingDeleteTimeoutsRef.current[noteId];
           }
           try {
-            await fetch(`/api/boards/${targetBoardId}/notes/${noteId}/restore`, {
-              method: "POST",
-            });
+            const response = await fetch(
+              `/api/boards/${targetBoardId}/notes/${noteId}/restore`,
+              {
+                method: "POST",
+                // keepalive ensures the request completes even if the user
+                // refreshes the page immediately after clicking undo
+                keepalive: true,
+              }
+            );
+            if (!response.ok) {
+              console.error("Failed to restore note");
+              return;
+            }
           } catch (error) {
             console.error("Error restoring note:", error);
+            return;
           }
           setNotes((prev) => [noteToDelete, ...prev]);
         },
