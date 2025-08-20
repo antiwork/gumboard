@@ -100,9 +100,9 @@ test.describe("Note Management", () => {
 
     const editedContent = testContext.prefix("Edited item");
     await authenticatedPage.getByText(originalContent).click();
-    const editInput = authenticatedPage.getByTestId(itemId).getByRole("textbox");
+    const editInput = authenticatedPage.getByTestId(itemId).locator("div[contenteditable]");
     await expect(editInput).toBeVisible();
-    await expect(editInput).toHaveValue(originalContent);
+    await expect(editInput).toHaveText(originalContent);
     const saveEditResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
@@ -812,8 +812,8 @@ test.describe("Note Management", () => {
       // When a note is created empty, it automatically shows the new item input
       const testItemContent = testContext.prefix("First item content");
 
-      // Look for any textarea in the newly created note
-      const newItemInput = authenticatedPage.locator("textarea").first();
+      // Look for any contenteditable div in the newly created note
+      const newItemInput = authenticatedPage.locator("div[contenteditable]").first();
       await expect(newItemInput).toBeVisible({ timeout: 10000 });
 
       const addItemResponse = authenticatedPage.waitForResponse(
@@ -878,8 +878,8 @@ test.describe("Note Management", () => {
       // When a note is created empty, it automatically shows the new item input
       const testItemContent = testContext.prefix("Last item content");
 
-      // Look for any textarea in the newly created note
-      const newItemInput = authenticatedPage.locator("textarea").first();
+      // Look for any contenteditable div in the newly created note
+      const newItemInput = authenticatedPage.locator("div[contenteditable]").first();
       await expect(newItemInput).toBeVisible({ timeout: 10000 });
 
       const addItemResponse = authenticatedPage.waitForResponse(
