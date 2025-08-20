@@ -1078,7 +1078,7 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
                   Board settings
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-                  Configure settings for "{board?.name}" board.
+                  Configure settings for &quot;{board?.name}&quot; board.
                 </AlertDialogDescription>
               </AlertDialogHeader>
 
@@ -1182,7 +1182,7 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
                   </label>
                 </div>
                 <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-                  When enabled, note updates will be sent to your organization's Slack channel
+                  When enabled, note updates will be sent to your organization&apos;s Slack channel
                 </p>
               </div>
 
@@ -1217,7 +1217,7 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
                   Delete Board
                 </AlertDialogTitle>
                 <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-                  Are you sure you want to delete "{board?.name}"? This action cannot be
+                  Are you sure you want to delete &quot;{board?.name}&quot;? This action cannot be
                   undone and will permanently delete all notes in this board.
                 </AlertDialogDescription>
               </AlertDialogHeader>
