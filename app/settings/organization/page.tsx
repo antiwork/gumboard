@@ -668,9 +668,7 @@ export default function OrganizationSettingsPage() {
                   className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
                 >
                   <div>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 overflow-hidden text-ellipsis whitespace-nowrap max-w-[95%]">
-                      {invite.email}
-                    </p>
+                    <p className="font-medium text-zinc-900 dark:text-zinc-100">{invite.email}</p>
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">
                       Invited on {new Date(invite.createdAt).toLocaleDateString()}
                     </p>
