@@ -47,7 +47,7 @@ export function ChecklistItem({
   isNewItem = false,
   onCreateItem,
 }: ChecklistItemProps) {
-  const contentRef = React.useRef<HTMLTextAreaElement>(null);
+  const contentRef = React.useRef<HTMLTextAreaElement | HTMLDivElement>(null);
   const previousContentRef = React.useRef<string>("");
   const deletingRef = React.useRef<boolean>(false);
 
@@ -56,7 +56,7 @@ export function ChecklistItem({
     return /<[^>]+>/.test(content);
   }, [editContent, item.content]);
 
-  const adjustContentHeight = (element: HTMLTextAreaElement) => {
+  const adjustContentHeight = (element: HTMLTextAreaElement | HTMLDivElement) => {
     element.style.height = "auto";
     element.style.height = element.scrollHeight + "px";
   };
@@ -73,18 +73,18 @@ export function ChecklistItem({
       adjustContentHeight(contentRef.current);
     }
   }, [item.content, isEditing]);
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement | HTMLDivElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (isNewItem && editContent?.trim() && onCreateItem) {
         onCreateItem(editContent.trim());
       } else {
-        const target = e.target as HTMLTextAreaElement;
+        const target = e.target as HTMLTextAreaElement | HTMLDivElement;
         target.blur();
       }
     }
     if (e.key === "Enter" && e.shiftKey) {
-      const target = e.target as HTMLTextAreaElement;
+      const target = e.target as HTMLTextAreaElement | HTMLDivElement;
       setTimeout(() => adjustContentHeight(target), 0);
     }
     if (e.key === "Escape") {
@@ -124,6 +124,38 @@ export function ChecklistItem({
     }
   };
 
+  const handleContentEditableInput = (e: React.FormEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    const content = target.innerHTML;
+    const sanitizedContent = sanitizeChecklistContent(content);
+    onEditContentChange?.(sanitizedContent);
+  };
+
+  const handleContentEditablePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const paste = e.clipboardData.getData("text");
+    const urlRegex = /^https?:\/\/.+/;
+    
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+    
+    const range = selection.getRangeAt(0);
+    const selectedText = selection.toString();
+    
+    if (urlRegex.test(paste) && selectedText) {
+      const linkHtml = `<a href="${paste}">${selectedText}</a>`;
+      range.deleteContents();
+      range.insertNode(document.createRange().createContextualFragment(linkHtml));
+      selection.removeAllRanges();
+      
+      const target = e.target as HTMLDivElement;
+      const sanitizedContent = sanitizeChecklistContent(target.innerHTML);
+      onEditContentChange?.(sanitizedContent);
+    } else {
+      document.execCommand('insertText', false, paste);
+    }
+  };
+
   const handleBlur = () => {
     if (deletingRef.current) {
       deletingRef.current = false;
@@ -155,52 +187,72 @@ export function ChecklistItem({
       />
 
       <div className="relative flex-1">
-        <textarea
-          ref={contentRef}
-          value={editContent ?? item.content}
-          onChange={(e) => onEditContentChange?.(e.target.value)}
-          disabled={readonly}
-          className={cn(
-            "w-full border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
-            item.checked && "text-slate-500 dark:text-zinc-500 line-through",
-            hasHtmlContent && !isEditing && "text-transparent"
-          )}
-          onBlur={handleBlur}
-          onKeyDown={handleKeyDown}
-          onFocus={(e) => {
-            if (isEditing) {
-              const originalScrollIntoView = e.target.scrollIntoView;
-              e.target.scrollIntoView = () => {};
-              setTimeout(() => {
-                e.target.scrollIntoView = originalScrollIntoView;
-              }, 100);
-            }
-
-            if (!isEditing && !readonly) {
-              onStartEdit?.(item.id);
-            }
-          }}
-          rows={1}
-          style={{ height: "auto" }}
-          onPaste={handlePaste}
-          onInput={(e) => {
-            const target = e.target as HTMLTextAreaElement;
-            const currentContent = target.value;
-
-            if (currentContent !== previousContentRef.current) {
-              adjustContentHeight(target);
-              previousContentRef.current = currentContent;
-            }
-          }}
-        />
-        {hasHtmlContent && !isEditing && (
-          <div
+        {(isEditing || isNewItem) ? (
+          <textarea
+            ref={contentRef as React.RefObject<HTMLTextAreaElement>}
+            value={editContent ?? item.content}
+            onChange={(e) => onEditContentChange?.(e.target.value)}
+            disabled={readonly}
             className={cn(
-              "absolute inset-0 px-1 py-1 text-sm pointer-events-none",
-              "text-zinc-900 dark:text-zinc-100",
+              "w-full border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
               item.checked && "text-slate-500 dark:text-zinc-500 line-through"
             )}
+            onBlur={handleBlur}
+            onKeyDown={handleKeyDown}
+            onFocus={(e) => {
+              if (isEditing) {
+                const originalScrollIntoView = e.target.scrollIntoView;
+                e.target.scrollIntoView = () => {};
+                setTimeout(() => {
+                  e.target.scrollIntoView = originalScrollIntoView;
+                }, 100);
+              }
+
+              if (!isEditing && !readonly) {
+                onStartEdit?.(item.id);
+              }
+            }}
+            rows={1}
+            style={{ height: "auto" }}
+            onPaste={handlePaste}
+            onInput={(e) => {
+              const target = e.target as HTMLTextAreaElement;
+              const currentContent = target.value;
+
+              if (currentContent !== previousContentRef.current) {
+                adjustContentHeight(target);
+                previousContentRef.current = currentContent;
+              }
+            }}
+          />
+        ) : (
+          <div
+            ref={contentRef as React.RefObject<HTMLDivElement>}
+            contentEditable={!readonly}
             dangerouslySetInnerHTML={{ __html: editContent ?? item.content }}
+            className={cn(
+              "w-full border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none min-h-[1.5rem]",
+              item.checked && "text-slate-500 dark:text-zinc-500 line-through"
+            )}
+            onBlur={handleBlur}
+            onInput={handleContentEditableInput}
+            onPaste={handleContentEditablePaste}
+            onKeyDown={handleKeyDown}
+            onFocus={(e) => {
+              if (!isEditing && !readonly) {
+                onStartEdit?.(item.id);
+              }
+            }}
+            onClick={(e) => {
+              if (!isEditing && e.target instanceof HTMLAnchorElement) {
+                e.stopPropagation();
+                return;
+              }
+              if (!isEditing && !readonly) {
+                onStartEdit?.(item.id);
+              }
+            }}
+            style={{ minHeight: "auto" }}
           />
         )}
       </div>
