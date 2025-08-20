@@ -46,7 +46,7 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
-  const [notesloading, setNotesLoading] = useState(true);
+  const [notesLoading, setNotesLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
 
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
@@ -703,7 +703,7 @@ export default function BoardPage({ params, isPublic = false }: BoardPageProps) 
     setDeleteConfirmDialog(false);
   };
 
-  if (userLoading || notesloading) {
+  if (userLoading || notesLoading) {
     return <BoardPageSkeleton />;
   }
 
