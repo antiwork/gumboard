@@ -253,7 +253,7 @@ export function filterAndSortNotes(
   return filteredNotes;
 }
 
-export function formatLastUpdate(updatedAt: string): string {
+export function formateDate(updatedAt: string): string {
   const now = new Date();
   const updated = new Date(updatedAt);
   const diffMs = now.getTime() - updated.getTime();

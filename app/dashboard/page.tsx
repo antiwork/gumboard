@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatLastUpdate } from "@/lib/utils";
+import { formateDate } from "@/lib/utils";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -49,7 +49,6 @@ export type DashboardBoard = Board & {
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
-  lastActivity: string;
   _count: { notes: number };
 };
 
@@ -336,7 +335,7 @@ export default function Dashboard() {
                       </CardContent>
                     )}
                     <CardFooter>
-                      <p className=" text-sm">{formatLastUpdate(board.lastActivity)}</p>
+                      <p className=" text-sm">{formateDate(board.updatedAt)}</p>
                     </CardFooter>
                   </Card>
                 </Link>
