@@ -33,11 +33,15 @@ jobs:
     env:
       GITHUB_CLIENT_ID: dummy-client-id
       GITHUB_CLIENT_SECRET: dummy-client-secret
+      GOOGLE_CLIENT_ID: dummy-google-id
+      GOOGLE_CLIENT_SECRET: dummy-google-secret
       AUTH_SECRET: sample-auth-secret
       AUTH_URL: http://localhost:3000
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/gumboard_test
       EMAIL_FROM: noreply@example.com
       AUTH_RESEND_KEY: dummy-resend-key
+      NEXT_PUBLIC_ENABLE_STRIPE: "0"
+      NODE_ENV: test
 
     steps:
       - uses: actions/checkout@v4
