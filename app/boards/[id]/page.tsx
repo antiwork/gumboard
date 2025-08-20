@@ -10,7 +10,7 @@ import { ChevronDown, Search, Copy, Trash2, X, ChevronUp, EllipsisVertical } fro
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
-import { Note as NoteCard } from "@/components/note";
+import { NotesGrid } from "@/components/notes-grid";
 
 import {
   AlertDialog,
@@ -837,26 +837,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         }}
       >
         {/* Notes Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 auto-rows-min">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-              onCopy={handleCopyNote}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10 h-fit"
-              style={{
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
-          ))}
-        </div>
+        <NotesGrid
+          notes={layoutNotes}
+          currentUser={user as User}
+          onUpdate={handleUpdateNoteFromComponent}
+          onDelete={handleDeleteNote}
+          onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+          onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+          onCopy={handleCopyNote}
+          showBoardName={boardId === "all-notes" || boardId === "archive"}
+          syncDB={true}
+          variant="grid"
+          noteClassName="shadow-md shadow-black/10 h-fit"
+          noteStyle={(note) => ({
+            padding: `${getResponsiveConfig().notePadding}px`,
+            backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+          })}
+          initialAnimation={false}
+        />
 
         {/* Empty State */}
         {filteredNotes.length === 0 &&

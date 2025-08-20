@@ -3,10 +3,9 @@
 import * as React from "react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Note as NoteComponent } from "@/components/note";
+import { NotesGrid } from "@/components/notes-grid";
 import type { Note } from "@/components/note";
 import { Plus } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 
 const initialNotes: Note[] = [
   {
@@ -280,29 +279,6 @@ const authors = [
   { name: "Zeta", initial: "Z" },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-    },
-  },
-};
-
-const itemVariants = {
-  hidden: { y: 20, opacity: 0 },
-  visible: {
-    y: 0,
-    opacity: 1,
-  },
-  exit: {
-    opacity: 0,
-    y: -20,
-    transition: { duration: 0.2 },
-  },
-};
-
 export function StickyNotesDemo() {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
 
@@ -342,38 +318,19 @@ export function StickyNotesDemo() {
           Add Note
         </Button>
       </div>
-      <div>
-        <motion.div
-          className="columns-1 gap-4 sm:columns-2"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
-          <AnimatePresence>
-            {notes.map((note) => (
-              <motion.div
-                key={note.id}
-                className="mb-4 break-inside-avoid"
-                variants={itemVariants}
-                exit="exit"
-                layout="position"
-                layoutId={note.id}
-              >
-                <div className="pb-4">
-                  <NoteComponent
-                    className={`${note.color} bg-white dark:bg-zinc-900 p-4`}
-                    note={note}
-                    currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
-                    onUpdate={handleUpdateNote}
-                    onDelete={handleDeleteNote}
-                    syncDB={false}
-                  />
-                </div>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </motion.div>
-      </div>
+      <NotesGrid
+        notes={notes}
+        currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
+        onUpdate={handleUpdateNote}
+        onDelete={handleDeleteNote}
+        syncDB={false}
+        variant="masonry"
+        staggerChildren={0.15}
+        noteClassName="bg-white dark:bg-zinc-900 p-4"
+        noteStyle={(note) => ({
+          backgroundColor: note.color,
+        })}
+      />
     </div>
   );
 }
