@@ -14,7 +14,6 @@ export default function BillingStatusPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    // optional fallback: if webhooks didn’t run, sync using session_id
     if (upgrade === "success" && sessionId) {
       setStatus("syncing");
       fetch(`/api/billing/sync?session_id=${encodeURIComponent(sessionId)}`)
@@ -38,22 +37,21 @@ export default function BillingStatusPage() {
 
   if (upgrade === "cancel") {
     return (
-      <div className="flex min-h-[60vh] items-center justify-center text-center">
+      <div className="flex min-h-screen items-center justify-center text-center bg-white text-black">
         <div className="space-y-4">
           <h1 className="text-xl font-semibold">Payment canceled</h1>
-          <p className="text-muted-foreground">No changes were made to your plan.</p>
+          <p className="text-gray-600">No changes were made to your plan.</p>
           <Button onClick={() => router.push("/dashboard")}>Back to dashboard</Button>
         </div>
       </div>
     );
   }
 
-  // success (with or without sync)
   return (
-    <div className="flex min-h-[60vh] items-center justify-center text-center">
+    <div className="flex min-h-screen items-center justify-center text-center bg-white text-black">
       <div className="space-y-4">
         <h1 className="text-xl font-semibold">Thank you!</h1>
-        <p className="text-muted-foreground">
+        <p className="text-gray-600">
           {status === "syncing" && "Confirming your subscription…"}
           {status === "ok" && message}
           {status === "error" && message}
