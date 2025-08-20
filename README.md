@@ -80,7 +80,6 @@ To enable login with Google, follow these steps:
    http://localhost:3000/api/auth/callback/google
    ```
    *(Replace with your production URL if deploying)*
----
 
 ### 2. Add Environment Variables
 
@@ -114,3 +113,69 @@ In your `.env.local` file, add:
 GITHUB_CLIENT_ID=your_github_client_id
 GITHUB_CLIENT_SECRET=your_github_client_secret
 ```
+
+---
+
+## 💳 Stripe Billing Setup
+
+Stripe integration is **optional** and off by default. Enable it only if you want billing features.
+
+### 1. Environment Variables
+
+Add the following to your `.env.local` (values from your Stripe Dashboard or CLI):
+
+```env
+# Feature flag
+NEXT_PUBLIC_ENABLE_STRIPE=0
+
+# Stripe keys (required only when flag = 1)
+STRIPE_SECRET_KEY=sk_test_xxx
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_LOOKUP_KEY=team_pro_monthly   # optional, for plan lookup
+```
+
+- Keep `NEXT_PUBLIC_ENABLE_STRIPE=0` for local dev/CI.  
+- Set it to `1` only when you want to test billing.
+
+### 2. Database
+
+Stripe fields are already in the Prisma schema. Make sure migrations are applied:
+
+```bash
+npm run db:migrate
+```
+
+### 3. Local Development with Stripe
+
+1. Start the app with billing enabled:
+   ```bash
+   NEXT_PUBLIC_ENABLE_STRIPE=1 npm run dev
+   ```
+2. In another terminal, run the Stripe CLI to forward webhooks:
+   ```bash
+   stripe listen --forward-to localhost:3000/api/billing/webhook
+   ```
+   Copy the printed signing secret into `STRIPE_WEBHOOK_SECRET`.
+
+3. Go to **Settings → Billing** in the app and click **Upgrade** to open Stripe Checkout.
+
+### 4. Production Setup
+
+1. Create a **Webhook endpoint** in your Stripe Dashboard:
+   ```
+   https://<your-domain>/api/billing/webhook
+   ```
+   Set its signing secret as `STRIPE_WEBHOOK_SECRET`.
+
+2. Add all Stripe env vars to your production environment.  
+3. Deploy, then verify the upgrade flow and subscription sync.
+
+### 5. Testing & CI
+
+- **Unit tests** use a lazy Stripe loader, so they don’t need real keys.  
+- **CI** runs with:
+  ```env
+  NEXT_PUBLIC_ENABLE_STRIPE=0
+  ```
+- Stripe E2E tests are not required by default.
