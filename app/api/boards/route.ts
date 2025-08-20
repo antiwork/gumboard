@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
 
     const { name, description, isPublic } = await request.json();
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
         { error: "Board name is required and cannot be empty or only whitespace" },
         { status: 400 }
@@ -147,7 +147,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: trimmedName,
         description,
-        isPublic: Boolean(isPublic || false),
+        isPublic: Boolean(isPublic),
         organizationId: user.organizationId,
         createdBy: session.user.id,
       },
