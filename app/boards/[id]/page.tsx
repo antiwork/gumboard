@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -89,37 +89,40 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }, [user, userLoading, router]);
 
   // Update URL with current filter state
-  const updateURL = (
-    newSearchTerm?: string,
-    newDateRange?: { startDate: Date | null; endDate: Date | null },
-    newAuthor?: string | null
-  ) => {
-    const params = new URLSearchParams();
+  const updateURL = useCallback(
+    (
+      newSearchTerm?: string,
+      newDateRange?: { startDate: Date | null; endDate: Date | null },
+      newAuthor?: string | null
+    ) => {
+      const params = new URLSearchParams();
 
-    const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
-    const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
-    const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
+      const currentSearchTerm = newSearchTerm !== undefined ? newSearchTerm : searchTerm;
+      const currentDateRange = newDateRange !== undefined ? newDateRange : dateRange;
+      const currentAuthor = newAuthor !== undefined ? newAuthor : selectedAuthor;
 
-    if (currentSearchTerm) {
-      params.set("search", currentSearchTerm);
-    }
+      if (currentSearchTerm) {
+        params.set("search", currentSearchTerm);
+      }
 
-    if (currentDateRange.startDate) {
-      params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
-    }
+      if (currentDateRange.startDate) {
+        params.set("startDate", currentDateRange.startDate.toISOString().split("T")[0]);
+      }
 
-    if (currentDateRange.endDate) {
-      params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
-    }
+      if (currentDateRange.endDate) {
+        params.set("endDate", currentDateRange.endDate.toISOString().split("T")[0]);
+      }
 
-    if (currentAuthor) {
-      params.set("author", currentAuthor);
-    }
+      if (currentAuthor) {
+        params.set("author", currentAuthor);
+      }
 
-    const queryString = params.toString();
-    const newURL = queryString ? `?${queryString}` : window.location.pathname;
-    router.replace(newURL, { scroll: false });
-  };
+      const queryString = params.toString();
+      const newURL = queryString ? `?${queryString}` : window.location.pathname;
+      router.replace(newURL, { scroll: false });
+    },
+    [searchTerm, dateRange, selectedAuthor, router]
+  );
 
   // Initialize filters from URL parameters
   const initializeFiltersFromURL = () => {
@@ -249,7 +252,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [searchTerm]);
+  }, [searchTerm, updateURL]);
 
   // Get unique authors for dropdown
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
@@ -394,6 +397,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
         setAddingChecklistItem(note.id);
+        if (searchTerm.trim() || dateRange.startDate || dateRange.endDate || selectedAuthor) {
+          setSearchTerm("");
+          setDebouncedSearchTerm("");
+          setDateRange({ startDate: null, endDate: null });
+          setSelectedAuthor(null);
+          updateURL("", { startDate: null, endDate: null }, null);
+        }
       }
     } catch (error) {
       console.error("Error creating note:", error);

@@ -967,11 +967,27 @@ test.describe("Note Management", () => {
       await authenticatedPage
         .getByRole("button", { name: "Pick a start date", exact: true })
         .click();
-      await authenticatedPage.getByRole("gridcell", { name: String(yesterday.getDate()) }).click();
+      const startCalendar = authenticatedPage.locator('table[role="grid"]');
+      await expect(startCalendar).toBeVisible();
+
+      const startDateStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
+      const startDateCell = startCalendar.locator(
+        `td[role="gridcell"][data-day="${startDateStr}"]:not([data-disabled="true"])`
+      );
+      await startDateCell.waitFor({ state: "visible" });
+      await startDateCell.click();
 
       // End date
       await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
-      await authenticatedPage.getByRole("gridcell", { name: String(today.getDate()) }).click();
+      const endCalendar = authenticatedPage.locator('table[role="grid"]');
+      await expect(endCalendar).toBeVisible();
+
+      const endDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+      const endDateCell = endCalendar.locator(
+        `td[role="gridcell"][data-day="${endDateStr}"]:not([data-disabled="true"])`
+      );
+      await endDateCell.waitFor({ state: "visible" });
+      await endDateCell.click();
 
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);

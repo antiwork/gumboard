@@ -141,7 +141,8 @@ test.describe("Authentication Flow", () => {
   test("should link magic link and Google OAuth accounts when using same email", async ({
     page,
   }) => {
-    const testEmail = "linked@example.com";
+    const testEmail = `linked+${Date.now()}@example.com`;
+    const userId = `linked-user-${Date.now()}`;
     let magicLinkAuthData: { email: string } | null = null;
     let googleAuthData: { email: string } | null = null;
 
@@ -173,7 +174,7 @@ test.describe("Authentication Flow", () => {
         contentType: "application/json",
         body: JSON.stringify({
           user: {
-            id: "linked-user-id",
+            id: userId,
             name: "Linked User",
             email: testEmail,
             image: "https://example.com/avatar.jpg",
@@ -189,7 +190,7 @@ test.describe("Authentication Flow", () => {
         contentType: "application/json",
         body: JSON.stringify({
           user: {
-            id: "linked-user-id",
+            id: userId,
             name: "Linked User",
             email: testEmail,
             providers: ["email", "google"],
@@ -257,7 +258,8 @@ test.describe("Authentication Flow", () => {
   test("should link magic link and GitHub OAuth accounts when using same email", async ({
     page,
   }) => {
-    const testEmail = "linked@example.com";
+    const testEmail = `linked+${Date.now()}@example.com`;
+    const userId = `linked-user-${Date.now()}`;
     let magicLinkAuthData: { email: string } | null = null;
     let githubAuthData: { email: string } | null = null;
 
@@ -289,7 +291,7 @@ test.describe("Authentication Flow", () => {
         contentType: "application/json",
         body: JSON.stringify({
           user: {
-            id: "linked-user-id",
+            id: userId,
             name: "Linked User",
             email: testEmail,
             image: "https://avatars.githubusercontent.com/u/456?v=4",
@@ -305,7 +307,7 @@ test.describe("Authentication Flow", () => {
         contentType: "application/json",
         body: JSON.stringify({
           user: {
-            id: "linked-user-id",
+            id: userId,
             name: "Linked User",
             email: testEmail,
             providers: ["email", "github"],
