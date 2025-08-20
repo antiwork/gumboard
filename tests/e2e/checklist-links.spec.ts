@@ -266,7 +266,7 @@ test.describe("Checklist HTML Links", () => {
     expect(updatedItem?.checked).toBe(true);
 
     const editableElement = authenticatedPage.locator(
-      `[data-testid="${itemId}"] [contenteditable="true"]`
+      `[data-testid="${itemId}"] textarea`
     );
     await editableElement.click();
 
@@ -277,15 +277,9 @@ test.describe("Checklist HTML Links", () => {
         resp.ok()
     );
 
-    await authenticatedPage.evaluate((itemId) => {
-      const element = document.querySelector(`[data-testid="${itemId}"] [contenteditable="true"]`);
-      if (element) {
-        element.innerHTML = element.innerHTML + " - updated";
-        element.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-    }, itemId);
-
-    await authenticatedPage.click("body");
+    await editableElement.focus();
+    await editableElement.fill("Task with <a target=\"_blank\" rel=\"noopener noreferrer\" href=\"https://example.com\">link</a> - updated");
+    await editableElement.blur();
     await editResponse;
 
     const editedItem = await testPrisma.checklistItem.findUnique({
@@ -338,7 +332,7 @@ test.describe("Checklist HTML Links", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     const editableElement = authenticatedPage.locator(
-      `[data-testid="${itemId}"] [contenteditable="true"]`
+      `[data-testid="${itemId}"] textarea`
     );
     await editableElement.click();
 
@@ -349,15 +343,9 @@ test.describe("Checklist HTML Links", () => {
         resp.ok()
     );
 
-    await authenticatedPage.evaluate((itemId) => {
-      const element = document.querySelector(`[data-testid="${itemId}"] [contenteditable="true"]`);
-      if (element) {
-        element.innerHTML = "Check out repository";
-        element.dispatchEvent(new Event("input", { bubbles: true }));
-      }
-    }, itemId);
-
-    await authenticatedPage.click("body");
+    await editableElement.focus();
+    await editableElement.fill("Check out repository");
+    await editableElement.blur();
     await editResponse;
 
     const updatedItem = await testPrisma.checklistItem.findUnique({
