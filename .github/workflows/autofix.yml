@@ -13,8 +13,6 @@ jobs:
   autofix:
     runs-on: ubicloud-standard-2
     env:
-      GITHUB_CLIENT_ID: dummy-client-id
-      GITHUB_CLIENT_SECRET: dummy-client-secret
       AUTH_SECRET: sample-auth-secret
       AUTH_URL: http://localhost:3000
 
