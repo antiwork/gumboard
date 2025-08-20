@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Plus, Grid3x3, Archive, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -41,8 +41,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BoardSettingsModal } from "@/components/board-settings-modal";
-import { useBoardSettings } from "@/hooks/useBoardSettings";
+import { BoardSettingsModal, BoardSettingsModalRef } from "@/components/board-settings-modal";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -67,29 +66,24 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
+  const [errorDialog, setErrorDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+  }>({ open: false, title: "", description: "" });
 
-  const {
-    boardSettingsDialog,
-    setBoardSettingsDialog,
-    boardSettings,
-    setBoardSettings,
-    copiedPublicUrl,
-    errorDialog,
-    setErrorDialog,
-    openBoardSettings,
-    handleUpdateBoardSettings,
-    handleDeleteBoard,
-    handleCopyPublicUrl,
-  } = useBoardSettings({
-    onBoardUpdate: (updatedBoard) => {
-      setBoards((prevBoards) =>
-        prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
-      );
-    },
-    onBoardDelete: (boardId) => {
-      setBoards(boards.filter((board) => board.id !== boardId));
-    },
-  });
+  const boardSettingsRef = useRef<BoardSettingsModalRef>(null);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleBoardUpdate = (updatedBoard: any) => {
+    setBoards((prevBoards) =>
+      prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
+    );
+  };
+
+  const handleBoardDelete = (boardId: string) => {
+    setBoards(boards.filter((board) => board.id !== boardId));
+  };
 
   const router = useRouter();
 
@@ -192,7 +186,7 @@ export default function Dashboard() {
   const handleBoardSettingsClick = (e: React.MouseEvent, board: DashboardBoard) => {
     e.preventDefault();
     e.stopPropagation();
-    openBoardSettings({
+    boardSettingsRef.current?.openBoardSettings({
       id: board.id,
       name: board.name,
       description: board.description || undefined,
@@ -406,14 +400,9 @@ export default function Dashboard() {
       </div>
 
       <BoardSettingsModal
-        open={boardSettingsDialog}
-        onOpenChange={setBoardSettingsDialog}
-        boardSettings={boardSettings}
-        onBoardSettingsChange={setBoardSettings}
-        onSave={handleUpdateBoardSettings}
-        onDelete={handleDeleteBoard}
-        onCopyPublicUrl={handleCopyPublicUrl}
-        copiedPublicUrl={copiedPublicUrl}
+        ref={boardSettingsRef}
+        onBoardUpdate={handleBoardUpdate}
+        onBoardDelete={handleBoardDelete}
       />
 
       <AlertDialog

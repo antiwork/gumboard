@@ -25,8 +25,7 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import { BoardSettingsModal } from "@/components/board-settings-modal";
-import { useBoardSettings } from "@/hooks/useBoardSettings";
+import { BoardSettingsModal, BoardSettingsModalRef } from "@/components/board-settings-modal";
 import {
   getResponsiveConfig,
   getUniqueAuthors,
@@ -69,25 +68,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
 
-  const {
-    boardSettingsDialog,
-    setBoardSettingsDialog,
-    boardSettings,
-    setBoardSettings,
-    copiedPublicUrl,
-    openBoardSettings,
-    handleUpdateBoardSettings,
-    handleDeleteBoard,
-    handleCopyPublicUrl,
-  } = useBoardSettings({
-    onBoardUpdate: (updatedBoard) => {
-      setBoard((prevBoard) => (prevBoard ? { ...prevBoard, ...updatedBoard } : null));
-      setAllBoards((prevBoards) =>
-        prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
-      );
-    },
-    redirectAfterDelete: "/dashboard",
-  });
+  const boardSettingsRef = useRef<BoardSettingsModalRef>(null);
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleBoardUpdate = (updatedBoard: any) => {
+    setBoard((prevBoard) => (prevBoard ? { ...prevBoard, ...updatedBoard } : null));
+    setAllBoards((prevBoards) =>
+      prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
+    );
+  };
+
+  const handleBoardDelete = () => {
+    // Redirect will be handled by the modal itself
+  };
 
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
@@ -751,7 +744,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   size="sm"
                   onClick={() => {
                     if (board) {
-                      openBoardSettings({
+                      boardSettingsRef.current?.openBoardSettings({
                         id: board.id,
                         name: board.name,
                         description: board.description || undefined,
@@ -991,20 +984,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </AlertDialog>
 
       <BoardSettingsModal
-        open={boardSettingsDialog}
-        onOpenChange={setBoardSettingsDialog}
-        boardSettings={{
-          id: boardId || "",
-          name: boardSettings.name,
-          description: boardSettings.description,
-          isPublic: boardSettings.isPublic,
-          sendSlackUpdates: boardSettings.sendSlackUpdates,
-        }}
-        onBoardSettingsChange={(settings) => setBoardSettings(settings)}
-        onSave={handleUpdateBoardSettings}
-        onDelete={handleDeleteBoard}
-        onCopyPublicUrl={handleCopyPublicUrl}
-        copiedPublicUrl={copiedPublicUrl}
+        ref={boardSettingsRef}
+        onBoardUpdate={handleBoardUpdate}
+        onBoardDelete={handleBoardDelete}
+        redirectAfterDelete="/dashboard"
       />
     </div>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, forwardRef, useImperativeHandle } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -26,30 +27,142 @@ interface BoardSettings {
 }
 
 interface BoardSettingsModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  boardSettings: BoardSettings;
-  onBoardSettingsChange: (settings: BoardSettings) => void;
-  onSave: (settings: Omit<BoardSettings, "id">) => void;
-  onDelete: () => void;
-  onCopyPublicUrl?: () => void;
-  copiedPublicUrl?: boolean;
+  onBoardUpdate?: (updatedBoard: BoardSettings & { createdAt?: string; updatedAt?: string }) => void;
+  onBoardDelete?: (boardId: string) => void;
+  redirectAfterDelete?: string;
 }
 
-export function BoardSettingsModal({
-  open,
-  onOpenChange,
-  boardSettings,
-  onBoardSettingsChange,
-  onSave,
-  onDelete,
-  onCopyPublicUrl,
-  copiedPublicUrl = false,
-}: BoardSettingsModalProps) {
+export interface BoardSettingsModalRef {
+  openBoardSettings: (board: {
+    id: string;
+    name: string;
+    description?: string;
+    isPublic?: boolean;
+    sendSlackUpdates?: boolean;
+  }) => void;
+}
+
+export const BoardSettingsModal = forwardRef<BoardSettingsModalRef, BoardSettingsModalProps>(
+  ({ onBoardUpdate, onBoardDelete, redirectAfterDelete }, ref) => {
+  const router = useRouter();
+  
+  const [open, setOpen] = useState(false);
+  const [boardSettings, setBoardSettings] = useState<BoardSettings>({
+    id: "",
+    name: "",
+    description: "",
+    isPublic: false,
+    sendSlackUpdates: true,
+  });
+  const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [errorDialog, setErrorDialog] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+  }>({ open: false, title: "", description: "" });
+
+  const openBoardSettings = (board: {
+    id: string;
+    name: string;
+    description?: string;
+    isPublic?: boolean;
+    sendSlackUpdates?: boolean;
+  }) => {
+    setBoardSettings({
+      id: board.id,
+      name: board.name,
+      description: board.description || "",
+      isPublic: board.isPublic ?? false,
+      sendSlackUpdates: board.sendSlackUpdates ?? true,
+    });
+    setOpen(true);
+  };
+
+  useImperativeHandle(ref, () => ({
+    openBoardSettings,
+  }));
+
+  const handleUpdateBoardSettings = async (settings: {
+    name: string;
+    description: string;
+    isPublic: boolean;
+    sendSlackUpdates: boolean;
+  }) => {
+    try {
+      const response = await fetch(`/api/boards/${boardSettings.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(settings),
+      });
+
+      if (response.ok) {
+        const { board } = await response.json();
+        setOpen(false);
+        onBoardUpdate?.(board);
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update board",
+          description: errorData.error || "Failed to update board",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating board settings:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to update board",
+        description: "Failed to update board",
+      });
+    }
+  };
+
+  const handleDeleteBoard = async () => {
+    try {
+      const response = await fetch(`/api/boards/${boardSettings.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setOpen(false);
+        onBoardDelete?.(boardSettings.id);
+        if (redirectAfterDelete) {
+          router.push(redirectAfterDelete);
+        }
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete board",
+          description: errorData.error || "Failed to delete board",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting board:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete board",
+        description: "Failed to delete board",
+      });
+    }
+  };
+
+  const handleCopyPublicUrl = async () => {
+    const publicUrl = `${window.location.origin}/public/boards/${boardSettings.id}`;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiedPublicUrl(true);
+      setTimeout(() => setCopiedPublicUrl(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy URL:", error);
+    }
+  };
 
   const handleSave = () => {
-    onSave({
+    handleUpdateBoardSettings({
       name: boardSettings.name,
       description: boardSettings.description,
       isPublic: boardSettings.isPublic,
@@ -59,7 +172,7 @@ export function BoardSettingsModal({
 
   const handleDelete = () => {
     setDeleteConfirmDialog(false);
-    onDelete();
+    handleDeleteBoard();
   };
 
   const handleDeleteClick = () => {
@@ -68,7 +181,7 @@ export function BoardSettingsModal({
 
   return (
     <>
-      <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
@@ -87,7 +200,7 @@ export function BoardSettingsModal({
               <Input
                 type="text"
                 value={boardSettings.name}
-                onChange={(e) => onBoardSettingsChange({ ...boardSettings, name: e.target.value })}
+                onChange={(e) => setBoardSettings({ ...boardSettings, name: e.target.value })}
                 placeholder="Enter board name"
                 className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
               />
@@ -100,7 +213,7 @@ export function BoardSettingsModal({
                 type="text"
                 value={boardSettings.description}
                 onChange={(e) =>
-                  onBoardSettingsChange({ ...boardSettings, description: e.target.value })
+                  setBoardSettings({ ...boardSettings, description: e.target.value })
                 }
                 placeholder="Enter board description"
                 className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
@@ -112,7 +225,7 @@ export function BoardSettingsModal({
                   id="isPublic"
                   checked={boardSettings.isPublic}
                   onCheckedChange={(checked) =>
-                    onBoardSettingsChange({ ...boardSettings, isPublic: checked as boolean })
+                    setBoardSettings({ ...boardSettings, isPublic: checked as boolean })
                   }
                 />
                 <label
@@ -126,7 +239,7 @@ export function BoardSettingsModal({
                 When enabled, anyone with the link can view this board
               </p>
 
-              {boardSettings.isPublic && onCopyPublicUrl && (
+              {boardSettings.isPublic && (
                 <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
                   <div className="flex items-center justify-between">
                     <div>
@@ -140,7 +253,7 @@ export function BoardSettingsModal({
                       </p>
                     </div>
                     <Button
-                      onClick={onCopyPublicUrl}
+                      onClick={handleCopyPublicUrl}
                       size="sm"
                       variant="outline"
                       className="ml-3 flex items-center space-x-1"
@@ -167,7 +280,7 @@ export function BoardSettingsModal({
                 id="sendSlackUpdates"
                 checked={boardSettings.sendSlackUpdates}
                 onCheckedChange={(checked) =>
-                  onBoardSettingsChange({ ...boardSettings, sendSlackUpdates: checked as boolean })
+                  setBoardSettings({ ...boardSettings, sendSlackUpdates: checked as boolean })
                 }
                 className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
               />
@@ -232,6 +345,29 @@ export function BoardSettingsModal({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={errorDialog.open} onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              {errorDialog.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              {errorDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction
+              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
+              className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
+            >
+              OK
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
-}
+});
+
+BoardSettingsModal.displayName = "BoardSettingsModal";
