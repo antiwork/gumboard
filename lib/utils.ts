@@ -89,19 +89,44 @@ export function calculateNoteHeight(
   return headerHeight + paddingHeight + totalChecklistHeight;
 }
 
+// Helper function to get actual container width for layout calculations
+function getActualContainerWidth(): number {
+  if (typeof window === "undefined") return 1200; // Default fallback
+  
+  // Try to get the actual viewport width, accounting for dev tools simulation
+  const viewportWidth = Math.min(
+    window.innerWidth,
+    document.documentElement.clientWidth,
+    window.screen?.availWidth || window.innerWidth
+  );
+  
+  // For very small widths (likely dev tools mobile simulation), ensure minimum usable space
+  return Math.max(viewportWidth, 280);
+}
+
 // Helper function to calculate bin-packed layout for desktop
-export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?: string | null) {
+export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?: string | null, containerElement?: Element | null) {
   if (typeof window === "undefined") return [];
 
   const config = getResponsiveConfig();
-  const containerWidth = window.innerWidth - config.containerPadding * 2;
+  
+  // Use container element width if available, otherwise fallback to viewport calculations
+  let containerWidth: number;
+  if (containerElement) {
+    const rect = containerElement.getBoundingClientRect();
+    containerWidth = Math.max(rect.width - config.containerPadding * 2, 280);
+  } else {
+    const actualViewportWidth = getActualContainerWidth();
+    containerWidth = actualViewportWidth - config.containerPadding * 2;
+  }
+  
   const noteWidthWithGap = config.noteWidth + config.gridGap;
   const columnsCount = Math.floor((containerWidth + config.gridGap) / noteWidthWithGap);
   const actualColumnsCount = Math.max(1, columnsCount);
 
   const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
   const calculatedNoteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
-  const minWidth = config.noteWidth - 40;
+  const minWidth = Math.min(config.noteWidth - 40, containerWidth * 0.8); // Ensure notes don't exceed container
   const maxWidth = config.noteWidth + 80;
   const adjustedNoteWidth = Math.max(minWidth, Math.min(maxWidth, calculatedNoteWidth));
 
@@ -140,19 +165,29 @@ export function calculateGridLayout(filteredNotes: Note[], addingChecklistItem?:
 }
 
 // Helper function to calculate mobile layout (optimized single/double column)
-export function calculateMobileLayout(filteredNotes: Note[], addingChecklistItem?: string | null) {
+export function calculateMobileLayout(filteredNotes: Note[], addingChecklistItem?: string | null, containerElement?: Element | null) {
   if (typeof window === "undefined") return [];
 
   const config = getResponsiveConfig();
-  const containerWidth = window.innerWidth - config.containerPadding * 2;
-  const minNoteWidth = config.noteWidth - 20;
+  
+  // Use container element width if available, otherwise fallback to viewport calculations
+  let containerWidth: number;
+  if (containerElement) {
+    const rect = containerElement.getBoundingClientRect();
+    containerWidth = Math.max(rect.width - config.containerPadding * 2, 260);
+  } else {
+    const actualViewportWidth = getActualContainerWidth();
+    containerWidth = actualViewportWidth - config.containerPadding * 2;
+  }
+  
+  const minNoteWidth = Math.min(config.noteWidth - 20, containerWidth * 0.85); // Ensure notes fit in container
   const columnsCount = Math.floor(
     (containerWidth + config.gridGap) / (minNoteWidth + config.gridGap)
   );
   const actualColumnsCount = Math.max(1, columnsCount);
 
   const availableWidthForNotes = containerWidth - (actualColumnsCount - 1) * config.gridGap;
-  const noteWidth = Math.floor(availableWidthForNotes / actualColumnsCount);
+  const noteWidth = Math.max(minNoteWidth, Math.floor(availableWidthForNotes / actualColumnsCount));
 
   const columnBottoms: number[] = new Array(actualColumnsCount).fill(config.containerPadding);
 
@@ -251,4 +286,29 @@ export function filterAndSortNotes(
   });
 
   return filteredNotes;
+}
+
+// Convert positioned notes from layout functions into columns for flexbox rendering
+export function convertPositionedNotesToColumns(
+  positionedNotes: Array<Note & { x: number; y: number; width: number; height: number }>
+): Array<Array<Note & { x: number; y: number; width: number; height: number }>> {
+  if (positionedNotes.length === 0) return [];
+  
+  // Group notes by their x position (which represents columns)
+  const columnMap = new Map<number, Array<Note & { x: number; y: number; width: number; height: number }>>();
+  
+  positionedNotes.forEach(note => {
+    const columnX = note.x;
+    if (!columnMap.has(columnX)) {
+      columnMap.set(columnX, []);
+    }
+    columnMap.get(columnX)!.push(note);
+  });
+  
+  // Convert to array of columns, sorted by x position (left to right)
+  const columns = Array.from(columnMap.entries())
+    .sort(([a], [b]) => a - b) // Sort columns by x position
+    .map(([, notes]) => notes.sort((a, b) => a.y - b.y)); // Sort notes within each column by y position (top to bottom)
+  
+  return columns;
 }

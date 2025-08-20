@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import * as React from "react";
+import { useMemo, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Note as NoteCard } from "@/components/note";
-import { cn } from "@/lib/utils";
+import { cn, calculateGridLayout, calculateMobileLayout, convertPositionedNotesToColumns } from "@/lib/utils";
+import { useResponsiveLayout } from "@/lib/hooks";
 import type { Note, User } from "@/components/note";
 
 interface NotesGridProps {
@@ -20,7 +22,7 @@ interface NotesGridProps {
   gridClassName?: string;
   noteClassName?: string;
   noteStyle?: (note: Note) => React.CSSProperties;
-  // Layout variant: 'grid' for board pages, 'masonry' for demo, 'board-masonry' for board pages with JS masonry
+  // Layout variant: 'grid', 'masonry' for demo, 'board-masonry' for board pages with JS masonry
   variant?: "grid" | "masonry" | "board-masonry";
   // Animation settings
   animationDuration?: number;
@@ -76,68 +78,11 @@ const masonryItemVariants = {
   },
 };
 
-// Hook to get fluid responsive column count based on screen size
-function useColumnCount() {
-  const [columnCount, setColumnCount] = useState(3);
+// Memoized components to prevent unnecessary re-renders
+const MemoizedNoteCard = memo(NoteCard);
 
-  useEffect(() => {
-    const updateColumnCount = () => {
-      const width = window.innerWidth;
-      
-      // Fluid responsive calculation based on available width
-      // Each column needs minimum ~280px for comfortable note display
-      const minColumnWidth = 280;
-      const containerPadding = 32; // Account for container padding
-      const gapWidth = 16; // Gap between columns
-      
-      const availableWidth = width - containerPadding;
-      let calculatedColumns = Math.floor(availableWidth / (minColumnWidth + gapWidth));
-      
-      // Ensure minimum 1 column and maximum 6 columns
-      calculatedColumns = Math.max(1, Math.min(6, calculatedColumns));
-      
-      // Fine-tune for better responsive behavior
-      if (width < 480) calculatedColumns = 1;        // Very small screens
-      else if (width < 768) calculatedColumns = Math.min(2, calculatedColumns);  // Mobile
-      else if (width < 1024) calculatedColumns = Math.min(3, calculatedColumns); // Tablet
-      
-      setColumnCount(calculatedColumns);
-    };
-
-    updateColumnCount();
-    window.addEventListener('resize', updateColumnCount);
-    return () => window.removeEventListener('resize', updateColumnCount);
-  }, []);
-
-  return columnCount;
-}
-
-// Distribute notes into columns based on shortest column
-function distributeNotesToColumns(notes: Note[], columnCount: number) {
-  // Ensure we have at least 1 column
-  const safeColumnCount = Math.max(1, columnCount);
-  const columns: Note[][] = Array.from({ length: safeColumnCount }, () => []);
-  const columnHeights = Array(safeColumnCount).fill(0);
-
-  // Create a Set to track which notes we've already distributed
-  const distributedNoteIds = new Set<string>();
-
-  notes.forEach((note) => {
-    // Skip if this note has already been distributed
-    if (distributedNoteIds.has(note.id)) {
-      return;
-    }
-    
-    // Find the shortest column
-    const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
-    columns[shortestColumnIndex].push(note);
-    distributedNoteIds.add(note.id);
-    // Estimate height (this is approximate, real implementation would measure actual heights)
-    columnHeights[shortestColumnIndex] += 200; // Base height estimate
-  });
-
-  return columns;
-}
+// Create stable animation variants outside component to prevent recreation
+const createItemVariants = (isGrid: boolean) => isGrid ? gridItemVariants : masonryItemVariants;
 
 export function NotesGrid({
   notes,
@@ -160,20 +105,25 @@ export function NotesGrid({
 }: NotesGridProps) {
   const isGrid = variant === "grid";
   const isBoardMasonry = variant === "board-masonry";
-  const columnCount = useColumnCount();
-  const itemVariants = isGrid ? gridItemVariants : masonryItemVariants;
+  const { isMobile, windowWidth } = useResponsiveLayout();
+  
+  // Ref to get the actual container element for layout calculations
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
+  // Memoize computed values to prevent recalculation on every render
+  const itemVariants = useMemo(() => createItemVariants(isGrid), [isGrid]);
+  
   // Grid classes for board layout
-  const gridClasses = cn(
+  const gridClasses = useMemo(() => cn(
     "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-6 auto-rows-min",
     gridClassName
-  );
+  ), [gridClassName]);
 
   // Masonry classes for demo layout (CSS columns) - using working version
-  const masonryClasses = cn("columns-1 gap-4 sm:columns-2", gridClassName);
+  const masonryClasses = useMemo(() => cn("columns-1 gap-4 sm:columns-2", gridClassName), [gridClassName]);
 
-  // Customize container variants with stagger timing
-  const customContainerVariants = {
+  // Customize container variants with stagger timing - memoized to prevent recreation
+  const customContainerVariants = useMemo(() => ({
     ...containerVariants,
     visible: {
       ...containerVariants.visible,
@@ -181,22 +131,31 @@ export function NotesGrid({
         staggerChildren: staggerChildren,
       },
     },
-  };
+  }), [staggerChildren]);
 
-  // Memoize the column distribution to prevent unnecessary re-calculations
+  // Use sophisticated layout calculation from lib/utils.ts for board-masonry
+  // Always call useMemo to comply with Rules of Hooks, but only use result for board-masonry
   const columns = useMemo(() => {
-    if (isBoardMasonry) {
-      return distributeNotesToColumns(notes, columnCount);
-    }
-    return [];
-  }, [isBoardMasonry, notes, columnCount]);
+    if (!isBoardMasonry) return [];
+    
+    // Use the sophisticated layout functions from lib/utils.ts
+    // Pass container element if available for more accurate container width detection
+    const positionedNotes = isMobile 
+      ? calculateMobileLayout(notes, null, containerRef.current) 
+      : calculateGridLayout(notes, null, containerRef.current);
+    
+    // Memoize the column conversion to avoid recalculation with same input
+    return convertPositionedNotesToColumns(positionedNotes);
+  }, [isBoardMasonry, notes, isMobile, windowWidth]); // Use windowWidth to trigger recalculation on any resize
 
+  // Memoize container classes to prevent recalculation
+  const containerClasses = useMemo(() => isGrid ? gridClasses : masonryClasses, [isGrid, gridClasses, masonryClasses]);
   // For board masonry layout (JavaScript-based), distribute notes into columns
   if (isBoardMasonry) {
-    
     return (
       <div className={className} data-testid="notes-grid">
         <motion.div
+          ref={containerRef}
           className={cn("flex gap-4", gridClassName)}
           variants={initialAnimation ? customContainerVariants : undefined}
           initial={initialAnimation ? "hidden" : undefined}
@@ -206,7 +165,7 @@ export function NotesGrid({
           {columns.map((columnNotes, columnIndex) => (
             <div key={columnIndex} className="flex-1 flex flex-col gap-4">
               <AnimatePresence mode="popLayout">
-                {columnNotes.map((note) => (
+                {columnNotes.map((note: Note & { x: number; y: number; width: number; height: number }) => (
                   <motion.div
                     key={note.id}
                     variants={itemVariants}
@@ -219,7 +178,7 @@ export function NotesGrid({
                       layout: { duration: animationDuration },
                     }}
                   >
-                    <NoteCard
+                    <MemoizedNoteCard
                       note={note}
                       currentUser={currentUser}
                       onUpdate={onUpdate}
@@ -242,8 +201,6 @@ export function NotesGrid({
       </div>
     );
   }
-
-  const containerClasses = isGrid ? gridClasses : masonryClasses;
 
   return (
     <div className={className} data-testid="notes-grid">
@@ -272,7 +229,7 @@ export function NotesGrid({
               }}
             >
               <div className={!isGrid ? "pb-4" : undefined}>
-                <NoteCard
+                <MemoizedNoteCard
                   note={note}
                   currentUser={currentUser}
                   onUpdate={onUpdate}
