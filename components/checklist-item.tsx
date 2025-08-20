@@ -98,7 +98,7 @@ export function ChecklistItem({
 
     const selection = window.getSelection();
     if (!selection || selection.rangeCount === 0) {
-      document.execCommand('insertText', false, paste);
+      document.execCommand("insertText", false, paste);
       return;
     }
     const range = selection.getRangeAt(0);
@@ -106,11 +106,11 @@ export function ChecklistItem({
     if (urlRegex.test(paste) && selectedText) {
       const linkHtml = `<a href="${paste}">${selectedText}</a>`;
       range.deleteContents();
-      
-      const tempDiv = document.createElement('div');
+
+      const tempDiv = document.createElement("div");
       tempDiv.innerHTML = linkHtml;
       const linkNode = tempDiv.firstChild;
-      
+
       if (linkNode) {
         range.insertNode(linkNode);
         range.setStartAfter(linkNode);
@@ -118,7 +118,7 @@ export function ChecklistItem({
         selection.removeAllRanges();
         selection.addRange(range);
       }
-      
+
       setTimeout(() => {
         const target = e.target as HTMLDivElement;
         const sanitizedContent = sanitizeChecklistContent(target.innerHTML);
@@ -132,7 +132,7 @@ export function ChecklistItem({
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
     const content = target.innerHTML;
-    if (content.includes('<')) {
+    if (content.includes("<")) {
       const sanitizedContent = sanitizeChecklistContent(content);
       onEditContentChange?.(sanitizedContent);
     } else {

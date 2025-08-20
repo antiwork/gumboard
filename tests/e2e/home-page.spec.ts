@@ -137,7 +137,10 @@ test.describe("Home Page", () => {
     expect(untoggledItem?.checked).toBe(false);
 
     // Test 3: Add a new checklist item using always-available input
-    const newItemInput = authenticatedPage.getByTestId("new-item").first().locator("div[contenteditable]");
+    const newItemInput = authenticatedPage
+      .getByTestId("new-item")
+      .first()
+      .locator("div[contenteditable]");
     const newItemContent = testContext.prefix("Brand new task item");
     const addItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -236,7 +239,10 @@ test.describe("Home Page", () => {
     expect(notesAfterDelete).toBe(2); // 3 - 1 deleted
 
     // Test 7: Split checklist item (Enter in middle of text) - use the third note we created
-    const splitNewItemInput = authenticatedPage.getByTestId("new-item").first().locator("div[contenteditable]");
+    const splitNewItemInput = authenticatedPage
+      .getByTestId("new-item")
+      .first()
+      .locator("div[contenteditable]");
     const splitTestContent = testContext.prefix("Split this item here");
     const addSplitItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
