@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -37,7 +37,7 @@ import {
 } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
 
-export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
+export default function BoardPage() {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
@@ -49,7 +49,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
-  const [boardId, setBoardId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -81,6 +80,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+    const { id: boardId } = useParams<{ id: string }>();
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -155,13 +155,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setSelectedAuthor(urlAuthor);
   };
 
-  useEffect(() => {
-    const initializeParams = async () => {
-      const resolvedParams = await params;
-      setBoardId(resolvedParams.id);
-    };
-    initializeParams();
-  }, [params]);
+
 
   // Initialize filters from URL on mount
   useEffect(() => {
@@ -170,9 +164,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }, []);
 
   useEffect(() => {
-    if (boardId) {
-      fetchBoardData();
-    }
+  fetchBoardData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
