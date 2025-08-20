@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   Card,
@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import Image from "next/image";
@@ -73,6 +74,7 @@ const oauthProviders = [
 ];
 
 function SignInContent() {
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -80,6 +82,12 @@ function SignInContent() {
   const [isResending, setIsResending] = useState(false);
   const [isResent, setIsResent] = useState(false);
   const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && session) {
+      router.replace("/dashboard");
+    }
+  }, [status, session, router]);
 
   useEffect(() => {
     const emailParam = searchParams.get("email");
@@ -134,6 +142,43 @@ function SignInContent() {
       setIsResending(false);
     }
   };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
+        <Card className="w-full max-w-sm sm:max-w-md bg-white/95 dark:bg-zinc-900/95 border border-gray-200 dark:border-zinc-800 shadow-sm">
+          <CardHeader className="text-center">
+            <Skeleton className="h-12 w-12 mx-auto mb-4" />
+            <Skeleton className="h-6 w-48 mx-auto" />
+            <Skeleton className="h-4 w-64 mx-auto" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+            <Skeleton className="h-12 w-full" />
+            <div className="relative mt-6 w-full">
+               <div className="absolute inset-0 flex items-center">
+                 <Skeleton className="h-px w-full" />
+               </div>
+               <div className="relative flex justify-center text-sm">
+                 <Skeleton className="h-4 w-24" />
+               </div>
+             </div>
+            <div className="space-y-3">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (status === "authenticated") {
+    return null;
+  }
 
   if (isSubmitted) {
     return (
