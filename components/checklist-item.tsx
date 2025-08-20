@@ -51,10 +51,6 @@ export function ChecklistItem({
   const previousContentRef = React.useRef<string>("");
   const deletingRef = React.useRef<boolean>(false);
 
-  const hasHtmlContent = React.useMemo(() => {
-    const content = editContent ?? item.content;
-    return /<[^>]+>/.test(content);
-  }, [editContent, item.content]);
 
   const adjustContentHeight = (element: HTMLTextAreaElement | HTMLDivElement) => {
     element.style.height = "auto";
@@ -238,14 +234,14 @@ export function ChecklistItem({
             onInput={handleContentEditableInput}
             onPaste={handleContentEditablePaste}
             onKeyDown={handleKeyDown}
-            onFocus={(e) => {
+            onFocus={() => {
               if (!isEditing && !readonly) {
                 onStartEdit?.(item.id);
               }
             }}
-            onClick={(e) => {
-              if (!isEditing && e.target instanceof HTMLAnchorElement) {
-                e.stopPropagation();
+            onClick={(event) => {
+              if (!isEditing && event.target instanceof HTMLAnchorElement) {
+                event.stopPropagation();
                 return;
               }
               if (!isEditing && !readonly) {
