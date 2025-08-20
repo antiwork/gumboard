@@ -1026,7 +1026,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
       )}
 
-
       <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
         <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
           <AlertDialogHeader>

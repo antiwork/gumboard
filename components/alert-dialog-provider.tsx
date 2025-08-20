@@ -21,9 +21,7 @@ interface AlertDialogContextType {
   showAlert: (options: AlertOptions) => void;
 }
 
-const AlertDialogContext = createContext<AlertDialogContextType | undefined>(
-  undefined
-);
+const AlertDialogContext = createContext<AlertDialogContextType | undefined>(undefined);
 
 export function AlertDialogProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<AlertOptions & { open: boolean }>({
@@ -79,4 +77,3 @@ export function useAlertDialog() {
   }
   return context;
 }
-

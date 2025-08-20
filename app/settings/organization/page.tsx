@@ -901,7 +901,6 @@ export default function OrganizationSettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }

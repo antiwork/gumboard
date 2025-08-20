@@ -167,9 +167,7 @@ test.describe("Organization Settings", () => {
     // Copy invite link
     await authenticatedPage.getByTitle("Copy invite link").click();
 
-    await expect(
-      authenticatedPage.locator("text=Invite link copied to clipboard!")
-    ).toBeVisible();
+    await expect(authenticatedPage.locator("text=Invite link copied to clipboard!")).toBeVisible();
 
     await authenticatedPage.locator('button:has-text("OK")').click();
   });
