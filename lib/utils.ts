@@ -298,6 +298,7 @@ export function formateDate(updatedAt: string): string {
     result += `${hours}h`;
     const remainingMinutes = minutes % 60;
     if (remainingMinutes > 0) result += ` ${remainingMinutes}m`;
+    result += " ago";
   } else {
     result += `${minutes}m ago`;
   }
