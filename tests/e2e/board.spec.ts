@@ -266,4 +266,38 @@ test.describe("Board Management", () => {
     const boardCard = authenticatedPage.locator(`[href="/boards/${board.id}"]`);
     await expect(boardCard.locator("text=/Last activity: now/")).toBeVisible();
   });
+
+  test("should display last activity in time format (e.g., 1h 2m ago)", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000 - 2 * 60 * 1000);
+
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        createdAt: oneHourAgo,
+        updatedAt: oneHourAgo,
+      },
+    });
+
+    await authenticatedPage.goto("/dashboard");
+
+    const boardCard = authenticatedPage.locator(`[href="/boards/${board.id}"]`);
+    await expect(boardCard).toBeVisible();
+
+    await expect(boardCard.locator("text=/Last activity: 1h 2m ago/")).toBeVisible();
+  });
 });
