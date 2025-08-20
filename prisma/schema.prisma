@@ -6,7 +6,6 @@
 
 generator client {
   provider = "prisma-client-js"
-
   previewFeatures = ["relationJoins"]
 }
 
@@ -15,7 +14,17 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth.js required models
+/* ──────────────────────────────────────────────────────────
+   Billing (Stripe)
+────────────────────────────────────────────────────────── */
+enum Plan {
+  FREE
+  PRO
+}
+
+/* ──────────────────────────────────────────────────────────
+   NextAuth.js models
+────────────────────────────────────────────────────────── */
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -46,34 +55,44 @@ model Session {
   @@map("sessions")
 }
 
-// Updated User model for NextAuth compatibility
 model User {
-  id             String       @id @default(cuid())
+  id             String        @id @default(cuid())
   name           String?
-  email          String       @unique
+  email          String        @unique
   emailVerified  DateTime?
   image          String?
   accounts       Account[]
   sessions       Session[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   organizationId String?
-  isAdmin        Boolean      @default(false) // Admin role for organization
+  isAdmin        Boolean       @default(false) // Admin role for organization
   organization   Organization? @relation(fields: [organizationId], references: [id])
-  invitedOrganizations OrganizationInvite[]
-  createdSelfServeInvites OrganizationSelfServeInvite[]
+  invitedOrganizations        OrganizationInvite[]
+  createdSelfServeInvites     OrganizationSelfServeInvite[]
   notes          Note[]
 
   @@index([organizationId], name: "idx_user_org")
   @@map("users")
 }
 
+/* ──────────────────────────────────────────────────────────
+   Core app models
+────────────────────────────────────────────────────────── */
 model Organization {
   id        String   @id @default(cuid())
   name      String
   slackWebhookUrl String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Stripe billing
+  plan                 Plan    @default(FREE)
+  stripeCustomerId     String? @unique
+  stripeSubscriptionId String? @unique
+  stripeStatus         String? // e.g. active, past_due, canceled
+
+  // Relations
   members   User[]
   invites   OrganizationInvite[]
   boards    Board[]
