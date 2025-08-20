@@ -74,7 +74,6 @@ test.describe("Board Management", () => {
 
   test("should prevent creating boards with whitespace-only names", async ({
     authenticatedPage,
-    testContext,
   }) => {
     await authenticatedPage.goto("/dashboard");
 

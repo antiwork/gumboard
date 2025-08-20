@@ -9,16 +9,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Grid3x3, Archive, Trash2, MoreVertical, Copy } from "lucide-react";
+import { Plus, Grid3x3, Archive, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
-  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -44,6 +41,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { BoardSettingsModal } from "@/components/board-settings-modal";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -84,12 +82,6 @@ export default function Dashboard() {
     title: string;
     description: string;
   }>({ open: false, title: "", description: "" });
-
-  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState<{
-    open: boolean;
-    boardId: string;
-    boardName: string;
-  }>({ open: false, boardId: "", boardName: "" });
 
   const router = useRouter();
 
@@ -191,13 +183,13 @@ export default function Dashboard() {
 
   const handleDeleteBoard = async () => {
     try {
-      const response = await fetch(`/api/boards/${deleteConfirmDialog.boardId}`, {
+      const response = await fetch(`/api/boards/${boardSettings.id}`, {
         method: "DELETE",
       });
 
       if (response.ok) {
-        setBoards(boards.filter((board) => board.id !== deleteConfirmDialog.boardId));
-        setDeleteConfirmDialog({ open: false, boardId: "", boardName: "" });
+        setBoards(boards.filter((board) => board.id !== boardSettings.id));
+        setBoardSettingsDialog(false);
       } else {
         const errorData = await response.json();
         setErrorDialog({
@@ -481,179 +473,16 @@ export default function Dashboard() {
         )}
       </div>
 
-      <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              Board settings
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Configure settings for &quot;{boardSettings.name}&quot; board.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-
-          <div className="py-4 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                Board name
-              </label>
-              <Input
-                type="text"
-                value={boardSettings.name}
-                onChange={(e) => setBoardSettings((prev) => ({ ...prev, name: e.target.value }))}
-                placeholder="Enter board name"
-                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                Description (optional)
-              </label>
-              <Input
-                type="text"
-                value={boardSettings.description}
-                onChange={(e) =>
-                  setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
-                }
-                placeholder="Enter board description"
-                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-              />
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isPublic"
-                  checked={boardSettings.isPublic}
-                  onCheckedChange={(checked) =>
-                    setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))
-                  }
-                />
-                <label
-                  htmlFor="isPublic"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
-                >
-                  Make board public
-                </label>
-              </div>
-              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-                When enabled, anyone with the link can view this board
-              </p>
-
-              {boardSettings.isPublic && (
-                <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-foreground dark:text-zinc-100">
-                        Public link
-                      </p>
-                      <p className="text-xs text-muted-foreground dark:text-zinc-400 break-all">
-                        {typeof window !== "undefined"
-                          ? `${window.location.origin}/public/boards/${boardSettings.id}`
-                          : ""}
-                      </p>
-                    </div>
-                    <Button
-                      onClick={handleCopyPublicUrl}
-                      size="sm"
-                      variant="outline"
-                      className="ml-3 flex items-center space-x-1"
-                    >
-                      {copiedPublicUrl ? (
-                        <>
-                          <span className="text-xs">✓</span>
-                          <span className="text-xs">Copied!</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy className="w-3 h-3" />
-                          <span className="text-xs">Copy</span>
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="sendSlackUpdates"
-                checked={boardSettings.sendSlackUpdates}
-                onCheckedChange={(checked) =>
-                  setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
-                }
-                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
-              />
-              <label
-                htmlFor="sendSlackUpdates"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
-              >
-                Send updates to Slack
-              </label>
-            </div>
-            <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-              When enabled, note updates will be sent to your organization&apos;s Slack channel
-            </p>
-          </div>
-
-          <AlertDialogFooter className="flex !flex-row justify-between">
-            <Button
-              onClick={() => {
-                setDeleteConfirmDialog({
-                  open: true,
-                  boardId: boardSettings.id,
-                  boardName: boardSettings.name,
-                });
-                setBoardSettingsDialog(false);
-              }}
-              variant="destructive"
-              className="mr-auto bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-              Delete <span className="hidden lg:inline">Board</span>
-            </Button>
-            <div className="flex space-x-2 items-center">
-              <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={() => handleUpdateBoardSettings(boardSettings)}
-                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
-              >
-                Save settings
-              </AlertDialogAction>
-            </div>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog
-        open={deleteConfirmDialog.open}
-        onOpenChange={(open) => setDeleteConfirmDialog({ open, boardId: "", boardName: "" })}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              Delete Board
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Are you sure you want to delete &quot;{deleteConfirmDialog.boardName}&quot;? This
-              action cannot be undone and will permanently delete all notes in this board.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteBoard}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              Delete Board
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <BoardSettingsModal
+        open={boardSettingsDialog}
+        onOpenChange={setBoardSettingsDialog}
+        boardSettings={boardSettings}
+        onBoardSettingsChange={setBoardSettings}
+        onSave={handleUpdateBoardSettings}
+        onDelete={handleDeleteBoard}
+        onCopyPublicUrl={handleCopyPublicUrl}
+        copiedPublicUrl={copiedPublicUrl}
+      />
 
       <AlertDialog
         open={errorDialog.open}
