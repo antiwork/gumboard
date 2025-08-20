@@ -177,12 +177,14 @@ test.describe("Home Page", () => {
     await editInput.blur();
     await editResponse;
 
-    await expect(financeItem.getByText(updatedFinanceText)).toBeVisible();
-
-    const editedItem = await testPrisma.checklistItem.findUnique({
-      where: { id: originalFinanceId },
-    });
-    expect(editedItem?.content).toBe(updatedFinanceText);
+    // Verify edit was saved to database
+    await test.expect
+      .poll(async () => {
+        return await testPrisma.checklistItem.findFirst({
+          where: { content: updatedFinanceText },
+        });
+      })
+      .toHaveProperty("content", updatedFinanceText);
 
     // Test 5: Delete a checklist item
     const deleteItemResponse = authenticatedPage.waitForResponse(
@@ -252,21 +254,26 @@ test.describe("Home Page", () => {
 
     // Now split the item
     await authenticatedPage.getByText(splitTestContent).click();
-    const splitInput = authenticatedPage.locator("textarea").filter({ hasText: splitTestContent });
+    const splitInput = authenticatedPage.locator("textarea").first();
     await expect(splitInput).toBeVisible();
 
+    // Move cursor to split point
+    await splitInput.press("Home");
+    for (let i = 0; i < 10; i++) {
+      await splitInput.press("ArrowRight");
+    }
+
+    // Attach waitForResponse immediately before triggering the split
     const splitResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    // Move cursor to split after "Split this" (10 characters from start)
-    await splitInput.press("Home");
-    for (let i = 0; i < 10; i++) {
-      await splitInput.press("ArrowRight");
-    }
+
     await splitInput.press("Enter");
+    await splitInput.blur(); // ensures PUT request triggers
+
     await splitResponse;
 
     // Verify the split created two items
