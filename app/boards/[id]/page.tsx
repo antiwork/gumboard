@@ -70,8 +70,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const boardSettingsRef = useRef<BoardSettingsModalRef>(null);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const handleBoardUpdate = (updatedBoard: any) => {
+  const handleBoardUpdate = (updatedBoard: Partial<Board> & { id: string }) => {
     setBoard((prevBoard) => (prevBoard ? { ...prevBoard, ...updatedBoard } : null));
     setAllBoards((prevBoards) =>
       prevBoards.map((b) => (b.id === updatedBoard.id ? { ...b, ...updatedBoard } : b))
