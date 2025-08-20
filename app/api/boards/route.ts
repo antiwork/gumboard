@@ -42,11 +42,25 @@ export async function GET() {
             },
           },
         },
+        notes: {
+          select: { updatedAt: true },
+          where: {
+            deletedAt: null,
+            archivedAt: null,
+          },
+          orderBy: { updatedAt: "desc" },
+          take: 1,
+        },
       },
-      orderBy: { updatedAt: "desc" },
+      orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ boards });
+    const result = boards.map((board) => ({
+      ...board,
+      updatedAt: board.notes[0]?.updatedAt ?? board.updatedAt,
+    }));
+
+    return NextResponse.json({ boards: result });
   } catch (error) {
     console.error("Error fetching boards:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
