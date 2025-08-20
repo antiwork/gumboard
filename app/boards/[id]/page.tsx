@@ -27,21 +27,17 @@ import { useTheme } from "next-themes";
 
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import {
-  getResponsiveConfig,
-  getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
-  filterAndSortNotes,
-} from "@/lib/utils";
+import { getUniqueAuthors, filterAndSortNotes, getBoardColumns } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
 import { BoardTopbar } from "@/components/board-topbar";
+import { useBoardColumnMeta } from "@/lib/hooks";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
+  const columnMeta = useBoardColumnMeta();
   const [notesloading, setNotesLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
   // Inline editing state removed; handled within Note component
@@ -50,7 +46,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [newBoardName, setNewBoardName] = useState("");
   const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -216,35 +211,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
   }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
-  // Removed debounce cleanup effect; editing is scoped to Note
-
-  // Enhanced responsive handling with debounced resize and better breakpoints
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768); // Tablet breakpoint
-
-        // Force re-render of notes layout after screen size change
-        // This ensures notes are properly repositioned
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          // Trigger a state update to force re-calculation of note positions
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50); // Debounce resize events - reduced for real-time feel
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
-
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearchTerm(searchTerm);
@@ -262,23 +228,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
-  const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, addingChecklistItem)
-        : calculateGridLayout(filteredNotes, addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem]
-  );
 
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
+  const columnsData = useMemo(() => {
+    return getBoardColumns(columnMeta.count, filteredNotes);
+  }, [columnMeta, filteredNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -713,36 +666,29 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       {/* Board Area */}
       <div
         ref={boardRef}
-        className="relative w-full"
-        style={{
-          height: boardHeight,
-          minHeight: "calc(100vh - 64px)", // Account for header height
-        }}
+        className="relative w-full min-h-[calc(100vh-236px)] sm:min-h-[calc(100vh-64px)] p-3 md:p-5"
       >
-        {/* Notes */}
-        <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={user as User}
-              onUpdate={handleUpdateNoteFromComponent}
-              onDelete={handleDeleteNote}
-              onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-              onCopy={handleCopyNote}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
+        <div className={`flex gap-${columnMeta.gap}`}>
+          {columnsData.map((column, index) => (
+            <div key={index} className="flex-1 flex flex-col gap-4">
+              {column.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  currentUser={user as User}
+                  onUpdate={handleUpdateNoteFromComponent}
+                  onDelete={handleDeleteNote}
+                  onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                  onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                  onCopy={handleCopyNote}
+                  showBoardName={boardId === "all-notes" || boardId === "archive"}
+                  className="shadow-md shadow-black/10 p-4"
+                  style={{
+                    backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                  }}
+                />
+              ))}
+            </div>
           ))}
         </div>
 
