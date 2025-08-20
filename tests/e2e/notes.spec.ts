@@ -918,64 +918,68 @@ test.describe("Note Management", () => {
 
   test.describe("Note Filters", () => {
     test("should create and filter notes between a given date", async ({
-      authenticatedPage,
-      testContext,
-      testPrisma,
-    }) => {
-      const boardName = testContext.getBoardName("Test Board");
-      const board = await testPrisma.board.create({
-        data: {
-          name: boardName,
-          description: testContext.prefix("Test board description"),
-          createdBy: testContext.userId,
-          organizationId: testContext.organizationId,
-        },
-      });
+  authenticatedPage,
+  testContext,
+  testPrisma,
+}) => {
+  const boardName = testContext.getBoardName("Test Board");
+  const board = await testPrisma.board.create({
+    data: {
+      name: boardName,
+      description: testContext.prefix("Test board description"),
+      createdBy: testContext.userId,
+      organizationId: testContext.organizationId,
+    },
+  });
 
-      // Create notes for today
-      for (let i = 0; i < 3; i++) {
-        await testPrisma.note.create({
-          data: {
-            color: "#fef3c7",
-            boardId: board.id,
-            createdBy: testContext.userId,
-            createdAt: new Date(),
-          },
-        });
-      }
-
-      // Create notes for 5 days ago
-      for (let i = 0; i < 2; i++) {
-        await testPrisma.note.create({
-          data: {
-            color: "#fef3c7",
-            boardId: board.id,
-            createdBy: testContext.userId,
-            createdAt: addDays(new Date(), -5),
-          },
-        });
-      }
-
-      const today = new Date();
-      const yesterday = addDays(today, -1);
-
-      await authenticatedPage.goto(`/boards/${board.id}`);
-      await authenticatedPage.locator('[data-slot="filter-popover"]').click();
-      await authenticatedPage.getByRole("button", { name: "Select date range" }).click();
-
-      // Start date
-      await authenticatedPage
-        .getByRole("button", { name: "Pick a start date", exact: true })
-        .click();
-      await authenticatedPage.getByRole("gridcell", { name: String(yesterday.getDate()) }).click();
-
-      // End date
-      await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
-      await authenticatedPage.getByRole("gridcell", { name: String(today.getDate()) }).click();
-
-      await authenticatedPage.getByRole("button", { name: "Apply" }).click();
-      await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);
+  // Create notes for today
+  for (let i = 0; i < 3; i++) {
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        createdAt: new Date(),
+      },
     });
+  }
+
+  // Create notes for 5 days ago
+  for (let i = 0; i < 2; i++) {
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        createdAt: addDays(new Date(), -5),
+      },
+    });
+  }
+
+  const today = new Date();
+  const yesterday = addDays(today, -1);
+
+  const formatDate = (date: Date) => date.toISOString().split("T")[0]; // "YYYY-MM-DD"
+
+  await authenticatedPage.goto(`/boards/${board.id}`);
+  await authenticatedPage.locator('[data-slot="filter-popover"]').click();
+  await authenticatedPage.getByRole("button", { name: "Select date range" }).click();
+
+  // Start date
+  await authenticatedPage
+    .getByRole("button", { name: "Pick a start date", exact: true })
+    .click();
+  await authenticatedPage.locator(`[data-day="${formatDate(yesterday)}"]`).click();
+
+  // End date
+  await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
+  await authenticatedPage.locator(`[data-day="${formatDate(today)}"]`).click();
+
+  await authenticatedPage.getByRole("button", { name: "Apply" }).click();
+
+  await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);
+});
+
 
     test("should filter notes by author", async ({
       authenticatedPage,
