@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 import { db } from "@/lib/db";
-import { env } from "@/lib/env";
-
-const stripe = new Stripe(env.STRIPE_SECRET_KEY!);
+import { getStripe } from "@/lib/stripe";
 
 export async function GET(req: NextRequest) {
+  // If Stripe is disabled or no secret key, do nothing (CI-safe)
+  const stripe = getStripe();
+  if (!stripe) return NextResponse.json({ ok: true });
+
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) {
     return NextResponse.json({ error: "Missing session_id" }, { status: 400 });
