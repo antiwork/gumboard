@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, Grid3x3, Archive, MoreVertical } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BoardSettingsModal, BoardSettingsModalRef } from "@/components/board-settings-modal";
+import { BoardSettingsModal, useBoardSettingsModal } from "@/components/board-settings-modal";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -72,7 +72,7 @@ export default function Dashboard() {
     description: string;
   }>({ open: false, title: "", description: "" });
 
-  const boardSettingsRef = useRef<BoardSettingsModalRef>(null);
+  const { openBoardSettings } = useBoardSettingsModal();
 
   const handleBoardSettingsSuccess = () => {
     fetchUserAndBoards();
@@ -179,7 +179,7 @@ export default function Dashboard() {
   const handleBoardSettingsClick = (e: React.MouseEvent, board: DashboardBoard) => {
     e.preventDefault();
     e.stopPropagation();
-    boardSettingsRef.current?.openBoardSettings({
+    openBoardSettings({
       id: board.id,
       name: board.name,
       description: board.description || undefined,
@@ -392,7 +392,7 @@ export default function Dashboard() {
         )}
       </div>
 
-      <BoardSettingsModal ref={boardSettingsRef} onSuccess={handleBoardSettingsSuccess} />
+      <BoardSettingsModal onSuccess={handleBoardSettingsSuccess} />
 
       <AlertDialog
         open={errorDialog.open}

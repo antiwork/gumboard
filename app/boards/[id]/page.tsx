@@ -25,7 +25,7 @@ import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
-import { BoardSettingsModal, BoardSettingsModalRef } from "@/components/board-settings-modal";
+import { BoardSettingsModal, useBoardSettingsModal } from "@/components/board-settings-modal";
 import {
   getResponsiveConfig,
   getUniqueAuthors,
@@ -67,7 +67,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: string;
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const boardSettingsRef = useRef<BoardSettingsModalRef>(null);
+  const { openBoardSettings } = useBoardSettingsModal();
 
   const handleBoardSettingsSuccess = () => {
     fetchBoardData();
@@ -735,7 +735,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   size="sm"
                   onClick={() => {
                     if (board) {
-                      boardSettingsRef.current?.openBoardSettings({
+                      openBoardSettings({
                         id: board.id,
                         name: board.name,
                         description: board.description || undefined,
@@ -974,11 +974,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </AlertDialogContent>
       </AlertDialog>
 
-      <BoardSettingsModal
-        ref={boardSettingsRef}
-        onSuccess={handleBoardSettingsSuccess}
-        redirectAfterDelete="/dashboard"
-      />
+      <BoardSettingsModal onSuccess={handleBoardSettingsSuccess} redirectAfterDelete="/dashboard" />
     </div>
   );
 }
