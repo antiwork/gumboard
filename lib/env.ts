@@ -34,7 +34,11 @@ const schema = z
   .superRefine((v, ctx) => {
     if (v.NEXT_PUBLIC_ENABLE_STRIPE === "1") {
       if (!v.STRIPE_SECRET_KEY)
-        ctx.addIssue({ code: "custom", path: ["STRIPE_SECRET_KEY"], message: "Required when Stripe is enabled" });
+        ctx.addIssue({
+          code: "custom",
+          path: ["STRIPE_SECRET_KEY"],
+          message: "Required when Stripe is enabled",
+        });
       if (!v.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
         ctx.addIssue({
           code: "custom",
@@ -42,7 +46,11 @@ const schema = z
           message: "Required when Stripe is enabled",
         });
       if (!v.STRIPE_WEBHOOK_SECRET)
-        ctx.addIssue({ code: "custom", path: ["STRIPE_WEBHOOK_SECRET"], message: "Required when Stripe is enabled" });
+        ctx.addIssue({
+          code: "custom",
+          path: ["STRIPE_WEBHOOK_SECRET"],
+          message: "Required when Stripe is enabled",
+        });
     }
   });
 
