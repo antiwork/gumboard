@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Note as NoteCard } from "@/components/note";
 import { cn } from "@/lib/utils";
@@ -20,8 +20,8 @@ interface NotesGridProps {
   gridClassName?: string;
   noteClassName?: string;
   noteStyle?: (note: Note) => React.CSSProperties;
-  // Layout variant: 'grid' for board pages, 'masonry' for demo
-  variant?: "grid" | "masonry";
+  // Layout variant: 'grid' for board pages, 'masonry' for demo, 'board-masonry' for board pages with JS masonry
+  variant?: "grid" | "masonry" | "board-masonry";
   // Animation settings
   animationDuration?: number;
   staggerChildren?: number;
@@ -76,6 +76,69 @@ const masonryItemVariants = {
   },
 };
 
+// Hook to get fluid responsive column count based on screen size
+function useColumnCount() {
+  const [columnCount, setColumnCount] = useState(3);
+
+  useEffect(() => {
+    const updateColumnCount = () => {
+      const width = window.innerWidth;
+      
+      // Fluid responsive calculation based on available width
+      // Each column needs minimum ~280px for comfortable note display
+      const minColumnWidth = 280;
+      const containerPadding = 32; // Account for container padding
+      const gapWidth = 16; // Gap between columns
+      
+      const availableWidth = width - containerPadding;
+      let calculatedColumns = Math.floor(availableWidth / (minColumnWidth + gapWidth));
+      
+      // Ensure minimum 1 column and maximum 6 columns
+      calculatedColumns = Math.max(1, Math.min(6, calculatedColumns));
+      
+      // Fine-tune for better responsive behavior
+      if (width < 480) calculatedColumns = 1;        // Very small screens
+      else if (width < 768) calculatedColumns = Math.min(2, calculatedColumns);  // Mobile
+      else if (width < 1024) calculatedColumns = Math.min(3, calculatedColumns); // Tablet
+      
+      setColumnCount(calculatedColumns);
+    };
+
+    updateColumnCount();
+    window.addEventListener('resize', updateColumnCount);
+    return () => window.removeEventListener('resize', updateColumnCount);
+  }, []);
+
+  return columnCount;
+}
+
+// Distribute notes into columns based on shortest column
+function distributeNotesToColumns(notes: Note[], columnCount: number) {
+  // Ensure we have at least 1 column
+  const safeColumnCount = Math.max(1, columnCount);
+  const columns: Note[][] = Array.from({ length: safeColumnCount }, () => []);
+  const columnHeights = Array(safeColumnCount).fill(0);
+
+  // Create a Set to track which notes we've already distributed
+  const distributedNoteIds = new Set<string>();
+
+  notes.forEach((note) => {
+    // Skip if this note has already been distributed
+    if (distributedNoteIds.has(note.id)) {
+      return;
+    }
+    
+    // Find the shortest column
+    const shortestColumnIndex = columnHeights.indexOf(Math.min(...columnHeights));
+    columns[shortestColumnIndex].push(note);
+    distributedNoteIds.add(note.id);
+    // Estimate height (this is approximate, real implementation would measure actual heights)
+    columnHeights[shortestColumnIndex] += 200; // Base height estimate
+  });
+
+  return columns;
+}
+
 export function NotesGrid({
   notes,
   currentUser,
@@ -96,6 +159,8 @@ export function NotesGrid({
   initialAnimation = true,
 }: NotesGridProps) {
   const isGrid = variant === "grid";
+  const isBoardMasonry = variant === "board-masonry";
+  const columnCount = useColumnCount();
   const itemVariants = isGrid ? gridItemVariants : masonryItemVariants;
 
   // Grid classes for board layout
@@ -104,10 +169,8 @@ export function NotesGrid({
     gridClassName
   );
 
-  // Masonry classes for demo layout
+  // Masonry classes for demo layout (CSS columns) - using working version
   const masonryClasses = cn("columns-1 gap-4 sm:columns-2", gridClassName);
-
-  const containerClasses = isGrid ? gridClasses : masonryClasses;
 
   // Customize container variants with stagger timing
   const customContainerVariants = {
@@ -120,8 +183,66 @@ export function NotesGrid({
     },
   };
 
+  // For board masonry layout (JavaScript-based), distribute notes into columns
+  if (isBoardMasonry) {
+    // Memoize the column distribution to prevent unnecessary re-calculations
+    const columns = useMemo(() => {
+      return distributeNotesToColumns(notes, columnCount);
+    }, [notes, columnCount]);
+    
+    return (
+      <div className={className} data-testid="notes-grid">
+        <motion.div
+          className={cn("flex gap-4", gridClassName)}
+          variants={initialAnimation ? customContainerVariants : undefined}
+          initial={initialAnimation ? "hidden" : undefined}
+          animate={initialAnimation ? "visible" : undefined}
+          data-testid="notes-grid-container"
+        >
+          {columns.map((columnNotes, columnIndex) => (
+            <div key={columnIndex} className="flex-1 flex flex-col gap-4">
+              <AnimatePresence mode="popLayout">
+                {columnNotes.map((note) => (
+                  <motion.div
+                    key={note.id}
+                    variants={itemVariants}
+                    initial={initialAnimation ? "hidden" : { opacity: 0, scale: 0.8 }}
+                    animate={initialAnimation ? "visible" : { opacity: 1, scale: 1 }}
+                    exit="exit"
+                    layout={"position"}
+                    layoutId={note.id}
+                    transition={{
+                      layout: { duration: animationDuration },
+                    }}
+                  >
+                    <NoteCard
+                      note={note}
+                      currentUser={currentUser}
+                      onUpdate={onUpdate}
+                      onDelete={onDelete}
+                      onArchive={onArchive}
+                      onUnarchive={onUnarchive}
+                      onCopy={onCopy}
+                      readonly={!currentUser}
+                      showBoardName={showBoardName}
+                      syncDB={syncDB}
+                      className={noteClassName}
+                      style={noteStyle?.(note)}
+                    />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    );
+  }
+
+  const containerClasses = isGrid ? gridClasses : masonryClasses;
+
   return (
-    <div className={className}>
+    <div className={className} data-testid="notes-grid">
       <motion.div
         className={containerClasses}
         variants={initialAnimation ? customContainerVariants : undefined}
@@ -129,6 +250,7 @@ export function NotesGrid({
         animate={initialAnimation ? "visible" : undefined}
         layout={isGrid ? true : undefined}
         layoutRoot={!isGrid ? true : undefined}
+        data-testid="notes-grid-container"
       >
         <AnimatePresence mode="popLayout">
           {notes.map((note) => (

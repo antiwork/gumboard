@@ -847,7 +847,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           onCopy={handleCopyNote}
           showBoardName={boardId === "all-notes" || boardId === "archive"}
           syncDB={true}
-          variant="grid"
+          variant="board-masonry"
           noteClassName="shadow-md shadow-black/10 h-fit"
           noteStyle={(note) => ({
             padding: `${getResponsiveConfig().notePadding}px`,
