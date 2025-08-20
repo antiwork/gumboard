@@ -1,6 +1,5 @@
 "use client";
 
-
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Search, X, ChevronUp, EllipsisVertical } from "lucide-react";
 import Link from "next/link";
@@ -66,7 +65,6 @@ export function BoardTopbar({
   showBoardDropdown = false,
   isPublic = false,
 }: BoardTopbarProps) {
-
   return (
     <div className="mx-0.5 sm:mx-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center h-auto sm:h-16 p-2 sm:p-0">
       <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 sm:w-fit grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
@@ -85,7 +83,7 @@ export function BoardTopbar({
             onClick={() => setShowBoardDropdown?.(!showBoardDropdown)}
             className="flex items-center justify-between px-2 py-2 w-full"
           >
-            <div className={`min-w-0 ${isPublic ? 'flex items-center space-x-2' : '' }`}>
+            <div className={`min-w-0 ${isPublic ? "flex items-center space-x-2" : ""}`}>
               <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
                 {boardId === "all-notes"
                   ? "All notes"
@@ -93,21 +91,18 @@ export function BoardTopbar({
                     ? "Archive"
                     : board?.name}
               </div>
-                {isPublic && <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                    Public
-                </span>}
+              {isPublic && (
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                  Public
+                </span>
+              )}
             </div>
-            {!isPublic && (
-              showBoardDropdown ? (
-                <ChevronUp
-                  className="w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform"
-                />
+            {!isPublic &&
+              (showBoardDropdown ? (
+                <ChevronUp className="w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform" />
               ) : (
-                <ChevronDown
-                  className="w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform"
-                />
-              )
-            )}
+                <ChevronDown className="w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform" />
+              ))}
           </Button>
 
           {showBoardDropdown && (
@@ -250,9 +245,9 @@ export function BoardTopbar({
             </Button>
           )}
         </div>
-        
-        {!isPublic && 
-        <Button
+
+        {!isPublic && (
+          <Button
             onClick={() => {
               if (boardId === "all-notes" && allBoards.length > 0) {
                 handleAddNote?.(allBoards[0].id);
@@ -260,22 +255,22 @@ export function BoardTopbar({
                 handleAddNote?.();
               }
             }}
-          disabled={boardId === "archive"}
-        >
-          <span>Add note</span>
-        </Button>
-        }
+            disabled={boardId === "archive"}
+          >
+            <span>Add note</span>
+          </Button>
+        )}
 
         {/* User Dropdown */}
         {user ? (
-              <ProfileDropdown user={user} />
-            ) : (
-              <Link href="/auth/signin">
-                <Button variant="outline" size="sm">
-                  Sign in
-                </Button>
-              </Link>
-            )}
+          <ProfileDropdown user={user} />
+        ) : (
+          <Link href="/auth/signin">
+            <Button variant="outline" size="sm">
+              Sign in
+            </Button>
+          </Link>
+        )}
       </div>
     </div>
   );

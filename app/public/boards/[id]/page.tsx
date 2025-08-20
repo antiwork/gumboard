@@ -9,11 +9,7 @@ import type { Note, Board } from "@/components/note";
 import { Note as NoteCard } from "@/components/note";
 import { useUser } from "@/app/contexts/UserContext";
 import { BoardTopbar } from "@/components/board-topbar";
-import {
-  getUniqueAuthors,
-  filterAndSortNotes,
-  getBoardColumns
-} from "@/lib/utils";
+import { getUniqueAuthors, filterAndSortNotes, getBoardColumns } from "@/lib/utils";
 import { useBoardColumnMeta } from "@/lib/hooks";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
