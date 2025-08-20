@@ -21,7 +21,7 @@ export async function GET() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Get all boards for the organization 
+    // Get all boards for the organization
     const boards = await db.board.findMany({
       where: { organizationId: user.organizationId },
       select: {
