@@ -10,22 +10,36 @@ export async function POST(req: NextRequest) {
   const sig = req.headers.get("stripe-signature")!;
   const raw = Buffer.from(await req.arrayBuffer());
 
-  let event: Stripe.Event;
+  let event: Stripe.Event | Record<string, unknown>;
   try {
-    event = stripe.webhooks.constructEvent(raw, sig, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (err: any) {
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+    event = stripe.webhooks.constructEvent(
+      raw,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : "Unknown error";
+    return NextResponse.json(
+      { error: `Webhook Error: ${message}` },
+      { status: 400 }
+    );
   }
 
   switch (event.type) {
     case "checkout.session.completed": {
       const s = event.data.object as Stripe.Checkout.Session;
-      const orgId = (s.client_reference_id || s.metadata?.organizationId) as string | undefined;
+      const orgId = (s.client_reference_id || s.metadata?.organizationId) as
+        | string
+        | undefined;
       const subId = s.subscription as string | undefined;
       if (orgId && subId) {
         await prisma.organization.update({
           where: { id: orgId },
-          data: { plan: "PRO", stripeSubscriptionId: subId, stripeStatus: "active" },
+          data: {
+            plan: "PRO",
+            stripeSubscriptionId: subId,
+            stripeStatus: "active",
+          },
         });
       }
       break;
@@ -37,10 +51,16 @@ export async function POST(req: NextRequest) {
       const status = sub.status; // active | past_due | canceled | ...
       await prisma.organization.updateMany({
         where: { stripeSubscriptionId: sub.id },
-        data: { plan: status === "active" ? "PRO" : "FREE", stripeStatus: status },
+        data: {
+          plan: status === "active" ? "PRO" : "FREE",
+          stripeStatus: status,
+        },
       });
       break;
     }
+    default:
+      // no-op
+      break;
   }
 
   return NextResponse.json({ ok: true });
