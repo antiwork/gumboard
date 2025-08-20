@@ -87,7 +87,6 @@ test.describe("Activity Tracking", () => {
     await expect(boardCard).toBeVisible({ timeout: 10000 });
     await expect(boardCard).toContainText("Last active:");
     
-    // Should show 0 notes
     await expect(boardCard).toContainText("0 notes");
   });
 });
