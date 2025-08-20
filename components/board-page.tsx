@@ -174,14 +174,12 @@ export default function BoardPage({ params }: BoardPageProps) {
     if (!isPublic) {
       initializeFiltersFromURL();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isPublic]);
 
   useEffect(() => {
     if (boardId) {
       fetchBoardData();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
   // Dropdown management - only for private pages
