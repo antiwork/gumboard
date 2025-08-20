@@ -967,11 +967,19 @@ test.describe("Note Management", () => {
       await authenticatedPage
         .getByRole("button", { name: "Pick a start date", exact: true })
         .click();
-      await authenticatedPage.getByRole("gridcell", { name: String(yesterday.getDate()) }).click();
+      // Select yesterday's date
+      await authenticatedPage
+        .locator(`td[role="gridcell"]:not([data-disabled="true"]):has-text("${yesterday.getDate()}")`)
+        .first()
+        .click();
 
       // End date
       await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
-      await authenticatedPage.getByRole("gridcell", { name: String(today.getDate()) }).click();
+      // Select today's date
+      await authenticatedPage
+        .locator(`td[role="gridcell"]:not([data-disabled="true"]):has-text("${today.getDate()}")`)
+        .first()
+        .click();
 
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);
