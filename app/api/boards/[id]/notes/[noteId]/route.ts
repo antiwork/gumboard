@@ -99,10 +99,10 @@ export async function PUT(
 
       sanitizedChecklistItems = [...checklistItems]
         .sort((a, b) => a.order - b.order)
-        .map((item, i) => ({ 
-          ...item, 
+        .map((item, i) => ({
+          ...item,
           order: i,
-          content: sanitizeChecklistContent(item.content)
+          content: sanitizeChecklistContent(item.content),
         }));
     }
 

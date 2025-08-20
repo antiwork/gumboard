@@ -93,24 +93,24 @@ export function ChecklistItem({
 
   const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
     e.preventDefault();
-    const paste = e.clipboardData.getData('text');
+    const paste = e.clipboardData.getData("text");
     const selection = window.getSelection();
-    
+
     if (selection && selection.rangeCount > 0) {
       const range = selection.getRangeAt(0);
       const selectedText = range.toString();
-      
+
       const urlRegex = /^https?:\/\/.+/;
       if (urlRegex.test(paste) && selectedText) {
         const link = `<a href="${paste}">${selectedText}</a>`;
         range.deleteContents();
         range.insertNode(document.createRange().createContextualFragment(link));
         selection.removeAllRanges();
-        
+
         const newContent = (e.target as HTMLDivElement).innerHTML;
         onEditContentChange?.(sanitizeChecklistContent(newContent));
       } else {
-        document.execCommand('insertText', false, paste);
+        document.execCommand("insertText", false, paste);
       }
     }
   };
@@ -158,7 +158,7 @@ export function ChecklistItem({
             adjustContentHeight(target);
             previousContentRef.current = currentContent;
           }
-          
+
           onEditContentChange?.(sanitizeChecklistContent(content));
         }}
         onPaste={handlePaste}
