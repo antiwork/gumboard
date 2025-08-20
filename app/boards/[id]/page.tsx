@@ -634,15 +634,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
+    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots p-4">
       <div>
-        <div className="mx-0.5 sm:mx-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 sm:w-fit grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center h-auto sm:h-16">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 p-2 sm:w-fit grid grid-cols-[auto_auto_1fr_auto_auto] gap-1 sm:gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Company Name */}
             <Link href="/dashboard" className="flex-shrink-0 pl-1">
-              <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
+              <h1 className="text-lg sm:text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
                 Gumboard
-                <BetaBadge />
+                <span className="hidden sm:inline-flex">
+                  <BetaBadge />
+                </span>
               </h1>
             </Link>
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
@@ -737,7 +739,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </div>
               )}
             </div>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
 
             {/* Filter Popover */}
             <div className="flex flex-nowrap space-x-1">
@@ -784,9 +786,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 p-2 grid grid-cols-[1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Search Box */}
-            <div className="relative h-9">
+            <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
               </div>
@@ -834,7 +836,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </div>
 
       {/* Board Area */}
-      <div ref={boardRef} className="relative w-full p-4">
+      <div ref={boardRef} className="relative w-full">
         {/* Notes */}
         <AnimatePresence>
           <div className="masonry-grid">
