@@ -144,7 +144,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     return (
       <div className="min-h-screen dark:bg-zinc-950 dark:text-zinc-100 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Board not found</h1>
+          <h1 className="text-2xl font-bold mb-2 dark:text-white">Board not found</h1>
           <p className="text-muted-foreground mb-4">
             This board doesn&apos;t exist or is not publicly accessible.
           </p>

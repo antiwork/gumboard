@@ -675,7 +675,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2">Board not found</h1>
+          <h1 className="text-2xl font-bold mb-2 dark:text-white">Board not found</h1>
           <Button asChild>
             <Link href="/">Go to Gumboard</Link>
           </Button>
