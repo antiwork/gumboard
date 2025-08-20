@@ -14,9 +14,57 @@ export function formatLastActivity(dateString: string): string {
   const minute = 60 * 1000;
   const hour = 60 * minute;
   const day = 24 * hour;
-
+  const week = 7 * day;
   if (diffMs < minute) return "Just now";
-  if (diffMs >= 7 * day) return date.toLocaleDateString();
+
+  let years = now.getFullYear() - date.getFullYear();
+  let months = now.getMonth() - date.getMonth();
+
+  if (months < 0) {
+    years--;
+    months += 12;
+  }
+
+  if (now.getDate() < date.getDate()) {
+    months--;
+    if (months < 0) {
+      years--;
+      months += 12;
+    }
+  }
+
+  if (years > 0) {
+    if (years > 1) {
+      return months > 0 ? `${years}y ${months}mo ago` : `${years}y ago`;
+    } else {
+      return months > 0 ? `1y ${months}mo ago` : "1y ago";
+    }
+  }
+
+  if (months > 0) {
+    const tempDate = new Date(date);
+    tempDate.setMonth(tempDate.getMonth() + months);
+    const remainingMs = now.getTime() - tempDate.getTime();
+    const weeks = Math.floor(remainingMs / week);
+
+    if (months > 1) {
+      return weeks > 0 ? `${months}mo ${weeks}w ago` : `${months}mo ago`;
+    } else {
+      return weeks > 0 ? `1mo ${weeks}w ago` : "1mo ago";
+    }
+  }
+
+  if (diffMs >= week) {
+    const weeks = Math.floor(diffMs / week);
+    const remainingMs = diffMs % week;
+    const days = Math.floor(remainingMs / day);
+
+    if (weeks > 1) {
+      return days > 0 ? `${weeks}w ${days}d ago` : `${weeks}w ago`;
+    } else {
+      return days > 0 ? `1w ${days}d ago` : "1w ago";
+    }
+  }
 
   const days = Math.floor(diffMs / day);
   const hours = Math.floor((diffMs % day) / hour);
@@ -33,8 +81,8 @@ export function formatLastActivity(dateString: string): string {
   } else if (minutes > 0) {
     parts.push(`${minutes}m`);
   }
-  if (parts.length === 0) return "Just now";
 
+  if (parts.length === 0) return "Just now";
   return `${parts.join(" ")} ago`;
 }
 

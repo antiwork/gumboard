@@ -49,21 +49,87 @@ describe("formatLastActivity utility function", () => {
     expect(result).toBe("30m ago");
   });
 
-  it("should return hours and minutes for enhanced format", () => {
-    const date = new Date("2024-01-15T10:58:00Z");
+  it("should return hours and minutes", () => {
+    const date = new Date("2024-01-15T10:30:00Z");
     const result = formatLastActivity(date.toISOString());
-    expect(result).toBe("1h 2m ago");
+    expect(result).toBe("1h 30m ago");
   });
 
-  it("should return days and hours for multi-day format", () => {
-    const date = new Date("2024-01-13T11:00:00Z");
+  it("should return only hours when minutes are 0", () => {
+    const date = new Date("2024-01-15T10:00:00Z");
     const result = formatLastActivity(date.toISOString());
-    expect(result).toBe("2d 1h ago");
+    expect(result).toBe("2h ago");
   });
 
-  it("should return date for times over 1 week", () => {
-    const date = new Date("2024-01-01T12:00:00Z");
+  it("should return days and hours", () => {
+    const date = new Date("2024-01-13T10:00:00Z");
     const result = formatLastActivity(date.toISOString());
-    expect(result).toBe("1/1/2024");
+    expect(result).toBe("2d 2h ago");
+  });
+
+  it("should return only days when hours are 0", () => {
+    const date = new Date("2024-01-13T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("2d ago");
+  });
+
+  it("should return weeks and days", () => {
+    const date = new Date("2024-01-06T10:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1w 2d ago");
+  });
+
+  it("should return only weeks when days are 0", () => {
+    const date = new Date("2024-01-08T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1w ago");
+  });
+
+  it("should return multiple weeks", () => {
+    const date = new Date("2023-12-25T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("3w ago");
+  });
+
+  it("should return months and weeks", () => {
+    const date = new Date("2023-12-01T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1mo 2w ago");
+  });
+
+  it("should return only months when weeks are 0", () => {
+    const date = new Date("2023-11-15T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("2mo ago");
+  });
+
+  it("should return multiple months", () => {
+    const date = new Date("2023-07-15T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("6mo ago");
+  });
+
+  it("should return years and months", () => {
+    const date = new Date("2022-10-15T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1y 3mo ago");
+  });
+
+  it("should return only years when months are 0", () => {
+    const date = new Date("2023-01-15T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1y ago");
+  });
+
+  it("should return multiple years", () => {
+    const date = new Date("2020-01-15T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("4y ago");
+  });
+
+  it("should return multiple years with months", () => {
+    const date = new Date("2021-10-15T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("2y 3mo ago");
   });
 });
