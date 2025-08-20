@@ -161,18 +161,35 @@ test.describe("Home Page", () => {
     // Test 4: Edit existing checklist item content
     const originalFinanceText = testContext.prefix("Finance update by Friday");
     const updatedFinanceText = testContext.prefix("Updated Finance deadline");
+    // Click on the text to start editing
     await authenticatedPage.getByText(originalFinanceText).click();
-    const editInput = authenticatedPage.locator("textarea").first();
+    
+    // Find the textarea within the specific checklist item
+    const checklistItem = authenticatedPage.getByTestId(testContext.prefix("101"));
+    const editInput = checklistItem.locator("textarea");
+    
+    // Wait for the textarea to be visible and have the correct value
     await expect(editInput).toBeVisible();
+    await expect(editInput).toHaveValue(originalFinanceText);
+    // Set up response listener before making changes
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
+
+    // Clear and fill the input
+    await editInput.clear();
     await editInput.fill(updatedFinanceText);
-    await editInput.blur(); // Use blur instead of Enter to save the edit
+    
+    // Trigger save by pressing Tab or clicking outside
+    await editInput.blur();
+    
+    // Wait for the response
     await editResponse;
+    
+    // Verify the text was updated in the UI
     await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible();
 
     // Verify edit was saved to database
