@@ -70,22 +70,22 @@ export async function GET() {
 
     const boardsWithActivity = boards.map((board) => {
       let lastActivityAt = board.updatedAt;
-      
+
       if (board.notes.length > 0) {
         const latestNote = board.notes[0];
         const noteUpdatedAt = new Date(latestNote.updatedAt);
-        
+
         if (latestNote.checklistItems.length > 0) {
           const latestChecklistItem = latestNote.checklistItems[0];
           const checklistUpdatedAt = new Date(latestChecklistItem.updatedAt);
 
-          lastActivityAt = checklistUpdatedAt > noteUpdatedAt 
-            ? latestChecklistItem.updatedAt 
-            : latestNote.updatedAt;
+          lastActivityAt =
+            checklistUpdatedAt > noteUpdatedAt
+              ? latestChecklistItem.updatedAt
+              : latestNote.updatedAt;
         } else {
           lastActivityAt = latestNote.updatedAt;
         }
-        
 
         if (new Date(lastActivityAt) < new Date(board.updatedAt)) {
           lastActivityAt = board.updatedAt;
@@ -94,7 +94,7 @@ export async function GET() {
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { notes: _, ...boardData } = board;
-      
+
       return {
         ...boardData,
         lastActivityAt,

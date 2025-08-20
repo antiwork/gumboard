@@ -23,7 +23,7 @@ export function formatLastActivity(dateString: string): string {
   const minutes = Math.floor((diffMs % hour) / minute);
 
   const parts: string[] = [];
-  
+
   if (days > 0) {
     parts.push(`${days}d`);
     if (hours > 0) parts.push(`${hours}h`);

@@ -6,7 +6,6 @@ test.describe("Activity Tracking", () => {
     testContext,
     testPrisma,
   }) => {
-
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Activity Test"),
@@ -16,14 +15,13 @@ test.describe("Activity Tracking", () => {
       },
     });
 
-
     await authenticatedPage.goto("/dashboard");
     await authenticatedPage.waitForLoadState("networkidle");
 
     const boardCard = authenticatedPage.locator(`[data-board-id="${board.id}"]`);
     await expect(boardCard).toBeVisible({ timeout: 10000 });
     await expect(boardCard).toContainText("Last active:");
-    
+
     const boardText = await boardCard.textContent();
     expect(boardText).toMatch(/Last active: (Just now|\d+[dhms]( \d+[dhms])? ago|\d+\/\d+\/\d+)/);
     expect(boardText).not.toContain("Last active: ago");
@@ -43,7 +41,7 @@ test.describe("Activity Tracking", () => {
       },
     });
 
-    const pastTime = new Date(Date.now() - (1.5 * 60 * 60 * 1000));
+    const pastTime = new Date(Date.now() - 1.5 * 60 * 60 * 1000);
     await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -63,15 +61,13 @@ test.describe("Activity Tracking", () => {
       },
     });
 
- 
     await authenticatedPage.goto("/dashboard");
     await authenticatedPage.waitForLoadState("networkidle");
 
- 
     const boardCard = authenticatedPage.locator(`[data-board-id="${board.id}"]`);
     await expect(boardCard).toBeVisible({ timeout: 10000 });
     await expect(boardCard).toContainText("Last active:");
-    
+
     const boardText = await boardCard.textContent();
     expect(boardText).toMatch(/Last active: (\d+h( \d+m)? ago|Just now)/);
   });
@@ -90,16 +86,13 @@ test.describe("Activity Tracking", () => {
       },
     });
 
-
     await authenticatedPage.goto("/dashboard");
     await authenticatedPage.waitForLoadState("networkidle");
-
 
     const boardCard = authenticatedPage.locator(`[data-board-id="${board.id}"]`);
     await expect(boardCard).toBeVisible({ timeout: 10000 });
     await expect(boardCard).toContainText("Last active:");
     await expect(boardCard).toContainText("0 notes");
-    
 
     const boardText = await boardCard.textContent();
     expect(boardText).toMatch(/Last active: (Just now|\d+[dhms])/);
@@ -111,7 +104,6 @@ test.describe("Activity Tracking", () => {
     testContext,
     testPrisma,
   }) => {
-
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("API Activity Test"),
@@ -138,16 +130,14 @@ test.describe("Activity Tracking", () => {
       },
     });
 
-
     await authenticatedPage.goto("/dashboard");
     await authenticatedPage.waitForLoadState("networkidle");
-
 
     const boardCard = authenticatedPage.locator(`[data-board-id="${board.id}"]`);
     await expect(boardCard).toBeVisible({ timeout: 10000 });
     await expect(boardCard).toContainText("Last active:");
     await expect(boardCard).toContainText("1 note");
-    
+
     const boardText = await boardCard.textContent();
     expect(boardText).toMatch(/Last active: (Just now|\d+m ago)/);
   });
