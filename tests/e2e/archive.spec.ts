@@ -149,16 +149,20 @@ test.describe("Archive Functionality", () => {
     testContext,
     testPrisma,
   }) => {
+    const suffix = Math.random().toString(36).substring(2, 8);
+
+    // Create an archived board
     const board = await testPrisma.board.create({
       data: {
-        name: testContext.getBoardName("Test Board"),
-        description: testContext.prefix("A test board"),
+        name: testContext.getBoardName(`Archived Board ${suffix}`),
+        description: testContext.prefix(`A test board ${suffix}`),
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
       },
     });
 
-    await testPrisma.note.create({
+    // Create an archived note inside the archived board
+    const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
         archivedAt: new Date(),
@@ -167,7 +171,7 @@ test.describe("Archive Functionality", () => {
         checklistItems: {
           create: [
             {
-              content: testContext.prefix("This is an archived note"),
+              content: testContext.prefix(`Archived note content ${suffix}`),
               checked: false,
               order: 0,
             },
@@ -176,13 +180,17 @@ test.describe("Archive Functionality", () => {
       },
     });
 
+    // Go to archive page
     await authenticatedPage.goto("/boards/archive");
 
-    await expect(
-      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
-    ).toBeVisible();
+    // Scope to the note text to avoid picking up another note
+    const noteLocator = authenticatedPage.getByText(
+      testContext.prefix(`Archived note content ${suffix}`)
+    );
+    await expect(noteLocator).toBeVisible();
 
-    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]');
+    // Look for archive button inside this note only
+    const archiveButton = noteLocator.locator("..").locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 

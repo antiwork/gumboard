@@ -108,10 +108,11 @@ test.describe("Delete User Functionality", () => {
       },
     });
 
+    const token = `test-token-${Date.now()}`;
     await testPrisma.organizationSelfServeInvite.create({
       data: {
         name: "Test Self Serve Invite",
-        token: "test-token-123",
+        token,
         organizationId: testContext.organizationId,
         createdBy: testContext.userId,
         expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
