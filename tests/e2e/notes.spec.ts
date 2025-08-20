@@ -831,7 +831,9 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.getByText(testItemContent).click();
 
-      const itemInput = authenticatedPage.locator(`div[contenteditable]`).filter({ hasText: testItemContent });
+      const itemInput = authenticatedPage
+        .locator(`div[contenteditable]`)
+        .filter({ hasText: testItemContent });
       await expect(itemInput).toBeVisible();
 
       await itemInput.focus();
@@ -897,7 +899,9 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.getByText(testItemContent).click();
 
-      const itemInput = authenticatedPage.locator(`div[contenteditable]`).filter({ hasText: testItemContent });
+      const itemInput = authenticatedPage
+        .locator(`div[contenteditable]`)
+        .filter({ hasText: testItemContent });
       await expect(itemInput).toBeVisible();
 
       await itemInput.focus();

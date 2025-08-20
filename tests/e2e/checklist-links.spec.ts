@@ -31,9 +31,11 @@ test.describe("Checklist HTML Links", () => {
     const testItemContent = "Check out GitHub repository";
     const testUrl = "https://github.com/antiwork/gumboard";
 
-    const initialInput = authenticatedPage.locator('[data-testid="new-item"] div[contenteditable]').first();
+    const initialInput = authenticatedPage
+      .locator('[data-testid="new-item"] div[contenteditable]')
+      .first();
     await expect(initialInput).toBeVisible({ timeout: 10000 });
-    
+
     await initialInput.focus();
     await initialInput.fill(testItemContent);
 
@@ -278,7 +280,9 @@ test.describe("Checklist HTML Links", () => {
     });
     expect(updatedItem?.checked).toBe(true);
 
-    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] div[contenteditable]`);
+    const editableElement = authenticatedPage.locator(
+      `[data-testid="${itemId}"] div[contenteditable]`
+    );
     await editableElement.click();
 
     const editResponse = authenticatedPage.waitForResponse(
@@ -291,7 +295,7 @@ test.describe("Checklist HTML Links", () => {
     await editableElement.focus();
     await editableElement.evaluate((element, content) => {
       element.innerHTML = content;
-      const inputEvent = new Event('input', { bubbles: true });
+      const inputEvent = new Event("input", { bubbles: true });
       element.dispatchEvent(inputEvent);
     }, 'Task with <a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a> - updated');
     await editableElement.blur();
@@ -346,7 +350,9 @@ test.describe("Checklist HTML Links", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const editableElement = authenticatedPage.locator(`[data-testid="${itemId}"] div[contenteditable]`);
+    const editableElement = authenticatedPage.locator(
+      `[data-testid="${itemId}"] div[contenteditable]`
+    );
     await editableElement.click();
 
     const editResponse = authenticatedPage.waitForResponse(
