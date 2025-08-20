@@ -72,6 +72,9 @@ export default async function HomePage() {
                   >
                     <Link href="/auth/signin">Get started - it&apos;s free</Link>
                   </Button>
+                  <Button asChild size="lg" className="bg-transparent underline text-lg">
+                    <Link href="/pricing">Pricing</Link>
+                  </Button>
                 </div>
               </div>
               <StickyNotesDemo />
