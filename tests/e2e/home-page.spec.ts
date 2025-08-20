@@ -163,11 +163,11 @@ test.describe("Home Page", () => {
     const updatedFinanceText = testContext.prefix("Updated Finance deadline");
     // Click on the text to start editing
     await authenticatedPage.getByText(originalFinanceText).click();
-    
+
     // Find the textarea within the specific checklist item
     const checklistItem = authenticatedPage.getByTestId(testContext.prefix("101"));
     const editInput = checklistItem.locator("textarea");
-    
+
     // Wait for the textarea to be visible and have the correct value
     await expect(editInput).toBeVisible();
     await expect(editInput).toHaveValue(originalFinanceText);
@@ -182,13 +182,13 @@ test.describe("Home Page", () => {
     // Clear and fill the input
     await editInput.clear();
     await editInput.fill(updatedFinanceText);
-    
+
     // Trigger save by pressing Tab or clicking outside
     await editInput.blur();
-    
+
     // Wait for the response
     await editResponse;
-    
+
     // Verify the text was updated in the UI
     await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible();
 

@@ -977,7 +977,9 @@ test.describe("Note Management", () => {
         .click();
       // Select yesterday's date
       await authenticatedPage
-        .locator(`td[role="gridcell"]:not([data-disabled="true"]):has-text("${yesterday.getDate()}")`)
+        .locator(
+          `td[role="gridcell"]:not([data-disabled="true"]):has-text("${yesterday.getDate()}")`
+        )
         .first()
         .click();
 
@@ -1438,7 +1440,9 @@ test.describe("Note Management", () => {
       await textarea.selectText();
 
       // Type very long text that should cause expansion
-      const veryLongText = "This is a very long text that will cause the card to expand. ".repeat(20);
+      const veryLongText = "This is a very long text that will cause the card to expand. ".repeat(
+        20
+      );
       await textarea.type(veryLongText);
 
       // Wait for the textarea to contain the new text (ensures the DOM has updated)
