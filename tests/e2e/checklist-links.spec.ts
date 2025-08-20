@@ -291,6 +291,8 @@ test.describe("Checklist HTML Links", () => {
     await editableElement.focus();
     await editableElement.evaluate((element, content) => {
       element.innerHTML = content;
+      const inputEvent = new Event('input', { bubbles: true });
+      element.dispatchEvent(inputEvent);
     }, 'Task with <a target="_blank" rel="noopener noreferrer" href="https://example.com">link</a> - updated');
     await editableElement.blur();
     await editResponse;
