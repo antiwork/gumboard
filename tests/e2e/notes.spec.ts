@@ -1388,7 +1388,7 @@ test.describe("Note Management", () => {
       // Type content and verify additional input appears
       const testContent = testContext.prefix("First item");
       await newItemInput.fill(testContent);
-      
+
       await expect(additionalNewItem).toBeVisible({ timeout: 2000 });
 
       // Clear content and verify additional input disappears
@@ -1429,7 +1429,7 @@ test.describe("Note Management", () => {
       // Type content to make additional input appear
       const testContent = testContext.prefix("First item");
       await newItemInput.fill(testContent);
-      
+
       const additionalNewItem = authenticatedPage.getByTestId("new-item-additional");
       await expect(additionalNewItem).toBeVisible({ timeout: 2000 });
 
@@ -1475,7 +1475,7 @@ test.describe("Note Management", () => {
       // Verify auto-add works
       const testContent = testContext.prefix("Normal board item");
       await newItemInput.fill(testContent);
-      
+
       const additionalNewItem = authenticatedPage.getByTestId("new-item-additional");
       await expect(additionalNewItem).toBeVisible({ timeout: 2000 });
     });

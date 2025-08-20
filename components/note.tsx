@@ -544,7 +544,7 @@ export function Note({
                   className="gap-3"
                   textareaRef={newItemRef}
                 />
-                
+
                 {/* Additional empty new item when current has content */}
                 {newItemContent.trim().length > 0 && (
                   <ChecklistItemComponent
