@@ -1315,4 +1315,78 @@ test.describe("Note Management", () => {
     const deleteButton = noteCard.getByRole("button", { name: /Delete Note/i });
     await expect(deleteButton).not.toBeVisible();
   });
+
+  test("should hide copy button on archived notes", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Note Actions Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Test board for note actions"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        archivedAt: new Date(),
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("Archived note content"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
+      },
+    });
+
+    await testPrisma.note.create({
+      data: {
+        color: "#fef3c7",
+        boardId: board.id,
+        createdBy: testContext.userId,
+        checklistItems: {
+          create: [
+            {
+              content: testContext.prefix("Active note content"),
+              checked: false,
+              order: 0,
+            },
+          ],
+        },
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+    await expect(authenticatedPage.getByText("Active note content")).toBeVisible();
+
+    await expect(authenticatedPage.getByText("Archived note content")).not.toBeVisible();
+
+    const activeNote = authenticatedPage
+      .locator('[data-testid="note-card"]')
+      .filter({ hasText: "Active note content" })
+      .first();
+    await activeNote.hover();
+    await expect(activeNote.getByRole("button", { name: "Copy note" })).toBeVisible();
+
+    await authenticatedPage.goto("/boards/archive");
+
+    const archivedNote = authenticatedPage
+      .locator('[data-testid="note-card"]')
+      .filter({ hasText: "Archived note content" })
+      .first();
+    await expect(archivedNote).toBeVisible();
+
+    await archivedNote.hover();
+    await expect(archivedNote.getByRole("button", { name: "Copy note" })).not.toBeVisible();
+  });
 });
