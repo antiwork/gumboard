@@ -640,8 +640,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   return (
     <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
-        <div className="mx-0.5 sm:mx-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 sm:w-fit grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+        <div className="mx-0.5 md:mx-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 items-center h-auto md:h-16 p-2 md:p-0">
+          <div className="bg-white dark:bg-zinc-900 shadow-md border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Company Name */}
             <Link href="/dashboard" className="flex-shrink-0 pl-1">
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
@@ -649,16 +649,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 <BetaBadge />
               </h1>
             </Link>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden md:block" />
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown min-w-32 sm:max-w-64 col-span-2 sm:col-span-1">
+            <div className="relative board-dropdown min-w-32 md:max-w-64 col-span-2 md:col-span-1">
               <Button
                 variant="ghost"
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
                 className="flex items-center justify-between px-2 py-2 w-full"
               >
                 <div className="min-w-0">
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
+                  <div className="text-md font-semibold text-foreground dark:text-zinc-100 truncate">
                     {boardId === "all-notes"
                       ? "All notes"
                       : boardId === "archive"
@@ -678,7 +678,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </Button>
 
               {showBoardDropdown && (
-                <div className="absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 ">
+                <div className="fixed sm:absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
                   <div className="p-2 flex flex-col gap-1">
                     {/* Boards */}
                     <div className=" max-h-50 overflow-y-auto">
@@ -697,6 +697,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         </Link>
                       ))}
                     </div>
+
                     {allBoards.length > 0 && (
                       <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
                     )}
@@ -704,7 +705,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* All Notes Option */}
                     <Link
                       href="/boards/all-notes"
-                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      className={`rounded-lg font-medium block px-3 py-1.5 text-md hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
                         boardId === "all-notes"
                           ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                           : "text-foreground dark:text-white"
@@ -717,7 +718,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     {/* Archive Option */}
                     <Link
                       href="/boards/archive"
-                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      className={`rounded-lg block font-medium px-3 py-1.5 text-md hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
                         boardId === "archive"
                           ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                           : "text-foreground dark:text-white"
@@ -742,7 +743,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </div>
               )}
             </div>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden md:block" />
 
             {/* Filter Popover */}
             <div className="flex flex-nowrap space-x-1">
@@ -789,7 +790,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+          <div className="bg-white dark:bg-zinc-900 shadow-md border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Search Box */}
             <div className="relative h-9">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -803,7 +804,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                 }}
-                className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-md bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
               />
               {searchTerm && (
                 <Button
@@ -1119,10 +1120,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <Button
               onClick={() => setDeleteConfirmDialog(true)}
               variant="destructive"
-              className="mr-auto bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+              className="mr-auto flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               <Trash2 className="w-4 h-4" />
-              Delete <span className="hidden lg:inline">Board</span>
+              <span>
+                Delete<span className="hidden lg:inline"> Board</span>
+              </span>
             </Button>
             <div className="flex space-x-2 items-center">
               <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
