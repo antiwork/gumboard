@@ -28,6 +28,10 @@ interface ChecklistItemProps {
   className?: string;
   isNewItem?: boolean;
   onCreateItem?: (content: string) => void;
+  // New optional props
+  autoFocus?: boolean;
+  onFocus?: () => void;
+  showCheckbox?: boolean;
 }
 
 export function ChecklistItem({
@@ -45,6 +49,9 @@ export function ChecklistItem({
   className,
   isNewItem = false,
   onCreateItem,
+  autoFocus = false,
+  onFocus,
+  showCheckbox = true,
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
@@ -67,6 +74,16 @@ export function ChecklistItem({
       adjustTextareaHeight(textareaRef.current);
     }
   }, [item.content, isEditing]);
+
+  // Autofocus support for newly created notes or when requested
+  React.useEffect(() => {
+    if (autoFocus && textareaRef.current) {
+      textareaRef.current.focus();
+      const len = (editContent ?? item.content).length;
+      textareaRef.current.setSelectionRange(len, len);
+    }
+  }, [autoFocus, editContent, item.content]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -113,12 +130,15 @@ export function ChecklistItem({
       data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
       data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
     >
-      <Checkbox
-        checked={item.checked}
-        onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-zinc-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
-        disabled={readonly}
-      />
+      
+      {showCheckbox && (
+        <Checkbox
+          checked={item.checked}
+          onCheckedChange={() => !readonly && onToggle?.(item.id)}
+          className="border-zinc-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
+          disabled={readonly}
+        />
+      )}
 
       <textarea
         ref={textareaRef}
@@ -143,6 +163,7 @@ export function ChecklistItem({
           if (!isEditing && !readonly) {
             onStartEdit?.(item.id);
           }
+          onFocus?.();
         }}
         rows={1}
         style={{ height: "auto" }}

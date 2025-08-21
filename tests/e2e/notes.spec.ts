@@ -1390,3 +1390,103 @@ test.describe("Note Management", () => {
     await expect(archivedNote.getByRole("button", { name: "Copy note" })).not.toBeVisible();
   });
 });
+
+test.describe("Additive input UX", () => {
+  test("should autofocus the new item input when a new note is created (normal board)", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Autofocus Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Autofocus board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    const createNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
+    );
+    await authenticatedPage.getByRole("button", { name: /Add Note/i }).click();
+    await createNoteResponse;
+
+    const newItemTextarea = authenticatedPage.getByTestId("new-item").locator("textarea");
+    await expect(newItemTextarea).toBeVisible({ timeout: 10000 });
+    await expect(newItemTextarea).toBeFocused();
+  });
+
+  test("typing in new item spawns a second empty to-do below and supports tabbing (normal board)", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Spawn Second Input Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Spawn second input"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    const createNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
+    );
+    await authenticatedPage.getByRole("button", { name: /Add Note/i }).click();
+    await createNoteResponse;
+
+    const firstNew = authenticatedPage.getByTestId("new-item").locator("textarea");
+    await expect(firstNew).toBeVisible();
+
+    // Start typing -> should reveal the second new input beneath
+    const firstContent = testContext.prefix("First quick item");
+    await firstNew.type(firstContent);
+    const secondNew = authenticatedPage.getByTestId("new-item-2").locator("textarea");
+    await expect(secondNew).toBeVisible();
+
+    // Tab from first to second input
+    await firstNew.press("Tab");
+    await expect(secondNew).toBeFocused();
+
+    const secondContent = testContext.prefix("Second quick item");
+    await secondNew.type(secondContent);
+
+    // Commit both by blurring the second (first was committed on blur due to Tab)
+    const saveResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    await secondNew.blur();
+    await saveResponse;
+
+    // Verify both appear in UI
+    await expect(authenticatedPage.getByText(firstContent)).toBeVisible();
+    await expect(authenticatedPage.getByText(secondContent)).toBeVisible();
+
+    // Verify persisted in DB
+    const notes = await testPrisma.note.findMany({
+      where: { boardId: board.id },
+      include: { checklistItems: true },
+    });
+    expect(notes).toHaveLength(1);
+    const items = notes[0].checklistItems;
+    const contents = items.map((i) => i.content);
+    expect(contents).toEqual(expect.arrayContaining([firstContent, secondContent]));
+  });
+});

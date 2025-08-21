@@ -87,6 +87,8 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const [secondNewItemContent, setSecondNewItemContent] = useState("");
+  const [spawnedSecondNewItem, setSpawnedSecondNewItem] = useState(false);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -331,6 +333,24 @@ export function Note({
     }
   };
 
+  const handleCreateSecondNewItem = (content: string) => {
+    if (content.trim()) {
+      handleAddChecklistItem(content.trim());
+      setSecondNewItemContent("");
+      setSpawnedSecondNewItem(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (!spawnedSecondNewItem && newItemContent.trim().length > 0) {
+      setSpawnedSecondNewItem(true);
+    }
+  }, [newItemContent, spawnedSecondNewItem]);
+
+  const showSecondNewItem = spawnedSecondNewItem || secondNewItemContent.trim().length > 0;
+
+  const shouldAutoFocusNewInput = canEdit && (note.checklistItems?.length ?? 0) === 0;
+
   return (
     <div
       className={cn(
@@ -508,31 +528,67 @@ export function Note({
 
             {/* Always-available New Item Input */}
             {canEdit && (
-              <ChecklistItemComponent
-                item={{
-                  id: "new-item",
-                  content: newItemContent,
-                  checked: false,
-                  order: 0,
-                }}
-                onEdit={() => {}}
-                onDelete={() => {
-                  setNewItemContent("");
-                }}
-                isEditing={true}
-                editContent={newItemContent}
-                onEditContentChange={setNewItemContent}
-                onStopEdit={() => {
-                  if (!newItemContent.trim()) {
+              <>
+                <ChecklistItemComponent
+                  item={{
+                    id: "new-item",
+                    content: newItemContent,
+                    checked: false,
+                    order: 0,
+                  }}
+                  onEdit={() => {}}
+                  onDelete={() => {
                     setNewItemContent("");
-                  }
-                }}
-                isNewItem={true}
-                onCreateItem={handleCreateNewItem}
-                readonly={false}
-                showDeleteButton={false}
-                className="gap-3"
-              />
+                  }}
+                  isEditing={true}
+                  editContent={newItemContent}
+                  onEditContentChange={setNewItemContent}
+                  onStopEdit={() => {
+                    if (!newItemContent.trim()) {
+                      setNewItemContent("");
+                    }
+                  }}
+                  isNewItem={true}
+                  onCreateItem={handleCreateNewItem}
+                  readonly={false}
+                  showDeleteButton={false}
+                  className="gap-3"
+                  autoFocus={shouldAutoFocusNewInput}
+                  showCheckbox={true}
+                />
+
+                {showSecondNewItem && (
+                  <ChecklistItemComponent
+                    item={{
+                      id: "new-item-2",
+                      content: secondNewItemContent,
+                      checked: false,
+                      order: 1,
+                    }}
+                    onEdit={() => {}}
+                    onDelete={() => {
+                      setSecondNewItemContent("");
+                      setSpawnedSecondNewItem(false);
+                    }}
+                    isEditing={true}
+                    editContent={secondNewItemContent}
+                    onEditContentChange={setSecondNewItemContent}
+                    onStopEdit={() => {
+                      if (!secondNewItemContent.trim()) {
+                        setSecondNewItemContent("");
+                        setSpawnedSecondNewItem(false);
+                      }
+                    }}
+                    isNewItem={true}
+                    onCreateItem={handleCreateSecondNewItem}
+                    readonly={false}
+                    showDeleteButton={false}
+                    className="gap-3"
+                    autoFocus={false}
+                    showCheckbox={true}
+                  />
+                )}
+              </>
             )}
           </DraggableRoot>
         </div>
