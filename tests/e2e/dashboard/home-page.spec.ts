@@ -1,4 +1,4 @@
-import { test, expect } from "../fixtures/test-helpers";
+import { test, expect } from "../../fixtures/test-helpers";
 
 test.describe("Home Page", () => {
   test("sticky notes demo - should handle all UI interactions correctly", async ({
