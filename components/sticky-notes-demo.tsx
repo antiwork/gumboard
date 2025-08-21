@@ -314,6 +314,21 @@ export function StickyNotesDemo() {
     setNotes(notes.filter((note) => note.id !== noteId));
   };
 
+  const handleCopyNote = (noteToCopy: Note) => {
+    const newNote: Note = {
+      ...noteToCopy,
+      id: `${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      checklistItems:
+        noteToCopy.checklistItems?.map((item, index) => ({
+          ...item,
+          id: `${Date.now()}-${index}`,
+        })) || [],
+    };
+    setNotes([newNote, ...notes]);
+  };
+
   const handleAddNote = () => {
     const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)];
     const randomAuthor = authors[Math.floor(Math.random() * authors.length)];
@@ -366,6 +381,7 @@ export function StickyNotesDemo() {
                     currentUser={{ id: "demo-user", name: "Demo User", email: "demo@example.com" }}
                     onUpdate={handleUpdateNote}
                     onDelete={handleDeleteNote}
+                    onCopy={handleCopyNote}
                     syncDB={false}
                   />
                 </div>
