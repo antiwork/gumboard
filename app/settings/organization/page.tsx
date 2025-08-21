@@ -635,34 +635,34 @@
               </p>
             </div>
 
-          <form onSubmit={handleInviteMember} className="flex space-x-4">
-            <div className="flex-1">
-              <Input
-                type="email"
-                value={inviteEmail}
-                onChange={(e) => setInviteEmail(e.target.value)}
-                placeholder="Enter email address"
-                required
-                disabled={!user?.isAdmin}
-                className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={inviting || !user?.isAdmin}
-              className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
-              title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
-            >
-              <UserPlus className="w-4 h-4 mr-2" />
-              {inviting ? (
-                "Inviting..."
-              ) : (
-                <>
-                  <span className="hidden lg:inline">Send</span>Invite
-                </>
-              )}
-            </Button>
-          </form>
+            <Form {...inviteForm}>
+                <form
+                className="flex items-start space-x-4"
+                onSubmit={inviteForm.handleSubmit(handleInviteMember)}>
+                    <FormField
+                      control={inviteForm.control}
+                      name="email"
+                      render={({field}) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input 
+                              id="invite-team-members"
+                              type="text"
+                              placeholder="Enter email address"
+                              disabled={!user?.isAdmin}
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage className="text-red-500 dark:text-red-400" />
+                        </FormItem>
+                      )}
+                    />
+                    <Button id="invite-member" type="submit" disabled={inviteForm.formState.isSubmitting || !user?.isAdmin}>
+                      <UserPlus className="w-4 h-4 mr-1" />
+                        <span>{inviteForm.formState.isSubmitting ? "Inviting..." : "Send Invite"}</span>
+                    </Button>
+                </form>
+            </Form>
 
             {/* Pending Invites */}
             {invites.length > 0 && (
