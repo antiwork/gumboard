@@ -5,7 +5,8 @@
   "license": "MIT",
   "scripts": {
     "dev": "next dev --turbopack",
-    "build": "prisma migrate deploy && prisma generate && next build",
+    "build": "prisma generate && next build",
+    "build:production": "prisma migrate deploy && prisma generate && next build",
     "start": "next start",
     "lint": "next lint && npm run lint:tsc",
     "lint:tsc": "tsc --noEmit",
