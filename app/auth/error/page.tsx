@@ -39,10 +39,7 @@ function AuthErrorContent() {
           <p className="text-sm text-muted-foreground dark:text-zinc-400">{errorMessage}</p>
         </div>
         <div className="pt-4">
-          <Button
-            asChild
-            className="w-full"
-          >
+          <Button asChild className="w-full">
             <Link href="/auth/signin">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Try again
