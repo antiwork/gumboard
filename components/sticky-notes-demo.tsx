@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Note as NoteComponent } from "@/components/note";
 import type { Note } from "@/components/note";
@@ -305,6 +305,8 @@ const itemVariants = {
 
 export function StickyNotesDemo() {
   const [notes, setNotes] = useState<Note[]>(initialNotes);
+  const [latestNoteId, setLatestNoteId] = useState<string | null>(null);
+  const noteRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
   const handleUpdateNote = (updatedNote: Note) => {
     setNotes(notes.map((note) => (note.id === updatedNote.id ? updatedNote : note)));
@@ -332,8 +334,9 @@ export function StickyNotesDemo() {
   const handleAddNote = () => {
     const randomColor = noteColors[Math.floor(Math.random() * noteColors.length)];
     const randomAuthor = authors[Math.floor(Math.random() * authors.length)];
+    const newNoteId = `${Date.now()}`;
     const newNote: Note = {
-      id: `${Date.now()}`,
+      id: newNoteId,
       color: randomColor,
       archivedAt: null,
       createdAt: new Date().toISOString(),
@@ -347,7 +350,25 @@ export function StickyNotesDemo() {
       checklistItems: [{ id: `${Date.now() + 1}`, content: "New to-do", checked: false, order: 0 }],
     };
     setNotes([newNote, ...notes]);
+    setLatestNoteId(newNoteId);
   };
+
+  // Focus on the second input field (below "New to-do") after a new note is rendered
+  useEffect(() => {
+    if (latestNoteId && noteRefs.current[latestNoteId]) {
+      const noteElement = noteRefs.current[latestNoteId];
+      // Find the second input field (the one below "New to-do")
+      const inputFields = noteElement?.querySelectorAll('textarea[data-testid="checklist-item-input"]');
+      if (inputFields && inputFields.length >= 2) {
+        const secondInputField = inputFields[1] as HTMLTextAreaElement;
+        setTimeout(() => {
+          secondInputField.focus();
+          secondInputField.setSelectionRange(secondInputField.value.length, secondInputField.value.length);
+        }, 100);
+      }
+      setLatestNoteId(null);
+    }
+  }, [latestNoteId, notes]);
 
   return (
     <div className="relative">
@@ -373,6 +394,9 @@ export function StickyNotesDemo() {
                 exit="exit"
                 layout="position"
                 layoutId={note.id}
+                ref={(el) => {
+                  noteRefs.current[note.id] = el;
+                }}
               >
                 <div className="pb-4">
                   <NoteComponent

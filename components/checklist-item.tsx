@@ -176,6 +176,7 @@ export function ChecklistItem({
             previousContentRef.current = currentContent;
           }
         }}
+        data-testid="checklist-item-input"
       />
 
       {showDeleteButton && !readonly && (
