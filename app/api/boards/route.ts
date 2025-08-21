@@ -71,7 +71,7 @@ export async function GET() {
       lastActivityAt: board.notes[0]?.updatedAt ?? board.updatedAt,
     }));
 
-    return NextResponse.json({ boards: boardsWithActivity });
+    return NextResponse.json({ boards: boardsWithLastActivityTimestamp });
   } catch (error) {
     console.error("Error fetching boards:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
