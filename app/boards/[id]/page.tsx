@@ -1121,7 +1121,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               onClick={() => setDeleteConfirmDialog(true)}
               variant="destructive"
               className="mr-auto flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-              >
+            >
               <Trash2 className="w-4 h-4" />
               <span className="hidden lg:inline">
                 Delete Board
