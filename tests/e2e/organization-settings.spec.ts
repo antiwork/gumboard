@@ -179,8 +179,11 @@ test.describe("Organization Settings", () => {
     );
   });
 
-  test("should validate organization name and show error for invalid name" , async ({authenticatedPage, testContext, testPrisma}) => {
-
+  test("should validate organization name and show error for invalid name", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     // Update organization to have an existing name
     await testPrisma.organization.update({
       where: { id: testContext.organizationId },
@@ -200,8 +203,10 @@ test.describe("Organization Settings", () => {
     await organizationNameInput.fill("");
 
     // Click save button for Slack integration
-    const organizationSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
-    await organizationSaveButton .click();
+    const organizationSaveButton = authenticatedPage
+      .locator('button:has-text("Save changes")')
+      .nth(1);
+    await organizationSaveButton.click();
 
     // Expect error message to appear
     await expect(authenticatedPage.locator("text=Organization name is required")).toBeVisible();
@@ -209,20 +214,24 @@ test.describe("Organization Settings", () => {
     // Verify the organization wasn't updated in the database
     const organizationName = await testPrisma.organization.findUnique({
       where: { id: testContext.organizationId },
-    })
+    });
 
-    expect(organizationName?.name).toBe("Test Organization")
+    expect(organizationName?.name).toBe("Test Organization");
   });
 
-  test("should allow admin to update the organization name", async ({authenticatedPage, testContext, testPrisma}) => {
-    const existingOrganizationName = testContext.prefix("Test Organization")
+  test("should allow admin to update the organization name", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const existingOrganizationName = testContext.prefix("Test Organization");
     testPrisma.organization.update({
       where: { id: testContext.organizationId },
       data: {
         name: existingOrganizationName,
         slackWebhookUrl: null,
-      }
-    })
+      },
+    });
 
     await authenticatedPage.goto("/settings/organization");
 
@@ -233,11 +242,13 @@ test.describe("Organization Settings", () => {
     const organizationNameInput = authenticatedPage.locator("#organizationName");
 
     // Update the organization name
-    const updatedOrganizationName = testContext.prefix("Updated Test Organization")
+    const updatedOrganizationName = testContext.prefix("Updated Test Organization");
     await organizationNameInput.fill(updatedOrganizationName);
 
     // Click save button for organization name
-    const organizationSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
+    const organizationSaveButton = authenticatedPage
+      .locator('button:has-text("Save changes")')
+      .nth(1);
 
     // Wait for the save request to complete
     const saveResponse = authenticatedPage.waitForResponse(
@@ -253,10 +264,12 @@ test.describe("Organization Settings", () => {
       where: { id: testContext.organizationId },
     });
     expect(org?.name).toBe(updatedOrganizationName);
-  })
+  });
 
-  test("should validate the invite team members form and show error for invalid email", async ({authenticatedPage, testPrisma}) => {
-
+  test("should validate the invite team members form and show error for invalid email", async ({
+    authenticatedPage,
+    testPrisma,
+  }) => {
     await authenticatedPage.goto("/settings/organization");
 
     // Wait for page to load
@@ -267,22 +280,21 @@ test.describe("Organization Settings", () => {
     await inviteTeamMembersInput.fill("invalid-email");
 
     // Click save button for Slack integration
-    const inviteTeamMemberButton = authenticatedPage.locator('#invite-member');
+    const inviteTeamMemberButton = authenticatedPage.locator("#invite-member");
     await inviteTeamMemberButton.click();
 
     await expect(authenticatedPage.locator("text=Invalid email address")).toBeVisible();
 
     const invite = await testPrisma.organizationInvite.findFirst({
       where: {
-        email: "invalid-email"
-      }
-    })
+        email: "invalid-email",
+      },
+    });
 
     expect(invite).toBeNull();
-  })
+  });
 
-  test("should allow sending invites", async ({authenticatedPage, testPrisma}) => {
-
+  test("should allow sending invites", async ({ authenticatedPage, testPrisma }) => {
     await authenticatedPage.goto("/settings/organization");
 
     // Wait for page to load
@@ -293,11 +305,13 @@ test.describe("Organization Settings", () => {
     await inviteTeamMembersInput.fill("test@example.com");
 
     // Click save button for Slack integration
-    const inviteTeamMemberButton = authenticatedPage.locator('#invite-member');
+    const inviteTeamMemberButton = authenticatedPage.locator("#invite-member");
 
     const saveResponse = authenticatedPage.waitForResponse(
       (resp) =>
-        resp.url().includes("/api/organization/invite") && resp.request().method() === "POST" && resp.ok()
+        resp.url().includes("/api/organization/invite") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
     );
 
     await inviteTeamMemberButton.click();
@@ -305,19 +319,17 @@ test.describe("Organization Settings", () => {
 
     const invite = await testPrisma.organizationInvite.findFirst({
       where: {
-        email: "test@example.com"
-      }
-    })
+        email: "test@example.com",
+      },
+    });
 
     expect(invite).not.toBeNull();
 
     await expect(authenticatedPage.locator("text=Invite sent successfully")).toBeVisible();
     await expect(authenticatedPage.locator("text=test@example.com")).toBeVisible();
+  });
 
-  })
-  
-  test("should allow cancelling pending invites", async ({authenticatedPage, testPrisma}) => {
-
+  test("should allow cancelling pending invites", async ({ authenticatedPage, testPrisma }) => {
     await authenticatedPage.goto("/settings/organization");
 
     // Wait for page to load
@@ -328,11 +340,13 @@ test.describe("Organization Settings", () => {
     await inviteTeamMembersInput.fill("test@example.com");
 
     // Click save button for Slack integration
-    const inviteTeamMemberButton = authenticatedPage.locator('#invite-member');
+    const inviteTeamMemberButton = authenticatedPage.locator("#invite-member");
 
     const saveResponse = authenticatedPage.waitForResponse(
       (resp) =>
-        resp.url().includes("/api/organization/invite") && resp.request().method() === "POST" && resp.ok()
+        resp.url().includes("/api/organization/invite") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
     );
 
     await inviteTeamMemberButton.click();
@@ -340,60 +354,68 @@ test.describe("Organization Settings", () => {
 
     const invite = await testPrisma.organizationInvite.findFirst({
       where: {
-        email: "test@example.com"
-      }
-    })
+        email: "test@example.com",
+      },
+    });
 
     expect(invite).not.toBeNull();
 
     await expect(authenticatedPage.locator("text=Invite sent successfully")).toBeVisible();
 
-    const pendingInvite = authenticatedPage.locator("text=test@example.com")
+    const pendingInvite = authenticatedPage.locator("text=test@example.com");
     await expect(pendingInvite).toBeVisible();
 
-    const cancelInviteButton = authenticatedPage.locator('#cancel-invite');
+    const cancelInviteButton = authenticatedPage.locator("#cancel-invite");
     await cancelInviteButton.click();
 
     await expect(pendingInvite).not.toBeVisible();
-  })
+  });
 
-  test("should validate self serve invite link inputs", async ({ authenticatedPage}) => {
-      
+  test("should validate self serve invite link inputs", async ({ authenticatedPage }) => {
     await authenticatedPage.goto("/settings/organization");
 
     // Wait for page to load
     await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
-    const selfServeInviteButton = authenticatedPage.locator("#create-self-serve-invite")
+    const selfServeInviteButton = authenticatedPage.locator("#create-self-serve-invite");
     await expect(selfServeInviteButton).toBeVisible();
     await selfServeInviteButton.click();
 
     await expect(authenticatedPage.locator("text=Invite name is required")).toBeVisible();
-  })
+  });
 
-  test("should allow to create self serve invite links", async ({ authenticatedPage, testContext, testPrisma}) => {
-      
+  test("should allow to create self serve invite links", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     await authenticatedPage.goto("/settings/organization");
 
     await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
-    const selfServeInviteNameInput = authenticatedPage.locator("#self-serve-invite-name-input")
-    const selfServeInviteExpiresInput = authenticatedPage.locator("#self-serve-invite-expires-input")
-    const selfServeInviteUsageLimitInput = authenticatedPage.locator("#self-serve-invite-usage-limit-input")
+    const selfServeInviteNameInput = authenticatedPage.locator("#self-serve-invite-name-input");
+    const selfServeInviteExpiresInput = authenticatedPage.locator(
+      "#self-serve-invite-expires-input"
+    );
+    const selfServeInviteUsageLimitInput = authenticatedPage.locator(
+      "#self-serve-invite-usage-limit-input"
+    );
     await expect(selfServeInviteNameInput).toBeVisible();
     await expect(selfServeInviteExpiresInput).toBeVisible();
     await expect(selfServeInviteUsageLimitInput).toBeVisible();
 
     const inviteName = testContext.prefix("Test Invite");
     await selfServeInviteNameInput.fill(inviteName);
-    
-    await selfServeInviteExpiresInput.fill(new Date().toISOString().split('T')[0]);
+
+    await selfServeInviteExpiresInput.fill(new Date().toISOString().split("T")[0]);
     await selfServeInviteUsageLimitInput.fill("10");
 
-    const selfServeInviteButton = authenticatedPage.locator("#create-self-serve-invite")
+    const selfServeInviteButton = authenticatedPage.locator("#create-self-serve-invite");
     await expect(selfServeInviteButton).toBeVisible();
 
     const selfServeInviteResponse = authenticatedPage.waitForResponse(
       (resp) =>
-        resp.url().includes("/api/organization/self-serve-invites") && resp.request().method() === "POST" && resp.ok()
+        resp.url().includes("/api/organization/self-serve-invites") &&
+        resp.request().method() === "POST" &&
+        resp.ok()
     );
 
     await selfServeInviteButton.click();
@@ -404,12 +426,11 @@ test.describe("Organization Settings", () => {
 
     const invite = await testPrisma.organizationSelfServeInvite.findFirst({
       where: {
-        name: inviteName
-      }
-    })
+        name: inviteName,
+      },
+    });
     console.log(invite);
-    
-    expect(invite).not.toBeNull();
 
-  })
-})
+    expect(invite).not.toBeNull();
+  });
+});
