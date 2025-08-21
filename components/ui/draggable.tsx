@@ -150,6 +150,7 @@ export function DraggableItem({
       style={style}
       className={combinedClassName}
       {...(disabled ? {} : { ...attributes, ...listeners })}
+      aria-describedby={`dnd-describedby-${id}`}
       {...props}
     >
       {children}
