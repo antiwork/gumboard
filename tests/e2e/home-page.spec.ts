@@ -80,15 +80,35 @@ test.describe("Home Page", () => {
     );
     await authenticatedPage.getByRole("button", { name: "Add Note" }).click();
     await createNoteResponse;
-    // New notes are created empty, verify we have one more new item input
+    // New notes are created with "New to-do", verify we have one more new item input
     await expect(authenticatedPage.getByTestId("new-item")).toHaveCount(initialNotes + 1);
     initialNotes += 1;
 
-    // Verify new note was created in database
+    // Verify "New to-do" is auto-selected in the new note
+    await expect(authenticatedPage.getByText("New to-do")).toBeVisible();
+
+    // Verify new note was created in database with "New to-do"
     const notesAfterAdd = await testPrisma.note.count({
       where: { boardId: demoBoard.id, deletedAt: null },
     });
     expect(notesAfterAdd).toBe(3); // 2 original + 1 new
+
+    // Verify the new note has "New to-do" item
+    const newNote = await testPrisma.note.findFirst({
+      where: { 
+        boardId: demoBoard.id, 
+        deletedAt: null,
+        NOT: {
+          id: { in: [note1.id, note2.id] }
+        }
+      },
+      include: {
+        checklistItems: true,
+      },
+    });
+    expect(newNote).toBeTruthy();
+    expect(newNote?.checklistItems).toHaveLength(1);
+    expect(newNote?.checklistItems[0].content).toBe("New to-do");
 
     // Test 2: Toggle checklist item (check/uncheck)
     const initialCheckedCount = await authenticatedPage

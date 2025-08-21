@@ -340,7 +340,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            checklistItems: [],
+            checklistItems: [{ content: "New to-do", checked: false, order: 0 }],
             ...(isAllNotesView && { boardId: targetBoardId }),
           }),
         }
@@ -349,7 +349,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
-        setAddingChecklistItem(note.id);
         if (searchTerm.trim() || dateRange.startDate || dateRange.endDate || selectedAuthor) {
           setSearchTerm("");
           setDebouncedSearchTerm("");

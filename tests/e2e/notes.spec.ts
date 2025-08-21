@@ -28,13 +28,14 @@ test.describe("Note Management", () => {
     await authenticatedPage.click('button:has-text("Add Note")');
     await createNoteResponse;
 
-    // Since the note is empty, it should show the new-item input automatically
-    const testItemContent = testContext.prefix("Test checklist item");
+    // Verify "New to-do" is auto-selected
+    await expect(authenticatedPage.getByText("New to-do")).toBeVisible();
 
-    // Look for any textarea in the note (the initial empty item input)
     const initialTextarea = authenticatedPage.locator("textarea").first();
     await expect(initialTextarea).toBeVisible({ timeout: 10000 });
+    await expect(initialTextarea).toHaveValue("New to-do");
 
+    const testItemContent = testContext.prefix("Test checklist item");
     await initialTextarea.fill(testItemContent);
 
     // Use Tab key to move focus away and trigger blur
@@ -273,7 +274,12 @@ test.describe("Note Management", () => {
     await authenticatedPage.click('button:has-text("Add Note")');
     await createNoteResponse;
 
+    // Verify "New to-do" is auto-selected
+    await expect(authenticatedPage.getByText("New to-do")).toBeVisible();
+
     const initialInput = authenticatedPage.locator("textarea.bg-transparent").first();
+    await expect(initialInput).toHaveValue("New to-do");
+    
     const firstItemContent = testContext.prefix("First item");
     const addFirstItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -337,7 +343,9 @@ test.describe("Note Management", () => {
     expect(createdNote).toBeTruthy();
     expect(createdNote?.boardId).toBe(board.id);
     expect(createdNote?.color).toMatch(/^#[0-9a-f]{6}$/i); // Valid hex color
-    expect(createdNote?.checklistItems).toHaveLength(0); // Notes start empty
+    expect(createdNote?.checklistItems).toHaveLength(1); // Notes start with "New to-do"
+    expect(createdNote?.checklistItems[0].content).toBe("New to-do");
+    expect(createdNote?.checklistItems[0].checked).toBe(false);
   });
 
   test("should toggle checklist item completion", async ({
@@ -1388,5 +1396,139 @@ test.describe("Note Management", () => {
 
     await archivedNote.hover();
     await expect(archivedNote.getByRole("button", { name: "Copy note" })).not.toBeVisible();
+  });
+
+  test("should auto-select 'New to-do' when creating notes", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Auto-select Test Board"),
+        description: testContext.prefix("Test board for auto-select"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    const createNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
+    );
+    await authenticatedPage.click('button:has-text("Add Note")');
+    await createNoteResponse;
+
+    // Verify "New to-do" is auto-selected
+    await expect(authenticatedPage.getByText("New to-do")).toBeVisible();
+    
+    // Verify the textarea contains "New to-do" and is ready for editing
+    const newTodoInput = authenticatedPage.locator("textarea").first();
+    await expect(newTodoInput).toHaveValue("New to-do");
+
+    // Verify in database
+    const createdNote = await testPrisma.note.findFirst({
+      where: {
+        boardId: board.id,
+        createdBy: testContext.userId,
+      },
+      include: {
+        checklistItems: true,
+      },
+    });
+
+    expect(createdNote).toBeTruthy();
+    expect(createdNote?.checklistItems).toHaveLength(1);
+    expect(createdNote?.checklistItems[0].content).toBe("New to-do");
+    expect(createdNote?.checklistItems[0].checked).toBe(false);
+  });
+
+  test("should support continuous checklist item workflow with tabbing", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Continuous Workflow Test Board"),
+        description: testContext.prefix("Test board for continuous workflow"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    const createNoteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        resp.request().method() === "POST" &&
+        resp.status() === 201
+    );
+    await authenticatedPage.click('button:has-text("Add Note")');
+    await createNoteResponse;
+
+    // Verify "New to-do" is auto-selected
+    await expect(authenticatedPage.getByText("New to-do")).toBeVisible();
+
+    const firstInput = authenticatedPage.locator("textarea").first();
+    const firstItemContent = testContext.prefix("First task item");
+    
+    const addFirstItemResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    
+    await firstInput.fill(firstItemContent);
+    await firstInput.press("Tab"); // This should create the item and move to next
+    await addFirstItemResponse;
+
+    // Verify first item was created and new empty input is available
+    await expect(authenticatedPage.getByText(firstItemContent)).toBeVisible();
+    
+    // Verify new empty input is available for continuous workflow
+    const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
+    await expect(newItemInput).toBeVisible();
+    
+    const secondItemContent = testContext.prefix("Second task item");
+    const addSecondItemResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+    
+    await newItemInput.fill(secondItemContent);
+    await newItemInput.press("Tab");
+    await addSecondItemResponse;
+    
+    // Verify both items exist and new input is still available
+    await expect(authenticatedPage.getByText(firstItemContent)).toBeVisible();
+    await expect(authenticatedPage.getByText(secondItemContent)).toBeVisible();
+    await expect(authenticatedPage.getByTestId("new-item")).toBeVisible();
+
+    // Verify in database
+    const updatedNote = await testPrisma.note.findFirst({
+      where: {
+        boardId: board.id,
+        createdBy: testContext.userId,
+      },
+      include: {
+        checklistItems: {
+          orderBy: { order: "asc" },
+        },
+      },
+    });
+
+    expect(updatedNote).toBeTruthy();
+    expect(updatedNote?.checklistItems).toHaveLength(2);
+    expect(updatedNote?.checklistItems[0].content).toBe(firstItemContent);
+    expect(updatedNote?.checklistItems[1].content).toBe(secondItemContent);
   });
 });
