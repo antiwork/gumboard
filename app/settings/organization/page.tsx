@@ -32,6 +32,11 @@ import { useUser } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "@/components/ui/form";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { toast } from "sonner";
 
 interface OrganizationInvite {
   id: string;
@@ -55,6 +60,10 @@ interface SelfServeInvite {
   };
 }
 
+const inviteFormSchema = z.object({
+  email: z.string().email("Invalid email address"),
+})
+
 export default function OrganizationSettingsPage() {
   const { user, loading, refreshUser } = useUser();
   const router = useRouter();
@@ -63,9 +72,7 @@ export default function OrganizationSettingsPage() {
   const [originalOrgName, setOriginalOrgName] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
-  const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
-  const [inviting, setInviting] = useState(false);
   const [selfServeInvites, setSelfServeInvites] = useState<SelfServeInvite[]>([]);
   const [newSelfServeInvite, setNewSelfServeInvite] = useState({
     name: "",
@@ -89,6 +96,11 @@ export default function OrganizationSettingsPage() {
     variant?: "default" | "success" | "error";
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
+
+  const inviteForm = useForm<z.infer<typeof inviteFormSchema>>({
+     resolver: zodResolver(inviteFormSchema),
+     defaultValues: { email: "" }
+  })
 
   useEffect(() => {
     if (user?.organization) {
@@ -187,44 +199,76 @@ export default function OrganizationSettingsPage() {
     }
   };
 
-  const handleInviteMember = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inviteEmail.trim()) return;
+  // const handleInviteMember = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   if (!inviteEmail.trim()) return;
 
-    setInviting(true);
+  //   setInviting(true);
+  //   try {
+  //     const response = await fetch("/api/organization/invite", {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         email: inviteEmail,
+  //       }),
+  //     });
+
+  //     if (response.ok) {
+  //       setInviteEmail("");
+  //       fetchInvites();
+  //     } else {
+  //       const errorData = await response.json();
+  //       setErrorDialog({
+  //         open: true,
+  //         title: "Failed to send invite",
+  //         description: errorData.error || "Failed to send invite",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error inviting member:", error);
+  //     setErrorDialog({
+  //       open: true,
+  //       title: "Failed to send invite",
+  //       description: "Failed to send invite",
+  //     });
+  //   } finally {
+  //     setInviting(false);
+  //   }
+  // };
+
+  const handleInviteMember = async (values: z.infer<typeof inviteFormSchema>) => {
+    if (!user?.isAdmin) return
+
     try {
       const response = await fetch("/api/organization/invite", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: inviteEmail,
-        }),
-      });
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: values.email }),
+      })
 
       if (response.ok) {
-        setInviteEmail("");
-        fetchInvites();
+        inviteForm.reset()
+        fetchInvites()
+        toast.success("Invite sent successfully")
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json()
         setErrorDialog({
           open: true,
           title: "Failed to send invite",
           description: errorData.error || "Failed to send invite",
-        });
+        })
       }
     } catch (error) {
-      console.error("Error inviting member:", error);
+      console.error("Error inviting member:", error)
       setErrorDialog({
         open: true,
         title: "Failed to send invite",
-        description: "Failed to send invite",
-      });
-    } finally {
-      setInviting(false);
+        description: "Something went wrong while sending the invite",
+      })
     }
-  };
+  }
 
   const handleRemoveMember = (memberId: string, memberName: string) => {
     setRemoveMemberDialog({
@@ -629,7 +673,36 @@ export default function OrganizationSettingsPage() {
             </p>
           </div>
 
-          <form onSubmit={handleInviteMember} className="flex space-x-4">
+          <Form {...inviteForm}>
+              <form
+              className="flex items-start space-x-4"
+               onSubmit={inviteForm.handleSubmit(handleInviteMember)}>
+                  <FormField
+                    control={inviteForm.control}
+                    name="email"
+                    render={({field}) => (
+                      <FormItem className="flex-1">
+                        {/* <FormLabel>Email</FormLabel> */}
+                        <FormControl>
+                          <Input 
+                            type="email"
+                            placeholder="Enter email address"
+                            disabled={!user?.isAdmin}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-red-500 dark:text-red-400" />
+                      </FormItem>
+                    )}
+                  />
+                  <Button type="submit" disabled={inviteForm.formState.isSubmitting || !user?.isAdmin}>
+                     <UserPlus className="w-4 h-4 mr-1" />
+                      <span>{inviteForm.formState.isSubmitting ? "Inviting..." : "Send Invite"}</span>
+                  </Button>
+              </form>
+          </Form>
+
+          {/* <form onSubmit={handleInviteMember} className="flex space-x-4">
             <div className="flex-1">
               <Input
                 type="email"
@@ -656,7 +729,7 @@ export default function OrganizationSettingsPage() {
                 </>
               )}
             </Button>
-          </form>
+          </form> */}
 
           {/* Pending Invites */}
           {invites.length > 0 && (
