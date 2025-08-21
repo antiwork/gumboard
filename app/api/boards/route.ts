@@ -49,15 +49,6 @@ export async function GET() {
           },
           select: {
             updatedAt: true,
-            checklistItems: {
-              select: {
-                updatedAt: true,
-              },
-              orderBy: {
-                updatedAt: "desc",
-              },
-              take: 1,
-            },
           },
           orderBy: {
             updatedAt: "desc",
@@ -68,42 +59,17 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    const boardsWithActivity = boards.map((board) => {
-      let lastActivityAt = board.updatedAt;
-
-      if (board.notes.length) {
-        const latestNote = board.notes[0];
-        const noteUpdatedAt = new Date(latestNote.updatedAt);
-
-        if (latestNote.checklistItems.length) {
-          const latestChecklistItem = latestNote.checklistItems[0];
-          const checklistUpdatedAt = new Date(latestChecklistItem.updatedAt);
-
-          lastActivityAt =
-            checklistUpdatedAt > noteUpdatedAt
-              ? latestChecklistItem.updatedAt
-              : latestNote.updatedAt;
-        } else {
-          lastActivityAt = latestNote.updatedAt;
-        }
-
-        if (new Date(lastActivityAt) < new Date(board.updatedAt)) {
-          lastActivityAt = board.updatedAt;
-        }
-      }
-
-      return {
-        id: board.id,
-        name: board.name,
-        description: board.description,
-        isPublic: board.isPublic,
-        createdBy: board.createdBy,
-        createdAt: board.createdAt,
-        updatedAt: board.updatedAt,
-        _count: board._count,
-        lastActivityAt,
-      };
-    });
+    const boardsWithActivity = boards.map((board) => ({
+      id: board.id,
+      name: board.name,
+      description: board.description,
+      isPublic: board.isPublic,
+      createdBy: board.createdBy,
+      createdAt: board.createdAt,
+      updatedAt: board.updatedAt,
+      _count: board._count,
+      lastActivityAt: board.notes[0]?.updatedAt ?? board.updatedAt,
+    }));
 
     return NextResponse.json({ boards: boardsWithActivity });
   } catch (error) {
