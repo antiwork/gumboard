@@ -762,10 +762,10 @@ export default function OrganizationSettingsPage() {
             <Button
               type="submit"
               disabled={creating || !user?.isAdmin}
-              className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
+              className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100 flex items-center gap-2"
               title={!user?.isAdmin ? "Only admins can create invite links" : undefined}
             >
-              <Link className="w-4 h-4 mr-2" />
+              <Link className="w-4 h-4" />
               {creating ? "Creating..." : "Create Invite Link"}
             </Button>
           </form>
