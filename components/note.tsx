@@ -13,7 +13,6 @@ import {
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 // Core domain types
@@ -85,8 +84,6 @@ export function Note({
   syncDB = true,
   style,
 }: NoteProps) {
-  const { resolvedTheme } = useTheme();
-
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
@@ -352,10 +349,7 @@ export function Note({
       data-testid="note-card"
       onFocusCapture={() => {}}
       onBlurCapture={() => {}}
-      style={{
-        backgroundColor: resolvedTheme === "dark" ? undefined : note.color,
-        ...style,
-      }}
+      style={style}
     >
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex items-center space-x-2">
@@ -388,8 +382,8 @@ export function Note({
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          {canEdit && (
-            <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            {canEdit && !note.archivedAt && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -409,6 +403,8 @@ export function Note({
                   <p>Copy note</p>
                 </TooltipContent>
               </Tooltip>
+            )}
+            {canEdit && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -428,8 +424,8 @@ export function Note({
                   <p>Delete note</p>
                 </TooltipContent>
               </Tooltip>
-            </div>
-          )}
+            )}
+          </div>
           {canEdit && onArchive && (
             <div className="flex items-center">
               <Tooltip>
