@@ -275,7 +275,7 @@ test.describe("Organization Settings", () => {
     // Wait for page to load
     await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
 
-     // verify invite input
+    // verify invite input
     const inviteTeamMembersInput = authenticatedPage.locator("#invite-team-members");
     await inviteTeamMembersInput.fill("invalid-email");
 

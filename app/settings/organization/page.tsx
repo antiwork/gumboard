@@ -66,25 +66,24 @@ interface SelfServeInvite {
   };
 }
 
-  const organizationSettingFormSchema = z.object({
-    name: z
-      .string().min(1, "Organization name is required"),
-    
-    slackWebhookUrl:  z.union([
-        z.literal(""), // allow empty string
-        z.string().regex(SLACK_WEBHOOK_REGEX, "Invalid Slack webhook URL"),
-      ])
-  })
+const organizationSettingFormSchema = z.object({
+  name: z.string().min(1, "Organization name is required"),
+
+  slackWebhookUrl: z.union([
+    z.literal(""), // allow empty string
+    z.string().regex(SLACK_WEBHOOK_REGEX, "Invalid Slack webhook URL"),
+  ]),
+});
 
 const inviteFormSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
-  const selfServeInviteFormSchema = z.object({
-    name: z.string().min(1, "Invite name is required"),
-    expiresAt: z.string().optional(),
-    usageLimit: z.coerce.number().min(1).optional(),
-  })
+const selfServeInviteFormSchema = z.object({
+  name: z.string().min(1, "Invite name is required"),
+  expiresAt: z.string().optional(),
+  usageLimit: z.coerce.number().min(1).optional(),
+});
 
 export default function OrganizationSettingsPage() {
   const { user, loading, refreshUser } = useUser();
