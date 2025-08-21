@@ -43,10 +43,6 @@ export async function GET() {
           },
         },
         notes: {
-          where: {
-            deletedAt: null,
-            archivedAt: null,
-          },
           select: {
             updatedAt: true,
           },
@@ -60,14 +56,7 @@ export async function GET() {
     });
 
     const boardsWithLastActivityTimestamp = boards.map((board) => ({
-      id: board.id,
-      name: board.name,
-      description: board.description,
-      isPublic: board.isPublic,
-      createdBy: board.createdBy,
-      createdAt: board.createdAt,
-      updatedAt: board.updatedAt,
-      _count: board._count,
+      ...board,
       lastActivityAt: board.notes[0]?.updatedAt ?? board.updatedAt,
     }));
 
