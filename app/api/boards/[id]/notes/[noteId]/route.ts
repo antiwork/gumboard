@@ -309,11 +309,6 @@ export async function DELETE(
       where: { id: noteId },
       data: {
         deletedAt: new Date(),
-        board: {
-          update: {
-            updatedAt: new Date(),
-          },
-        },
       },
     });
 
