@@ -341,10 +341,7 @@ export function Note({
         className
       )}
       data-testid="note-card"
-      style={{
-        backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-        ...style,
-      }}
+      style={style}
     >
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex items-center space-x-2">
