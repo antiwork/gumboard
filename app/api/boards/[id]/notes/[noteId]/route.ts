@@ -175,6 +175,7 @@ export async function PUT(
         data: {
           ...(color !== undefined && { color }),
           ...(archivedAt !== undefined && { archivedAt }),
+          updatedAt: new Date(),
         },
         include: {
           user: { select: { id: true, name: true, email: true, image: true } },
@@ -308,6 +309,11 @@ export async function DELETE(
       where: { id: noteId },
       data: {
         deletedAt: new Date(),
+        board: {
+          update: {
+            updatedAt: new Date(),
+          },
+        },
       },
     });
 

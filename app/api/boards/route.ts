@@ -42,11 +42,36 @@ export async function GET() {
             },
           },
         },
+        notes: {
+          where: {
+            deletedAt: null,
+            archivedAt: null,
+          },
+          select: {
+            updatedAt: true,
+          },
+          orderBy: {
+            updatedAt: "desc",
+          },
+          take: 1,
+        },
       },
       orderBy: { createdAt: "desc" },
     });
 
-    return NextResponse.json({ boards });
+    const boardsWithLastActivityTimestamp = boards.map((board) => ({
+      id: board.id,
+      name: board.name,
+      description: board.description,
+      isPublic: board.isPublic,
+      createdBy: board.createdBy,
+      createdAt: board.createdAt,
+      updatedAt: board.updatedAt,
+      _count: board._count,
+      lastActivityAt: board.notes[0]?.updatedAt ?? board.updatedAt,
+    }));
+
+    return NextResponse.json({ boards: boardsWithLastActivityTimestamp });
   } catch (error) {
     console.error("Error fetching boards:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -63,7 +88,7 @@ export async function POST(request: NextRequest) {
 
     const { name, description, isPublic } = await request.json();
 
-    if (!name || typeof name !== "string" || name.trim().length === 0) {
+    if (!name || typeof name !== "string" || !name.trim()) {
       return NextResponse.json(
         { error: "Board name is required and cannot be empty or only whitespace" },
         { status: 400 }
@@ -88,7 +113,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: trimmedName,
         description,
-        isPublic: Boolean(isPublic || false),
+        isPublic: Boolean(isPublic),
         organizationId: user.organizationId,
         createdBy: session.user.id,
       },
