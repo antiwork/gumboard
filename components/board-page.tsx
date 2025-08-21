@@ -11,6 +11,7 @@ import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
+import { useBoardColumnMeta } from "@/lib/hooks";
 
 import {
   AlertDialog,
@@ -28,11 +29,9 @@ import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
 import { useUser } from "@/app/contexts/UserContext";
 import {
-  getResponsiveConfig,
   getUniqueAuthors,
-  calculateGridLayout,
-  calculateMobileLayout,
   filterAndSortNotes,
+  getBoardColumns,
 } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
 
@@ -45,6 +44,7 @@ interface BoardPageProps {
 
 export default function BoardPage({ params }: BoardPageProps) {
   const { isPublic } = params;
+  const columnMeta = useBoardColumnMeta();
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
@@ -275,23 +275,9 @@ export default function BoardPage({ params }: BoardPageProps) {
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user, isPublic]
   );
 
-  const layoutNotes = useMemo(
-    () =>
-      isMobile
-        ? calculateMobileLayout(filteredNotes, isPublic ? null : addingChecklistItem)
-        : calculateGridLayout(filteredNotes, isPublic ? null : addingChecklistItem),
-    [isMobile, filteredNotes, addingChecklistItem, isPublic]
-  );
-
-  const boardHeight = useMemo(() => {
-    if (layoutNotes.length === 0) {
-      return "calc(100vh - 64px)";
-    }
-    const maxBottom = Math.max(...layoutNotes.map((note) => note.y + note.height));
-    const minHeight = typeof window !== "undefined" && window.innerWidth < 768 ? 500 : 600;
-    const calculatedHeight = Math.max(minHeight, maxBottom + 100);
-    return `${calculatedHeight}px`;
-  }, [layoutNotes]);
+  const columnsData = useMemo(() => {
+    return getBoardColumns(columnMeta.count, filteredNotes);
+  }, [columnMeta, filteredNotes]);
 
   const fetchBoardData = async () => {
     try {
@@ -727,7 +713,7 @@ export default function BoardPage({ params }: BoardPageProps) {
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
+  <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
         <div className="mx-4 flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
           <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center w-full sm:w-auto">
@@ -777,19 +763,23 @@ export default function BoardPage({ params }: BoardPageProps) {
                 {showBoardDropdown && (
                   <div className="fixed sm:absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
                     <div className="p-2 flex flex-col gap-1">
+                      {/* Boards */}
+                    <div className=" max-h-50 overflow-y-auto">
                       {allBoards.map((b) => (
                         <Link
                           key={b.id}
                           href={`/boards/${b.id}`}
-                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${b.id === boardId
+                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                            b.id === boardId
                               ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
                               : "text-foreground dark:text-zinc-100"
-                            }`}
+                          }`}
                           onClick={() => setShowBoardDropdown(false)}
                         >
                           <div>{b.name}</div>
                         </Link>
                       ))}
+                    </div>
 
                       {allBoards.length > 0 && (
                         <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
@@ -937,74 +927,35 @@ export default function BoardPage({ params }: BoardPageProps) {
         </div>
       </div>
 
+
+      {/* Board Area */}
       <div
         ref={boardRef}
-        className="relative w-full"
-        style={{
-          height: boardHeight,
-          minHeight: "calc(100vh - 64px)",
-        }}
+        className="relative w-full min-h-[calc(100vh-236px)] sm:min-h-[calc(100vh-64px)] p-3 md:p-5"
       >
-        <div className="relative w-full h-full">
-          {layoutNotes.map((note) => (
-            <NoteCard
-              key={note.id}
-              note={note as Note}
-              currentUser={isPublic ? undefined : (user as User)}
-              readonly={isPublic}
-              onUpdate={!isPublic ? handleUpdateNoteFromComponent : undefined}
-              onDelete={!isPublic ? handleDeleteNote : undefined}
-              onArchive={!isPublic && boardId !== "archive" ? handleArchiveNote : undefined}
-              onUnarchive={!isPublic && boardId === "archive" ? handleUnarchiveNote : undefined}
-              onCopy={!isPublic ? handleCopyNote : undefined}
-              showBoardName={boardId === "all-notes" || boardId === "archive"}
-              className="shadow-md shadow-black/10"
-              style={{
-                position: "absolute",
-                left: note.x,
-                top: note.y,
-                width: note.width,
-                height: note.height,
-                padding: `${getResponsiveConfig().notePadding}px`,
-                backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-              }}
-            />
+        <div className={`flex gap-${columnMeta.gap}`}>
+          {columnsData.map((column, index) => (
+            <div key={index} className="flex-1 flex flex-col gap-4">
+              {column.map((note) => (
+                <NoteCard
+                  key={note.id}
+                  note={note}
+                  currentUser={user as User}
+                  onUpdate={handleUpdateNoteFromComponent}
+                  onDelete={handleDeleteNote}
+                  onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                  onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                  onCopy={handleCopyNote}
+                  showBoardName={boardId === "all-notes" || boardId === "archive"}
+                  className="shadow-md shadow-black/10 p-4"
+                  style={{
+                    backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                  }}
+                />
+              ))}
+            </div>
           ))}
         </div>
-
-        {filteredNotes.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                No notes found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                {searchTerm || selectedAuthor || dateRange.startDate || dateRange.endDate
-                  ? "Try adjusting your filters to see more notes."
-                  : "This board doesn't have any notes yet."}
-              </p>
-
-              {!isPublic &&
-                (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
-                  <Button
-                    onClick={() => {
-                      setSearchTerm("");
-                      setDebouncedSearchTerm("");
-                      setDateRange({ startDate: null, endDate: null });
-                      setSelectedAuthor(null);
-                      updateURL("", { startDate: null, endDate: null }, null);
-                    }}
-                    variant="outline"
-                    className="flex items-center space-x-2 cursor-pointer mt-4"
-                  >
-                    <span>Clear All Filters</span>
-                  </Button>
-                )}
-            </div>
-          </div>
-        )}
-      </div>
 
       {!isPublic && (
         <>
@@ -1271,6 +1222,7 @@ export default function BoardPage({ params }: BoardPageProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }
