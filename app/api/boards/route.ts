@@ -59,7 +59,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     });
 
-    const boardsWithActivity = boards.map((board) => ({
+    const boardsWithLastActivityTimestamp = boards.map((board) => ({
       id: board.id,
       name: board.name,
       description: board.description,
