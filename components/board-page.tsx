@@ -730,11 +730,10 @@ export default function BoardPage({ params }: BoardPageProps) {
                           <Link
                             key={b.id}
                             href={`/boards/${b.id}`}
-                            className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
-                              b.id === boardId
+                            className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${b.id === boardId
                                 ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
                                 : "text-foreground dark:text-zinc-100"
-                            }`}
+                              }`}
                             onClick={() => setShowBoardDropdown(false)}
                           >
                             <div>{b.name}</div>
@@ -748,11 +747,10 @@ export default function BoardPage({ params }: BoardPageProps) {
 
                       <Link
                         href="/boards/all-notes"
-                        className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                          boardId === "all-notes"
+                        className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "all-notes"
                             ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                             : "text-foreground dark:text-white"
-                        }`}
+                          }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>All notes</div>
@@ -760,11 +758,10 @@ export default function BoardPage({ params }: BoardPageProps) {
 
                       <Link
                         href="/boards/archive"
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                          boardId === "archive"
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "archive"
                             ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                             : "text-foreground dark:text-white"
-                        }`}
+                          }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>All archived</div>
@@ -1133,10 +1130,10 @@ export default function BoardPage({ params }: BoardPageProps) {
                   <Button
                     onClick={() => setDeleteConfirmDialog(true)}
                     variant="destructive"
-                    className="mr-auto bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+                    className="mr-auto flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
                   >
                     <Trash2 className="w-4 h-4" />
-                    Delete <span className="hidden lg:inline">Board</span>
+                    <span className="hidden lg:inline">Delete Board</span>
                   </Button>
                   <div className="flex space-x-2 items-center">
                     <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
