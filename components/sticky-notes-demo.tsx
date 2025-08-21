@@ -320,10 +320,11 @@ export function StickyNotesDemo() {
       id: `${Date.now()}`,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      checklistItems: noteToCopy.checklistItems?.map((item, index) => ({
-        ...item,
-        id: `${Date.now()}-${index}`,
-      })) || [],
+      checklistItems:
+        noteToCopy.checklistItems?.map((item, index) => ({
+          ...item,
+          id: `${Date.now()}-${index}`,
+        })) || [],
     };
     setNotes([newNote, ...notes]);
   };
