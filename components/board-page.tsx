@@ -222,7 +222,7 @@ export default function BoardPage({ params }: BoardPageProps) {
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showBoardDropdown, showAddBoard, addingChecklistItem, isPublic]);
+  }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
 
   useEffect(() => {
     let resizeTimeout: NodeJS.Timeout;
