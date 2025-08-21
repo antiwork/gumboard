@@ -13,7 +13,6 @@ import {
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 // Core domain types
@@ -85,8 +84,6 @@ export function Note({
   syncDB = true,
   style,
 }: NoteProps) {
-  const { resolvedTheme } = useTheme();
-
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
