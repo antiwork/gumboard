@@ -198,11 +198,11 @@ test.describe("Organization Settings", () => {
     // Wait for page to load
     await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
 
-    // Verify Slack webhook input is disabled for non-admin users
+    // locate organization name input
     const organizationNameInput = authenticatedPage.locator("#organizationName");
     await organizationNameInput.fill("");
 
-    // Click save button for Slack integration
+    // Click save button for organization name
     const organizationSaveButton = authenticatedPage
       .locator('button:has-text("Save changes")')
       .nth(1);
@@ -275,11 +275,11 @@ test.describe("Organization Settings", () => {
     // Wait for page to load
     await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
 
-    // Verify Slack webhook input is disabled for non-admin users
+     // verify invite input
     const inviteTeamMembersInput = authenticatedPage.locator("#invite-team-members");
     await inviteTeamMembersInput.fill("invalid-email");
 
-    // Click save button for Slack integration
+    // Click save button for invite team member
     const inviteTeamMemberButton = authenticatedPage.locator("#invite-member");
     await inviteTeamMemberButton.click();
 
@@ -300,11 +300,11 @@ test.describe("Organization Settings", () => {
     // Wait for page to load
     await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
 
-    // Verify Slack webhook input is disabled for non-admin users
+    // verify invite input
     const inviteTeamMembersInput = authenticatedPage.locator("#invite-team-members");
     await inviteTeamMembersInput.fill("test@example.com");
 
-    // Click save button for Slack integration
+    // Click save button for invite team member
     const inviteTeamMemberButton = authenticatedPage.locator("#invite-member");
 
     const saveResponse = authenticatedPage.waitForResponse(
@@ -335,11 +335,11 @@ test.describe("Organization Settings", () => {
     // Wait for page to load
     await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
 
-    // Verify Slack webhook input is disabled for non-admin users
+    // locate invite team members input
     const inviteTeamMembersInput = authenticatedPage.locator("#invite-team-members");
     await inviteTeamMembersInput.fill("test@example.com");
 
-    // Click save button for Slack integration
+    // Click save button to send invite
     const inviteTeamMemberButton = authenticatedPage.locator("#invite-member");
 
     const saveResponse = authenticatedPage.waitForResponse(
@@ -429,8 +429,6 @@ test.describe("Organization Settings", () => {
         name: inviteName,
       },
     });
-    console.log(invite);
-
     expect(invite).not.toBeNull();
   });
 });
