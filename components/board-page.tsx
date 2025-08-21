@@ -12,7 +12,6 @@ import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
 import { Note as NoteCard } from "@/components/note";
 import { useBoardColumnMeta } from "@/lib/hooks";
-
 import {
   AlertDialog,
   AlertDialogAction,
@@ -770,8 +769,8 @@ export default function BoardPage({ params }: BoardPageProps) {
                             key={b.id}
                             href={`/boards/${b.id}`}
                             className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${b.id === boardId
-                                ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
-                                : "text-foreground dark:text-zinc-100"
+                              ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
+                              : "text-foreground dark:text-zinc-100"
                               }`}
                             onClick={() => setShowBoardDropdown(false)}
                           >
@@ -907,6 +906,7 @@ export default function BoardPage({ params }: BoardPageProps) {
                     }
                   }}
                   disabled={boardId === "archive"}
+                  className="col-span-2 sm:col-span-1"
                 >
                   <span>Add note</span>
                 </Button>
@@ -925,7 +925,6 @@ export default function BoardPage({ params }: BoardPageProps) {
           </div>
         </div>
       </div>
-
 
       {/* Board Area */}
       <div
@@ -954,22 +953,22 @@ export default function BoardPage({ params }: BoardPageProps) {
               ))}
             </div>
           ))}
-          
-        {filteredNotes.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-6xl mb-4">📝</div>
-              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
-                No notes found
-              </h3>
-              <p className="text-gray-500 dark:text-gray-400">
-                {searchTerm || selectedAuthor || dateRange.startDate || dateRange.endDate
-                  ? "Try adjusting your filters to see more notes."
-                  : "This board doesn't have any notes yet."}
-              </p>
+
+          {filteredNotes.length === 0 && (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="text-center">
+                <div className="text-6xl mb-4">📝</div>
+                <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                  No notes found
+                </h3>
+                <p className="text-gray-500 dark:text-gray-400">
+                  {searchTerm || selectedAuthor || dateRange.startDate || dateRange.endDate
+                    ? "Try adjusting your filters to see more notes."
+                    : "This board doesn't have any notes yet."}
+                </p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
         </div>
 
         {!isPublic && (
