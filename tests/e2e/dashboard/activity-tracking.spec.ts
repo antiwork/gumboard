@@ -1,4 +1,4 @@
-import { test, expect } from "../fixtures/test-helpers";
+import { test, expect } from "../../fixtures/test-helpers";
 
 test.describe("Activity Tracking", () => {
   test("should display last activity on dashboard boards", async ({

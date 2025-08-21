@@ -1,4 +1,4 @@
-import { test, expect } from "../fixtures/test-helpers";
+import { test, expect } from "../../fixtures/test-helpers";
 
 test("should exclude archived notes from boards query", async ({
   authenticatedPage,
