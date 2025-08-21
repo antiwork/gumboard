@@ -689,12 +689,11 @@ export default function BoardPage({ params }: BoardPageProps) {
 
             {isPublic ? (
               <>
-                <div className="flex-1 mr-0 sm:flex-none">
+                <div className="flex-1 mr-2 sm:flex-none">
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
                     {board?.name}
                   </div>
                 </div>
-                <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700" />
                 <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                   Public
                 </span>
@@ -911,6 +910,7 @@ export default function BoardPage({ params }: BoardPageProps) {
                   onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
                   onCopy={handleCopyNote}
                   showBoardName={boardId === "all-notes" || boardId === "archive"}
+                  readonly={isPublic}
                   className="shadow-md shadow-black/10 p-4"
                   style={{
                     backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
