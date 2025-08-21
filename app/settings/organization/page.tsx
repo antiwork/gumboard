@@ -4,7 +4,6 @@
   import { Button } from "@/components/ui/button";
   import { Card } from "@/components/ui/card";
   import { Input } from "@/components/ui/input";
-  import { Label } from "@/components/ui/label";
   import {
     Trash2,
     UserPlus,
@@ -75,16 +74,20 @@
     email: z.string().email("Invalid email address"),
   })
 
+  const selfServeInviteFormSchema = z.object({
+    name: z
+      .string()
+      .min(1, "Invite name is required")
+      .refine((value) => value.trim().length > 0, "Invite name cannot be empty"),
+    expiresAt: z.string().optional(),
+    usageLimit: z.coerce.number().min(1).optional(),
+  })
+
   export default function OrganizationSettingsPage() {
     const { user, loading, refreshUser } = useUser();
     const router = useRouter();
     const [invites, setInvites] = useState<OrganizationInvite[]>([]);
     const [selfServeInvites, setSelfServeInvites] = useState<SelfServeInvite[]>([]);
-    const [newSelfServeInvite, setNewSelfServeInvite] = useState({
-      name: "",
-      expiresAt: "",
-      usageLimit: "",
-    });
     const [removeMemberDialog, setRemoveMemberDialog] = useState<{
       open: boolean;
       memberId: string;
@@ -101,7 +104,6 @@
       description: string;
       variant?: "default" | "success" | "error";
     }>({ open: false, title: "", description: "", variant: "error" });
-    const [creating, setCreating] = useState(false);
 
     const inviteForm = useForm<z.infer<typeof inviteFormSchema>>({
       resolver: zodResolver(inviteFormSchema),
@@ -111,6 +113,11 @@
     const organizationSettingForm = useForm<z.infer<typeof organizationSettingFormSchema>>({
       resolver: zodResolver(organizationSettingFormSchema),
       defaultValues: { name: "", slackWebhookUrl: "" },
+    });
+
+    const selfServeInviteForm = useForm<z.infer<typeof selfServeInviteFormSchema>>({
+      resolver: zodResolver(selfServeInviteFormSchema),
+      defaultValues: { name: "", expiresAt: "", usageLimit: undefined },
     });
 
     const slackWebhookValue = organizationSettingForm.watch("slackWebhookUrl");
@@ -309,62 +316,104 @@
       }
     };
 
-    const handleCreateSelfServeInvite = async (e: React.FormEvent) => {
-      e.preventDefault();
-      if (!newSelfServeInvite.name.trim()) return;
+    const handleCreateSelfServeInvite = async (values: z.infer<typeof selfServeInviteFormSchema>) => {
+    if (!user?.isAdmin) return;
 
-      setCreating(true);
-      try {
-        const payload: {
-          name: string;
-          expiresAt?: string;
-          usageLimit?: number;
-        } = {
-          name: newSelfServeInvite.name,
-        };
+    try {
+      const payload = {
+        name: values.name,
+        expiresAt: values.expiresAt,
+        usageLimit: values.usageLimit,
+      }
 
-        if (newSelfServeInvite.expiresAt) {
-          // Send the date as YYYY-MM-DD format
-          payload.expiresAt = newSelfServeInvite.expiresAt;
-        }
+      console.log(payload);
+      
 
-        if (newSelfServeInvite.usageLimit) {
-          const limit = parseInt(newSelfServeInvite.usageLimit);
-          if (!isNaN(limit) && limit > 0) {
-            payload.usageLimit = limit;
-          }
-        }
+      const response = await fetch("/api/organization/self-serve-invites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
 
-        const response = await fetch("/api/organization/self-serve-invites", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        });
+      console.log(await response.json());
+      
 
-        if (response.ok) {
-          setNewSelfServeInvite({ name: "", expiresAt: "", usageLimit: "" });
-          fetchSelfServeInvites();
-        } else {
-          const errorData = await response.json();
-          setErrorDialog({
-            open: true,
-            title: "Failed to create invite link",
-            description: errorData.error || "Failed to create invite link",
-          });
-        }
-      } catch (error) {
-        console.error("Error creating self-serve invite:", error);
+      if (response.ok) {
+        selfServeInviteForm.reset();
+        fetchSelfServeInvites();
+      } else {
+        const errorData = await response.json();
         setErrorDialog({
           open: true,
           title: "Failed to create invite link",
-          description: "Failed to create invite link",
+          description: errorData.error || "Failed to create invite link",
         });
-      } finally {
-        setCreating(false);
       }
-    };
+    } catch (error) {
+      console.error("Error creating self-serve invite:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to create invite link",
+        description: "Failed to create invite link",
+      });
+    }
+  };
+
+    // const handleCreateSelfServeInvite = async (values: z.infer<typeof selfServeInviteFormSchema>) => {
+
+    //   try {
+    //     const payload: {
+    //       name: string;
+    //       expiresAt?: string;
+    //       usageLimit?: number;
+    //     } = {
+    //       name: val.name,
+    //     };
+
+    //     if (newSelfServeInvite.expiresAt) {
+    //       // Send the date as YYYY-MM-DD format
+    //       payload.expiresAt = newSelfServeInvite.expiresAt;
+    //     }
+
+    //     if (newSelfServeInvite.usageLimit) {
+    //       const limit = parseInt(newSelfServeInvite.usageLimit);
+    //       if (!isNaN(limit) && limit > 0) {
+    //         payload.usageLimit = limit;
+    //       }
+    //     }
+
+    //     const response = await fetch("/api/organization/self-serve-invites", {
+    //       method: "POST",
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //       body: JSON.stringify(payload),
+    //     });
+
+    //     if (response.ok) {
+    //       setNewSelfServeInvite({ name: "", expiresAt: "", usageLimit: "" });
+    //       fetchSelfServeInvites();
+    //     } else {
+    //       const errorData = await response.json();
+    //       setErrorDialog({
+    //         open: true,
+    //         title: "Failed to create invite link",
+    //         description: errorData.error || "Failed to create invite link",
+    //       });
+    //     }
+    //   } catch (error) {
+    //     console.error("Error creating self-serve invite:", error);
+    //     setErrorDialog({
+    //       open: true,
+    //       title: "Failed to create invite link",
+    //       description: "Failed to create invite link",
+    //     });
+    //   } finally {
+    //     setCreating(false);
+    //   }
+    // };
 
     const handleDeleteSelfServeInvite = (inviteToken: string, inviteName: string) => {
       setDeleteInviteDialog({
@@ -712,7 +761,81 @@
             </div>
 
             {/* Create New Self-Serve Invite */}
-            <form
+            <Form {...selfServeInviteForm}>
+                <form onSubmit={selfServeInviteForm.handleSubmit(handleCreateSelfServeInvite)}>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={selfServeInviteForm.control}
+                      name="name"
+                      render={({field}) => (
+                        <FormItem>
+                          <FormLabel>Invite Name</FormLabel>
+                          <FormControl>
+                            <Input 
+                              type="text"
+                              placeholder="e.g., General Invite"
+                              {...field}
+                            />
+                          </FormControl>
+                          <div className="min-h-[1rem]">
+
+                          <FormMessage className="text-red-500 dark:text-red-400" />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField 
+                      control={selfServeInviteForm.control}
+                      name="expiresAt"
+                      render={({field}) => (
+                        <FormItem>
+                          <FormLabel>Expires (Optional)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              className="py-0"
+                              type="date"
+                              {...field}
+                            />
+                          </FormControl>
+                           <div className="min-h-[1rem]">
+
+                          <FormMessage className="text-red-500 dark:text-red-400" />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField 
+                      control={selfServeInviteForm.control}
+                      name="usageLimit"
+                      render={({field}) => (
+                        <FormItem>
+                          <FormLabel>Usage Limit (Optional)</FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Unlimited"
+                              type="number"
+                              {...field}
+                            />
+                          </FormControl>
+                          <div className="min-h-[1rem]">
+
+                          <FormMessage className="text-red-500 dark:text-red-400" />
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                    </div>
+                    <Button className="mt-2" type="submit" disabled={!user?.isAdmin}>
+                         <Link className="w-4 h-4 mr-1" />
+                        <span>{selfServeInviteForm.formState.isSubmitting ? "Creating..." : "Create Invite Link"}</span>
+                    </Button>
+                </form>
+            </Form>
+
+
+
+            {/* <form
               onSubmit={handleCreateSelfServeInvite}
               className="space-y-4 p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
             >
@@ -785,7 +908,7 @@
                 <Link className="w-4 h-4 mr-2" />
                 {creating ? "Creating..." : "Create Invite Link"}
               </Button>
-            </form>
+            </form> */}
 
             {/* Active Self-Serve Invites */}
             {selfServeInvites.length > 0 && (
