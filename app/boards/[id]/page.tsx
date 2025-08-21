@@ -828,6 +828,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 }
               }}
               disabled={boardId === "archive"}
+              className="col-span-2 sm:col-span-1"
             >
               <span>Add note</span>
             </Button>
