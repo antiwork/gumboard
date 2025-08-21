@@ -793,13 +793,15 @@ export default function OrganizationSettingsPage() {
                   )}
                 />
               </div>
+
               <Button
                 id="create-self-serve-invite"
                 className="mt-2"
+                title={!user?.isAdmin ? "Only admins can create invite links" : undefined}
                 type="submit"
                 disabled={!user?.isAdmin || selfServeInviteForm.formState.isSubmitting}
               >
-                <Link className="w-4 h-4 mr-1" />
+                <Link className="w-4 h-4" />
                 <span>
                   {selfServeInviteForm.formState.isSubmitting
                     ? "Creating..."
