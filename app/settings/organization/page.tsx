@@ -669,9 +669,9 @@ export default function OrganizationSettingsPage() {
                   </div>
                   <Button
                     onClick={() => handleCancelInvite(invite.id)}
-                    variant="outline"
+                    variant="destructive"
                     size="sm"
-                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900 border-red-600 hover:bg-inherit hover:border-red-600"
+                    className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
                   >
                     Cancel
                   </Button>
