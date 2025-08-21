@@ -61,9 +61,7 @@
 
   const organizationSettingFormSchema = z.object({
     name: z
-      .string()
-      .min(1, "Organization name is required")
-      .refine((value) => value.trim().length > 0, "Organization name cannot be empty"),
+      .string().min(1, "Organization name is required"),
     
     slackWebhookUrl:  z.union([
         z.literal(""), // allow empty string
@@ -76,10 +74,7 @@
   })
 
   const selfServeInviteFormSchema = z.object({
-    name: z
-      .string()
-      .min(1, "Invite name is required")
-      .refine((value) => value.trim().length > 0, "Invite name cannot be empty"),
+    name: z.string().min(1, "Invite name is required"),
     expiresAt: z.string().optional(),
     usageLimit: z.coerce.number().min(1).optional(),
   })
@@ -783,7 +778,7 @@
                       )}
                     />
                     </div>
-                    <Button id="create-self-serve-invite" className="mt-2" type="submit" disabled={!user?.isAdmin}>
+                    <Button id="create-self-serve-invite" className="mt-2" type="submit" disabled={!user?.isAdmin || selfServeInviteForm.formState.isSubmitting }>
                          <Link className="w-4 h-4 mr-1" />
                         <span>{selfServeInviteForm.formState.isSubmitting ? "Creating..." : "Create Invite Link"}</span>
                     </Button>
