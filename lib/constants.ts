@@ -1,12 +1,14 @@
 export const NOTE_COLORS = [
-  "#fef3c7", // yellow
-  "#fce7f3", // pink
-  "#dbeafe", // blue
-  "#dcfce7", // green
-  "#fed7d7", // red
-  "#e0e7ff", // indigo
-  "#f3e8ff", // purple
-  "#fef4e6", // orange
+  "#fff2a8", // butter yellow
+  "#ffe17a", // sun yellow
+  "#ffb77a", // apricot
+  "#d9f1b1", // pale green
+  "#bfe48d", // spring green
+  "#87e6d6", // mint teal
+  "#cde4ff", // baby blue
+  "#a8c8ff", // periwinkle
+  "#c7b7ff", // soft lavender
+  "#f7c2e6", // soft pink
 ] as const;
 
 export type NoteColor = (typeof NOTE_COLORS)[number];
