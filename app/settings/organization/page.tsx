@@ -766,11 +766,7 @@ export default function OrganizationSettingsPage() {
               title={!user?.isAdmin ? "Only admins can create invite links" : undefined}
             >
               <Link className="w-4 h-4" />
-              {creating ? (
-                "Creating..."
-              ) : (
-                <span className="hidden md:inline">Create Invite Link</span>
-              )}
+              {creating ? "Creating..." : "Create Invite Link"}
             </Button>
           </form>
 
