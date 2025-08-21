@@ -730,10 +730,11 @@ export default function BoardPage({ params }: BoardPageProps) {
                           <Link
                             key={b.id}
                             href={`/boards/${b.id}`}
-                            className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${b.id === boardId
+                            className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                              b.id === boardId
                                 ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
                                 : "text-foreground dark:text-zinc-100"
-                              }`}
+                            }`}
                             onClick={() => setShowBoardDropdown(false)}
                           >
                             <div>{b.name}</div>
@@ -747,10 +748,11 @@ export default function BoardPage({ params }: BoardPageProps) {
 
                       <Link
                         href="/boards/all-notes"
-                        className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "all-notes"
+                        className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                          boardId === "all-notes"
                             ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                             : "text-foreground dark:text-white"
-                          }`}
+                        }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>All notes</div>
@@ -758,10 +760,11 @@ export default function BoardPage({ params }: BoardPageProps) {
 
                       <Link
                         href="/boards/archive"
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "archive"
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                          boardId === "archive"
                             ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
                             : "text-foreground dark:text-white"
-                          }`}
+                        }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
                         <div>All archived</div>
