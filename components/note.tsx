@@ -370,8 +370,8 @@ export function Note({
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          {canEdit && (
-            <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            {canEdit && !note.archivedAt && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -391,6 +391,8 @@ export function Note({
                   <p>Copy note</p>
                 </TooltipContent>
               </Tooltip>
+            )}
+            {canEdit && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -410,8 +412,8 @@ export function Note({
                   <p>Delete note</p>
                 </TooltipContent>
               </Tooltip>
-            </div>
-          )}
+            )}
+          </div>
           {canEdit && onArchive && (
             <div className="flex items-center">
               <Tooltip>
