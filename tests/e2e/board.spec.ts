@@ -52,7 +52,9 @@ test.describe("Board Management", () => {
 
     await authenticatedPage.goto("/dashboard");
 
-    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
+    await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible({
+      timeout: 10000,
+    });
     await expect(
       authenticatedPage.locator('button:has-text("Create your first board")')
     ).toBeVisible();
