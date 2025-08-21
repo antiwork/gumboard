@@ -25,13 +25,11 @@ test.describe("Home Page", () => {
         checklistItems: {
           create: [
             {
-              id: testContext.prefix("101"),
               content: testContext.prefix("Finance update by Friday"),
               checked: false,
               order: 0,
             },
             {
-              id: testContext.prefix("102"),
               content: testContext.prefix("Helper Tix (Mon-Fri)"),
               checked: false,
               order: 1,
@@ -49,13 +47,11 @@ test.describe("Home Page", () => {
         checklistItems: {
           create: [
             {
-              id: testContext.prefix("301"),
               content: testContext.prefix("Metabase queries"),
               checked: false,
               order: 0,
             },
             {
-              id: testContext.prefix("302"),
               content: testContext.prefix("Review support huddle"),
               checked: false,
               order: 1,
@@ -115,7 +111,8 @@ test.describe("Home Page", () => {
       .getByRole("checkbox", { checked: true })
       .count();
     const uncheckedCheckbox = authenticatedPage
-      .getByTestId(testContext.prefix("102"))
+      .getByText(testContext.prefix("Helper Tix (Mon-Fri)"))
+      .locator("..")
       .getByRole("checkbox");
 
     const toggleResponse1 = authenticatedPage.waitForResponse(
@@ -133,7 +130,7 @@ test.describe("Home Page", () => {
 
     // Verify checkbox state in database
     const toggledItem = await testPrisma.checklistItem.findFirst({
-      where: { id: testContext.prefix("102") },
+      where: { content: testContext.prefix("Helper Tix (Mon-Fri)") },
     });
     expect(toggledItem?.checked).toBe(true);
 
@@ -152,7 +149,7 @@ test.describe("Home Page", () => {
 
     // Verify checkbox state in database
     const untoggledItem = await testPrisma.checklistItem.findFirst({
-      where: { id: testContext.prefix("102") },
+      where: { content: testContext.prefix("Helper Tix (Mon-Fri)") },
     });
     expect(untoggledItem?.checked).toBe(false);
 
@@ -204,7 +201,7 @@ test.describe("Home Page", () => {
       })
       .toHaveProperty("content", updatedFinanceText);
 
-    // Test 5: Delete a checklist item
+    // Test 5: Delete a checklist item (use the updated content)
     const deleteItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
@@ -212,15 +209,16 @@ test.describe("Home Page", () => {
         resp.ok()
     );
     await authenticatedPage
-      .getByTestId(testContext.prefix("101"))
+      .getByText(updatedFinanceText)
+      .locator("..")
       .getByRole("button", { name: "Delete item", exact: true })
       .click();
     await deleteItemResponse;
-    await expect(authenticatedPage.getByTestId(testContext.prefix("101"))).not.toBeAttached();
+    await expect(authenticatedPage.getByText(updatedFinanceText)).not.toBeAttached();
 
     // Verify item was deleted from database
     const deletedItem = await testPrisma.checklistItem.findFirst({
-      where: { id: testContext.prefix("101") },
+      where: { content: updatedFinanceText },
     });
     expect(deletedItem).toBeNull();
 
@@ -304,14 +302,14 @@ test.describe("Home Page", () => {
     const sourceElement = authenticatedPage.locator(`text=${sourceElementText}`);
     const targetElement = authenticatedPage.locator(`text=${targetElementText}`);
 
-    const sourceTestId = testContext.prefix("301");
-    const targetTestId = testContext.prefix("302");
+    const sourceChecklistItem = authenticatedPage.getByText(sourceElementText).locator("..");
+    const targetChecklistItem = authenticatedPage.getByText(targetElementText).locator("..");
 
-    await expect(authenticatedPage.getByTestId(sourceTestId)).toHaveAttribute(
+    await expect(sourceChecklistItem).toHaveAttribute(
       "data-testorder",
       "0"
     );
-    await expect(authenticatedPage.getByTestId(targetTestId)).toHaveAttribute(
+    await expect(targetChecklistItem).toHaveAttribute(
       "data-testorder",
       "1"
     );
@@ -335,11 +333,11 @@ test.describe("Home Page", () => {
     await authenticatedPage.mouse.up();
     await reorderResponse;
 
-    await expect(authenticatedPage.getByTestId(targetTestId)).toHaveAttribute(
+    await expect(targetChecklistItem).toHaveAttribute(
       "data-testorder",
       "0"
     );
-    await expect(authenticatedPage.getByTestId(sourceTestId)).toHaveAttribute(
+    await expect(sourceChecklistItem).toHaveAttribute(
       "data-testorder",
       "1"
     );
