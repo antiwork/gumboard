@@ -8,6 +8,7 @@ import {
   shouldSendNotification,
 } from "@/lib/slack";
 import { NOTE_COLORS } from "@/lib/constants";
+import { updateBoardActivity } from "@/lib/board-activity";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -200,6 +201,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         });
       }
     }
+
+    // Update board activity timestamp
+    await updateBoardActivity(boardId);
 
     return NextResponse.json({ note }, { status: 201 });
   } catch (error) {

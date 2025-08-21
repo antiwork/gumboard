@@ -7,6 +7,7 @@ import {
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";
+import { updateBoardActivity } from "@/lib/board-activity";
 
 // Update a note
 export async function PUT(
@@ -246,6 +247,9 @@ export async function PUT(
       }
     }
 
+    // Update board activity timestamp
+    await updateBoardActivity(boardId);
+
     return NextResponse.json({ note: updatedNote });
   } catch (error) {
     console.error("Error updating note:", error);
@@ -310,6 +314,9 @@ export async function DELETE(
         deletedAt: new Date(),
       },
     });
+
+    // Update board activity timestamp
+    await updateBoardActivity(boardId);
 
     return NextResponse.json({ success: true });
   } catch (error) {
