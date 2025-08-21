@@ -644,17 +644,11 @@ export default function OrganizationSettingsPage() {
             <Button
               type="submit"
               disabled={inviting || !user?.isAdmin}
-              className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100"
+              className="disabled:bg-gray-400 disabled:cursor-not-allowed bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 text-white dark:text-zinc-100 flex items-center gap-2"
               title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
             >
-              <UserPlus className="w-4 h-4 mr-2" />
-              {inviting ? (
-                "Inviting..."
-              ) : (
-                <>
-                  <span className="hidden lg:inline">Send</span>Invite
-                </>
-              )}
+              <UserPlus className="w-4 h-4" />
+              {inviting ? "Inviting..." : <span className="hidden lg:inline">Send Invite</span>}
             </Button>
           </form>
 
