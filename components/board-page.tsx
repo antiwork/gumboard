@@ -713,7 +713,7 @@ export default function BoardPage({ params }: BoardPageProps) {
   }
 
   return (
-  <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
+    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
         <div className="mx-4 flex flex-wrap sm:flex-nowrap justify-between items-center h-auto sm:h-16 p-2 sm:p-0">
           <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center w-full sm:w-auto">
@@ -764,22 +764,21 @@ export default function BoardPage({ params }: BoardPageProps) {
                   <div className="fixed sm:absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 max-h-80 overflow-y-auto">
                     <div className="p-2 flex flex-col gap-1">
                       {/* Boards */}
-                    <div className=" max-h-50 overflow-y-auto">
-                      {allBoards.map((b) => (
-                        <Link
-                          key={b.id}
-                          href={`/boards/${b.id}`}
-                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
-                            b.id === boardId
-                              ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
-                              : "text-foreground dark:text-zinc-100"
-                          }`}
-                          onClick={() => setShowBoardDropdown(false)}
-                        >
-                          <div>{b.name}</div>
-                        </Link>
-                      ))}
-                    </div>
+                      <div className=" max-h-50 overflow-y-auto">
+                        {allBoards.map((b) => (
+                          <Link
+                            key={b.id}
+                            href={`/boards/${b.id}`}
+                            className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${b.id === boardId
+                                ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
+                                : "text-foreground dark:text-zinc-100"
+                              }`}
+                            onClick={() => setShowBoardDropdown(false)}
+                          >
+                            <div>{b.name}</div>
+                          </Link>
+                        ))}
+                      </div>
 
                       {allBoards.length > 0 && (
                         <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
@@ -788,8 +787,8 @@ export default function BoardPage({ params }: BoardPageProps) {
                       <Link
                         href="/boards/all-notes"
                         className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "all-notes"
-                            ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                            : "text-foreground dark:text-white"
+                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                          : "text-foreground dark:text-white"
                           }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
@@ -799,8 +798,8 @@ export default function BoardPage({ params }: BoardPageProps) {
                       <Link
                         href="/boards/archive"
                         className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "archive"
-                            ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                            : "text-foreground dark:text-white"
+                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                          : "text-foreground dark:text-white"
                           }`}
                         onClick={() => setShowBoardDropdown(false)}
                       >
@@ -955,273 +954,289 @@ export default function BoardPage({ params }: BoardPageProps) {
               ))}
             </div>
           ))}
+          
+        {filteredNotes.length === 0 && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="text-center">
+              <div className="text-6xl mb-4">📝</div>
+              <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">
+                No notes found
+              </h3>
+              <p className="text-gray-500 dark:text-gray-400">
+                {searchTerm || selectedAuthor || dateRange.startDate || dateRange.endDate
+                  ? "Try adjusting your filters to see more notes."
+                  : "This board doesn't have any notes yet."}
+              </p>
+            </div>
+          </div>
+        )}
         </div>
 
-      {!isPublic && (
-        <>
-          {showAddBoard && (
-            <div
-              className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/40 dark:bg-black/70 backdrop-blur-sm add-board-modal"
-              onClick={() => {
-                setShowAddBoard(false);
-                setNewBoardName("");
-                setNewBoardDescription("");
-              }}
-            >
+        {!isPublic && (
+          <>
+            {showAddBoard && (
               <div
-                className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-gray-200 dark:border-zinc-800"
-                onClick={(e) => e.stopPropagation()}
+                className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/40 dark:bg-black/70 backdrop-blur-sm add-board-modal"
+                onClick={() => {
+                  setShowAddBoard(false);
+                  setNewBoardName("");
+                  setNewBoardDescription("");
+                }}
               >
-                <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
-                  Create new board
-                </h3>
-                <form onSubmit={handleAddBoard}>
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                        Board name
-                      </label>
-                      <Input
-                        type="text"
-                        value={newBoardName}
-                        onChange={(e) => setNewBoardName(e.target.value)}
-                        placeholder="Enter board name"
-                        required
-                        className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-                      />
+                <div
+                  className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-gray-200 dark:border-zinc-800"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
+                    Create new board
+                  </h3>
+                  <form onSubmit={handleAddBoard}>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                          Board name
+                        </label>
+                        <Input
+                          type="text"
+                          value={newBoardName}
+                          onChange={(e) => setNewBoardName(e.target.value)}
+                          placeholder="Enter board name"
+                          required
+                          className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                          Description (optional)
+                        </label>
+                        <Input
+                          type="text"
+                          value={newBoardDescription}
+                          onChange={(e) => setNewBoardDescription(e.target.value)}
+                          placeholder="Enter board description"
+                          className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                        Description (optional)
-                      </label>
-                      <Input
-                        type="text"
-                        value={newBoardDescription}
-                        onChange={(e) => setNewBoardDescription(e.target.value)}
-                        placeholder="Enter board description"
-                        className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-                      />
+                    <div className="flex justify-end space-x-3 mt-6">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setShowAddBoard(false);
+                          setNewBoardName("");
+                          setNewBoardDescription("");
+                        }}
+                        className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-300 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-300 dark:hover:bg-zinc-800"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        className="bg-blue-600 hover:bg-blue-700 text-zinc-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
+                      >
+                        Create board
+                      </Button>
                     </div>
-                  </div>
-                  <div className="flex justify-end space-x-3 mt-6">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => {
-                        setShowAddBoard(false);
-                        setNewBoardName("");
-                        setNewBoardDescription("");
-                      }}
-                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-300 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-300 dark:hover:bg-zinc-800"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="submit"
-                      className="bg-blue-600 hover:bg-blue-700 text-zinc-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
-                    >
-                      Create board
-                    </Button>
-                  </div>
-                </form>
+                  </form>
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
-            <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-                  Board settings
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-                  Configure settings for &quot;{board?.name}&quot; board.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
+            <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
+              <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+                    Board settings
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+                    Configure settings for &quot;{board?.name}&quot; board.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
 
-              <div className="py-4 space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                    Board name
-                  </label>
-                  <Input
-                    type="text"
-                    value={boardSettings.name}
-                    onChange={(e) =>
-                      setBoardSettings((prev) => ({ ...prev, name: e.target.value }))
-                    }
-                    placeholder="Enter board name"
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                    Description (optional)
-                  </label>
-                  <Input
-                    type="text"
-                    value={boardSettings.description}
-                    onChange={(e) =>
-                      setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
-                    }
-                    placeholder="Enter board description"
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-                  />
-                </div>
-                <div className="space-y-4">
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="isPublic"
-                      checked={boardSettings.isPublic}
-                      onCheckedChange={(checked) =>
-                        setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))
+                <div className="py-4 space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                      Board name
+                    </label>
+                    <Input
+                      type="text"
+                      value={boardSettings.name}
+                      onChange={(e) =>
+                        setBoardSettings((prev) => ({ ...prev, name: e.target.value }))
                       }
+                      placeholder="Enter board name"
+                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
+                      Description (optional)
+                    </label>
+                    <Input
+                      type="text"
+                      value={boardSettings.description}
+                      onChange={(e) =>
+                        setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
+                      }
+                      placeholder="Enter board description"
+                      className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+                    />
+                  </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="isPublic"
+                        checked={boardSettings.isPublic}
+                        onCheckedChange={(checked) =>
+                          setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))
+                        }
+                      />
+                      <label
+                        htmlFor="isPublic"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
+                      >
+                        Make board public
+                      </label>
+                    </div>
+                    <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
+                      When enabled, anyone with the link can view this board
+                    </p>
+
+                    {boardSettings.isPublic && (
+                      <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-foreground dark:text-zinc-100">
+                              Public link
+                            </p>
+                            <p className="text-xs text-muted-foreground dark:text-zinc-400 break-all">
+                              {typeof window !== "undefined"
+                                ? `${window.location.origin}/public/boards/${boardId}`
+                                : ""}
+                            </p>
+                          </div>
+                          <Button
+                            onClick={handleCopyPublicUrl}
+                            size="sm"
+                            variant="outline"
+                            className="ml-3 flex items-center space-x-1"
+                          >
+                            {copiedPublicUrl ? (
+                              <>
+                                <span className="text-xs">✓</span>
+                                <span className="text-xs">Copied!</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span className="text-xs">Copy</span>
+                              </>
+                            )}
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="sendSlackUpdates"
+                      checked={boardSettings.sendSlackUpdates}
+                      onCheckedChange={(checked) =>
+                        setBoardSettings((prev) => ({
+                          ...prev,
+                          sendSlackUpdates: checked as boolean,
+                        }))
+                      }
+                      className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
                     />
                     <label
-                      htmlFor="isPublic"
+                      htmlFor="sendSlackUpdates"
                       className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
                     >
-                      Make board public
+                      Send updates to Slack
                     </label>
                   </div>
                   <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-                    When enabled, anyone with the link can view this board
+                    When enabled, note updates will be sent to your organization&apos;s Slack channel
                   </p>
-
-                  {boardSettings.isPublic && (
-                    <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-foreground dark:text-zinc-100">
-                            Public link
-                          </p>
-                          <p className="text-xs text-muted-foreground dark:text-zinc-400 break-all">
-                            {typeof window !== "undefined"
-                              ? `${window.location.origin}/public/boards/${boardId}`
-                              : ""}
-                          </p>
-                        </div>
-                        <Button
-                          onClick={handleCopyPublicUrl}
-                          size="sm"
-                          variant="outline"
-                          className="ml-3 flex items-center space-x-1"
-                        >
-                          {copiedPublicUrl ? (
-                            <>
-                              <span className="text-xs">✓</span>
-                              <span className="text-xs">Copied!</span>
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="w-3 h-3" />
-                              <span className="text-xs">Copy</span>
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="sendSlackUpdates"
-                    checked={boardSettings.sendSlackUpdates}
-                    onCheckedChange={(checked) =>
-                      setBoardSettings((prev) => ({
-                        ...prev,
-                        sendSlackUpdates: checked as boolean,
-                      }))
-                    }
-                    className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
-                  />
-                  <label
-                    htmlFor="sendSlackUpdates"
-                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
+                <AlertDialogFooter className="flex !flex-row justify-between">
+                  <Button
+                    onClick={() => setDeleteConfirmDialog(true)}
+                    variant="destructive"
+                    className="mr-auto bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
                   >
-                    Send updates to Slack
-                  </label>
-                </div>
-                <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-                  When enabled, note updates will be sent to your organization&apos;s Slack channel
-                </p>
-              </div>
+                    <Trash2 className="w-4 h-4" />
+                    Delete <span className="hidden lg:inline">Board</span>
+                  </Button>
+                  <div className="flex space-x-2 items-center">
+                    <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
+                      Cancel
+                    </AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={() => handleUpdateBoardSettings(boardSettings)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
+                    >
+                      Save settings
+                    </AlertDialogAction>
+                  </div>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
 
-              <AlertDialogFooter className="flex !flex-row justify-between">
-                <Button
-                  onClick={() => setDeleteConfirmDialog(true)}
-                  variant="destructive"
-                  className="mr-auto bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  Delete <span className="hidden lg:inline">Board</span>
-                </Button>
-                <div className="flex space-x-2 items-center">
-                  <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
+            <AlertDialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>
+              <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+                <AlertDialogHeader>
+                  <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+                    Delete Board
+                  </AlertDialogTitle>
+                  <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+                    Are you sure you want to delete &quot;{board?.name}&quot;? This action cannot be
+                    undone and will permanently delete all notes in this board.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
                     Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction
-                    onClick={() => handleUpdateBoardSettings(boardSettings)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
+                    onClick={handleDeleteBoard}
+                    className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
                   >
-                    Save settings
+                    Delete Board
                   </AlertDialogAction>
-                </div>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </>
+        )}
 
-          <AlertDialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>
-            <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-              <AlertDialogHeader>
-                <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-                  Delete Board
-                </AlertDialogTitle>
-                <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-                  Are you sure you want to delete &quot;{board?.name}&quot;? This action cannot be
-                  undone and will permanently delete all notes in this board.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDeleteBoard}
-                  className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-                >
-                  Delete Board
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </>
-      )}
-
-      <AlertDialog
-        open={errorDialog.open}
-        onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
-      >
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
-              {errorDialog.title}
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              {errorDialog.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
-              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              OK
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        <AlertDialog
+          open={errorDialog.open}
+          onOpenChange={(open) => setErrorDialog({ open, title: "", description: "" })}
+        >
+          <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+                {errorDialog.title}
+              </AlertDialogTitle>
+              <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+                {errorDialog.description}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogAction
+                onClick={() => setErrorDialog({ open: false, title: "", description: "" })}
+                className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+              >
+                OK
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   );
