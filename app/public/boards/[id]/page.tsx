@@ -11,10 +11,12 @@ import { useUser } from "@/app/contexts/UserContext";
 import { BoardTopbar } from "@/components/board-topbar";
 import { getUniqueAuthors, filterAndSortNotes, getBoardColumns } from "@/lib/utils";
 import { useBoardColumnMeta } from "@/lib/hooks";
+import { useTheme } from "next-themes";
 
 export default function PublicBoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
+  const { resolvedTheme } = useTheme();
   const [loading, setLoading] = useState(true);
   const columnMeta = useBoardColumnMeta();
   const [boardId, setBoardId] = useState<string | null>(null);
@@ -138,6 +140,9 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
                   note={note as Note}
                   readonly={true}
                   className="shadow-md shadow-black/10 p-4"
+                  style={{
+                    backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                  }}
                 />
               ))}
             </div>
