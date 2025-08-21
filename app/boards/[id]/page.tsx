@@ -1123,9 +1123,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               className="mr-auto flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               <Trash2 className="w-4 h-4" />
-              <span className="hidden lg:inline">
-                Delete Board
-              </span>
+              <span className="hidden lg:inline">Delete Board</span>
             </Button>
             <div className="flex space-x-2 items-center">
               <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">

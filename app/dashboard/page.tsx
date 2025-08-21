@@ -41,6 +41,7 @@ import {
 } from "@/components/ui/form";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
+import { formatLastActivity } from "@/lib/utils";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -48,6 +49,7 @@ export type DashboardBoard = Board & {
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
+  lastActivityAt: string;
   _count: { notes: number };
 };
 
@@ -326,13 +328,16 @@ export default function Dashboard() {
                         </span>
                       </div>
                     </CardHeader>
-                    {board.description && (
-                      <CardContent>
-                        <p className="text-slate-600 dark:text-zinc-300 truncate">
+                    <CardContent>
+                      {board.description && (
+                        <p className="text-slate-600 dark:text-zinc-300 truncate mb-2">
                           {board.description}
                         </p>
-                      </CardContent>
-                    )}
+                      )}
+                      <p className="text-xs text-slate-500 dark:text-zinc-400">
+                        Last active: {formatLastActivity(board.lastActivityAt)}
+                      </p>
+                    </CardContent>
                   </Card>
                 </Link>
               ))}
