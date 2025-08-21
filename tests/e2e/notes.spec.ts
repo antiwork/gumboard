@@ -279,7 +279,7 @@ test.describe("Note Management", () => {
 
     const initialInput = authenticatedPage.locator("textarea.bg-transparent").first();
     await expect(initialInput).toHaveValue("New to-do");
-    
+
     const firstItemContent = testContext.prefix("First item");
     const addFirstItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -1425,7 +1425,7 @@ test.describe("Note Management", () => {
 
     // Verify "New to-do" is auto-selected
     await expect(authenticatedPage.getByText("New to-do")).toBeVisible();
-    
+
     // Verify the textarea contains "New to-do" and is ready for editing
     const newTodoInput = authenticatedPage.locator("textarea").first();
     await expect(newTodoInput).toHaveValue("New to-do");
@@ -1477,25 +1477,25 @@ test.describe("Note Management", () => {
 
     const firstInput = authenticatedPage.locator("textarea").first();
     const firstItemContent = testContext.prefix("First task item");
-    
+
     const addFirstItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    
+
     await firstInput.fill(firstItemContent);
     await firstInput.press("Tab"); // This should create the item and move to next
     await addFirstItemResponse;
 
     // Verify first item was created and new empty input is available
     await expect(authenticatedPage.getByText(firstItemContent)).toBeVisible();
-    
+
     // Verify new empty input is available for continuous workflow
     const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
-    
+
     const secondItemContent = testContext.prefix("Second task item");
     const addSecondItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
@@ -1503,11 +1503,11 @@ test.describe("Note Management", () => {
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    
+
     await newItemInput.fill(secondItemContent);
     await newItemInput.press("Tab");
     await addSecondItemResponse;
-    
+
     // Verify both items exist and new input is still available
     await expect(authenticatedPage.getByText(firstItemContent)).toBeVisible();
     await expect(authenticatedPage.getByText(secondItemContent)).toBeVisible();

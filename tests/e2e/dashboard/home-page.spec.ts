@@ -91,12 +91,12 @@ test.describe("Home Page", () => {
 
     // Verify the new note has "New to-do" item
     const newNote = await testPrisma.note.findFirst({
-      where: { 
-        boardId: demoBoard.id, 
+      where: {
+        boardId: demoBoard.id,
         deletedAt: null,
         NOT: {
-          id: { in: [note1.id, note2.id] }
-        }
+          id: { in: [note1.id, note2.id] },
+        },
       },
       include: {
         checklistItems: true,
@@ -305,14 +305,8 @@ test.describe("Home Page", () => {
     const sourceChecklistItem = authenticatedPage.getByText(sourceElementText).locator("..");
     const targetChecklistItem = authenticatedPage.getByText(targetElementText).locator("..");
 
-    await expect(sourceChecklistItem).toHaveAttribute(
-      "data-testorder",
-      "0"
-    );
-    await expect(targetChecklistItem).toHaveAttribute(
-      "data-testorder",
-      "1"
-    );
+    await expect(sourceChecklistItem).toHaveAttribute("data-testorder", "0");
+    await expect(targetChecklistItem).toHaveAttribute("data-testorder", "1");
 
     await expect(sourceElement).toBeVisible();
 
@@ -333,14 +327,8 @@ test.describe("Home Page", () => {
     await authenticatedPage.mouse.up();
     await reorderResponse;
 
-    await expect(targetChecklistItem).toHaveAttribute(
-      "data-testorder",
-      "0"
-    );
-    await expect(sourceChecklistItem).toHaveAttribute(
-      "data-testorder",
-      "1"
-    );
+    await expect(targetChecklistItem).toHaveAttribute("data-testorder", "0");
+    await expect(sourceChecklistItem).toHaveAttribute("data-testorder", "1");
 
     // Verify reorder was saved to database
     const reorderedItems = await testPrisma.checklistItem.findMany({
