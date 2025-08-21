@@ -42,7 +42,7 @@ interface BoardPageProps {
 }
 
 export default function BoardPage({ params }: BoardPageProps) {
-  const { isPublic } = params;
+  const { isPublic, id } = params;
   const columnMeta = useBoardColumnMeta();
   const [board, setBoard] = useState<Board | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
@@ -65,9 +65,7 @@ export default function BoardPage({ params }: BoardPageProps) {
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
-
-  const [boardId, setBoardId] = useState<string | null>(null);
-  const [isMobile, setIsMobile] = useState(false);
+  const boardId = id;
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -162,14 +160,6 @@ export default function BoardPage({ params }: BoardPageProps) {
   };
 
   useEffect(() => {
-    const initializeParams = async () => {
-      const resolvedParams = await params;
-      setBoardId(resolvedParams.id);
-    };
-    initializeParams();
-  }, [params]);
-
-  useEffect(() => {
     if (!isPublic) {
       initializeFiltersFromURL();
     }
@@ -222,29 +212,6 @@ export default function BoardPage({ params }: BoardPageProps) {
       document.removeEventListener("keydown", handleKeyDown);
     };
   }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
-
-  useEffect(() => {
-    let resizeTimeout: NodeJS.Timeout;
-
-    const checkResponsive = () => {
-      if (typeof window !== "undefined") {
-        const width = window.innerWidth;
-        setIsMobile(width < 768);
-
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-          setNotes((prevNotes) => [...prevNotes]);
-        }, 50);
-      }
-    };
-
-    checkResponsive();
-    window.addEventListener("resize", checkResponsive);
-    return () => {
-      window.removeEventListener("resize", checkResponsive);
-      clearTimeout(resizeTimeout);
-    };
-  }, []);
 
   useEffect(() => {
     if (isPublic) {
