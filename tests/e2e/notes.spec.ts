@@ -1368,25 +1368,25 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
     await expect(authenticatedPage.getByText("Active note content")).toBeVisible();
-    
+
     await expect(authenticatedPage.getByText("Archived note content")).not.toBeVisible();
-    
+
     const activeNote = authenticatedPage
       .locator('[data-testid="note-card"]')
       .filter({ hasText: "Active note content" })
       .first();
     await activeNote.hover();
-    await expect(activeNote.getByRole('button', { name: 'Copy note' })).toBeVisible();
-    
-    await authenticatedPage.goto('/boards/archive');
-    
+    await expect(activeNote.getByRole("button", { name: "Copy note" })).toBeVisible();
+
+    await authenticatedPage.goto("/boards/archive");
+
     const archivedNote = authenticatedPage
       .locator('[data-testid="note-card"]')
       .filter({ hasText: "Archived note content" })
       .first();
     await expect(archivedNote).toBeVisible();
-    
+
     await archivedNote.hover();
-    await expect(archivedNote.getByRole('button', { name: 'Copy note' })).not.toBeVisible();
+    await expect(archivedNote.getByRole("button", { name: "Copy note" })).not.toBeVisible();
   });
 });
