@@ -648,13 +648,7 @@ export default function OrganizationSettingsPage() {
               title={!user?.isAdmin ? "Only admins can invite new team members" : undefined}
             >
               <UserPlus className="w-4 h-4" />
-              {inviting ? (
-                "Inviting..."
-              ) : (
-                <span>
-                  <span className="hidden lg:inline">Send </span>Invite
-                </span>
-              )}
+              {inviting ? "Inviting..." : <span className="hidden lg:inline">Send Invite</span>}
             </Button>
           </form>
 
