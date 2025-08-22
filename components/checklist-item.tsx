@@ -50,6 +50,40 @@ export function ChecklistItem({
   const previousContentRef = React.useRef<string>("");
   const deletingRef = React.useRef<boolean>(false);
 
+  // Convert URLs in plain text into clickable <a> elements
+  const linkifyText = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, index) => {
+      const isUrl = urlRegex.test(part);
+      // Reset lastIndex due to global regex use across iterations
+      urlRegex.lastIndex = 0;
+
+      if (isUrl) {
+        const href = part.startsWith("http") ? part : `https://${part}`;
+        return (
+          <a
+            key={`url-${index}`}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 text-blue-600 dark:text-blue-400 hover:opacity-80"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {part}
+          </a>
+        );
+      }
+      // Preserve line breaks in non-URL text
+      return part.split("\n").map((line, lineIdx) => (
+        <React.Fragment key={`txt-${index}-${lineIdx}`}>
+          {line}
+          {lineIdx < part.split("\n").length - 1 && <br />}
+        </React.Fragment>
+      ));
+    });
+  };
+
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
     textarea.style.height = textarea.scrollHeight + "px";
@@ -120,42 +154,60 @@ export function ChecklistItem({
         disabled={readonly}
       />
 
-      <textarea
-        ref={textareaRef}
-        value={editContent ?? item.content}
-        onChange={(e) => onEditContentChange?.(e.target.value)}
-        disabled={readonly}
-        className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
-          item.checked && "text-slate-500 dark:text-zinc-500 line-through"
-        )}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        onFocus={(e) => {
-          if (isEditing) {
-            const originalScrollIntoView = e.target.scrollIntoView;
-            e.target.scrollIntoView = () => {};
-            setTimeout(() => {
-              e.target.scrollIntoView = originalScrollIntoView;
-            }, 100);
-          }
+      {isEditing ? (
+        <textarea
+          ref={textareaRef}
+          value={editContent ?? item.content}
+          onChange={(e) => onEditContentChange?.(e.target.value)}
+          disabled={readonly}
+          className={cn(
+            "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
+            item.checked && "text-slate-500 dark:text-zinc-500 line-through"
+          )}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          onFocus={(e) => {
+            if (isEditing) {
+              const originalScrollIntoView = e.target.scrollIntoView;
+              e.target.scrollIntoView = () => {};
+              setTimeout(() => {
+                e.target.scrollIntoView = originalScrollIntoView;
+              }, 100);
+            }
+          }}
+          rows={1}
+          style={{ height: "auto" }}
+          onInput={(e) => {
+            const target = e.target as HTMLTextAreaElement;
+            const currentContent = target.value;
 
-          if (!isEditing && !readonly) {
-            onStartEdit?.(item.id);
-          }
-        }}
-        rows={1}
-        style={{ height: "auto" }}
-        onInput={(e) => {
-          const target = e.target as HTMLTextAreaElement;
-          const currentContent = target.value;
-
-          if (currentContent !== previousContentRef.current) {
-            adjustTextareaHeight(target);
-            previousContentRef.current = currentContent;
-          }
-        }}
-      />
+            if (currentContent !== previousContentRef.current) {
+              adjustTextareaHeight(target);
+              previousContentRef.current = currentContent;
+            }
+          }}
+        />
+      ) : (
+        <div
+          className={cn(
+            "flex-1 px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 whitespace-pre-wrap break-words cursor-text",
+            item.checked && "text-slate-500 dark:text-zinc-500 line-through"
+          )}
+          role={!readonly ? "button" : undefined}
+          tabIndex={!readonly ? 0 : -1}
+          onClick={() => {
+            if (!readonly) onStartEdit?.(item.id);
+          }}
+          onKeyDown={(e) => {
+            if (!readonly && (e.key === "Enter" || e.key === " ")) {
+              e.preventDefault();
+              onStartEdit?.(item.id);
+            }
+          }}
+        >
+          {linkifyText(item.content)}
+        </div>
+      )}
 
       {showDeleteButton && !readonly && (
         <Button
