@@ -159,7 +159,7 @@ test.describe("Home Page", () => {
     await editInput.fill(updatedFinanceText);
     await editInput.blur(); // Use blur instead of Enter to save the edit
     await editResponse;
-    
+
     // Wait for the UI to update with the new content
     // The textarea might stay visible, so we'll wait for the updated text directly
     await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible({ timeout: 10000 });
