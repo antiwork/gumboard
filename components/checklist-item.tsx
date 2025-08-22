@@ -28,6 +28,7 @@ interface ChecklistItemProps {
   className?: string;
   isNewItem?: boolean;
   onCreateItem?: (content: string) => void;
+  canEdit?: boolean;
 }
 
 export function ChecklistItem({
@@ -45,6 +46,7 @@ export function ChecklistItem({
   className,
   isNewItem = false,
   onCreateItem,
+  canEdit = false,
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
@@ -154,7 +156,7 @@ export function ChecklistItem({
         disabled={readonly}
       />
 
-      {isEditing ? (
+      {isEditing || (!readonly && canEdit) ? (
         <textarea
           ref={textareaRef}
           value={editContent ?? item.content}
@@ -185,6 +187,9 @@ export function ChecklistItem({
               adjustTextareaHeight(target);
               previousContentRef.current = currentContent;
             }
+          }}
+          onClick={() => {
+            if (!readonly && !isEditing) onStartEdit?.(item.id);
           }}
         />
       ) : (

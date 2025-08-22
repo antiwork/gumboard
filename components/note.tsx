@@ -501,6 +501,7 @@ export function Note({
                     onStopEdit={handleStopEditItem}
                     readonly={readonly}
                     showDeleteButton={canEdit}
+                    canEdit={canEdit}
                   />
                 </DraggableItem>
               ))}
@@ -532,6 +533,7 @@ export function Note({
                 readonly={false}
                 showDeleteButton={false}
                 className="gap-3"
+                canEdit={canEdit}
               />
             )}
           </DraggableRoot>
