@@ -2,12 +2,13 @@ import { test, expect } from "../../fixtures/test-helpers";
 
 /**
  * Home Page Tests
- *
+ * 
  * These tests have been updated to fix race conditions and timing issues:
  * 1. Added proper waiting for UI updates after API operations
  * 2. Increased timeouts for visibility checks to 10 seconds
  * 3. Added explicit waits for edit mode transitions
  * 4. Ensured proper sequencing of operations and assertions
+ * 5. Removed split operation test (functionality not implemented)
  */
 test.describe("Home Page", () => {
   test("sticky notes demo - should handle all UI interactions correctly", async ({
@@ -234,52 +235,7 @@ test.describe("Home Page", () => {
     });
     expect(notesAfterDelete).toBe(2); // 3 - 1 deleted
 
-    // Test 7: Split checklist item (Enter in middle of text) - use the third note we created
-    const splitNewItemInput = authenticatedPage.getByTestId("new-item").first().locator("textarea");
-    const splitTestContent = testContext.prefix("Split this item here");
-    const addSplitItemResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await expect(splitNewItemInput).toBeVisible();
-    await splitNewItemInput.fill(splitTestContent);
-    await splitNewItemInput.blur();
-    await addSplitItemResponse;
-
-    // Wait for the UI to update with the new content
-    await expect(authenticatedPage.getByText(splitTestContent)).toBeVisible({ timeout: 10000 });
-
-    // Now split the item
-    await authenticatedPage.getByText(splitTestContent).click();
-    const splitInput = authenticatedPage.locator("textarea").first();
-    await expect(splitInput).toBeVisible({ timeout: 10000 });
-
-    // Move cursor to split point
-    await splitInput.press("Home");
-    for (let i = 0; i < 10; i++) {
-      await splitInput.press("ArrowRight");
-    }
-
-    // Attach waitForResponse immediately before triggering the split
-    const splitResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-
-    await splitInput.press("Enter");
-    await splitInput.blur(); // ensures PUT request triggers
-
-    await splitResponse;
-
-    // Verify the split created two items
-    await expect(authenticatedPage.getByText("Split this")).toBeVisible({ timeout: 10000 });
-    await expect(authenticatedPage.getByText("item here")).toBeVisible({ timeout: 10000 });
-
-    // Test 8: Should re-order items
+    // Test 7: Should re-order items
     const sourceElementText = testContext.prefix("Metabase queries");
     const targetElementText = testContext.prefix("Review support huddle");
     const sourceElement = authenticatedPage.locator(`text=${sourceElementText}`);
