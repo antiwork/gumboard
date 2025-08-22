@@ -147,31 +147,38 @@ test.describe("Home Page", () => {
     // Test 4: Edit existing checklist item content
     const originalFinanceText = testContext.prefix("Finance update by Friday");
     const updatedFinanceText = testContext.prefix("Updated Finance deadline");
-    await authenticatedPage.getByText(originalFinanceText).click();
-    const editInput = authenticatedPage.locator("textarea").first();
+    
+    // Find the specific item by its test ID and click on it
+    const financeItem = authenticatedPage.getByTestId(testContext.prefix("101"));
+    await expect(financeItem).toBeVisible();
+    await financeItem.click();
+    
+    // Now find the textarea within this specific item
+    const editInput = financeItem.locator("textarea");
     await expect(editInput).toBeVisible();
+    
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
+    
     await editInput.fill(updatedFinanceText);
     await editInput.blur(); // Use blur instead of Enter to save the edit
     await editResponse;
     
-    // Wait for the UI to update with the new content
-    // The textarea might stay visible, so we'll wait for the updated text directly
-    await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible({ timeout: 10000 });
-
-    // Verify edit was saved to database
+    // First verify the edit was saved to database
     await test.expect
       .poll(async () => {
         return await testPrisma.checklistItem.findFirst({
           where: { content: updatedFinanceText },
         });
-      })
-      .toHaveProperty("content", updatedFinanceText);
+      }, { timeout: 10000 })
+      .toBeTruthy();
+    
+    // Now wait for the UI to update with the new content
+    await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible({ timeout: 10000 });
 
     // Test 5: Delete a checklist item
     const deleteItemResponse = authenticatedPage.waitForResponse(
