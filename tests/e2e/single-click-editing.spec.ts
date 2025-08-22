@@ -190,7 +190,9 @@ test.describe("Single-Click Note Editing", () => {
 
     // Check if the component is in edit mode (textarea) or display mode (div)
     // Since the user is not authorized, it should be in readonly mode
-    const textContent = authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`);
+    const textContent = authenticatedPage.locator(
+      `text=${testContext.prefix("Test checklist item")}`
+    );
     await expect(textContent).toBeVisible({ timeout: 10000 });
 
     // The component should show the text content, not a textarea
@@ -240,7 +242,9 @@ test.describe("Single-Click Note Editing", () => {
     ).toBeVisible({ timeout: 10000 });
 
     // The component should show the text content in display mode
-    const textContent = authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`);
+    const textContent = authenticatedPage.locator(
+      `text=${testContext.prefix("Original item content")}`
+    );
     await expect(textContent).toBeVisible({ timeout: 10000 });
 
     // Verify the text content is visible and clickable
