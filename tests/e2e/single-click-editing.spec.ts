@@ -2,7 +2,7 @@ import { test, expect } from "../fixtures/test-helpers";
 
 /**
  * Single-Click Note Editing Tests
- * 
+ *
  * These tests have been updated to fix race conditions and timing issues:
  * 1. Added proper waiting for UI updates after API operations
  * 2. Increased timeouts for visibility checks to 10 seconds
