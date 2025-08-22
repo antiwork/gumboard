@@ -60,6 +60,9 @@ export function ChecklistItem({
     if (isEditing && textareaRef.current) {
       adjustTextareaHeight(textareaRef.current);
       previousContentRef.current = editContent ?? item.content;
+      // Place cursor at the end of text
+      const length = textareaRef.current.value.length;
+      textareaRef.current.setSelectionRange(length, length);
     }
   }, [isEditing, editContent, item.content]);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
