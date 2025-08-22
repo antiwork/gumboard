@@ -156,9 +156,9 @@ export class TestContext {
   async waitForUIUpdate(page: Page, timeout: number = 10000) {
     // Wait a small amount of time for any immediate UI updates
     await page.waitForTimeout(100);
-    
+
     // Wait for any pending network requests to complete
-    await page.waitForLoadState('networkidle', { timeout });
+    await page.waitForLoadState("networkidle", { timeout });
   }
 }
 

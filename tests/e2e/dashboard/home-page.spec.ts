@@ -2,7 +2,7 @@ import { test, expect } from "../../fixtures/test-helpers";
 
 /**
  * Home Page Tests
- * 
+ *
  * These tests have been updated to fix race conditions and timing issues:
  * 1. Added proper waiting for UI updates after API operations
  * 2. Increased timeouts for visibility checks to 10 seconds
@@ -123,7 +123,7 @@ test.describe("Home Page", () => {
     await newItemInput.fill(newItemContent);
     await newItemInput.blur();
     await addItemResponse;
-    
+
     // Wait for the UI to update with the new content
     await expect(authenticatedPage.getByText(newItemContent)).toBeVisible({ timeout: 10000 });
 
@@ -156,11 +156,11 @@ test.describe("Home Page", () => {
     await editInput.fill(updatedFinanceText);
     await editInput.blur(); // Use blur instead of Enter to save the edit
     await editResponse;
-    
+
     // Wait for the UI to update with the new content
     // First wait for the textarea to disappear (edit mode to end)
     await expect(editInput).not.toBeVisible();
-    
+
     // Then wait for the updated text to be visible
     await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible({ timeout: 10000 });
 
@@ -237,7 +237,7 @@ test.describe("Home Page", () => {
     await splitNewItemInput.fill(splitTestContent);
     await splitNewItemInput.blur();
     await addSplitItemResponse;
-    
+
     // Wait for the UI to update with the new content
     await expect(authenticatedPage.getByText(splitTestContent)).toBeVisible({ timeout: 10000 });
 
