@@ -44,33 +44,36 @@ export class TestContext {
     }
 
     try {
-      await this.prisma.$transaction(async (tx) => {
-        await tx.organization.create({
-          data: {
-            id: this.organizationId,
-            name: `Test Org ${this.testId}`,
-          },
-        });
+      await this.prisma.$transaction(
+        async (tx) => {
+          await tx.organization.create({
+            data: {
+              id: this.organizationId,
+              name: `Test Org ${this.testId}`,
+            },
+          });
 
-        await tx.user.create({
-          data: {
-            id: this.userId,
-            email: this.userEmail,
-            name: `Test User ${this.testId}`,
-            organizationId: this.organizationId,
-          },
-        });
+          await tx.user.create({
+            data: {
+              id: this.userId,
+              email: this.userEmail,
+              name: `Test User ${this.testId}`,
+              organizationId: this.organizationId,
+            },
+          });
 
-        await tx.session.create({
-          data: {
-            sessionToken: this.sessionToken,
-            userId: this.userId,
-            expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
-          },
-        });
-      }, {
-        timeout: 15000, // 15 second timeout for auth initialization
-      });
+          await tx.session.create({
+            data: {
+              sessionToken: this.sessionToken,
+              userId: this.userId,
+              expires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+            },
+          });
+        },
+        {
+          timeout: 15000, // 15 second timeout for auth initialization
+        }
+      );
     } catch (error) {
       console.error(`Failed to initialize auth for test ${this.testId}:`, error);
       throw error;
@@ -176,9 +179,9 @@ export const test = base.extend<{
 
     // eslint-disable-next-line react-hooks/rules-of-hooks
     await use(context);
-    
+
     // Add a small delay before cleanup to avoid race conditions
-    await new Promise(resolve => setTimeout(resolve, 100));
+    await new Promise((resolve) => setTimeout(resolve, 100));
     await context.cleanup();
 
     if (process.env.DEBUG_TESTS) {
