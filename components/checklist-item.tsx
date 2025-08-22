@@ -32,7 +32,7 @@ interface ChecklistItemProps {
   autoFocus?: boolean;
   onFocus?: () => void;
   showCheckbox?: boolean;
-  onEnterPress?: (position: 'before' | 'after') => void;
+  onEnterPress?: (position: "before" | "after") => void;
 }
 
 export function ChecklistItem({
@@ -96,16 +96,16 @@ export function ChecklistItem({
         const target = e.target as HTMLTextAreaElement;
         const cursorPosition = target.selectionStart;
         const contentLength = target.value.length;
-        
+
         if (cursorPosition === 0) {
           // Cursor at start - insert before
-          onEnterPress('before');
+          onEnterPress("before");
         } else if (cursorPosition === contentLength) {
           // Cursor at end - insert after
-          onEnterPress('after');
+          onEnterPress("after");
         } else {
           // Cursor in middle - insert after
-          onEnterPress('after');
+          onEnterPress("after");
         }
       } else {
         const target = e.target as HTMLTextAreaElement;

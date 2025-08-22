@@ -341,7 +341,7 @@ export function Note({
     }
   };
 
-  const handleEnterPress = (itemId: string, position: 'before' | 'after') => {
+  const handleEnterPress = (itemId: string, position: "before" | "after") => {
     const item = note.checklistItems?.find((i) => i.id === itemId);
     if (!item) return;
 
@@ -349,21 +349,27 @@ export function Note({
       id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       content: "",
       checked: false,
-      order: position === 'before' ? item.order : item.order + 1,
+      order: position === "before" ? item.order : item.order + 1,
     };
 
     // Update order of existing items
-    const updatedItems = note.checklistItems?.map((i) => {
-      if (position === 'before') {
-        return i.order >= item.order ? { ...i, order: i.order + 1 } : i;
-      } else {
-        return i.order > item.order ? { ...i, order: i.order + 1 } : i;
-      }
-    }) || [];
+    const updatedItems =
+      note.checklistItems?.map((i) => {
+        if (position === "before") {
+          return i.order >= item.order ? { ...i, order: i.order + 1 } : i;
+        } else {
+          return i.order > item.order ? { ...i, order: i.order + 1 } : i;
+        }
+      }) || [];
 
-    const finalItems = position === 'before' 
-      ? [...updatedItems.slice(0, item.order), newItem, ...updatedItems.slice(item.order)]
-      : [...updatedItems.slice(0, item.order + 1), newItem, ...updatedItems.slice(item.order + 1)];
+    const finalItems =
+      position === "before"
+        ? [...updatedItems.slice(0, item.order), newItem, ...updatedItems.slice(item.order)]
+        : [
+            ...updatedItems.slice(0, item.order + 1),
+            newItem,
+            ...updatedItems.slice(item.order + 1),
+          ];
 
     const optimisticNote = {
       ...note,
