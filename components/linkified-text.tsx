@@ -10,34 +10,20 @@ interface LinkifiedTextProps {
   linkClassName?: string;
 }
 
-export function LinkifiedText({
-  text,
-  className,
-  linkClassName,
-}: LinkifiedTextProps) {
+export function LinkifiedText({ text, className, linkClassName }: LinkifiedTextProps) {
   // Only memoize the parsing operation since it involves regex
   const parts = React.useMemo(() => parseLinks(text), [text]);
 
   // Early return for no links case
-  if (parts.length === 1 && parts[0].type === 'text') {
-    return (
-      <span 
-        className={className}
-        dangerouslySetInnerHTML={{ __html: parts[0].content }}
-      />
-    );
+  if (parts.length === 1 && parts[0].type === "text") {
+    return <span className={className} dangerouslySetInnerHTML={{ __html: parts[0].content }} />;
   }
 
   return (
     <span className={className}>
       {parts.map((part, index) => {
         if (part.type === "text") {
-          return (
-            <span
-              key={`text-${index}`}
-              dangerouslySetInnerHTML={{ __html: part.content }}
-            />
-          );
+          return <span key={`text-${index}`} dangerouslySetInnerHTML={{ __html: part.content }} />;
         }
 
         if (part.type === "link" && part.url) {

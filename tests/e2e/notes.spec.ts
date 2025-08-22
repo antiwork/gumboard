@@ -1434,18 +1434,16 @@ test.describe("Note Management", () => {
       // Test 1: Verify links are rendered correctly
       const exampleLink = authenticatedPage.locator('a[href="https://example.com/"]');
       const googleLink = authenticatedPage.locator('a[href="https://www.google.com/"]');
-      
+
       await expect(exampleLink).toBeVisible();
       await expect(googleLink).toBeVisible();
       await expect(exampleLink).toHaveAttribute("target", "_blank");
       await expect(exampleLink).toHaveAttribute("rel", "noopener noreferrer");
 
       // Test 2: Verify XSS prevention
-      const maliciousLinks = await authenticatedPage
-        .locator('a[href*="javascript:"]')
-        .count();
+      const maliciousLinks = await authenticatedPage.locator('a[href*="javascript:"]').count();
       expect(maliciousLinks).toBe(0);
-      
+
       // Ensure script text is displayed but escaped
       const noteContent = authenticatedPage.locator('[data-testid="note-card"]').first();
       await expect(noteContent).toContainText("<script>");

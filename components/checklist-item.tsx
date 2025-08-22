@@ -159,10 +159,7 @@ export function ChecklistItem({
             }
           }}
         >
-          <LinkifiedText 
-            text={item.content} 
-            className="break-all"
-          />
+          <LinkifiedText text={item.content} className="break-all" />
         </div>
       )}
 
