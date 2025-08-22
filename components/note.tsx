@@ -341,6 +341,50 @@ export function Note({
     }
   };
 
+  const handleEnterPress = (itemId: string, position: 'before' | 'after') => {
+    const item = note.checklistItems?.find((i) => i.id === itemId);
+    if (!item) return;
+
+    const newItem = {
+      id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      content: "",
+      checked: false,
+      order: position === 'before' ? item.order : item.order + 1,
+    };
+
+    // Update order of existing items
+    const updatedItems = note.checklistItems?.map((i) => {
+      if (position === 'before') {
+        return i.order >= item.order ? { ...i, order: i.order + 1 } : i;
+      } else {
+        return i.order > item.order ? { ...i, order: i.order + 1 } : i;
+      }
+    }) || [];
+
+    const finalItems = position === 'before' 
+      ? [...updatedItems.slice(0, item.order), newItem, ...updatedItems.slice(item.order)]
+      : [...updatedItems.slice(0, item.order + 1), newItem, ...updatedItems.slice(item.order + 1)];
+
+    const optimisticNote = {
+      ...note,
+      checklistItems: finalItems,
+    };
+
+    onUpdate?.(optimisticNote);
+
+    if (syncDB) {
+      fetch(`/api/boards/${note.boardId}/notes/${note.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          checklistItems: finalItems,
+        }),
+      }).catch(console.error);
+    }
+  };
+
   React.useEffect(() => {
     if (!spawnedSecondNewItem && newItemContent.trim().length > 0) {
       setSpawnedSecondNewItem(true);
@@ -521,6 +565,7 @@ export function Note({
                     onStopEdit={handleStopEditItem}
                     readonly={readonly}
                     showDeleteButton={canEdit}
+                    onEnterPress={(position) => handleEnterPress(item.id, position)}
                   />
                 </DraggableItem>
               ))}
@@ -584,7 +629,7 @@ export function Note({
                     readonly={false}
                     showDeleteButton={false}
                     className="gap-3"
-                    autoFocus={false}
+                    autoFocus={true}
                     showCheckbox={true}
                   />
                 )}

@@ -844,7 +844,8 @@ test.describe("Note Management", () => {
 
       const checklistItems = authenticatedPage
         .getByRole("checkbox")
-        .filter({ hasNot: authenticatedPage.getByTestId("new-item") });
+        .filter({ hasNot: authenticatedPage.getByTestId("new-item") })
+        .filter({ hasNot: authenticatedPage.getByTestId("new-item-2") });
       await expect(checklistItems).toHaveCount(2);
       await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
     });
@@ -910,7 +911,8 @@ test.describe("Note Management", () => {
 
       const checklistItems = authenticatedPage
         .getByRole("checkbox")
-        .filter({ hasNot: authenticatedPage.getByTestId("new-item") });
+        .filter({ hasNot: authenticatedPage.getByTestId("new-item") })
+        .filter({ hasNot: authenticatedPage.getByTestId("new-item-2") });
       await expect(checklistItems).toHaveCount(2);
       await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
     });

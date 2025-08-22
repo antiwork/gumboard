@@ -32,6 +32,7 @@ interface ChecklistItemProps {
   autoFocus?: boolean;
   onFocus?: () => void;
   showCheckbox?: boolean;
+  onEnterPress?: (position: 'before' | 'after') => void;
 }
 
 export function ChecklistItem({
@@ -52,6 +53,7 @@ export function ChecklistItem({
   autoFocus = false,
   onFocus,
   showCheckbox = true,
+  onEnterPress,
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
@@ -89,6 +91,22 @@ export function ChecklistItem({
       e.preventDefault();
       if (isNewItem && editContent?.trim() && onCreateItem) {
         onCreateItem(editContent.trim());
+      } else if (onEnterPress) {
+        // Determine if cursor is at start or end to decide where to insert new item
+        const target = e.target as HTMLTextAreaElement;
+        const cursorPosition = target.selectionStart;
+        const contentLength = target.value.length;
+        
+        if (cursorPosition === 0) {
+          // Cursor at start - insert before
+          onEnterPress('before');
+        } else if (cursorPosition === contentLength) {
+          // Cursor at end - insert after
+          onEnterPress('after');
+        } else {
+          // Cursor in middle - insert after
+          onEnterPress('after');
+        }
       } else {
         const target = e.target as HTMLTextAreaElement;
         target.blur();
