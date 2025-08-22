@@ -1,4 +1,4 @@
-import { test, expect } from "../../fixtures/test-helpers";
+import { test, expect } from "../fixtures/test-helpers";
 
 /**
  * Single-Click Note Editing Tests
