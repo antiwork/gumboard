@@ -1389,4 +1389,66 @@ test.describe("Note Management", () => {
     await archivedNote.hover();
     await expect(archivedNote.getByRole("button", { name: "Copy note" })).not.toBeVisible();
   });
+
+  test.describe("Link Parsing in Checklist Items", () => {
+    test("should render clickable links and prevent XSS attacks", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Links Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Board for testing links"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      // Create notes with various link patterns and XSS attempts
+      await testPrisma.note.create({
+        data: {
+          color: "#fef3c7",
+          boardId: board.id,
+          createdBy: testContext.userId,
+          checklistItems: {
+            create: [
+              {
+                content: "Check out https://example.com and www.google.com for info",
+                checked: false,
+                order: 0,
+              },
+              {
+                content: 'Test <script>alert("XSS")</script> and javascript:alert("XSS")',
+                checked: false,
+                order: 1,
+              },
+            ],
+          },
+        },
+      });
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+
+      // Test 1: Verify links are rendered correctly
+      const exampleLink = authenticatedPage.locator('a[href="https://example.com/"]');
+      const googleLink = authenticatedPage.locator('a[href="https://www.google.com/"]');
+      
+      await expect(exampleLink).toBeVisible();
+      await expect(googleLink).toBeVisible();
+      await expect(exampleLink).toHaveAttribute("target", "_blank");
+      await expect(exampleLink).toHaveAttribute("rel", "noopener noreferrer");
+
+      // Test 2: Verify XSS prevention
+      const maliciousLinks = await authenticatedPage
+        .locator('a[href*="javascript:"]')
+        .count();
+      expect(maliciousLinks).toBe(0);
+      
+      // Ensure script text is displayed but escaped
+      const noteContent = authenticatedPage.locator('[data-testid="note-card"]').first();
+      await expect(noteContent).toContainText("<script>");
+    });
+  });
 });
