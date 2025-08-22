@@ -129,13 +129,16 @@ test.describe("Home Page", () => {
 
     // Verify new item was added to database with polling
     await test.expect
-      .poll(async () => {
-        return await testPrisma.checklistItem.findFirst({
-          where: { content: newItemContent },
-        });
-      }, { timeout: 10000 })
+      .poll(
+        async () => {
+          return await testPrisma.checklistItem.findFirst({
+            where: { content: newItemContent },
+          });
+        },
+        { timeout: 10000 }
+      )
       .toBeTruthy();
-    
+
     const newItem = await testPrisma.checklistItem.findFirst({
       where: { content: newItemContent },
     });
