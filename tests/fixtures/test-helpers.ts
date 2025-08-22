@@ -148,6 +148,15 @@ export class TestContext {
   getBoardName(name: string) {
     return `${name}_${this.testId}`;
   }
+
+  // Helper method to wait for UI updates after API operations
+  async waitForUIUpdate(page: Page, timeout: number = 10000) {
+    // Wait a small amount of time for any immediate UI updates
+    await page.waitForTimeout(100);
+    
+    // Wait for any pending network requests to complete
+    await page.waitForLoadState('networkidle', { timeout });
+  }
 }
 
 export const test = base.extend<{

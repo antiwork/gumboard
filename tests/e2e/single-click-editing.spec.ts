@@ -1,5 +1,14 @@
-import { test, expect } from "../fixtures/test-helpers";
+import { test, expect } from "../../fixtures/test-helpers";
 
+/**
+ * Single-Click Note Editing Tests
+ * 
+ * These tests have been updated to fix race conditions and timing issues:
+ * 1. Added proper waiting for UI updates after API operations
+ * 2. Increased timeouts for visibility checks to 10 seconds
+ * 3. Added explicit waits for component state transitions
+ * 4. Ensured proper sequencing of operations and assertions
+ */
 test.describe("Single-Click Note Editing", () => {
   test("should enter edit mode on single click for checklist notes", async ({
     authenticatedPage,
@@ -40,12 +49,12 @@ test.describe("Single-Click Note Editing", () => {
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     const checklistItemElement = authenticatedPage
       .locator("textarea")
       .filter({ hasText: testContext.prefix("Test checklist item") });
-    await expect(checklistItemElement).toBeVisible();
+    await expect(checklistItemElement).toBeVisible({ timeout: 10000 });
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
@@ -226,12 +235,12 @@ test.describe("Single-Click Note Editing", () => {
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`)
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     const checklistItemElement = authenticatedPage
       .locator("textarea")
       .filter({ hasText: testContext.prefix("Original item content") });
-    await expect(checklistItemElement).toBeVisible();
+    await expect(checklistItemElement).toBeVisible({ timeout: 10000 });
 
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`)

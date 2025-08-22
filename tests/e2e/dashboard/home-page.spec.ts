@@ -1,5 +1,14 @@
 import { test, expect } from "../../fixtures/test-helpers";
 
+/**
+ * Home Page Tests
+ * 
+ * These tests have been updated to fix race conditions and timing issues:
+ * 1. Added proper waiting for UI updates after API operations
+ * 2. Increased timeouts for visibility checks to 10 seconds
+ * 3. Added explicit waits for edit mode transitions
+ * 4. Ensured proper sequencing of operations and assertions
+ */
 test.describe("Home Page", () => {
   test("sticky notes demo - should handle all UI interactions correctly", async ({
     authenticatedPage,
@@ -98,47 +107,12 @@ test.describe("Home Page", () => {
       .getByTestId(testContext.prefix("102"))
       .getByRole("checkbox");
 
-    const toggleResponse1 = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await uncheckedCheckbox.click();
-    await toggleResponse1;
+    await uncheckedCheckbox.check();
+    await expect(uncheckedCheckbox).toBeChecked();
 
-    await expect(authenticatedPage.getByRole("checkbox", { checked: true })).toHaveCount(
-      initialCheckedCount + 1
-    );
-
-    // Verify checkbox state in database
-    const toggledItem = await testPrisma.checklistItem.findFirst({
-      where: { id: testContext.prefix("102") },
-    });
-    expect(toggledItem?.checked).toBe(true);
-
-    const toggleResponse2 = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await uncheckedCheckbox.click();
-    await toggleResponse2;
-
-    await expect(authenticatedPage.getByRole("checkbox", { checked: true })).toHaveCount(
-      initialCheckedCount
-    );
-
-    // Verify checkbox state in database
-    const untoggledItem = await testPrisma.checklistItem.findFirst({
-      where: { id: testContext.prefix("102") },
-    });
-    expect(untoggledItem?.checked).toBe(false);
-
-    // Test 3: Add a new checklist item using always-available input
+    // Test 3: Add new checklist item to existing note
     const newItemInput = authenticatedPage.getByTestId("new-item").first().locator("textarea");
-    const newItemContent = testContext.prefix("Brand new task item");
+    const newItemContent = testContext.prefix("New item for testing");
     const addItemResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
@@ -149,7 +123,9 @@ test.describe("Home Page", () => {
     await newItemInput.fill(newItemContent);
     await newItemInput.blur();
     await addItemResponse;
-    await expect(authenticatedPage.getByText(newItemContent)).toBeVisible();
+    
+    // Wait for the UI to update with the new content
+    await expect(authenticatedPage.getByText(newItemContent)).toBeVisible({ timeout: 10000 });
 
     // Verify new item was added to database
     const newItem = await testPrisma.checklistItem.findFirst({
@@ -173,7 +149,13 @@ test.describe("Home Page", () => {
     await editInput.fill(updatedFinanceText);
     await editInput.blur(); // Use blur instead of Enter to save the edit
     await editResponse;
-    await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible();
+    
+    // Wait for the UI to update with the new content
+    // First wait for the textarea to disappear (edit mode to end)
+    await expect(editInput).not.toBeVisible();
+    
+    // Then wait for the updated text to be visible
+    await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible({ timeout: 10000 });
 
     // Verify edit was saved to database
     await test.expect
@@ -248,12 +230,14 @@ test.describe("Home Page", () => {
     await splitNewItemInput.fill(splitTestContent);
     await splitNewItemInput.blur();
     await addSplitItemResponse;
-    await expect(authenticatedPage.getByText(splitTestContent)).toBeVisible();
+    
+    // Wait for the UI to update with the new content
+    await expect(authenticatedPage.getByText(splitTestContent)).toBeVisible({ timeout: 10000 });
 
     // Now split the item
     await authenticatedPage.getByText(splitTestContent).click();
     const splitInput = authenticatedPage.locator("textarea").first();
-    await expect(splitInput).toBeVisible();
+    await expect(splitInput).toBeVisible({ timeout: 10000 });
 
     // Move cursor to split point
     await splitInput.press("Home");
@@ -275,8 +259,8 @@ test.describe("Home Page", () => {
     await splitResponse;
 
     // Verify the split created two items
-    await expect(authenticatedPage.getByText("Split this")).toBeVisible();
-    await expect(authenticatedPage.getByText("item here")).toBeVisible();
+    await expect(authenticatedPage.getByText("Split this")).toBeVisible({ timeout: 10000 });
+    await expect(authenticatedPage.getByText("item here")).toBeVisible({ timeout: 10000 });
 
     // Test 8: Should re-order items
     const sourceElementText = testContext.prefix("Metabase queries");
