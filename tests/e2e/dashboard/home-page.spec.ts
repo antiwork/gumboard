@@ -147,36 +147,39 @@ test.describe("Home Page", () => {
     // Test 4: Edit existing checklist item content
     const originalFinanceText = testContext.prefix("Finance update by Friday");
     const updatedFinanceText = testContext.prefix("Updated Finance deadline");
-    
+
     // Find the specific item by its test ID and click on it
     const financeItem = authenticatedPage.getByTestId(testContext.prefix("101"));
     await expect(financeItem).toBeVisible();
     await financeItem.click();
-    
+
     // Now find the textarea within this specific item
     const editInput = financeItem.locator("textarea");
     await expect(editInput).toBeVisible();
-    
+
     const editResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
-    
+
     await editInput.fill(updatedFinanceText);
     await editInput.blur(); // Use blur instead of Enter to save the edit
     await editResponse;
-    
+
     // First verify the edit was saved to database
     await test.expect
-      .poll(async () => {
-        return await testPrisma.checklistItem.findFirst({
-          where: { content: updatedFinanceText },
-        });
-      }, { timeout: 10000 })
+      .poll(
+        async () => {
+          return await testPrisma.checklistItem.findFirst({
+            where: { content: updatedFinanceText },
+          });
+        },
+        { timeout: 10000 }
+      )
       .toBeTruthy();
-    
+
     // Now wait for the UI to update with the new content
     await expect(authenticatedPage.getByText(updatedFinanceText)).toBeVisible({ timeout: 10000 });
 
