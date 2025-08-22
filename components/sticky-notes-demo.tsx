@@ -358,12 +358,17 @@ export function StickyNotesDemo() {
     if (latestNoteId && noteRefs.current[latestNoteId]) {
       const noteElement = noteRefs.current[latestNoteId];
       // Find the second input field (the one below "New to-do")
-      const inputFields = noteElement?.querySelectorAll('textarea[data-testid="checklist-item-input"]');
+      const inputFields = noteElement?.querySelectorAll(
+        'textarea[data-testid="checklist-item-input"]'
+      );
       if (inputFields && inputFields.length >= 2) {
         const secondInputField = inputFields[1] as HTMLTextAreaElement;
         setTimeout(() => {
           secondInputField.focus();
-          secondInputField.setSelectionRange(secondInputField.value.length, secondInputField.value.length);
+          secondInputField.setSelectionRange(
+            secondInputField.value.length,
+            secondInputField.value.length
+          );
         }, 100);
       }
       setLatestNoteId(null);

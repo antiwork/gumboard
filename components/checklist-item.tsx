@@ -130,7 +130,6 @@ export function ChecklistItem({
       data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
       data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
     >
-      
       {showCheckbox && (
         <Checkbox
           checked={item.checked}
