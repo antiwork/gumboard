@@ -1,4 +1,4 @@
-import { test, expect } from "../fixtures/test-helpers";
+import { test, expect } from "../../fixtures/test-helpers";
 
 test.describe("Board Card", () => {
   test("should exclude archived notes from the board card", async ({

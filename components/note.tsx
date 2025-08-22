@@ -13,7 +13,6 @@ import {
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
-import { useTheme } from "next-themes";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 // Core domain types
@@ -85,8 +84,6 @@ export function Note({
   syncDB = true,
   style,
 }: NoteProps) {
-  const { resolvedTheme } = useTheme();
-
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
@@ -337,24 +334,33 @@ export function Note({
   return (
     <div
       className={cn(
-        "rounded-lg select-none group transition-all duration-200 flex flex-col border border-gray-200 dark:border-gray-600 box-border",
+        "relative select-none group transition-shadow duration-200 flex flex-col dark:border-gray-600 dark:bg-zinc-900 box-border",
+        // Focus highlight when any child is focused/being typed into
+        "focus-within:ring-2 focus-within:ring-sky-500 dark:focus-within:ring-sky-400 focus-within:ring-offset-1 focus-within:ring-offset-white dark:focus-within:ring-offset-zinc-900",
+        // Light theme variant
+        "shadow-[-5px_14px_20px_-12px_rgba(0,0,0,0.18),_5px_14px_20px_-12px_rgba(0,0,0,0.18),_0_24px_40px_-22px_rgba(0,0,0,0.12)]",
+        // Dark theme variant
+        "dark:shadow-[-5px_14px_20px_-12px_rgba(0,0,0,0.38),_5px_14px_20px_-12px_rgba(0,0,0,0.38),_0_26px_42px_-22px_rgba(0,0,0,0.24)]",
+        // Minimal top sticky shade
+        "before:content-[''] before:absolute before:inset-x-0 before:top-0 before:h-1 before:opacity-20 before:pointer-events-none",
+        "before:bg-gradient-to-b before:from-black/5 before:to-transparent dark:before:from-white/5",
         className
       )}
       data-testid="note-card"
-      style={{
-        backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-        ...style,
-      }}
+      onFocusCapture={() => {}}
+      onBlurCapture={() => {}}
+      style={style}
     >
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex items-center space-x-2">
-          <Avatar className="h-7 w-7 border-2 border-white dark:border-zinc-800">
-            <AvatarFallback className="bg-zinc-200 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
+          <Avatar className="h-7 w-7">
+            <AvatarFallback className="bg-white/50 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
               {note.user.name
                 ? note.user.name.charAt(0).toUpperCase()
                 : note.user.email.charAt(0).toUpperCase()}
             </AvatarFallback>
             <AvatarImage
+              className="border-1 rounded-full border-zinc-50/50 dark:border-zinc-800"
               src={note.user.image ? note.user.image : undefined}
               alt={note.user.name || ""}
             />
@@ -376,8 +382,8 @@ export function Note({
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          {canEdit && (
-            <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+          <div className="flex space-x-1 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+            {canEdit && !note.archivedAt && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -386,7 +392,7 @@ export function Note({
                       e.stopPropagation();
                       onCopy?.(note);
                     }}
-                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-white/20 rounded"
                     variant="ghost"
                     size="icon"
                   >
@@ -397,6 +403,8 @@ export function Note({
                   <p>Copy note</p>
                 </TooltipContent>
               </Tooltip>
+            )}
+            {canEdit && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -405,7 +413,7 @@ export function Note({
                       e.stopPropagation();
                       onDelete?.(note.id);
                     }}
-                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400 rounded"
+                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-white/20 rounded"
                     variant="ghost"
                     size="icon"
                   >
@@ -416,8 +424,8 @@ export function Note({
                   <p>Delete note</p>
                 </TooltipContent>
               </Tooltip>
-            </div>
-          )}
+            )}
+          </div>
           {canEdit && onArchive && (
             <div className="flex items-center">
               <Tooltip>
@@ -427,7 +435,7 @@ export function Note({
                       e.stopPropagation();
                       onArchive(note.id);
                     }}
-                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 rounded"
+                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white hover:bg-white/20 rounded"
                     variant="ghost"
                     size="icon"
                     aria-label="Archive note"
@@ -450,7 +458,7 @@ export function Note({
                       e.stopPropagation();
                       onUnarchive(note.id);
                     }}
-                    className="p-1 text-gray-600 dark:text-gray-400 hover:text-green-600 dark:hover:text-green-400 rounded"
+                    className="p-1 text-zinc-600 dark:text-zinc-400 hover:text-green-600 dark:hover:text-green-400 rounded"
                     variant="ghost"
                     size="icon"
                     aria-label="Unarchive note"
