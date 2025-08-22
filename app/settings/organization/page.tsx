@@ -328,8 +328,6 @@ export default function OrganizationSettingsPage() {
         usageLimit: values.usageLimit,
       };
 
-      console.log(payload);
-
       const response = await fetch("/api/organization/self-serve-invites", {
         method: "POST",
         headers: {
@@ -337,8 +335,6 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify(payload),
       });
-
-      console.log(await response.json());
 
       if (response.ok) {
         selfServeInviteForm.reset();
