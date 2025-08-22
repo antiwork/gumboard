@@ -127,11 +127,18 @@ test.describe("Home Page", () => {
     // Wait for the UI to update with the new content
     await expect(authenticatedPage.getByText(newItemContent)).toBeVisible({ timeout: 10000 });
 
-    // Verify new item was added to database
+    // Verify new item was added to database with polling
+    await test.expect
+      .poll(async () => {
+        return await testPrisma.checklistItem.findFirst({
+          where: { content: newItemContent },
+        });
+      }, { timeout: 10000 })
+      .toBeTruthy();
+    
     const newItem = await testPrisma.checklistItem.findFirst({
       where: { content: newItemContent },
     });
-    expect(newItem).toBeTruthy();
     expect(newItem?.content).toBe(newItemContent);
 
     // Test 4: Edit existing checklist item content
