@@ -41,15 +41,17 @@ test.describe("Single-Click Note Editing", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
-
-    const checklistItemElement = authenticatedPage
-      .locator("textarea")
-      .filter({ hasText: testContext.prefix("Test checklist item") });
-    await expect(checklistItemElement).toBeVisible();
-
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
+    
+    // Click on it to enter edit mode
+    await authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`).click();
+    
+    // Now textarea should be visible
+    const checklistItemElement = authenticatedPage.locator("textarea").first();
+    await expect(checklistItemElement).toBeVisible();
+    await expect(checklistItemElement).toHaveValue(testContext.prefix("Test checklist item"));
   });
 
   test("should enter edit mode on single click for checklist items", async ({
@@ -93,14 +95,17 @@ test.describe("Single-Click Note Editing", () => {
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
 
-    const checklistItemElement = authenticatedPage
-      .locator("textarea")
-      .filter({ hasText: testContext.prefix("Test checklist item") });
-    await expect(checklistItemElement).toBeVisible();
-
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
+    
+    // Click on it to enter edit mode
+    await authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`).click();
+    
+    // Now textarea should be visible
+    const checklistItemElement = authenticatedPage.locator("textarea").first();
+    await expect(checklistItemElement).toBeVisible();
+    await expect(checklistItemElement).toHaveValue(testContext.prefix("Test checklist item"));
   });
 
   test("should not enter edit mode when user is not authorized", async ({
@@ -176,15 +181,17 @@ test.describe("Single-Click Note Editing", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
-
-    const checklistItemElement = authenticatedPage
-      .locator("textarea")
-      .filter({ hasText: testContext.prefix("Test checklist item") });
-    await expect(checklistItemElement).toBeVisible();
-
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
+    
+    // Try to click on it
+    await authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`).click();
+    
+    // Should NOT enter edit mode (no textarea should appear)
+    const textareas = authenticatedPage.locator("textarea");
+    // Only the new item input should be visible, not an edit textarea
+    await expect(textareas).toHaveCount(0);
   });
 
   test("should save changes when editing checklist item content", async ({
@@ -228,14 +235,17 @@ test.describe("Single-Click Note Editing", () => {
       authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`)
     ).toBeVisible();
 
-    const checklistItemElement = authenticatedPage
-      .locator("textarea")
-      .filter({ hasText: testContext.prefix("Original item content") });
-    await expect(checklistItemElement).toBeVisible();
-
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`)
     ).toBeVisible();
+    
+    // Click on it to enter edit mode
+    await authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`).click();
+    
+    // Now textarea should be visible
+    const checklistItemElement = authenticatedPage.locator("textarea").first();
+    await expect(checklistItemElement).toBeVisible();
+    await expect(checklistItemElement).toHaveValue(testContext.prefix("Original item content"));
 
     // Note: This test mainly validates that the UI renders correctly.
     // The actual editing behavior would require more complex UI interactions

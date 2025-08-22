@@ -35,16 +35,20 @@ test.describe("Note Management", () => {
     const initialTextarea = authenticatedPage.locator("textarea").first();
     await expect(initialTextarea).toBeVisible({ timeout: 10000 });
 
+    const addChecklistItemResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+        resp.request().method() === "PUT" &&
+        resp.status() === 200
+    );
     await initialTextarea.fill(testItemContent);
 
     // Use Tab key to move focus away and trigger blur
     await initialTextarea.press("Tab");
+    await addChecklistItemResponse;
 
     // Wait for the content to appear in the UI (this means at least one submission worked)
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
-
-    // Add a small delay to ensure all async operations complete
-    await authenticatedPage.waitForTimeout(1000);
 
     const notes = await testPrisma.note.findMany({
       where: {
