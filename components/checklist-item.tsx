@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
+import { LinkifiedText } from "@/components/linkified-text";
 
 export interface ChecklistItem {
   id: string;
@@ -61,12 +62,6 @@ export function ChecklistItem({
       previousContentRef.current = editContent ?? item.content;
     }
   }, [isEditing, editContent, item.content]);
-
-  React.useEffect(() => {
-    if (!isEditing && textareaRef.current) {
-      adjustTextareaHeight(textareaRef.current);
-    }
-  }, [item.content, isEditing]);
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -120,42 +115,56 @@ export function ChecklistItem({
         disabled={readonly}
       />
 
-      <textarea
-        ref={textareaRef}
-        value={editContent ?? item.content}
-        onChange={(e) => onEditContentChange?.(e.target.value)}
-        disabled={readonly}
-        className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
-          item.checked && "text-zinc-500 dark:text-zinc-500 line-through"
-        )}
-        onBlur={handleBlur}
-        onKeyDown={handleKeyDown}
-        onFocus={(e) => {
-          if (isEditing) {
+      {isEditing ? (
+        <textarea
+          ref={textareaRef}
+          value={editContent ?? item.content}
+          onChange={(e) => onEditContentChange?.(e.target.value)}
+          disabled={readonly}
+          className={cn(
+            "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
+            item.checked && "text-zinc-500 dark:text-zinc-500 line-through"
+          )}
+          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
+          onFocus={(e) => {
             const originalScrollIntoView = e.target.scrollIntoView;
             e.target.scrollIntoView = () => {};
             setTimeout(() => {
               e.target.scrollIntoView = originalScrollIntoView;
             }, 100);
-          }
+          }}
+          rows={1}
+          style={{ height: "auto" }}
+          onInput={(e) => {
+            const target = e.target as HTMLTextAreaElement;
+            const currentContent = target.value;
 
-          if (!isEditing && !readonly) {
-            onStartEdit?.(item.id);
-          }
-        }}
-        rows={1}
-        style={{ height: "auto" }}
-        onInput={(e) => {
-          const target = e.target as HTMLTextAreaElement;
-          const currentContent = target.value;
-
-          if (currentContent !== previousContentRef.current) {
-            adjustTextareaHeight(target);
-            previousContentRef.current = currentContent;
-          }
-        }}
-      />
+            if (currentContent !== previousContentRef.current) {
+              adjustTextareaHeight(target);
+              previousContentRef.current = currentContent;
+            }
+          }}
+          autoFocus
+        />
+      ) : (
+        <div
+          className={cn(
+            "flex-1 px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 cursor-text overflow-hidden",
+            item.checked && "text-zinc-500 dark:text-zinc-500 line-through"
+          )}
+          onClick={() => {
+            if (!readonly) {
+              onStartEdit?.(item.id);
+            }
+          }}
+        >
+          <LinkifiedText 
+            text={item.content} 
+            className="break-all"
+          />
+        </div>
+      )}
 
       {showDeleteButton && !readonly && (
         <Button
