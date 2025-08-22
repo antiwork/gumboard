@@ -44,10 +44,10 @@ test.describe("Single-Click Note Editing", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
-    
+
     // Click on it to enter edit mode
     await authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`).click();
-    
+
     // Now textarea should be visible
     const checklistItemElement = authenticatedPage.locator("textarea").first();
     await expect(checklistItemElement).toBeVisible();
@@ -98,10 +98,10 @@ test.describe("Single-Click Note Editing", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
-    
+
     // Click on it to enter edit mode
     await authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`).click();
-    
+
     // Now textarea should be visible
     const checklistItemElement = authenticatedPage.locator("textarea").first();
     await expect(checklistItemElement).toBeVisible();
@@ -184,10 +184,10 @@ test.describe("Single-Click Note Editing", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`)
     ).toBeVisible();
-    
+
     // Try to click on it
     await authenticatedPage.locator(`text=${testContext.prefix("Test checklist item")}`).click();
-    
+
     // Should NOT enter edit mode (no textarea should appear)
     const textareas = authenticatedPage.locator("textarea");
     // Only the new item input should be visible, not an edit textarea
@@ -238,10 +238,10 @@ test.describe("Single-Click Note Editing", () => {
     await expect(
       authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`)
     ).toBeVisible();
-    
+
     // Click on it to enter edit mode
     await authenticatedPage.locator(`text=${testContext.prefix("Original item content")}`).click();
-    
+
     // Now textarea should be visible
     const checklistItemElement = authenticatedPage.locator("textarea").first();
     await expect(checklistItemElement).toBeVisible();

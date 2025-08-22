@@ -443,7 +443,7 @@ test.describe("Archive Functionality", () => {
     await expect(noteCard.getByText(testContext.prefix("First item"))).toBeVisible();
     await expect(noteCard.getByText(testContext.prefix("Second item"))).toBeVisible();
     await expect(noteCard.getByText(testContext.prefix("Third item"))).toBeVisible();
-    
+
     // Verify the new item input textarea is present
     const newItemTextarea = noteCard.locator("textarea").first();
     await expect(newItemTextarea).toBeVisible();

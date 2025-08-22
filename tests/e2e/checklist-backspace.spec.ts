@@ -41,7 +41,7 @@ test.describe("Checklist Backspace Behavior", () => {
 
     // Click on the item to edit it (it's displayed as text initially)
     await authenticatedPage.locator(`text=${testContext.prefix("Test item")}`).click();
-    
+
     // Now the textarea should be visible
     const checklistItemElement = authenticatedPage.locator("textarea").first();
     await expect(checklistItemElement).toBeVisible();
