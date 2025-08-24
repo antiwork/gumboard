@@ -640,8 +640,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   return (
     <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
-        <div className="mx-0.5 sm:mx-5 grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-2 items-center h-auto sm:h-16 p-2 sm:p-0">
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 sm:w-fit grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+        <div className="mx-0.5 md:mx-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 items-center h-auto md:h-16 p-2 md:p-0">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Company Name */}
             <Link href="/dashboard" className="flex-shrink-0 pl-1">
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
@@ -649,9 +649,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 <BetaBadge />
               </h1>
             </Link>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden md:block" />
+
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown min-w-32 sm:max-w-64 col-span-2 sm:col-span-1">
+            <div className="relative board-dropdown min-w-32 md:max-w-64 col-span-2 md:col-span-1">
               <Button
                 variant="ghost"
                 onClick={() => setShowBoardDropdown(!showBoardDropdown)}
@@ -678,7 +679,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </Button>
 
               {showBoardDropdown && (
-                <div className="absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 ">
+                <div className="absolute left-0 mt-1 w-full md:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 ">
                   <div className="p-2 flex flex-col gap-1">
                     {/* Boards */}
                     <div className=" max-h-50 overflow-y-auto">
@@ -742,7 +743,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </div>
               )}
             </div>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden md:block" />
 
             {/* Filter Popover */}
             <div className="flex flex-nowrap space-x-1">
@@ -789,7 +790,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] sm:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Search Box */}
             <div className="relative h-9">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -828,7 +829,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 }
               }}
               disabled={boardId === "archive"}
-              className="col-span-2 sm:col-span-1"
+              className="col-span-2 md:col-span-1"
             >
               <span>Add note</span>
             </Button>
