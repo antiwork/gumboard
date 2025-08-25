@@ -668,11 +668,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </PopoverTrigger>
 
                 <PopoverContent
-                  className="p-2 w-full sm:w-64 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 max-h-80 overflow-y-auto"
+                  className="p-2 w-full sm:w-64 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
                   align="start"
                 >
                   <div className="flex flex-col gap-1">
                     {/* Boards */}
+                    <div className="max-h-50 overflow-y-auto">
                     {allBoards.map((b) => (
                       <Link
                         key={b.id}
@@ -687,6 +688,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         <div data-board-name={b.name}>{b.name}</div>
                       </Link>
                     ))}
+                    </div>
 
                     {allBoards.length > 0 && (
                       <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
