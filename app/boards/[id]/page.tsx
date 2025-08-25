@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, X, ChevronUp, EllipsisVertical } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
@@ -31,6 +31,7 @@ import { useUser } from "@/app/contexts/UserContext";
 import { getUniqueAuthors, filterAndSortNotes, getBoardColumns } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
 import { useBoardColumnMeta } from "@/lib/hooks";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -174,14 +175,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showBoardDropdown || showAddBoard) {
+      if (showAddBoard) {
         const target = event.target as Element;
-        if (
-          !target.closest(".board-dropdown") &&
-          !target.closest(".user-dropdown") &&
-          !target.closest(".add-board-modal")
-        ) {
-          setShowBoardDropdown(false);
+        if (!target.closest(".user-dropdown") && !target.closest(".add-board-modal")) {
           setShowAddBoard(false);
         }
       }
@@ -191,9 +187,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (event.key === "Escape") {
         if (addingChecklistItem) {
           setAddingChecklistItem(null);
-        }
-        if (showBoardDropdown) {
-          setShowBoardDropdown(false);
         }
         if (showAddBoard) {
           setShowAddBoard(false);
@@ -209,7 +202,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
+  }, [showAddBoard, addingChecklistItem]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -651,97 +644,92 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </Link>
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown min-w-32 sm:max-w-64 col-span-2 sm:col-span-1">
-              <Button
-                variant="ghost"
-                onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center justify-between px-2 py-2 w-full"
+            <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
+              <PopoverTrigger
+                asChild
+                data-testid="board-dropdown-trigger"
+                className="board-dropdown mr-0 min-w-32 sm:max-w-64 col-span-2 sm:col-span-1"
               >
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
+                <Button variant="ghost" className="flex items-center justify-between p-2 w-full">
+                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
                     {boardId === "all-notes"
                       ? "All notes"
                       : boardId === "archive"
                         ? "Archive"
                         : board?.name}
                   </div>
-                </div>
-                {showBoardDropdown ? (
-                  <ChevronUp
-                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
-                  />
-                ) : (
                   <ChevronDown
-                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
+                    size={16}
+                    className={`transition-transform ${showBoardDropdown ? "rotate-180" : ""}`}
                   />
-                )}
-              </Button>
+                </Button>
+              </PopoverTrigger>
 
-              {showBoardDropdown && (
-                <div className="absolute left-0 mt-1 w-full sm:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 ">
-                  <div className="p-2 flex flex-col gap-1">
-                    {/* Boards */}
-                    <div className=" max-h-50 overflow-y-auto">
-                      {allBoards.map((b) => (
-                        <Link
-                          key={b.id}
-                          href={`/boards/${b.id}`}
-                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
-                            b.id === boardId
-                              ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
-                              : "text-foreground dark:text-zinc-100"
-                          }`}
-                          onClick={() => setShowBoardDropdown(false)}
-                        >
-                          <div>{b.name}</div>
-                        </Link>
-                      ))}
-                    </div>
-                    {allBoards.length > 0 && (
-                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
-                    )}
-
-                    {/* All Notes Option */}
-                    <Link
-                      href="/boards/all-notes"
-                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                        boardId === "all-notes"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
-                      onClick={() => setShowBoardDropdown(false)}
-                    >
-                      <div>All notes</div>
-                    </Link>
-
-                    {/* Archive Option */}
-                    <Link
-                      href="/boards/archive"
-                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                        boardId === "archive"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
-                      onClick={() => setShowBoardDropdown(false)}
-                    >
-                      <div>All archived</div>
-                    </Link>
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setShowAddBoard(true);
-                        setShowBoardDropdown(false);
-                      }}
-                      className="flex items-center w-full px-4 py-2"
-                    >
-                      <span className="font-medium">Create new board</span>
-                    </Button>
+              <PopoverContent
+                className="p-2 w-full sm:w-64 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                align="start"
+              >
+                <div className="flex flex-col gap-1">
+                  {/* Boards */}
+                  <div className="max-h-50 overflow-y-auto">
+                    {allBoards.map((b) => (
+                      <Link
+                        key={b.id}
+                        href={`/boards/${b.id}`}
+                        data-board-id={b.id}
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                          b.id === boardId
+                            ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
+                            : "text-foreground dark:text-zinc-100"
+                        }`}
+                      >
+                        <div data-board-name={b.name}>{b.name}</div>
+                      </Link>
+                    ))}
                   </div>
+
+                  {allBoards.length > 0 && (
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                  )}
+
+                  {/* All Notes Option */}
+                  <Link
+                    href="/boards/all-notes"
+                    className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      boardId === "all-notes"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                    }`}
+                  >
+                    <div>All notes</div>
+                  </Link>
+
+                  {/* Archive Option */}
+                  <Link
+                    href="/boards/archive"
+                    className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      boardId === "archive"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                    }`}
+                  >
+                    <div>All archived</div>
+                  </Link>
+                  <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowAddBoard(true);
+                      setShowBoardDropdown(false);
+                    }}
+                    className="flex items-center w-full px-4 py-2"
+                  >
+                    <span className="font-medium">Create new board</span>
+                  </Button>
                 </div>
-              )}
-            </div>
+              </PopoverContent>
+            </Popover>
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
 
             {/* Filter Popover */}

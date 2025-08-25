@@ -74,7 +74,6 @@ test.describe("Board Management", () => {
 
   test("should prevent creating boards with whitespace-only names", async ({
     authenticatedPage,
-    testContext,
   }) => {
     await authenticatedPage.goto("/dashboard");
 
@@ -181,6 +180,87 @@ test.describe("Board Management", () => {
 
       // Should navigate to the home page
       await expect(page).toHaveURL("/");
+    });
+  });
+
+  test.describe("Board Selector Dropdown", () => {
+    test("should display all created boards and navigate to the clicked board", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("A test board"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      const boardName2 = testContext.getBoardName("Test Board 2");
+      await testPrisma.board.create({
+        data: {
+          name: boardName2,
+          description: testContext.prefix("A test board"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+      await authenticatedPage.goto("/boards/all-notes");
+
+      await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
+
+      await expect(authenticatedPage.locator(`[data-board-name="${boardName}"]`)).toBeVisible();
+      await expect(authenticatedPage.locator(`[data-board-name="${boardName2}"]`)).toBeVisible();
+
+      await authenticatedPage.locator(`[data-board-id="${board.id}"]`).click();
+      await expect(authenticatedPage).toHaveURL(`/boards/${board.id}`);
+    });
+
+    test("should go to all notes page on clicking All notes button", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("A test board"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+      authenticatedPage.goto(`/boards/${board.id}`);
+
+      await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
+
+      await authenticatedPage.getByText("All notes").click();
+      await expect(authenticatedPage).toHaveURL("/boards/all-notes");
+    });
+
+    test("should go to archive page on clicking Archive button", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("A test board"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+      authenticatedPage.goto(`/boards/${board.id}`);
+
+      await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
+
+      await authenticatedPage.getByText("All archived").click();
+      await expect(authenticatedPage).toHaveURL("/boards/archive");
     });
   });
 });
