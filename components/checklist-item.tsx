@@ -155,6 +155,7 @@ export function ChecklistItem({
             previousContentRef.current = currentContent;
           }
         }}
+        placeholder={isNewItem ? "Add todos here, start typing..." : undefined}
       />
 
       {showDeleteButton && !readonly && (
