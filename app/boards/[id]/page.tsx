@@ -101,9 +101,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }, [user, userLoading, router]);
 
   const formSchema = z.object({
-    name: z
-      .string()
-      .min(1, "Board name is required"),
+    name: z.string().min(1, "Board name is required"),
     description: z.string().optional(),
   });
 
@@ -509,7 +507,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         },
         body: JSON.stringify({
           name,
-          description
+          description,
         }),
       });
 
@@ -636,11 +634,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
             {/* Board Selector Dropdown */}
             <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
-              <PopoverTrigger asChild data-testid="board-dropdown-trigger" className="board-dropdown mr-0 min-w-32 sm:max-w-64 col-span-2 sm:col-span-1">
-                <Button
-                  variant="ghost"
-                  className="flex items-center justify-between p-2 w-full"
-                >
+              <PopoverTrigger
+                asChild
+                data-testid="board-dropdown-trigger"
+                className="board-dropdown mr-0 min-w-32 sm:max-w-64 col-span-2 sm:col-span-1"
+              >
+                <Button variant="ghost" className="flex items-center justify-between p-2 w-full">
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
                     {boardId === "all-notes"
                       ? "All notes"
@@ -933,9 +932,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 )}
               />
               <DialogFooter>
-                <Button type="submit">
-                  Create board
-                </Button>
+                <Button type="submit">Create board</Button>
               </DialogFooter>
             </form>
           </Form>
