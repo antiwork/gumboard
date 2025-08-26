@@ -666,10 +666,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         key={b.id}
                         href={`/boards/${b.id}`}
                         data-board-id={b.id}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${b.id === boardId
-                          ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
-                          : "text-foreground dark:text-zinc-100"
-                          }`}
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                          b.id === boardId
+                            ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
+                            : "text-foreground dark:text-zinc-100"
+                        }`}
                       >
                         <div data-board-name={b.name}>{b.name}</div>
                       </Link>
@@ -680,22 +681,26 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
                   )}
 
+                  {/* All Notes Option */}
                   <Link
                     href="/boards/all-notes"
-                    className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "all-notes"
-                      ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                      : "text-foreground dark:text-white"
-                      }`}
+                    className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      boardId === "all-notes"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                    }`}
                   >
                     <div>All notes</div>
                   </Link>
 
+                  {/* Archive Option */}
                   <Link
                     href="/boards/archive"
-                    className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${boardId === "archive"
-                      ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                      : "text-foreground dark:text-white"
-                      }`}
+                    className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      boardId === "archive"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                    }`}
                   >
                     <div>All archived</div>
                   </Link>
