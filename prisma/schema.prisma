@@ -5,8 +5,7 @@
 // Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
 
 generator client {
-  provider = "prisma-client-js"
-
+  provider        = "prisma-client-js"
   previewFeatures = ["relationJoins"]
 }
 
@@ -15,7 +14,22 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// NextAuth.js required models
+/**
+ * =========================
+ * Enums (NEW)
+ * =========================
+ */
+enum OrgRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+/**
+ * =========================
+ * NextAuth.js required models
+ * =========================
+ */
 model Account {
   id                String  @id @default(cuid())
   userId            String
@@ -46,54 +60,110 @@ model Session {
   @@map("sessions")
 }
 
-// Updated User model for NextAuth compatibility
+/**
+ * =========================
+ * User (ADD: activeOrganizationId + memberships)
+ * =========================
+ */
 model User {
-  id             String       @id @default(cuid())
-  name           String?
-  email          String       @unique
-  emailVerified  DateTime?
-  image          String?
-  accounts       Account[]
-  sessions       Session[]
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  id            String    @id @default(cuid())
+  name          String?
+  email         String    @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Legacy single-org pointer (kept for compatibility)
   organizationId String?
-  isAdmin        Boolean      @default(false) // Admin role for organization
-  organization   Organization? @relation(fields: [organizationId], references: [id])
-  invitedOrganizations OrganizationInvite[]
+  isAdmin        Boolean       @default(false) // Admin role for organization
+  organization   Organization? @relation("UserPrimaryOrg", fields: [organizationId], references: [id])
+
+  // NEW: optional “active/last used” organization pointer
+  activeOrganizationId String?
+  activeOrganization   Organization? @relation("UserActiveOrg", fields: [activeOrganizationId], references: [id])
+
+  invitedOrganizations    OrganizationInvite[]
   createdSelfServeInvites OrganizationSelfServeInvite[]
-  notes          Note[]
+  notes                   Note[]
+
+  // NEW: memberships back-relation
+  memberships Membership[]
 
   @@index([organizationId], name: "idx_user_org")
+  @@index([activeOrganizationId], name: "idx_user_active_org")
   @@map("users")
 }
 
+/**
+ * =========================
+ * Organization (ADD: memberships + activeUsers relation fields)
+ * =========================
+ */
 model Organization {
-  id        String   @id @default(cuid())
-  name      String
+  id              String   @id @default(cuid())
+  name            String
   slackWebhookUrl String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  members   User[]
-  invites   OrganizationInvite[]
-  boards    Board[]
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Legacy back-relation to users via User.organizationId
+  members User[] @relation("UserPrimaryOrg")
+
+  // NEW: users who have this org as their activeOrganization
+  activeUsers User[] @relation("UserActiveOrg")
+
+  // NEW: membership relation
+  memberships Membership[]
+
+  invites          OrganizationInvite[]
+  boards           Board[]
   selfServeInvites OrganizationSelfServeInvite[]
 
   @@map("organizations")
 }
 
-model Board {
-  id             String       @id @default(cuid())
-  name           String
-  description    String?
-  isPublic       Boolean      @default(false)
-  sendSlackUpdates Boolean    @default(true)
+/**
+ * =========================
+ * Membership (NEW)
+ * =========================
+ */
+model Membership {
+  id             String   @id @default(cuid())
+  userId         String
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  createdBy      String
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  notes          Note[]
+  role           OrgRole  @default(MEMBER)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId], name: "idx_membership_user")
+  @@index([organizationId], name: "idx_membership_org")
+  @@map("memberships")
+}
+
+/**
+ * =========================
+ * Existing models (unchanged)
+ * =========================
+ */
+model Board {
+  id               String       @id @default(cuid())
+  name             String
+  description      String?
+  isPublic         Boolean      @default(false)
+  sendSlackUpdates Boolean      @default(true)
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdBy        String
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  notes            Note[]
 
   // Performance indexes
   @@index([organizationId, createdAt], name: "idx_board_org_created")
@@ -101,18 +171,18 @@ model Board {
 }
 
 model Note {
-  id        String @id @default(cuid())
-  color     String @default("#fef3c7") // Default yellow color
+  id             String          @id @default(cuid())
+  color          String          @default("#fef3c7") // Default yellow color
   checklistItems ChecklistItem[]
   archivedAt     DateTime? // Track archived status
   slackMessageId String?
-  boardId   String
-  board     Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
-  createdBy String
-  user      User   @relation(fields: [createdBy], references: [id], onDelete: Cascade)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deletedAt DateTime? // Soft delete timestamp
+  boardId        String
+  board          Board           @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  createdBy      String
+  user           User            @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime? // Soft delete timestamp
 
   // Performance indexes
   @@index([boardId, deletedAt], name: "idx_note_board_deleted")
@@ -132,9 +202,9 @@ model ChecklistItem {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@map("checklist_items")
   @@index([noteId])
   @@index([noteId, order])
+  @@map("checklist_items")
 }
 
 model OrganizationInvite {
@@ -154,14 +224,14 @@ model OrganizationInvite {
 model OrganizationSelfServeInvite {
   id             String       @id @default(cuid())
   token          String?      @unique // Cryptographically secure token for the URL
-  name           String       // Name/description for the invite link
+  name           String // Name/description for the invite link
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy      String
   user           User         @relation(fields: [createdBy], references: [id])
   createdAt      DateTime     @default(now())
-  expiresAt      DateTime?    // Optional expiration date
-  usageLimit     Int?         // Optional usage limit
+  expiresAt      DateTime? // Optional expiration date
+  usageLimit     Int? // Optional usage limit
   usageCount     Int          @default(0) // Track how many times it's been used
   isActive       Boolean      @default(true)
 
