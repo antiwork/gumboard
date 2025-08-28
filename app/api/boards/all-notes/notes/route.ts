@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { z } from "zod";
 import { NOTE_COLORS } from "@/lib/constants";
+
+const checklistItemInputSchema = z.object({
+  content: z.string().optional().default(""),
+  checked: z.boolean().optional().default(false),
+  order: z.number().optional(),
+});
+const createGlobalNoteSchema = z.object({
+  boardId: z.string(),
+  color: z.string().optional(),
+  checklistItems: z.array(checklistItemInputSchema).optional(),
+});
 
 // Get all notes from all boards in the organization
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,11 +80,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { color, boardId, checklistItems } = await request.json();
+    const body = await request.json();
 
-    if (!boardId) {
-      return NextResponse.json({ error: "Board ID is required" }, { status: 400 });
+    let validatedBody;
+    try {
+      validatedBody = createGlobalNoteSchema.parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
+
+    const { color, boardId, checklistItems } = validatedBody;
 
     // Verify user has access to the specified board (same organization)
     const user = await db.user.findUnique({
@@ -104,11 +127,11 @@ export async function POST(request: NextRequest) {
       checked: boolean;
       order: number;
     }> = [];
-    if (checklistItems && Array.isArray(checklistItems)) {
+    if (checklistItems) {
       checklistItems.forEach((item, index) => {
         initialChecklistItems.push({
-          content: item.content || "",
-          checked: item.checked || false,
+          content: item.content,
+          checked: item.checked,
           order: item.order !== undefined ? item.order : index,
         });
       });

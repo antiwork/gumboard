@@ -1,6 +1,11 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+
+const updateProfileSchema = z.object({
+  name: z.string().min(1, "Name is required").trim(),
+});
 
 export async function PUT(request: NextRequest) {
   try {
@@ -10,16 +15,26 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name } = await request.json();
+    const body = await request.json();
 
-    if (!name || typeof name !== "string") {
-      return NextResponse.json({ error: "Name is required" }, { status: 400 });
+    let validatedBody;
+    try {
+      validatedBody = updateProfileSchema.parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
 
+    const { name } = validatedBody;
     // Update user profile
     const updatedUser = await db.user.update({
       where: { id: session.user.id },
-      data: { name: name.trim() },
+      data: { name },
       include: {
         organization: {
           include: {
