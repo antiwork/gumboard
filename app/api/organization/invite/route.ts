@@ -9,7 +9,10 @@ import { z } from "zod";
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
 const inviteSchema = z.object({
-  email: z.string().email().transform((email) => email.trim().toLowerCase()),
+  email: z
+    .string()
+    .email()
+    .transform((email) => email.trim().toLowerCase()),
 });
 
 export async function POST(request: NextRequest) {

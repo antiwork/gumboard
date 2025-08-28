@@ -142,8 +142,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       sendSlackUpdates?: boolean;
     } = {};
     if (name !== undefined) updateData.name = name.trim() || board.name;
-    if (description !== undefined)
-      updateData.description = (description?.trim() || null) as string;
+    if (description !== undefined) updateData.description = (description?.trim() || null) as string;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates;
 

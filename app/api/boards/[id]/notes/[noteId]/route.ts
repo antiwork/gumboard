@@ -18,7 +18,11 @@ const checklistItemSchema = z.object({
 
 const updateNoteSchema = z.object({
   color: z.string().optional(),
-  archivedAt: z.string().nullable().optional().transform((val) => val ? new Date(val) : val),
+  archivedAt: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val ? new Date(val) : val)),
   checklistItems: z.array(checklistItemSchema).optional(),
 });
 
