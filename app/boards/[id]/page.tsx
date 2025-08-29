@@ -876,8 +876,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   setSelectedAuthor(null);
                   updateURL("", { startDate: null, endDate: null }, null);
                 }}
-                variant="outline"
-                className="flex items-center space-x-2 cursor-pointer"
+                variant="default"
               >
                 <span>Clear All Filters</span>
               </Button>
