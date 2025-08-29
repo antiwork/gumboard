@@ -39,3 +39,9 @@ export const inviteSchema = z.object({
     .email()
     .transform((email) => email.trim().toLowerCase()),
 });
+
+
+export const memberSchema = z.object({
+    isAdmin: z.boolean().default(false),
+  });
+  

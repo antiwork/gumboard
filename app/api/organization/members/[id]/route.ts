@@ -1,8 +1,8 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { updateMemberSchema } from "@/lib/types/zod-types";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { memberSchema } from "@/lib/types/zod-types";
 
 // Update member (toggle admin role)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -18,7 +18,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     let validatedBody;
     try {
-      validatedBody = updateMemberSchema.parse(body);
+      validatedBody = memberSchema.parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(
