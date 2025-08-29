@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { boardSchema } from "@/lib/types/zod-types";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -72,7 +74,26 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const boardId = (await params).id;
-    const { name, description, isPublic, sendSlackUpdates } = await request.json();
+    const body = await request.json();
+
+    let validatedBody;
+    try {
+      validatedBody = boardSchema
+        .extend({
+          name: z.string().optional(),
+        })
+        .parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+
+    const { name, description, isPublic, sendSlackUpdates } = validatedBody;
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
@@ -118,9 +139,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       isPublic?: boolean;
       sendSlackUpdates?: boolean;
     } = {};
-    if (name !== undefined) updateData.name = name?.trim() || board.name;
-    if (description !== undefined)
-      updateData.description = description?.trim() || board.description;
+    if (name !== undefined) updateData.name = name.trim() || board.name;
+    if (description !== undefined) updateData.description = (description?.trim() || null) as string;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates;
 

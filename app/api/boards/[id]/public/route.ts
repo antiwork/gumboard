@@ -1,6 +1,7 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -10,8 +11,22 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { isPublic } = await request.json();
+    const body = await request.json();
     const boardId = (await params).id;
+
+    let validatedBody;
+    try {
+      validatedBody = z.object({ isPublic: z.boolean() }).parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+    const { isPublic } = validatedBody;
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
@@ -48,7 +63,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     const updatedBoard = await db.board.update({
       where: { id: boardId },
-      data: { isPublic: Boolean(isPublic) },
+      data: { isPublic },
     });
 
     return NextResponse.json({ board: updatedBoard });
