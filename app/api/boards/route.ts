@@ -2,18 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const createBoardSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Board name is required and cannot be empty or only whitespace")
-    .refine(
-      (val) => val.trim().length > 0,
-      "Board name is required and cannot be empty or only whitespace"
-    ),
-  description: z.string().optional(),
-  isPublic: z.boolean().optional(),
-});
+import { createBoardSchema } from "@/lib/types/zod-types";
 
 export async function GET() {
   try {

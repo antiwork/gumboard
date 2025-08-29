@@ -8,23 +8,7 @@ import {
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";
-
-const checklistItemSchema = z.object({
-  id: z.string(),
-  content: z.string(),
-  checked: z.boolean(),
-  order: z.number(),
-});
-
-const updateNoteSchema = z.object({
-  color: z.string().optional(),
-  archivedAt: z
-    .string()
-    .nullable()
-    .optional()
-    .transform((val) => (val ? new Date(val) : val)),
-  checklistItems: z.array(checklistItemSchema).optional(),
-});
+import { updateNoteSchema } from "@/lib/types/zod-types";
 
 export async function PUT(
   request: NextRequest,

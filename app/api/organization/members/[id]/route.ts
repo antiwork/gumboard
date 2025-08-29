@@ -1,11 +1,8 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { updateMemberSchema } from "@/lib/types/zod-types";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const updateMemberSchema = z.object({
-  isAdmin: z.boolean().default(false),
-});
 
 // Update member (toggle admin role)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

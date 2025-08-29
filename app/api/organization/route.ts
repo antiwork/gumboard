@@ -2,11 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const updateOrganizationSchema = z.object({
-  name: z.string().min(1, "Organization name is required"),
-  slackWebhookUrl: z.string().optional(),
-});
+import { updateOrganizationSchema } from "@/lib/types/zod-types";
 
 export async function PUT(request: NextRequest) {
   try {

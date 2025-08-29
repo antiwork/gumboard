@@ -3,17 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { NOTE_COLORS } from "@/lib/constants";
-
-const checklistItemInputSchema = z.object({
-  content: z.string().optional().default(""),
-  checked: z.boolean().optional().default(false),
-  order: z.number().optional(),
-});
-const createGlobalNoteSchema = z.object({
-  boardId: z.string(),
-  color: z.string().optional(),
-  checklistItems: z.array(checklistItemInputSchema).optional(),
-});
+import { createGlobalNoteSchema } from "@/lib/types/zod-types";
 
 // Get all notes from all boards in the organization
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -9,17 +9,7 @@ import {
   shouldSendNotification,
 } from "@/lib/slack";
 import { NOTE_COLORS } from "@/lib/constants";
-
-const checklistItemInputSchema = z.object({
-  content: z.string().optional().default(""),
-  checked: z.boolean().optional().default(false),
-  order: z.number().optional(),
-});
-
-const createNoteSchema = z.object({
-  color: z.string().optional(),
-  checklistItems: z.array(checklistItemInputSchema).optional(),
-});
+import { createNoteSchema } from "@/lib/types/zod-types";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

@@ -1,11 +1,8 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { updateProfileSchema } from "@/lib/types/zod-types";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const updateProfileSchema = z.object({
-  name: z.string().min(1, "Name is required").trim(),
-});
 
 export async function PUT(request: NextRequest) {
   try {

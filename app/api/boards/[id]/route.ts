@@ -2,13 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-
-const updateBoardSchema = z.object({
-  name: z.string().optional(),
-  description: z.string().optional(),
-  isPublic: z.boolean().optional(),
-  sendSlackUpdates: z.boolean().optional(),
-});
+import { updateBoardSchema } from "@/lib/types/zod-types";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

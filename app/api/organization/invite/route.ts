@@ -5,15 +5,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
 import { z } from "zod";
+import { inviteSchema } from "@/lib/types/zod-types";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
-
-const inviteSchema = z.object({
-  email: z
-    .string()
-    .email()
-    .transform((email) => email.trim().toLowerCase()),
-});
 
 export async function POST(request: NextRequest) {
   try {
