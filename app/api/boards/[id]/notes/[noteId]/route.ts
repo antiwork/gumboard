@@ -25,9 +25,11 @@ export async function PUT(
 
     let validatedBody;
     try {
-      validatedBody = noteSchema.omit({
-        boardId: true,
-      }).parse(body);
+      validatedBody = noteSchema
+        .omit({
+          boardId: true,
+        })
+        .parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(

@@ -22,7 +22,7 @@ export const boardSchema = z.object({
   description: z.string().optional(),
   isPublic: z.boolean().optional(),
   sendSlackUpdates: z.boolean().optional(),
-})
+});
 
 export const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
@@ -40,8 +40,6 @@ export const inviteSchema = z.object({
     .transform((email) => email.trim().toLowerCase()),
 });
 
-
 export const memberSchema = z.object({
-    isAdmin: z.boolean().default(false),
-  });
-  
+  isAdmin: z.boolean().default(false),
+});

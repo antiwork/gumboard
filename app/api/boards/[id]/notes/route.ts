@@ -98,10 +98,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     let validatedBody;
     try {
-      validatedBody = noteSchema.omit({
-        boardId: true,
-        archivedAt: true,
-      }).parse(body);
+      validatedBody = noteSchema
+        .omit({
+          boardId: true,
+          archivedAt: true,
+        })
+        .parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(

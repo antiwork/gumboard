@@ -78,9 +78,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     let validatedBody;
     try {
-      validatedBody = boardSchema.extend({
-        name: z.string().optional(),
-      }).parse(body);
+      validatedBody = boardSchema
+        .extend({
+          name: z.string().optional(),
+        })
+        .parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(
