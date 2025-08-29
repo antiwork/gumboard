@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { updateProfileSchema } from "@/lib/types/zod-types";
+import { profileSchema } from "@/lib/types/zod-types";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest) {
 
     let validatedBody;
     try {
-      validatedBody = updateProfileSchema.parse(body);
+      validatedBody = profileSchema.parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(

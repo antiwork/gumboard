@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { updateBoardSchema } from "@/lib/types/zod-types";
+import { boardSchema } from "@/lib/types/zod-types";
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -78,7 +78,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
     let validatedBody;
     try {
-      validatedBody = updateBoardSchema.parse(body);
+      validatedBody = boardSchema.extend({
+        name: z.string().optional(),
+      }).parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(

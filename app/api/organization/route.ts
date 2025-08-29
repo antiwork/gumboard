@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { updateOrganizationSchema } from "@/lib/types/zod-types";
+import { organizationSchema } from "@/lib/types/zod-types";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -16,7 +16,7 @@ export async function PUT(request: NextRequest) {
 
     let validatedBody;
     try {
-      validatedBody = updateOrganizationSchema.parse(body);
+      validatedBody = organizationSchema.parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(

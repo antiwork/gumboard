@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { createBoardSchema } from "@/lib/types/zod-types";
+import { boardSchema } from "@/lib/types/zod-types";
 
 export async function GET() {
   try {
@@ -92,7 +92,15 @@ export async function POST(request: NextRequest) {
 
     let validatedBody;
     try {
-      validatedBody = createBoardSchema.parse(body);
+      validatedBody = boardSchema.extend({
+        name: z
+    .string()
+    .min(1, "Board name is required and cannot be empty or only whitespace")
+    .refine(
+      (val) => val.trim().length > 0,
+      "Board name is required and cannot be empty or only whitespace"
+    ),
+      }).parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(
