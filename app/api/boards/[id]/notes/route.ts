@@ -9,7 +9,7 @@ import {
   shouldSendNotification,
 } from "@/lib/slack";
 import { NOTE_COLORS } from "@/lib/constants";
-import { createNoteSchema } from "@/lib/types/zod-types";
+import { noteSchema } from "@/lib/types/zod-types";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -98,7 +98,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     let validatedBody;
     try {
-      validatedBody = createNoteSchema.parse(body);
+      validatedBody = noteSchema.omit({
+        boardId: true,
+        archivedAt: true,
+      }).parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(

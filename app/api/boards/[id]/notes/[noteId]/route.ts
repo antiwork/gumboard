@@ -8,7 +8,7 @@ import {
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";
-import { updateNoteSchema } from "@/lib/types/zod-types";
+import { noteSchema } from "@/lib/types/zod-types";
 
 export async function PUT(
   request: NextRequest,
@@ -25,7 +25,9 @@ export async function PUT(
 
     let validatedBody;
     try {
-      validatedBody = updateNoteSchema.parse(body);
+      validatedBody = noteSchema.omit({
+        boardId: true,
+      }).parse(body);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return NextResponse.json(
@@ -93,7 +95,7 @@ export async function PUT(
 
       sanitizedChecklistItems = [...checklistItems]
         .sort((a, b) => a.order - b.order)
-        .map((item, i) => ({ ...item, order: i }));
+        .map((item, i) => ({ ...item, order: i, id: item.id || "" }));
     }
 
     let checklistChanges:

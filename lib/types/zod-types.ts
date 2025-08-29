@@ -1,24 +1,35 @@
 import { z } from "zod";
 
-export const checklistItemSchema = z.object({
-  id: z.string(),
+const checklistItemSchema = z.object({
+  id: z.string().optional(),
   content: z.string(),
   checked: z.boolean(),
   order: z.number(),
 });
 
-export const checklistItemInputSchema = z.object({
-  content: z.string().optional().default(""),
-  checked: z.boolean().optional().default(false),
-  order: z.number().optional(),
-});
+// export const createNoteSchema = z.object({
+//   color: z.string().optional(),
+//   checklistItems: z.array(checklistItemSchema).optional(),
+// });
 
-export const createNoteSchema = z.object({
-  color: z.string().optional(),
-  checklistItems: z.array(checklistItemInputSchema).optional(),
-});
+// export const updateNoteSchema = z.object({
+//   color: z.string().optional(),
+//   archivedAt: z
+//     .string()
+//     .nullable()
+//     .optional()
+//     .transform((val) => (val ? new Date(val) : val)),
+//   checklistItems: z.array(checklistItemSchema).optional(),
+// });
 
-export const updateNoteSchema = z.object({
+// export const createGlobalNoteSchema = z.object({
+//   boardId: z.string(),
+//   color: z.string().optional(),
+//   checklistItems: z.array(checklistItemSchema).optional(),
+// });
+
+export const noteSchema = z.object({
+  boardId: z.string(),
   color: z.string().optional(),
   archivedAt: z
     .string()
@@ -26,12 +37,6 @@ export const updateNoteSchema = z.object({
     .optional()
     .transform((val) => (val ? new Date(val) : val)),
   checklistItems: z.array(checklistItemSchema).optional(),
-});
-
-export const createGlobalNoteSchema = z.object({
-  boardId: z.string(),
-  color: z.string().optional(),
-  checklistItems: z.array(checklistItemInputSchema).optional(),
 });
 
 export const updateBoardSchema = z.object({
