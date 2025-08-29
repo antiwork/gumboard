@@ -43,6 +43,30 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Member not in your organization" }, { status: 403 });
     }
 
+    // Critical Security Check: Prevent admin lockout
+    if (member.id === currentUser.id && member.isAdmin && !isAdmin) {
+      // If admin is trying to demote themselves, check if they're the last admin
+      const adminCount = await db.user.count({
+        where: {
+          organizationId: currentUser.organizationId,
+          isAdmin: true,
+        },
+      });
+
+      if (adminCount <= 1) {
+        return NextResponse.json({
+          error: "Cannot remove admin privileges from the last admin. Promote another member to admin first.",
+        }, { status: 400 });
+      }
+    }
+
+    // Additional Security Check: Prevent non-admin from promoting themselves
+    if (member.id === currentUser.id && !member.isAdmin && isAdmin) {
+      return NextResponse.json({
+        error: "Cannot promote yourself to admin. Another admin must promote you.",
+      }, { status: 403 });
+    }
+
     // Update the member's admin status
     const updatedMember = await db.user.update({
       where: { id: memberId },
@@ -107,6 +131,22 @@ export async function DELETE(
     // Can't remove yourself
     if (member.id === currentUser.id) {
       return NextResponse.json({ error: "Cannot remove yourself" }, { status: 400 });
+    }
+
+    // Critical Security Check: Prevent removing the last admin
+    if (member.isAdmin) {
+      const adminCount = await db.user.count({
+        where: {
+          organizationId: currentUser.organizationId,
+          isAdmin: true,
+        },
+      });
+
+      if (adminCount <= 1) {
+        return NextResponse.json({
+          error: "Cannot remove the last admin from the organization. Promote another member to admin first.",
+        }, { status: 400 });
+      }
     }
 
     // Remove member from organization
