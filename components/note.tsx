@@ -263,9 +263,10 @@ export function Note({
         id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         content,
         checked: false,
-        order: note.checklistItems && note.checklistItems.length > 0 
-          ? Math.max(...note.checklistItems.map(item => item.order)) + 1 
-          : 0,
+        order:
+          note.checklistItems && note.checklistItems.length > 0
+            ? Math.max(...note.checklistItems.map((item) => item.order)) + 1
+            : 0,
       };
 
       const allItemsChecked = [...(note.checklistItems || []), newItem].every(
