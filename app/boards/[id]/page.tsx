@@ -174,15 +174,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   // Close dropdowns when clicking outside and handle escape key
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (showBoardDropdown || showAddBoard) {
+      if (showBoardDropdown || showAddBoard || boardSettingsDialog) {
         const target = event.target as Element;
         if (
           !target.closest(".board-dropdown") &&
           !target.closest(".user-dropdown") &&
-          !target.closest(".add-board-modal")
+          !target.closest(".add-board-modal") &&
+          !target.closest(".board-settings-modal")
         ) {
           setShowBoardDropdown(false);
           setShowAddBoard(false);
+          setBoardSettingsDialog(false);
         }
       }
     };
@@ -200,6 +202,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           setNewBoardName("");
           setNewBoardDescription("");
         }
+        if (boardSettingsDialog) {
+          setBoardSettingsDialog(false);
+        }
       }
     };
 
@@ -209,7 +214,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       document.removeEventListener("mousedown", handleClickOutside);
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [showBoardDropdown, showAddBoard, addingChecklistItem]);
+  }, [showBoardDropdown, showAddBoard, boardSettingsDialog, addingChecklistItem]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -1003,7 +1008,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </AlertDialog>
 
       <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
-        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
+        <AlertDialogContent className="board-settings-modal bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Board settings
