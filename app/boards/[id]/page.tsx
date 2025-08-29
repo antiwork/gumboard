@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, X, ChevronUp, EllipsisVertical } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
@@ -22,6 +22,22 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
 import { useTheme } from "next-themes";
@@ -31,6 +47,10 @@ import { useUser } from "@/app/contexts/UserContext";
 import { getUniqueAuthors, filterAndSortNotes, getBoardColumns } from "@/lib/utils";
 import { BoardPageSkeleton } from "@/components/board-skeleton";
 import { useBoardColumnMeta } from "@/lib/hooks";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -43,8 +63,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   // Inline editing state removed; handled within Note component
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
-  const [newBoardName, setNewBoardName] = useState("");
-  const [newBoardDescription, setNewBoardDescription] = useState("");
   const [boardId, setBoardId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
@@ -56,7 +74,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     endDate: null,
   });
   const [selectedAuthor, setSelectedAuthor] = useState<string | null>(null);
-  const [addingChecklistItem, setAddingChecklistItem] = useState<string | null>(null);
   // Per-item edit and animations are handled inside Note component now
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
@@ -82,6 +99,19 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       router.push("/auth/signin");
     }
   }, [user, userLoading, router]);
+
+  const formSchema = z.object({
+    name: z.string().min(1, "Board name is required"),
+    description: z.string().optional(),
+  });
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      description: "",
+    },
+  });
 
   // Update URL with current filter state
   const updateURL = useCallback(
@@ -170,51 +200,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
-
-  // Close dropdowns when clicking outside and handle escape key
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (showBoardDropdown || showAddBoard || boardSettingsDialog) {
-        const target = event.target as Element;
-        if (
-          !target.closest(".board-dropdown") &&
-          !target.closest(".user-dropdown") &&
-          !target.closest(".add-board-modal") &&
-          !target.closest(".board-settings-modal")
-        ) {
-          setShowBoardDropdown(false);
-          setShowAddBoard(false);
-          setBoardSettingsDialog(false);
-        }
-      }
-    };
-
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        if (addingChecklistItem) {
-          setAddingChecklistItem(null);
-        }
-        if (showBoardDropdown) {
-          setShowBoardDropdown(false);
-        }
-        if (showAddBoard) {
-          setShowAddBoard(false);
-          setNewBoardName("");
-          setNewBoardDescription("");
-        }
-        if (boardSettingsDialog) {
-          setBoardSettingsDialog(false);
-        }
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [showBoardDropdown, showAddBoard, boardSettingsDialog, addingChecklistItem]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -354,7 +339,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
-        setAddingChecklistItem(note.id);
         if (searchTerm.trim() || dateRange.startDate || dateRange.endDate || selectedAuthor) {
           setSearchTerm("");
           setDebouncedSearchTerm("");
@@ -513,10 +497,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  const handleAddBoard = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newBoardName.trim()) return;
-
+  const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
+    const { name, description } = values;
     try {
       const response = await fetch("/api/boards", {
         method: "POST",
@@ -524,18 +506,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: newBoardName,
-          description: newBoardDescription,
+          name,
+          description,
         }),
       });
 
       if (response.ok) {
         const { board } = await response.json();
         setAllBoards([board, ...allBoards]);
-        setNewBoardName("");
-        setNewBoardDescription("");
         setShowAddBoard(false);
-        setShowBoardDropdown(false);
         router.push(`/boards/${board.id}`);
       } else {
         const errorData = await response.json();
@@ -571,9 +550,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { board } = await response.json();
         setBoard(board);
-
         setAllBoards((prevBoards) => prevBoards.map((b) => (b.id === board.id ? board : b)));
-
         setBoardSettings({
           name: board.name,
           description: board.description || "",
@@ -657,98 +634,92 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden md:block" />
 
             {/* Board Selector Dropdown */}
-            <div className="relative board-dropdown min-w-32 md:max-w-64 col-span-2 md:col-span-1">
-              <Button
-                variant="ghost"
-                onClick={() => setShowBoardDropdown(!showBoardDropdown)}
-                className="flex items-center justify-between px-2 py-2 w-full"
+            <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
+              <PopoverTrigger
+                asChild
+                data-testid="board-dropdown-trigger"
+                className="board-dropdown mr-0 min-w-32 sm:max-w-64 col-span-2 sm:col-span-1"
               >
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
+                <Button variant="ghost" className="flex items-center justify-between p-2 w-full">
+                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
                     {boardId === "all-notes"
                       ? "All notes"
                       : boardId === "archive"
                         ? "Archive"
                         : board?.name}
                   </div>
-                </div>
-                {showBoardDropdown ? (
-                  <ChevronUp
-                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
-                  />
-                ) : (
                   <ChevronDown
-                    className={`w-4 h-4 text-muted-foreground dark:text-zinc-400 transition-transform`}
+                    size={16}
+                    className={`transition-transform ${showBoardDropdown ? "rotate-180" : ""}`}
                   />
-                )}
-              </Button>
+                </Button>
+              </PopoverTrigger>
 
-              {showBoardDropdown && (
-                <div className="absolute left-0 mt-1 w-full md:w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 z-50 ">
-                  <div className="p-2 flex flex-col gap-1">
-                    {/* Boards */}
-                    <div className=" max-h-50 overflow-y-auto">
-                      {allBoards.map((b) => (
-                        <Link
-                          key={b.id}
-                          href={`/boards/${b.id}`}
-                          className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
-                            b.id === boardId
-                              ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
-                              : "text-foreground dark:text-zinc-100"
-                          }`}
-                          onClick={() => setShowBoardDropdown(false)}
-                        >
-                          <div>{b.name}</div>
-                        </Link>
-                      ))}
-                    </div>
-                    {allBoards.length > 0 && (
-                      <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
-                    )}
-
-                    {/* All Notes Option */}
-                    <Link
-                      href="/boards/all-notes"
-                      className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                        boardId === "all-notes"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
-                      onClick={() => setShowBoardDropdown(false)}
-                    >
-                      <div>All notes</div>
-                    </Link>
-
-                    {/* Archive Option */}
-                    <Link
-                      href="/boards/archive"
-                      className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
-                        boardId === "archive"
-                          ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
-                          : "text-foreground dark:text-white"
-                      }`}
-                      onClick={() => setShowBoardDropdown(false)}
-                    >
-                      <div>All archived</div>
-                    </Link>
-                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        setShowAddBoard(true);
-                        setShowBoardDropdown(false);
-                      }}
-                      className="flex items-center w-full px-4 py-2"
-                    >
-                      <span className="font-medium">Create new board</span>
-                    </Button>
+              <PopoverContent
+                className="p-2 w-full sm:w-64 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                align="start"
+              >
+                <div className="flex flex-col gap-1">
+                  <div className="max-h-50 overflow-y-auto">
+                    {allBoards.map((b) => (
+                      <Link
+                        key={b.id}
+                        href={`/boards/${b.id}`}
+                        data-board-id={b.id}
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                          b.id === boardId
+                            ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
+                            : "text-foreground dark:text-zinc-100"
+                        }`}
+                      >
+                        <div data-board-name={b.name}>{b.name}</div>
+                      </Link>
+                    ))}
                   </div>
+
+                  {allBoards.length > 0 && (
+                    <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                  )}
+
+                  {/* All Notes Option */}
+                  <Link
+                    href="/boards/all-notes"
+                    className={`rounded-lg font-medium block px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      boardId === "all-notes"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                    }`}
+                  >
+                    <div>All notes</div>
+                  </Link>
+
+                  {/* Archive Option */}
+                  <Link
+                    href="/boards/archive"
+                    className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      boardId === "archive"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                    }`}
+                  >
+                    <div>All archived</div>
+                  </Link>
+                  <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setShowAddBoard(true);
+                      setShowBoardDropdown(false);
+                    }}
+                    className="flex items-center w-full px-4 py-2"
+                  >
+                    <span className="font-medium">Create new board</span>
+                  </Button>
                 </div>
-              )}
-            </div>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden md:block" />
+              </PopoverContent>
+            </Popover>
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
 
             {/* Filter Popover */}
             <div className="flex flex-nowrap space-x-1">
@@ -914,74 +885,60 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           )}
       </div>
 
-      {showAddBoard && (
-        <div
-          className="fixed inset-0 flex items-center justify-center z-50 p-4 bg-black/40 dark:bg-black/70 backdrop-blur-sm add-board-modal"
-          onClick={() => {
-            setShowAddBoard(false);
-            setNewBoardName("");
-            setNewBoardDescription("");
-          }}
-        >
-          <div
-            className="bg-white dark:bg-zinc-950 bg-opacity-95 dark:bg-opacity-95 rounded-xl p-5 sm:p-7 w-full max-w-sm sm:max-w-md shadow-2xl border border-gray-200 dark:border-zinc-800"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h3 className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
-              Create new board
-            </h3>
-            <form onSubmit={handleAddBoard}>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                    Board name
-                  </label>
-                  <Input
-                    type="text"
-                    value={newBoardName}
-                    onChange={(e) => setNewBoardName(e.target.value)}
-                    placeholder="Enter board name"
-                    required
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                    Description (optional)
-                  </label>
-                  <Input
-                    type="text"
-                    value={newBoardDescription}
-                    onChange={(e) => setNewBoardDescription(e.target.value)}
-                    placeholder="Enter board description"
-                    className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
-                  />
-                </div>
-              </div>
-              <div className="flex justify-end space-x-3 mt-6">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setShowAddBoard(false);
-                    setNewBoardName("");
-                    setNewBoardDescription("");
-                  }}
-                  className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-300 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-300 dark:hover:bg-zinc-800"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-blue-600 hover:bg-blue-700 text-zinc-100 dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-zinc-100"
-                >
-                  Create board
-                </Button>
-              </div>
+      <Dialog open={showAddBoard} onOpenChange={setShowAddBoard}>
+        <DialogContent className="bg-white dark:bg-zinc-950  sm:max-w-[425px] ">
+          <DialogHeader>
+            <DialogTitle className="text-lg font-semibold mb-4 text-foreground dark:text-zinc-100">
+              Create New Board
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Fill out the details to create a new board.
+            </DialogDescription>
+          </DialogHeader>
+          <Form {...form}>
+            <form className="space-y-4" onSubmit={form.handleSubmit(handleAddBoard)}>
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Board Name</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter board name"
+                        className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
+                        autoFocus
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-600" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description (Optional)</FormLabel>
+                    <FormControl>
+                      <Input
+                        placeholder="Enter board description"
+                        className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <DialogFooter>
+                <Button type="submit">Create board</Button>
+              </DialogFooter>
             </form>
-          </div>
-        </div>
-      )}
+          </Form>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={errorDialog.open}
