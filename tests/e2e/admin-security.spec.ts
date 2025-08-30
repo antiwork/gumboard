@@ -97,10 +97,11 @@ test.describe("Admin Security - Prevent Organization Lockout", () => {
       testContext,
       testPrisma,
     }) => {
-      // Setup: Create a target admin user (different from test user)
+      // Setup: Create a target admin user (different from test user) with unique email
+      const uniqueEmail = `target-admin-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
       const targetAdmin = await testPrisma.user.create({
         data: {
-          email: "target-admin@test.com",
+          email: uniqueEmail,
           name: "Target Admin",
           organizationId: testContext.organizationId,
           isAdmin: true,
@@ -160,19 +161,21 @@ test.describe("Admin Security - Prevent Organization Lockout", () => {
       testContext,
       testPrisma,
     }) => {
-      // Setup: Create target admin and another admin
+      // Setup: Create target admin and another admin with unique emails
+      const uniqueEmail1 = `target-admin-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
       const targetAdmin = await testPrisma.user.create({
         data: {
-          email: "target-admin@test.com",
+          email: uniqueEmail1,
           name: "Target Admin",
           organizationId: testContext.organizationId,
           isAdmin: true,
         },
       });
 
+      const uniqueEmail2 = `other-admin-${Date.now()}-${Math.random().toString(36).substring(7)}@test.com`;
       const otherAdmin = await testPrisma.user.create({
         data: {
-          email: "other-admin@test.com",
+          email: uniqueEmail2,
           name: "Other Admin",
           organizationId: testContext.organizationId,
           isAdmin: true,

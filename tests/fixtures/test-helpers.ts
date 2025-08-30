@@ -108,6 +108,13 @@ export class TestContext {
             },
           });
 
+          // Delete organization self serve invites to avoid foreign key violations
+          await tx.organizationSelfServeInvite.deleteMany({
+            where: {
+              organizationId: this.organizationId,
+            },
+          });
+
           await tx.user.deleteMany({
             where: {
               organizationId: this.organizationId,
