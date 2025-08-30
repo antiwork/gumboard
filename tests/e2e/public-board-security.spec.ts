@@ -40,19 +40,19 @@ test.describe("Public Board Security", () => {
       // Test API endpoint directly (simulating unauthenticated access)
       const apiResponse = await page.request.get(`/api/boards/${board.id}`);
       expect(apiResponse.status()).toBe(200);
-      
+
       const apiData = await apiResponse.json();
-      
+
       // Verify board data is returned
       expect(apiData.board.id).toBe(board.id);
       expect(apiData.board.name).toBe(board.name);
       expect(apiData.board.isPublic).toBe(true);
-      
+
       // CRITICAL: Verify organization data is sanitized (no sensitive member info)
       expect(apiData.board.organization).toBeDefined();
       expect(apiData.board.organization.id).toBeDefined();
       expect(apiData.board.organization.name).toBeDefined();
-      
+
       // SECURITY CHECK: Ensure no sensitive organization data is leaked
       expect(apiData.board.organization.members).toBeUndefined();
       expect(apiData.board.organization.slackWebhookUrl).toBeUndefined();
@@ -97,13 +97,13 @@ test.describe("Public Board Security", () => {
 
       // Test API endpoint directly (unauthenticated access to private board)
       const apiResponse = await page.request.get(`/api/boards/${privateBoard.id}`);
-      
+
       // SECURITY CHECK: Should return 401 Unauthorized for private board
       expect(apiResponse.status()).toBe(401);
-      
+
       const errorData = await apiResponse.json();
       expect(errorData.error).toBe("Unauthorized");
-      
+
       // Verify no board data is leaked in error response
       expect(errorData.board).toBeUndefined();
       expect(errorData.name).toBeUndefined();
@@ -147,17 +147,17 @@ test.describe("Public Board Security", () => {
       // Test accessing other org's public board via API
       const apiResponse = await page.request.get(`/api/boards/${otherOrgBoard.id}`);
       expect(apiResponse.status()).toBe(200);
-      
+
       const apiData = await apiResponse.json();
-      
+
       // Should be accessible since it's public
       expect(apiData.board.id).toBe(otherOrgBoard.id);
       expect(apiData.board.isPublic).toBe(true);
-      
+
       // But organization data should be sanitized
       expect(apiData.board.organization.id).toBe(otherOrg.id);
       expect(apiData.board.organization.name).toBeDefined();
-      
+
       // SECURITY CHECK: No sensitive org data from other organization
       expect(apiData.board.organization.members).toBeUndefined();
       expect(apiData.board.organization.slackWebhookUrl).toBeUndefined();
@@ -184,10 +184,10 @@ test.describe("Public Board Security", () => {
 
       // Try to access notes API without authentication
       const notesResponse = await page.request.get(`/api/boards/${privateBoard.id}/notes`);
-      
+
       // SECURITY CHECK: Should require authentication
       expect(notesResponse.status()).toBe(401);
-      
+
       const errorData = await notesResponse.json();
       expect(errorData.error).toBe("Unauthorized");
     });
@@ -225,7 +225,7 @@ test.describe("Public Board Security", () => {
 
       // SECURITY CHECK: Should be blocked
       expect(createResponse.status()).toBe(401);
-      
+
       const errorData = await createResponse.json();
       expect(errorData.error).toBe("Unauthorized");
     });
@@ -273,7 +273,7 @@ test.describe("Public Board Security", () => {
       // Verify public content is visible
       await expect(page.locator(`text=${publicBoard.name}`)).toBeVisible();
       await expect(page.locator("text=Public note - should be visible")).toBeVisible();
-      
+
       // Verify no sensitive UI elements are shown
       await expect(page.locator('button:has-text("Add Note")')).not.toBeVisible();
       await expect(page.locator('[aria-label="Delete note"]')).not.toBeVisible();
