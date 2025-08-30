@@ -54,17 +54,24 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       });
 
       if (adminCount <= 1) {
-        return NextResponse.json({
-          error: "Cannot remove admin privileges from the last admin. Promote another member to admin first.",
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error:
+              "Cannot remove admin privileges from the last admin. Promote another member to admin first.",
+          },
+          { status: 400 }
+        );
       }
     }
 
     // Additional Security Check: Prevent non-admin from promoting themselves
     if (member.id === currentUser.id && !member.isAdmin && isAdmin) {
-      return NextResponse.json({
-        error: "Cannot promote yourself to admin. Another admin must promote you.",
-      }, { status: 403 });
+      return NextResponse.json(
+        {
+          error: "Cannot promote yourself to admin. Another admin must promote you.",
+        },
+        { status: 403 }
+      );
     }
 
     // Update the member's admin status
@@ -143,9 +150,13 @@ export async function DELETE(
       });
 
       if (adminCount <= 1) {
-        return NextResponse.json({
-          error: "Cannot remove the last admin from the organization. Promote another member to admin first.",
-        }, { status: 400 });
+        return NextResponse.json(
+          {
+            error:
+              "Cannot remove the last admin from the organization. Promote another member to admin first.",
+          },
+          { status: 400 }
+        );
       }
     }
 
