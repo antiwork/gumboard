@@ -36,26 +36,27 @@ const test = base.extend<{ inviteToken: string }>({
 });
 
 test.describe("Invite Acceptance", () => {
-  test("accepting a valid invite redirects to dashboard", async ({ authenticatedPage, inviteToken }) => {
+  test("accepting a valid invite redirects to dashboard", async ({
+    authenticatedPage,
+    inviteToken,
+  }) => {
     await authenticatedPage.goto(`/invite/accept?token=${inviteToken}`);
     const acceptButton = authenticatedPage.locator('button:has-text("Accept Invitation")');
 
-    await Promise.all([
-      authenticatedPage.waitForURL(/.*dashboard/),
-      acceptButton.click(),
-    ]);
+    await Promise.all([authenticatedPage.waitForURL(/.*dashboard/), acceptButton.click()]);
 
     await expect(authenticatedPage).toHaveURL(/.*dashboard/);
   });
 
-  test("declining marks invite declined", async ({ authenticatedPage, inviteToken, testPrisma }) => {
+  test("declining marks invite declined", async ({
+    authenticatedPage,
+    inviteToken,
+    testPrisma,
+  }) => {
     await authenticatedPage.goto(`/invite/accept?token=${inviteToken}`);
     const declineButton = authenticatedPage.locator('button:has-text("Decline Invitation")');
 
-    await Promise.all([
-      authenticatedPage.waitForURL(/.*dashboard/),
-      declineButton.click(),
-    ]);
+    await Promise.all([authenticatedPage.waitForURL(/.*dashboard/), declineButton.click()]);
 
     const invite = await testPrisma.organizationInvite.findUnique({ where: { id: inviteToken } });
     expect(invite?.status).toBe("DECLINED");
