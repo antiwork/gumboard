@@ -20,7 +20,7 @@ test.describe("Public Board Security", () => {
       });
 
       // Create a note with content
-      const note = await testPrisma.note.create({
+      await testPrisma.note.create({
         data: {
           boardId: board.id,
           createdBy: testContext.userId,
@@ -78,7 +78,7 @@ test.describe("Public Board Security", () => {
       });
 
       // Create sensitive note content
-      const sensitiveNote = await testPrisma.note.create({
+      await testPrisma.note.create({
         data: {
           boardId: privateBoard.id,
           createdBy: testContext.userId,
@@ -250,7 +250,7 @@ test.describe("Public Board Security", () => {
       });
 
       // Create a public note
-      const publicNote = await testPrisma.note.create({
+      await testPrisma.note.create({
         data: {
           boardId: publicBoard.id,
           createdBy: testContext.userId,
