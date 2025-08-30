@@ -13,7 +13,6 @@ test.describe("Admin Security - Prevent Organization Lockout", () => {
         data: { isAdmin: true },
       });
 
-      // Ensure no other admins exist
       await testPrisma.user.updateMany({
         where: {
           organizationId: testContext.organizationId,

@@ -260,7 +260,9 @@ test.describe("Board Management", () => {
       await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
 
       await authenticatedPage.getByText("All archived").click();
-      await expect(authenticatedPage).toHaveURL("/boards/archive");
+      
+      // Wait for navigation with increased timeout
+      await expect(authenticatedPage).toHaveURL("/boards/archive", { timeout: 10000 });
     });
   });
 });

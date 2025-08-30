@@ -12,16 +12,21 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Resend({
       from: env.EMAIL_FROM,
     }),
-    GoogleProvider({
-      clientId: env.GOOGLE_CLIENT_ID,
-      clientSecret: env.GOOGLE_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
-    GitHubProvider({
-      clientId: env.GITHUB_CLIENT_ID,
-      clientSecret: env.GITHUB_CLIENT_SECRET,
-      allowDangerousEmailAccountLinking: true,
-    }),
+    // Only add OAuth providers if credentials are available
+    ...(env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET ? [
+      GoogleProvider({
+        clientId: env.GOOGLE_CLIENT_ID,
+        clientSecret: env.GOOGLE_CLIENT_SECRET,
+        allowDangerousEmailAccountLinking: true,
+      })
+    ] : []),
+    ...(env.GITHUB_CLIENT_ID && env.GITHUB_CLIENT_SECRET ? [
+      GitHubProvider({
+        clientId: env.GITHUB_CLIENT_ID,
+        clientSecret: env.GITHUB_CLIENT_SECRET,
+        allowDangerousEmailAccountLinking: true,
+      })
+    ] : []),
   ],
   pages: {
     signIn: "/auth/signin",
