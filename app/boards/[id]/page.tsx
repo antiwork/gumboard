@@ -641,7 +641,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 className="board-dropdown mr-0 min-w-32 sm:max-w-64 col-span-2 sm:col-span-1"
               >
                 <Button variant="ghost" className="flex items-center justify-between p-2 w-full">
-                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100">
+                  <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
                     {boardId === "all-notes"
                       ? "All notes"
                       : boardId === "archive"

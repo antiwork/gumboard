@@ -366,7 +366,7 @@ export function Note({
             />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 truncate max-w-20">
+            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 max-w-20">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
