@@ -773,10 +773,11 @@ export default function OrganizationSettingsPage() {
                       autoFocus
                       showOutsideDays={true}
                       classNames={{
+                        day: "cursor-pointer relative z-20 !pointer-events-auto",
+                        outside:
+                          "text-zinc-400 dark:text-zinc-700 opacity-60 hover:bg-accent hover:text-accent-foreground cursor-pointer !pointer-events-auto relative z-20",
                         weekday:
                           "w-(--cell-size) text-center text-zinc-900 dark:text-zinc-100 font-normal text-[0.8rem] select-none",
-                        outside:
-                          "text-zinc-400 dark:text-zinc-700 opacity-60 hover:bg-accent hover:text-accent-foreground cursor-pointer",
                         caption_label: "text-zinc-900 dark:text-zinc-100",
                       }}
                     />
