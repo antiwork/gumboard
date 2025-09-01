@@ -768,12 +768,13 @@ export default function OrganizationSettingsPage() {
                         setNewSelfServeInvite((prev) => ({
                           ...prev,
                           expiresAt: formattedDate,
-                        }))
+                        }));
                       }}
                       autoFocus
                       showOutsideDays={false}
                       classNames={{
-                        weekday: "w-(--cell-size) text-center text-zinc-900 dark:text-zinc-100 font-normal text-[0.8rem] select-none",
+                        weekday:
+                          "w-(--cell-size) text-center text-zinc-900 dark:text-zinc-100 font-normal text-[0.8rem] select-none",
                         caption_label: "text-zinc-900 dark:text-zinc-100",
                       }}
                     />
