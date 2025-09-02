@@ -81,6 +81,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: string;
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingArchiveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingUnarchiveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
   const [boardSettings, setBoardSettings] = useState({
     name: "",
@@ -440,61 +442,115 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     });
   };
 
-  const handleArchiveNote = async (noteId: string) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote) return;
+  const handleArchiveNote = (noteId: string) => {
+    const currentNote = notes.find((n) => n.id === noteId);
+    if (!currentNote) return;
 
-      const targetBoardId = currentNote?.board?.id ?? currentNote.boardId;
+    const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
 
-      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
-      });
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+        });
 
-      if (!response.ok) {
-        // Revert on error
-        setNotes((prev) => [...prev, currentNote]);
+        if (!response.ok) {
+          setNotes((prev) => [currentNote, ...prev]);
+          setErrorDialog({
+            open: true,
+            title: "Archive Failed",
+            description: "Failed to archive note. Please try again.",
+          });
+        }
+      } catch (error) {
+        console.error("Error archiving note:", error);
+        setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
           description: "Failed to archive note. Please try again.",
         });
+      } finally {
+        delete pendingArchiveTimeoutsRef.current[noteId];
       }
-    } catch (error) {
-      console.error("Error archiving note:", error);
-    }
+    }, 4000);
+
+    pendingArchiveTimeoutsRef.current[noteId] = timeoutId;
+
+    toast("Note archived", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const t = pendingArchiveTimeoutsRef.current[noteId];
+          if (t) {
+            clearTimeout(t);
+            delete pendingArchiveTimeoutsRef.current[noteId];
+          }
+          setNotes((prev) => [currentNote, ...prev]);
+        },
+      },
+      duration: 4000,
+    });
   };
-  const handleUnarchiveNote = async (noteId: string) => {
-    try {
-      const currentNote = notes.find((n) => n.id === noteId);
-      if (!currentNote) return;
 
-      const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
-      if (!targetBoardId) return;
+  const handleUnarchiveNote = (noteId: string) => {
+    const currentNote = notes.find((n) => n.id === noteId);
+    if (!currentNote) return;
 
-      setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
+    if (!targetBoardId) return;
 
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archivedAt: null }),
-      });
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
-      if (!response.ok) {
-        setNotes((prev) => [...prev, currentNote]);
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ archivedAt: null }),
+        });
+
+        if (!response.ok) {
+          setNotes((prev) => [currentNote, ...prev]);
+          setErrorDialog({
+            open: true,
+            title: "Unarchive Failed",
+            description: "Failed to unarchive note. Please try again.",
+          });
+        }
+      } catch (error) {
+        console.error("Error unarchiving note:", error);
+        setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
           open: true,
           title: "Unarchive Failed",
           description: "Failed to unarchive note. Please try again.",
         });
+      } finally {
+        delete pendingUnarchiveTimeoutsRef.current[noteId];
       }
-    } catch (error) {
-      console.error("Error unarchiving note:", error);
-    }
+    }, 4000);
+
+    pendingUnarchiveTimeoutsRef.current[noteId] = timeoutId;
+
+    toast("Note unarchived", {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const t = pendingUnarchiveTimeoutsRef.current[noteId];
+          if (t) {
+            clearTimeout(t);
+            delete pendingUnarchiveTimeoutsRef.current[noteId];
+          }
+          setNotes((prev) => [currentNote, ...prev]);
+        },
+      },
+      duration: 4000,
+    });
   };
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
