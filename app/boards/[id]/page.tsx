@@ -442,7 +442,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     });
   };
 
-
   const handleArchiveNote = (noteId: string) => {
     const currentNote = notes.find((n) => n.id === noteId);
     if (!currentNote) return;
@@ -460,7 +459,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         });
 
         if (!response.ok) {
-  
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
             open: true,
@@ -483,7 +481,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     pendingArchiveTimeoutsRef.current[noteId] = timeoutId;
 
-
     toast("Note archived", {
       action: {
         label: "Undo",
@@ -493,13 +490,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             clearTimeout(t);
             delete pendingArchiveTimeoutsRef.current[noteId];
           }
-          setNotes((prev) => [currentNote, ...prev]); 
+          setNotes((prev) => [currentNote, ...prev]);
         },
       },
       duration: 4000,
     });
   };
-
 
   const handleUnarchiveNote = (noteId: string) => {
     const currentNote = notes.find((n) => n.id === noteId);
@@ -508,9 +504,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     const targetBoardId = currentNote.board?.id ?? currentNote.boardId;
     if (!targetBoardId) return;
 
-
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
-
 
     const timeoutId = setTimeout(async () => {
       try {
@@ -552,13 +546,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             clearTimeout(t);
             delete pendingUnarchiveTimeoutsRef.current[noteId];
           }
-          setNotes((prev) => [currentNote, ...prev]); 
+          setNotes((prev) => [currentNote, ...prev]);
         },
       },
       duration: 4000,
     });
   };
-
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
     const { name, description } = values;
