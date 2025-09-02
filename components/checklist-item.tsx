@@ -127,12 +127,11 @@ export function ChecklistItem({
         disabled={readonly}
         placeholder={isNewItem ? "Start typing…" : undefined}
         className={cn(
-        "flex-1 border-none bg-transparent px-1 py-1 text-sm resize-none overflow-hidden outline-none transition-all duration-200",
-        item.checked
-          ? "text-zinc-500 dark:text-zinc-500 line-through"
-          : "text-zinc-900 dark:text-zinc-100"
+          "flex-1 border-none bg-transparent px-1 py-1 text-sm resize-none overflow-hidden outline-none transition-all duration-200",
+          item.checked
+            ? "text-zinc-500 dark:text-zinc-500 line-through"
+            : "text-zinc-900 dark:text-zinc-100"
         )}
-
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         onFocus={(e) => {
