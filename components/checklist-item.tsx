@@ -116,7 +116,7 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-zinc-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
+        className="transition-colors duration-200 border-zinc-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
         disabled={readonly}
       />
 
@@ -127,9 +127,12 @@ export function ChecklistItem({
         disabled={readonly}
         placeholder={isNewItem ? "Start typing…" : undefined}
         className={cn(
-          "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
-          item.checked && "text-zinc-500 dark:text-zinc-500 line-through"
+        "flex-1 border-none bg-transparent px-1 py-1 text-sm resize-none overflow-hidden outline-none transition-all duration-200",
+        item.checked
+          ? "text-zinc-500 dark:text-zinc-500 line-through"
+          : "text-zinc-900 dark:text-zinc-100"
         )}
+
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
         onFocus={(e) => {
