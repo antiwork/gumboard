@@ -5,6 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+
 import {
   Trash2,
   UserPlus,
@@ -12,10 +16,11 @@ import {
   ShieldCheck,
   Link,
   Copy,
-  Calendar,
+  CalendarIcon,
   Users,
   ExternalLink,
 } from "lucide-react";
+import { Calendar as CalendarIconLucide } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
   AlertDialog,
@@ -726,19 +731,57 @@ export default function OrganizationSettingsPage() {
                 <Label htmlFor="expiresAt" className="text-zinc-800 dark:text-zinc-200 mb-2">
                   Expires (Optional)
                 </Label>
-                <Input
-                  id="expiresAt"
-                  type="date"
-                  value={newSelfServeInvite.expiresAt}
-                  onChange={(e) =>
-                    setNewSelfServeInvite((prev) => ({
-                      ...prev,
-                      expiresAt: e.target.value,
-                    }))
-                  }
-                  disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
-                />
+                <Popover open={user?.isAdmin ? undefined : false}>
+                  <PopoverTrigger asChild>
+                    <div
+                      className="flex items-center w-full px-3 py-[6px]
+                                 bg-white dark:bg-zinc-800 
+                                 border border-zinc-300 dark:border-zinc-700 
+                                 rounded-md cursor-pointer 
+                                 text-zinc-500 dark:text-zinc-400 
+                                 hover:border-zinc-400 dark:hover:border-zinc-600"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                      <span
+                        className={
+                          newSelfServeInvite.expiresAt
+                            ? "text-zinc-900 dark:text-zinc-200"
+                            : "text-zinc-500 dark:text-zinc-400"
+                        }
+                      >
+                        {newSelfServeInvite.expiresAt
+                          ? format(new Date(newSelfServeInvite.expiresAt), "dd-MM-yyyy")
+                          : "Pick a date"}
+                      </span>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={
+                        newSelfServeInvite.expiresAt
+                          ? new Date(newSelfServeInvite.expiresAt)
+                          : undefined
+                      }
+                      onSelect={(date) => {
+                        const formattedDate = date ? format(date, "yyyy-MM-dd") : "";
+                        setNewSelfServeInvite((prev) => ({
+                          ...prev,
+                          expiresAt: formattedDate,
+                        }));
+                      }}
+                      autoFocus
+                      showOutsideDays={true}
+                      classNames={{
+                        weekday:
+                          "w-(--cell-size) text-center text-zinc-900 dark:text-zinc-100 font-normal text-[0.8rem] select-none",
+                        outside:
+                          "text-zinc-400 dark:text-zinc-700 opacity-60 hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                        caption_label: "text-zinc-900 dark:text-zinc-100",
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label htmlFor="usageLimit" className="text-zinc-800 dark:text-zinc-200 mb-2">
@@ -825,7 +868,7 @@ export default function OrganizationSettingsPage() {
                           </span>
                           {invite.expiresAt && (
                             <span className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
+                              <CalendarIconLucide className="w-4 h-4 mr-1" />
                               Expires {new Date(invite.expiresAt).toLocaleDateString()}
                             </span>
                           )}
