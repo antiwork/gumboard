@@ -409,13 +409,13 @@ export default function OrganizationSettingsPage() {
         title: "Failed to delete invite link",
         description: "Failed to delete invite link",
       });
-    } finally { 
-      setDeletingInviteToken(null); 
-      setDeleteInviteDialog({ 
-        open: false, 
-        inviteToken: "", 
-        inviteName: "", 
-      }); 
+    } finally {
+      setDeletingInviteToken(null);
+      setDeleteInviteDialog({
+        open: false,
+        inviteToken: "",
+        inviteName: "",
+      });
     }
   };
 
@@ -835,8 +835,11 @@ export default function OrganizationSettingsPage() {
               {selfServeInvites.map((invite) => (
                 <div
                   key={invite.id}
-                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${ 
-                    deletingInviteToken === invite.token ? "opacity-50 pointer-events-none transition-opacity duration-100" : "" }`}
+                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
+                    deletingInviteToken === invite.token
+                      ? "opacity-50 pointer-events-none transition-opacity duration-100"
+                      : ""
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
