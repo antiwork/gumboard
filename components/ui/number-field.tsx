@@ -3,7 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
-export interface NumberFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {}
+export type NumberFieldProps = React.InputHTMLAttributes<HTMLInputElement>;
 
 const NumberField = React.forwardRef<HTMLInputElement, NumberFieldProps>(
   ({ className, value, onChange, ...props }, ref) => {
