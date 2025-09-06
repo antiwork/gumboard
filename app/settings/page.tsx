@@ -112,7 +112,7 @@ export default function ProfileSettingsPage() {
               value={profileName}
               onChange={(e) => setProfileName(e.target.value)}
               placeholder="Enter your full name"
-              className="mt-1 bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100"
+              className="mt-2 bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100"
             />
           </div>
 
@@ -126,7 +126,7 @@ export default function ProfileSettingsPage() {
                 type="email"
                 value={user?.email || ""}
                 disabled
-                className="bg-muted dark:bg-zinc-800 text-muted-foreground dark:text-zinc-400 cursor-not-allowed"
+                className="mt-1 bg-muted dark:bg-zinc-800 text-muted-foreground dark:text-zinc-400 cursor-not-allowed"
               />
               <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-zinc-400" />
             </div>
