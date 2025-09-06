@@ -18,8 +18,8 @@ const NumberField = React.forwardRef<HTMLInputElement, NumberFieldProps>(
     const handleDecrement = () => {
       const numericValue = Number(value || 0);
       const minProp = Number(props.min || -Infinity);
-      
-      if (numericValue <= minProp) return; 
+
+      if (numericValue <= minProp) return;
 
       const newValue = numericValue - 1;
       onChange?.({
