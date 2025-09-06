@@ -74,6 +74,7 @@ export default function OrganizationSettingsPage() {
   const [inviting, setInviting] = useState(false);
   const [cancellingInviteIds, setCancellingInviteIds] = useState<string[]>([]);
   const [selfServeInvites, setSelfServeInvites] = useState<SelfServeInvite[]>([]);
+  const [deletingInviteToken, setDeletingInviteToken] = useState<string | null>(null);
   const [newSelfServeInvite, setNewSelfServeInvite] = useState({
     name: "",
     expiresAt: "",
@@ -382,6 +383,7 @@ export default function OrganizationSettingsPage() {
   };
 
   const confirmDeleteSelfServeInvite = async () => {
+    setDeletingInviteToken(deleteInviteDialog.inviteToken);
     try {
       const response = await fetch(
         `/api/organization/self-serve-invites/${deleteInviteDialog.inviteToken}`,
@@ -407,6 +409,13 @@ export default function OrganizationSettingsPage() {
         title: "Failed to delete invite link",
         description: "Failed to delete invite link",
       });
+    } finally { 
+      setDeletingInviteToken(null); 
+      setDeleteInviteDialog({ 
+        open: false, 
+        inviteToken: "", 
+        inviteName: "", 
+      }); 
     }
   };
 
@@ -826,7 +835,8 @@ export default function OrganizationSettingsPage() {
               {selfServeInvites.map((invite) => (
                 <div
                   key={invite.id}
-                  className="p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700"
+                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${ 
+                    deletingInviteToken === invite.token ? "opacity-50 pointer-events-none transition-opacity duration-100" : "" }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
