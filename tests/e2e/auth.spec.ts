@@ -395,10 +395,10 @@ test.describe("Authentication Flow", () => {
     await expect(authenticatedPage.locator("text=No boards yet")).toBeVisible();
   });
 
-  test("should validate email input and display error on invalid email", async ({page}) => {
+  test("should validate email input and display error on invalid email", async ({ page }) => {
     await page.goto("/auth/signin");
-    await page.fill('input[name="email"]', 'invalid-email');
+    await page.fill('input[name="email"]', "invalid-email");
     await page.click('button[type="submit"]');
-    await expect(page.locator('text=Invalid email address')).toBeVisible();
-  })
+    await expect(page.locator("text=Invalid email address")).toBeVisible();
+  });
 });

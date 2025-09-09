@@ -19,7 +19,14 @@ import Image from "next/image";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 const emailProviders = [
   {
@@ -76,10 +83,8 @@ const oauthProviders = [
 ];
 
 const formSchema = z.object({
-  email: z
-    .string()
-    .email("Invalid email address")
-})
+  email: z.string().email("Invalid email address"),
+});
 
 function SignInContent() {
   const router = useRouter();
@@ -105,7 +110,7 @@ function SignInContent() {
     },
   });
 
-  const { isSubmitting } = form.formState
+  const { isSubmitting } = form.formState;
   const email = form.watch("email");
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
@@ -148,9 +153,7 @@ function SignInContent() {
             <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mb-4 ring-1 ring-green-200/60 dark:ring-green-800/40">
               <Mail className="w-6 h-6 text-green-700 dark:text-green-400" />
             </div>
-            <CardTitle className="text-2xl dark:text-zinc-100">
-              Check your email
-            </CardTitle>
+            <CardTitle className="text-2xl dark:text-zinc-100">Check your email</CardTitle>
             <CardDescription className="dark:text-zinc-400">
               We&apos;ve sent a magic link to{" "}
               <strong className="dark:text-zinc-100">{form.getValues("email")}</strong>
@@ -226,13 +229,11 @@ function SignInContent() {
               {emailParam && (
                 <div className="flex items-center justify-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-md p-3">
                   <Mail size={16} />
-                  <p className="text-sm">
-                    You&apos;re signing in from an organization invitation
-                  </p>
+                  <p className="text-sm">You&apos;re signing in from an organization invitation</p>
                 </div>
               )}
 
-              <FormField 
+              <FormField
                 control={form.control}
                 name="email"
                 render={({ field }) => (
@@ -241,11 +242,11 @@ function SignInContent() {
                       Email address
                     </FormLabel>
                     <FormControl>
-                      <Input 
+                      <Input
                         className="h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400 hover:border-gray-400 transition-colors"
-                        placeholder="Enter your email" 
+                        placeholder="Enter your email"
                         disabled={isSubmitting || !!emailParam}
-                        {...field} 
+                        {...field}
                       />
                     </FormControl>
                     <FormMessage className="text-red-600 dark:text-red-400 text-xs" />
@@ -258,8 +259,8 @@ function SignInContent() {
                 className="w-full h-12 font-medium mt-4 bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
                 type="submit"
                 disabled={isSubmitting || !email}
-                >
-                  {isSubmitting ? (
+              >
+                {isSubmitting ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Sending magic link...
