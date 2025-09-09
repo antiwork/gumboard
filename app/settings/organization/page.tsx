@@ -5,6 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
+import { NumberField } from "@/components/ui/number-field";
+
 import {
   Trash2,
   UserPlus,
@@ -12,10 +17,11 @@ import {
   ShieldCheck,
   Link,
   Copy,
-  Calendar,
+  CalendarIcon,
   Users,
   ExternalLink,
 } from "lucide-react";
+import { Calendar as CalendarIconLucide } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
   AlertDialog,
@@ -66,7 +72,9 @@ export default function OrganizationSettingsPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
+  const [cancellingInviteIds, setCancellingInviteIds] = useState<string[]>([]);
   const [selfServeInvites, setSelfServeInvites] = useState<SelfServeInvite[]>([]);
+  const [deletingInviteToken, setDeletingInviteToken] = useState<string | null>(null);
   const [newSelfServeInvite, setNewSelfServeInvite] = useState({
     name: "",
     expiresAt: "",
@@ -261,6 +269,7 @@ export default function OrganizationSettingsPage() {
   };
 
   const handleCancelInvite = async (inviteId: string) => {
+    setCancellingInviteIds((prev) => [...prev, inviteId]);
     try {
       const response = await fetch(`/api/organization/invites/${inviteId}`, {
         method: "DELETE",
@@ -271,6 +280,8 @@ export default function OrganizationSettingsPage() {
       }
     } catch (error) {
       console.error("Error canceling invite:", error);
+    } finally {
+      setCancellingInviteIds((prev) => prev.filter((id) => id !== inviteId));
     }
   };
 
@@ -372,6 +383,7 @@ export default function OrganizationSettingsPage() {
   };
 
   const confirmDeleteSelfServeInvite = async () => {
+    setDeletingInviteToken(deleteInviteDialog.inviteToken);
     try {
       const response = await fetch(
         `/api/organization/self-serve-invites/${deleteInviteDialog.inviteToken}`,
@@ -396,6 +408,13 @@ export default function OrganizationSettingsPage() {
         open: true,
         title: "Failed to delete invite link",
         description: "Failed to delete invite link",
+      });
+    } finally {
+      setDeletingInviteToken(null);
+      setDeleteInviteDialog({
+        open: false,
+        inviteToken: "",
+        inviteName: "",
       });
     }
   };
@@ -460,7 +479,7 @@ export default function OrganizationSettingsPage() {
               value={orgName}
               onChange={(e) => setOrgName(e.target.value)}
               placeholder="Enter organization name"
-              className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className="mt-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               disabled={!user?.isAdmin}
             />
           </div>
@@ -500,7 +519,7 @@ export default function OrganizationSettingsPage() {
               value={slackWebhookUrl}
               onChange={(e) => setSlackWebhookUrl(e.target.value)}
               placeholder="https://hooks.slack.com/services/..."
-              className="mt-1 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
+              className="mt-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
               disabled={!user?.isAdmin}
             />
             <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
@@ -673,9 +692,10 @@ export default function OrganizationSettingsPage() {
                     onClick={() => handleCancelInvite(invite.id)}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900 border-red-600 hover:bg-inherit hover:border-red-600"
+                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900 border-red-600 hover:bg-inherit hover:border-red-600 disabled:opacity-70 disabled:text-red-300"
+                    disabled={cancellingInviteIds.includes(invite.id)}
                   >
-                    Cancel
+                    {cancellingInviteIds.includes(invite.id) ? "Cancelling..." : "Cancel"}
                   </Button>
                 </div>
               ))}
@@ -719,34 +739,71 @@ export default function OrganizationSettingsPage() {
                   placeholder="e.g., General Invite"
                   required
                   disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
+                  className="bg-white h-9 dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
               <div>
                 <Label htmlFor="expiresAt" className="text-zinc-800 dark:text-zinc-200 mb-2">
                   Expires (Optional)
                 </Label>
-                <Input
-                  id="expiresAt"
-                  type="date"
-                  value={newSelfServeInvite.expiresAt}
-                  onChange={(e) =>
-                    setNewSelfServeInvite((prev) => ({
-                      ...prev,
-                      expiresAt: e.target.value,
-                    }))
-                  }
-                  disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
-                />
+                <Popover open={user?.isAdmin ? undefined : false}>
+                  <PopoverTrigger asChild>
+                    <div
+                      className="flex h-9 items-center w-full px-3 py-[6px]
+                                 bg-white dark:bg-zinc-800 
+                                 border border-zinc-300 dark:border-zinc-700 
+                                 rounded-md cursor-pointer 
+                                 text-zinc-500 dark:text-zinc-400 
+                                 hover:border-zinc-400 dark:hover:border-zinc-600"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4 text-zinc-500 dark:text-zinc-400" />
+                      <span
+                        className={
+                          newSelfServeInvite.expiresAt
+                            ? "text-zinc-900 dark:text-zinc-200"
+                            : "text-zinc-500 dark:text-zinc-400"
+                        }
+                      >
+                        {newSelfServeInvite.expiresAt
+                          ? format(new Date(newSelfServeInvite.expiresAt), "dd-MM-yyyy")
+                          : "Pick a date"}
+                      </span>
+                    </div>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={
+                        newSelfServeInvite.expiresAt
+                          ? new Date(newSelfServeInvite.expiresAt)
+                          : undefined
+                      }
+                      onSelect={(date) => {
+                        const formattedDate = date ? format(date, "yyyy-MM-dd") : "";
+                        setNewSelfServeInvite((prev) => ({
+                          ...prev,
+                          expiresAt: formattedDate,
+                        }));
+                      }}
+                      autoFocus
+                      showOutsideDays={true}
+                      classNames={{
+                        weekday:
+                          "w-(--cell-size) text-center text-zinc-900 dark:text-zinc-100 font-normal text-[0.8rem] select-none",
+                        outside:
+                          "text-zinc-400 dark:text-zinc-700 opacity-60 hover:bg-accent hover:text-accent-foreground cursor-pointer",
+                        caption_label: "text-zinc-900 dark:text-zinc-100",
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
               </div>
               <div>
                 <Label htmlFor="usageLimit" className="text-zinc-800 dark:text-zinc-200 mb-2">
                   Usage Limit (Optional)
                 </Label>
-                <Input
+                <NumberField
                   id="usageLimit"
-                  type="number"
                   min="1"
                   value={newSelfServeInvite.usageLimit}
                   onChange={(e) =>
@@ -757,7 +814,6 @@ export default function OrganizationSettingsPage() {
                   }
                   placeholder="Unlimited"
                   disabled={!user?.isAdmin}
-                  className="bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 dark:border-zinc-700"
                 />
               </div>
             </div>
@@ -779,7 +835,11 @@ export default function OrganizationSettingsPage() {
               {selfServeInvites.map((invite) => (
                 <div
                   key={invite.id}
-                  className="p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700"
+                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
+                    deletingInviteToken === invite.token
+                      ? "opacity-50 pointer-events-none transition-opacity duration-100"
+                      : ""
+                  }`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
@@ -788,9 +848,15 @@ export default function OrganizationSettingsPage() {
                           <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
                             {invite.name}
                           </h5>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                            Active
-                          </span>
+                          {(invite.expiresAt ? new Date(invite.expiresAt) < new Date() : false) ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                              Expired
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                              Active
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center space-x-2 ml-4">
                           <Button
@@ -825,7 +891,7 @@ export default function OrganizationSettingsPage() {
                           </span>
                           {invite.expiresAt && (
                             <span className="flex items-center">
-                              <Calendar className="w-4 h-4 mr-1" />
+                              <CalendarIconLucide className="w-4 h-4 mr-1" />
                               Expires {new Date(invite.expiresAt).toLocaleDateString()}
                             </span>
                           )}

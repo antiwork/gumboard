@@ -135,7 +135,7 @@ function DateRangePicker({
                       outside: "text-gray-400 opacity-50 pointer-events-none",
                     }}
                     classNames={{
-                      day: "hover:bg-sky-500 transition-colors duration-200 rounded",
+                      day: "hover:bg-sky-500 hover:text-white transition-colors duration-200 rounded",
                       disabled: "opacity-50 cursor-not-allowed hover:bg-transparent",
                       selected: "bg-sky-500 text-white hover:bg-sky-600",
                     }}
@@ -174,7 +174,7 @@ function DateRangePicker({
                       outside: "text-gray-400 opacity-50 pointer-events-none",
                     }}
                     classNames={{
-                      day: "hover:bg-sky-500 hover:text-white transition-colors rounded",
+                      day: "hover:bg-sky-500 hover:text-white transition-colors duration-200 rounded",
                       disabled: "opacity-50 cursor-not-allowed hover:bg-transparent",
                       selected: "bg-sky-500 text-white hover:bg-sky-600",
                     }}
