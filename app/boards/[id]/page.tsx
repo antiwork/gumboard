@@ -1120,7 +1120,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onCheckedChange={(checked) =>
                   setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
                 }
-                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
+                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600"
               />
               <label
                 htmlFor="sendSlackUpdates"
