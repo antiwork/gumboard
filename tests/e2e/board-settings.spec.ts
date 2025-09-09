@@ -23,7 +23,7 @@ test.describe("Board Settings", () => {
 
     await expect(authenticatedPage.locator("text=Board settings")).toBeVisible();
     await expect(
-      authenticatedPage.locator(`text=Configure settings for "${board.name}" board.`)
+      authenticatedPage.locator(`text=Configure settings for ${board.name} board.`)
     ).toBeVisible();
     await expect(
       authenticatedPage.locator('label:has-text("Send updates to Slack")')
@@ -183,8 +183,8 @@ test.describe("Board Settings", () => {
     await checkbox.uncheck();
     await expect(checkbox).not.toBeChecked();
 
-    await authenticatedPage.click('button:has-text("Cancel")');
-
+    await authenticatedPage.getByTitle("close").click();
+    
     await expect(authenticatedPage.locator("text=Board settings")).not.toBeVisible();
 
     // Verify settings were not saved in database
