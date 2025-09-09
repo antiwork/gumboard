@@ -334,17 +334,17 @@ export function Note({
 
   const handleNavigateToPrevious = (currentItemId: string) => {
     if (!note.checklistItems) return;
-    
-    const currentIndex = note.checklistItems.findIndex(item => item.id === currentItemId);
+
+    const currentIndex = note.checklistItems.findIndex((item) => item.id === currentItemId);
     if (currentIndex > 0) {
       const previousItem = note.checklistItems[currentIndex - 1];
       const previousItemContent = previousItem.content;
-      
+
       navigationRef.current = {
         itemId: previousItem.id,
-        content: previousItemContent
+        content: previousItemContent,
       };
-      
+
       handleDeleteChecklistItem(currentItemId);
     } else {
       handleDeleteItem(currentItemId);
@@ -355,12 +355,14 @@ export function Note({
     if (navigationRef.current) {
       const { itemId, content } = navigationRef.current;
       navigationRef.current = null;
-      
+
       setEditingItem(itemId);
       setEditingItemContent(content);
-      
+
       requestAnimationFrame(() => {
-        const textarea = document.querySelector(`[data-testid="${itemId}"] textarea`) as HTMLTextAreaElement;
+        const textarea = document.querySelector(
+          `[data-testid="${itemId}"] textarea`
+        ) as HTMLTextAreaElement;
         if (textarea) {
           textarea.focus();
           textarea.setSelectionRange(content.length, content.length);
