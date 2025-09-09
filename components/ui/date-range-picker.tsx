@@ -47,9 +47,6 @@ function DateRangePicker({
       setInternalStartDate(date);
       if (internalEndDate && isAfter(date, internalEndDate)) {
         setInternalEndDate(null);
-        onDateRangeChange?.(date, null);
-      } else {
-        onDateRangeChange?.(date, internalEndDate);
       }
     }
     setIsStartPopoverOpen(false);
@@ -58,7 +55,6 @@ function DateRangePicker({
   const handleEndCalendarSelect = (date: Date | undefined) => {
     if (date && internalStartDate && isAfter(internalStartDate, date)) return;
     setInternalEndDate(date || null);
-    onDateRangeChange?.(internalStartDate, date || null);
     setIsEndPopoverOpen(false);
   };
 
@@ -69,7 +65,10 @@ function DateRangePicker({
     setIsFilterDropdownOpen(false);
   };
 
-  const handleApply = () => setIsFilterDropdownOpen(false);
+  const handleApply = () => {
+    onDateRangeChange?.(internalStartDate, internalEndDate);
+    setIsFilterDropdownOpen(false);
+  };
 
   useEffect(() => {
     setInternalStartDate(startDate || null);
