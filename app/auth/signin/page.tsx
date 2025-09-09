@@ -78,7 +78,6 @@ const oauthProviders = [
 const formSchema = z.object({
   email: z
     .string()
-    .min(1, "Email is required")
     .email("Invalid email address")
 })
 
@@ -107,6 +106,7 @@ function SignInContent() {
   });
 
   const { isSubmitting } = form.formState
+  const email = form.watch("email");
 
   const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
@@ -257,6 +257,7 @@ function SignInContent() {
               <Button
                 className="w-full h-12 font-medium mt-4 bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
                 type="submit"
+                disabled={isSubmitting || !email}
                 >
                   {isSubmitting ? (
                   <>
