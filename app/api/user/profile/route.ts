@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { profileSchema } from "@/lib/types/zod-types";
+import { profileSchema } from "@/lib/types";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 

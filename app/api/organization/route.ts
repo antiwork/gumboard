@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { organizationSchema } from "@/lib/types/zod-types";
+import { organizationSchema } from "@/lib/types";
 
 export async function PUT(request: NextRequest) {
   try {

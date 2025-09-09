@@ -2,7 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { memberSchema } from "@/lib/types/zod-types";
+import { memberSchema } from "@/lib/types";
 
 // Update member (toggle admin role)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

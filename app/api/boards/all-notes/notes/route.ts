@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { z } from "zod";
 import { NOTE_COLORS } from "@/lib/constants";
-import { noteSchema } from "@/lib/types/zod-types";
+import { noteSchema } from "@/lib/types";
 
 // Get all notes from all boards in the organization
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

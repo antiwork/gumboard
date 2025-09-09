@@ -8,7 +8,7 @@ import {
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";
-import { noteSchema } from "@/lib/types/zod-types";
+import { noteSchema } from "@/lib/types";
 
 export async function PUT(
   request: NextRequest,

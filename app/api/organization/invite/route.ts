@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
 import { z } from "zod";
-import { inviteSchema } from "@/lib/types/zod-types";
+import { inviteSchema } from "@/lib/types";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 

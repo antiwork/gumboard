@@ -9,7 +9,7 @@ import {
   shouldSendNotification,
 } from "@/lib/slack";
 import { NOTE_COLORS } from "@/lib/constants";
-import { noteSchema } from "@/lib/types/zod-types";
+import { noteSchema } from "@/lib/types";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
