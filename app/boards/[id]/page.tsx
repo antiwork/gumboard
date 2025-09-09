@@ -10,6 +10,7 @@ import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical } from "lucide-r
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
+import { NoNotesCreated } from "@/components/ui/no-notes-created";
 import { Note as NoteCard } from "@/components/note";
 
 import {
@@ -901,7 +902,27 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           ))}
         </div>
 
-        {/* Empty State */}
+        {/* No Notes Created State */}
+        {notes.length === 0 && (
+          <NoNotesCreated
+            onCreateNote={
+              boardId !== "archive"
+                ? () => {
+                    if (boardId === "all-notes" && allBoards.length > 0) {
+                      handleAddNote(allBoards[0].id);
+                    } else {
+                      handleAddNote();
+                    }
+                  }
+                : undefined
+            }
+            boardName={board?.name}
+            isArchive={boardId === "archive"}
+            className="absolute inset-0"
+          />
+        )}
+
+        {/* Filtered Empty State */}
         {filteredNotes.length === 0 &&
           notes.length > 0 &&
           (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
