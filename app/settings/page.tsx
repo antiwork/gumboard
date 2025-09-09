@@ -120,15 +120,15 @@ export default function ProfileSettingsPage() {
             <Label htmlFor="email" className="text-foreground dark:text-zinc-200">
               Email Address
             </Label>
-            <div className="relative mt-1">
+            <div className="relative mt-2">
               <Input
                 id="email"
                 type="email"
                 value={user?.email || ""}
                 disabled
-                className="mt-1 bg-muted dark:bg-zinc-800 text-muted-foreground dark:text-zinc-400 cursor-not-allowed"
+                className="bg-muted dark:bg-zinc-800 text-muted-foreground dark:text-zinc-400 cursor-not-allowed pr-10"
               />
-              <Mail className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-zinc-400" />
+              <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground dark:text-zinc-400 pointer-events-none" />
             </div>
           </div>
         </div>
