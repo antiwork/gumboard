@@ -826,17 +826,20 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             {/* Search Box */}
             <div className="relative h-9">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
+                <Search
+                  className={`h-4 w-4 text-muted-foreground dark:text-zinc-400 ${notes.length === 0 ? "opacity-30" : ""}`}
+                />
               </div>
               <input
                 aria-label="Search notes"
                 type="text"
-                placeholder="Search notes..."
+                placeholder={notes.length === 0 ? "No notes to search" : "Search notes..."}
                 value={searchTerm}
+                disabled={notes.length === 0}
                 onChange={(e) => {
                   setSearchTerm(e.target.value);
                 }}
-                className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400 disabled:opacity-30"
               />
               {searchTerm && (
                 <Button
