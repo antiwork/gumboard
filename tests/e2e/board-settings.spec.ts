@@ -184,7 +184,7 @@ test.describe("Board Settings", () => {
     await expect(checkbox).not.toBeChecked();
 
     await authenticatedPage.getByTitle("close").click();
-    
+
     await expect(authenticatedPage.locator("text=Board settings")).not.toBeVisible();
 
     // Verify settings were not saved in database
