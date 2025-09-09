@@ -971,11 +971,11 @@ test.describe("Note Management", () => {
       await expect(startCalendar).toBeVisible();
 
       const startDateStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, "0")}-${String(yesterday.getDate()).padStart(2, "0")}`;
-      const startDateCell = startCalendar.locator(
-        `td[role="gridcell"][data-day="${startDateStr}"]:not([data-disabled="true"])`
+      const startDateButton = startCalendar.locator(
+        `td[role="gridcell"][data-day="${startDateStr}"] button:not([disabled])`
       );
-      await startDateCell.waitFor({ state: "visible" });
-      await startDateCell.click();
+      await expect(startDateButton).toBeVisible();
+      await startDateButton.click();
 
       // End date
       await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
@@ -983,11 +983,11 @@ test.describe("Note Management", () => {
       await expect(endCalendar).toBeVisible();
 
       const endDateStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
-      const endDateCell = endCalendar.locator(
-        `td[role="gridcell"][data-day="${endDateStr}"]:not([data-disabled="true"])`
+      const endDateButton = endCalendar.locator(
+        `td[role="gridcell"][data-day="${endDateStr}"] button:not([disabled])`
       );
-      await endDateCell.waitFor({ state: "visible" });
-      await endDateCell.click();
+      await expect(endDateButton).toBeVisible();
+      await endDateButton.click();
 
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(3);
