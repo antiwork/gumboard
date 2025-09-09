@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical, XIcon } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
@@ -1021,12 +1021,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
         <AlertDialogContent className="board-settings-modal bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
+          <AlertDialogCancel asChild>
+            <Button
+              className="absolute right-4 top-3 md:right-4 md:top-5 border-0 p-1"
+              aria-label="Close"
+              title="close"
+            >
+             <XIcon className="text-4"/>
+            </Button>
+          </AlertDialogCancel>
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100 text-start">
               Board settings
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Configure settings for &quot;{board?.name}&quot; board.
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400 text-start">
+              Configure settings for <span className="font-semibold">{board?.name}</span> board.
             </AlertDialogDescription>
           </AlertDialogHeader>
 
@@ -1045,16 +1054,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
-                Description (optional)
+              Description (optional)
               </label>
-              <Input
-                type="text"
-                value={boardSettings.description}
-                onChange={(e) =>
-                  setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
-                }
-                placeholder="Enter board description"
-                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+              <textarea
+              value={boardSettings.description}
+              onChange={(e) =>
+                setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
+              }
+              placeholder="Enter board description"
+              className="bg-white text-foreground dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 w-full resize-none text-base md:text-sm rounded-md px-3 py-2 outline-none focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus:border-blue-500"
               />
             </div>
             <div className="space-y-4">
@@ -1073,12 +1081,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   Make board public
                 </label>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
+              <p className="text-xs text-muted-foreground dark:text-zinc-400">
                 When enabled, anyone with the link can view this board
               </p>
 
               {boardSettings.isPublic && (
-                <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
+                <div className=" p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium text-foreground dark:text-zinc-100">
@@ -1113,7 +1121,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               )}
             </div>
 
-            <div className="flex items-center space-x-2">
+            <div className="flex items-end space-x-2">
               <Checkbox
                 id="sendSlackUpdates"
                 checked={boardSettings.sendSlackUpdates}
@@ -1129,24 +1137,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 Send updates to Slack
               </label>
             </div>
-            <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
+            <p className="text-xs text-muted-foreground dark:text-zinc-400 ">
               When enabled, note updates will be sent to your organization&apos;s Slack channel
             </p>
           </div>
 
           <AlertDialogFooter className="flex !flex-row justify-between">
-            <Button
+            
+            <div className="flex gap-2 items-center">
+              <Button
               onClick={() => setDeleteConfirmDialog(true)}
               variant="destructive"
-              className="mr-auto flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+              className=" flex items-start gap-1 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
             >
               <Trash2 className="w-4 h-4" />
               <span className="hidden lg:inline">Delete Board</span>
             </Button>
-            <div className="flex space-x-2 items-center">
-              <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
-                Cancel
-              </AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => handleUpdateBoardSettings(boardSettings)}
                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
