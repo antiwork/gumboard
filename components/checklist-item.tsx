@@ -28,6 +28,7 @@ interface ChecklistItemProps {
   className?: string;
   isNewItem?: boolean;
   onCreateItem?: (content: string) => void;
+  onNavigateToPrevious?: (itemId: string) => void;
 }
 
 export function ChecklistItem({
@@ -45,6 +46,7 @@ export function ChecklistItem({
   className,
   isNewItem = false,
   onCreateItem,
+  onNavigateToPrevious,
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
@@ -86,7 +88,11 @@ export function ChecklistItem({
     }
     if (e.key === "Backspace" && editContent?.trim() === "") {
       e.preventDefault();
-      onDelete?.(item.id);
+      if (onNavigateToPrevious && !isNewItem) {
+        onNavigateToPrevious(item.id);
+      } else {
+        onDelete?.(item.id);
+      }
     }
   };
 

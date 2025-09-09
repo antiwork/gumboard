@@ -87,6 +87,7 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const navigationRef = React.useRef<{ itemId: string; content: string } | null>(null);
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -331,6 +332,43 @@ export function Note({
     }
   };
 
+  const handleNavigateToPrevious = (currentItemId: string) => {
+    if (!note.checklistItems) return;
+    
+    const currentIndex = note.checklistItems.findIndex(item => item.id === currentItemId);
+    if (currentIndex > 0) {
+      const previousItem = note.checklistItems[currentIndex - 1];
+      const previousItemContent = previousItem.content;
+      
+      navigationRef.current = {
+        itemId: previousItem.id,
+        content: previousItemContent
+      };
+      
+      handleDeleteChecklistItem(currentItemId);
+    } else {
+      handleDeleteItem(currentItemId);
+    }
+  };
+
+  React.useEffect(() => {
+    if (navigationRef.current) {
+      const { itemId, content } = navigationRef.current;
+      navigationRef.current = null;
+      
+      setEditingItem(itemId);
+      setEditingItemContent(content);
+      
+      requestAnimationFrame(() => {
+        const textarea = document.querySelector(`[data-testid="${itemId}"] textarea`) as HTMLTextAreaElement;
+        if (textarea) {
+          textarea.focus();
+          textarea.setSelectionRange(content.length, content.length);
+        }
+      });
+    }
+  }, [note.checklistItems]);
+
   return (
     <div
       className={cn(
@@ -501,6 +539,7 @@ export function Note({
                     onStopEdit={handleStopEditItem}
                     readonly={readonly}
                     showDeleteButton={canEdit}
+                    onNavigateToPrevious={handleNavigateToPrevious}
                   />
                 </DraggableItem>
               ))}
