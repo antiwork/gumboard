@@ -148,16 +148,16 @@ function SignInContent() {
             <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mb-4 ring-1 ring-green-200/60 dark:ring-green-800/40">
               <Mail className="w-6 h-6 text-green-700 dark:text-green-400" />
             </div>
-            <CardTitle className="text-2xl text-foreground dark:text-zinc-100">
+            <CardTitle className="text-2xl dark:text-zinc-100">
               Check your email
             </CardTitle>
-            <CardDescription className="text-muted-foreground dark:text-zinc-400">
+            <CardDescription className="dark:text-zinc-400">
               We&apos;ve sent a magic link to{" "}
-              <strong className="text-foreground dark:text-zinc-100">{form.getValues("email")}</strong>
+              <strong className="dark:text-zinc-100">{form.getValues("email")}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground text-center mb-4 dark:text-zinc-400">
+            <p className="text-sm text-center mb-4 dark:text-zinc-400">
               Click the link in the email to sign in to your account. The link will expire in 24
               hours.
             </p>
@@ -183,7 +183,7 @@ function SignInContent() {
               variant="outline"
               className="w-full bg-white border-gray-200 text-gray-900 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
               onClick={handleResendEmail}
-              disabled={isResending}
+              disabled={isResending || isResent}
               aria-busy={isResending}
             >
               {isResending ? (
@@ -210,11 +210,11 @@ function SignInContent() {
           <div className="mx-auto mb-4">
             <Image src="/logo/gumboard.svg" alt="Gumboard Logo" width={48} height={48} />
           </div>
-          <CardTitle className="text-xl sm:text-2xl font-bold text-foreground dark:text-zinc-100 flex items-center gap-2 justify-center">
+          <CardTitle className="text-xl sm:text-2xl font-bold dark:text-zinc-100 flex items-center gap-2 justify-center">
             Welcome to Gumboard
             <BetaBadge />
           </CardTitle>
-          <CardDescription className="text-muted-foreground dark:text-zinc-400">
+          <CardDescription className="text-balance dark:text-zinc-400">
             {emailParam
               ? "we'll send you a magic link to verify your email address"
               : "Enter your email address and we'll send you a magic link to sign in"}
