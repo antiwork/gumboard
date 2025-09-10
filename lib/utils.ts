@@ -196,3 +196,24 @@ export function getBoardColumns(columnCount: number, notes: Note[]) {
   }
   return columns;
 }
+
+const EMAIL_REGEX =
+  /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*\.[a-zA-Z]{2,}$/;
+
+export function isValidEmail(email: string): boolean {
+  if (!email || typeof email !== "string" || email.length < 5) return false;
+  const atIndex = email.indexOf("@");
+  if (atIndex < 1 || atIndex === email.length - 1 || email.indexOf("@", atIndex + 1) !== -1) {
+    return false;
+  }
+  if (
+    email.includes("..") ||
+    email.startsWith(".") ||
+    email.endsWith(".") ||
+    email.endsWith("@") ||
+    email.startsWith("@")
+  ) {
+    return false;
+  }
+  return EMAIL_REGEX.test(email);
+}
