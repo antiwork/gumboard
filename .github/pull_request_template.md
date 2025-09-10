@@ -43,6 +43,7 @@
 - [ ] I have added/updated tests that prove the effectiveness of these changes
 - [ ] I have updated the documentation to reflect these changes, if applicable
 - [ ] I have followed the project's coding style guidelines
+- [ ] I have self-reviewed my code
 - [ ] I have addressed the code review feedback from the previous submission, if applicable
 
 ---
