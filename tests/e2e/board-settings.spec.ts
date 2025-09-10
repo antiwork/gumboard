@@ -245,7 +245,7 @@ test.describe("Board Settings", () => {
       authenticatedPage.locator("text=This board doesn't exist or is not publicly accessible.")
     ).toBeVisible();
   });
-  
+
   test("should delete board and redirect to dashboard", async ({
     authenticatedPage,
     testContext,
