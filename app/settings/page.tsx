@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, Trash2, AlertTriangle } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
+import { toast } from "sonner";
 
 import {
   AlertDialog,
@@ -73,8 +74,11 @@ export default function ProfileSettingsPage() {
       if (response.ok) {
         await refreshUser();
         setProfileName(profileName.trim());
+        toast.success("Profile updated successfully");
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error occurred";
+      toast.error(`Failed to save profile: ${errorMessage}`);
       console.error("Error updating profile:", error);
     } finally {
       setSaving(false);
