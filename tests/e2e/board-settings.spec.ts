@@ -262,10 +262,7 @@ test.describe("Board Settings", () => {
       },
     });
 
-    await authenticatedPage.context().grantPermissions([
-      "clipboard-read",
-      "clipboard-write",
-    ]);
+    await authenticatedPage.context().grantPermissions(["clipboard-read", "clipboard-write"]);
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
@@ -275,9 +272,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.getByRole("button", { name: /Copy/ }).click();
 
-    const clipboardText = await authenticatedPage.evaluate(
-      () => navigator.clipboard.readText()
-    );
+    const clipboardText = await authenticatedPage.evaluate(() => navigator.clipboard.readText());
 
     expect(clipboardText).toContain(`/public/boards/${board.id}`);
 
