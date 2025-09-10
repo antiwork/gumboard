@@ -97,7 +97,7 @@ export async function PUT(
 
       sanitizedChecklistItems = [...checklistItems]
         .sort((a, b) => a.order - b.order)
-        .map((item, i) => ({ ...item, order: i, id: item.id || "" }));
+        .map((item, i) => ({ ...item, order: i, id: item.id || crypto.randomUUID() }));
     }
 
     let checklistChanges:

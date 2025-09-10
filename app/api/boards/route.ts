@@ -96,11 +96,7 @@ export async function POST(request: NextRequest) {
         .extend({
           name: z
             .string()
-            .min(1, "Board name is required and cannot be empty or only whitespace")
-            .refine(
-              (val) => val.trim().length > 0,
-              "Board name is required and cannot be empty or only whitespace"
-            ),
+            .min(1, "Board name is required and cannot be empty or only whitespace"),
         })
         .parse(body);
     } catch (error) {
