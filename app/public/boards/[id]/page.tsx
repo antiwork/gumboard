@@ -54,7 +54,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     try {
       const [boardResponse, notesResponse] = await Promise.all([
         fetch(`/api/boards/${boardId}`),
-        fetch(`/api/boards/${boardId}/notes`)
+        fetch(`/api/boards/${boardId}/notes`),
       ]);
 
       if (boardResponse.status === 404 || boardResponse.status === 403) {

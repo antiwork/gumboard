@@ -87,7 +87,7 @@ export default function Dashboard() {
     try {
       const [userResponse, boardsResponse] = await Promise.all([
         fetch("/api/user"),
-        fetch("/api/boards")
+        fetch("/api/boards"),
       ]);
 
       if (userResponse.status === 401) {
