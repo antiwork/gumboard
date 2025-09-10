@@ -2,7 +2,7 @@ import { z } from "zod";
 import { NOTE_COLORS } from "@/lib/constants";
 
 const checklistItemSchema = z.object({
-  id: z.string().optional(),
+  id: z.string(),
   content: z.string(),
   checked: z.boolean(),
   order: z.number(),
