@@ -309,7 +309,7 @@ test.describe("Search Functionality", () => {
     await expect(newNoteTextarea).toBeVisible();
   });
 
-  test("should disable search when there are no notes", async ({
+  test("should hide search when there are no notes", async ({
     authenticatedPage,
     testContext,
     testPrisma,
@@ -325,9 +325,7 @@ test.describe("Search Functionality", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-
-    const searchInput = authenticatedPage.locator('input[placeholder="No notes to search"]');
-    await expect(searchInput).toBeVisible();
-    await expect(searchInput).toBeDisabled();
+    const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
+    await expect(searchInput).not.toBeVisible();
   });
 });
