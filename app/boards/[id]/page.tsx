@@ -935,7 +935,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     handleAddNote();
                   }
                 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 cursor-pointer"
               >
                 <Plus className="w-4 h-4" />
                 Create your first note
