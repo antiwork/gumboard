@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical, StickyNote, Plus } from "lucide-react";
+import {
+  ChevronDown,
+  Search,
+  Copy,
+  Trash2,
+  X,
+  EllipsisVertical,
+  StickyNote,
+  Plus,
+} from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
