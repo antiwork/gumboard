@@ -4,6 +4,8 @@ import { env } from "@/lib/env";
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/utils";
+import { z } from "zod";
+import { inviteSchema } from "@/lib/types";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
@@ -15,13 +17,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { email } = await request.json();
+    const body = await request.json();
 
-    if (!email || typeof email !== "string") {
-      return NextResponse.json({ error: "Email is required" }, { status: 400 });
+    let validatedBody;
+    try {
+      validatedBody = inviteSchema.parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    const { email: cleanEmail } = validatedBody;
 
     // Get user with organization
     const user = await db.user.findUnique({

@@ -358,6 +358,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       const checklistItems =
         originalNote.checklistItems?.map((item, index) => ({
+          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           content: item.content,
           checked: item.checked,
           order: index,
