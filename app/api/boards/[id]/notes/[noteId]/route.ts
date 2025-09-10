@@ -1,14 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { z } from "zod";
 import {
   updateSlackMessage,
   sendTodoNotification,
   hasValidContent,
   shouldSendNotification,
 } from "@/lib/slack";
+import { noteSchema } from "@/lib/types";
 
-// Update a note
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string; noteId: string }> }
@@ -19,8 +20,27 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { color, archivedAt, checklistItems } = await request.json();
+    const body = await request.json();
     const { id: boardId, noteId } = await params;
+
+    let validatedBody;
+    try {
+      validatedBody = noteSchema
+        .omit({
+          boardId: true,
+        })
+        .parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+
+    const { color, archivedAt, checklistItems } = validatedBody;
 
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
@@ -69,28 +89,7 @@ export async function PUT(
       | undefined;
 
     if (checklistItems !== undefined) {
-      if (!Array.isArray(checklistItems)) {
-        return NextResponse.json({ error: "checklistItems must be an array" }, { status: 400 });
-      }
-
-      for (const item of checklistItems) {
-        if (
-          typeof item.id !== "string" ||
-          typeof item.content !== "string" ||
-          typeof item.checked !== "boolean" ||
-          typeof item.order !== "number"
-        ) {
-          return NextResponse.json(
-            {
-              error:
-                "Each checklist item must have id (string), content (string), checked (boolean), order (number)",
-            },
-            { status: 400 }
-          );
-        }
-      }
-
-      const ids = checklistItems.map((i: { id: string }) => i.id);
+      const ids = checklistItems.map((i) => i.id);
       const uniqueIds = new Set(ids);
       if (ids.length !== uniqueIds.size) {
         return NextResponse.json({ error: "Duplicate checklist item IDs found" }, { status: 400 });

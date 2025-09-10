@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { z } from "zod";
 import {
   sendSlackMessage,
   formatNoteForSlack,
@@ -8,6 +9,7 @@ import {
   shouldSendNotification,
 } from "@/lib/slack";
 import { NOTE_COLORS } from "@/lib/constants";
+import { noteSchema } from "@/lib/types";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -91,8 +93,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { color, checklistItems } = await request.json();
+    const body = await request.json();
     const boardId = (await params).id;
+
+    let validatedBody;
+    try {
+      validatedBody = noteSchema
+        .omit({
+          boardId: true,
+          archivedAt: true,
+        })
+        .parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+    const { color, checklistItems } = validatedBody;
 
     // Verify user has access to this board (same organization)
     const user = await db.user.findUnique({
@@ -139,11 +160,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       checked: boolean;
       order: number;
     }> = [];
-    if (checklistItems && Array.isArray(checklistItems)) {
+    if (checklistItems) {
       checklistItems.forEach((item, index) => {
         initialChecklistItems.push({
-          content: item.content || "",
-          checked: item.checked || false,
+          content: item.content,
+          checked: item.checked,
           order: item.order !== undefined ? item.order : index,
         });
       });
