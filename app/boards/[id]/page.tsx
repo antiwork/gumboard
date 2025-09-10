@@ -384,6 +384,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
+        toast("Note copied");
       }
     } catch (error) {
       console.error("Error copying note:", error);
@@ -537,7 +538,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     pendingUnarchiveTimeoutsRef.current[noteId] = timeoutId;
 
-    toast("Note unarchived", {
+    toast("Note unarchive", {
       action: {
         label: "Undo",
         onClick: () => {
