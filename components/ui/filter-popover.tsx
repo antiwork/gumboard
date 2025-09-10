@@ -91,7 +91,7 @@ function FilterPopover({
                     variant="ghost"
                     onClick={() => onAuthorChange?.(null)}
                     className={cn(
-                      "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                      "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-2 h-auto",
                       !selectedAuthor &&
                         "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
                     )}
@@ -111,7 +111,7 @@ function FilterPopover({
                       variant="ghost"
                       onClick={() => onAuthorChange?.(author.id)}
                       className={cn(
-                        "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                        "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-2 h-auto",
                         selectedAuthor === author.id &&
                           "bg-blue-50 dark:bg-zinc-800 hover:bg-blue-50 text-blue-600 dark:text-zinc-200"
                       )}

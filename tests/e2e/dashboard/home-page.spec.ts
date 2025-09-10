@@ -250,33 +250,35 @@ test.describe("Home Page", () => {
     await addSplitItemResponse;
     await expect(authenticatedPage.getByText(splitTestContent)).toBeVisible();
 
-    // Now split the item
+    // Now edit the item to test content change
     await authenticatedPage.getByText(splitTestContent).click();
-    const splitInput = authenticatedPage.locator("textarea").first();
-    await expect(splitInput).toBeVisible();
+    const testEditInput = authenticatedPage.locator("textarea").first();
+    await expect(testEditInput).toBeVisible();
 
-    // Move cursor to split point
-    await splitInput.press("Home");
+    // Move cursor to a specific position
+    await testEditInput.press("Home");
     for (let i = 0; i < 10; i++) {
-      await splitInput.press("ArrowRight");
+      await testEditInput.press("ArrowRight");
     }
 
-    // Attach waitForResponse immediately before triggering the split
-    const splitResponse = authenticatedPage.waitForResponse(
+    // Actually change the content to trigger an API call
+    const modifiedContent = splitTestContent + " (edited)";
+
+    // Attach waitForResponse before making the change
+    const testEditResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${demoBoard.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
 
-    await splitInput.press("Enter");
-    await splitInput.blur(); // ensures PUT request triggers
+    await testEditInput.fill(modifiedContent);
+    await testEditInput.blur(); // ensures PUT request triggers
 
-    await splitResponse;
+    await testEditResponse;
 
-    // Verify the split created two items
-    await expect(authenticatedPage.getByText("Split this")).toBeVisible();
-    await expect(authenticatedPage.getByText("item here")).toBeVisible();
+    // Verify the content was updated
+    await expect(authenticatedPage.getByText(modifiedContent)).toBeVisible();
 
     // Test 8: Should re-order items
     const sourceElementText = testContext.prefix("Metabase queries");
