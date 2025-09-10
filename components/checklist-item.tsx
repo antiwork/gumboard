@@ -98,7 +98,9 @@ export function ChecklistItem({
     if (isNewItem && editContent?.trim() && onCreateItem) {
       onCreateItem(editContent.trim());
     } else if (isEditing && editContent !== undefined && onEdit) {
-      onEdit(item.id, editContent);
+      if (editContent !== item.content) {
+        onEdit(item.id, editContent);
+      }
     }
     onStopEdit?.();
   };
