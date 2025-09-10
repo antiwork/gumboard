@@ -381,7 +381,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const { note } = await response.json();
         setNotes((prev) => [...prev, note]);
-        toast("Note copied");
+        toast("Note copied", {
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              setNotes((prev) => prev.filter((n) => n.id !== note.id));
+              
+              try {
+                  await fetch(`/api/boards/${targetBoardId}/notes/${note.id}`, {
+                  method: "DELETE",
+                });
+              } catch (error) {
+                setNotes((prev) => [...prev, note]);
+                console.error("Error deleting copied note:", error);
+              }
+            },
+          },
+          duration: 4000,
+        });
       }
     } catch (error) {
       console.error("Error copying note:", error);
