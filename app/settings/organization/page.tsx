@@ -874,7 +874,7 @@ export default function OrganizationSettingsPage() {
                     deletingInviteToken === invite.token
                       ? "opacity-50 pointer-events-none transition-opacity duration-100"
                       : ""
-                  } truncate max-w-full overflow-scroll whitespace-nowrap`}
+                  } truncate max-w-full overflow-x-auto whitespace-nowrap`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
