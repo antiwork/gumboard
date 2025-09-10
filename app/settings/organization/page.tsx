@@ -17,11 +17,12 @@ import {
   ShieldCheck,
   Link,
   Copy,
+  Check,
   CalendarIcon,
   Users,
   ExternalLink,
+  Calendar as CalendarIconLucide,
 } from "lucide-react";
-import { Calendar as CalendarIconLucide } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
   AlertDialog,
@@ -38,6 +39,7 @@ import { useUser } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
+import { toast } from "sonner";
 
 interface OrganizationInvite {
   id: string;
@@ -98,6 +100,7 @@ export default function OrganizationSettingsPage() {
     variant?: "default" | "success" | "error";
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
+  const [copiedInviteToken, setCopiedInviteToken] = useState<string | null>(null);
 
   useEffect(() => {
     if (user?.organization) {
@@ -459,12 +462,9 @@ export default function OrganizationSettingsPage() {
     const inviteUrl = `${window.location.origin}/join/${inviteToken}`;
     try {
       await navigator.clipboard.writeText(inviteUrl);
-      setErrorDialog({
-        open: true,
-        title: "Success",
-        description: "Invite link copied to clipboard!",
-        variant: "success",
-      });
+      toast("Invite link copied to clipboard!");
+      setCopiedInviteToken(inviteToken);
+      setTimeout(() => setCopiedInviteToken(null), 3000);
     } catch (error) {
       console.error("Failed to copy link:", error);
       // Fallback for older browsers
@@ -474,12 +474,9 @@ export default function OrganizationSettingsPage() {
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      setErrorDialog({
-        open: true,
-        title: "Success",
-        description: "Invite link copied to clipboard!",
-        variant: "success",
-      });
+      toast("Invite link copied to clipboard!");
+      setCopiedInviteToken(inviteToken);
+      setTimeout(() => setCopiedInviteToken(null), 3000);
     }
   };
 
@@ -904,7 +901,11 @@ export default function OrganizationSettingsPage() {
                             className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-zinc-800"
                             title="Copy invite link"
                           >
-                            <Copy className="w-4 h-4" />
+                            {copiedInviteToken === invite.token ? (
+                              <Check className="w-4 h-4" data-testid="check-icon" />
+                            ) : (
+                              <Copy className="w-4 h-4" data-testid="copy-icon" />
+                            )}
                           </Button>
                           {user?.isAdmin && (
                             <Button
