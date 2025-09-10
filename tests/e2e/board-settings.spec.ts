@@ -245,4 +245,58 @@ test.describe("Board Settings", () => {
       authenticatedPage.locator("text=This board doesn't exist or is not publicly accessible.")
     ).toBeVisible();
   });
+  test("should make board public and copy link", async ({
+    authenticatedPage,
+    browser,
+    testPrisma,
+    testContext,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Shareable Board"),
+        description: testContext.prefix("A shareable board"),
+        isPublic: false,
+        sendSlackUpdates: false,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.context().grantPermissions([
+      "clipboard-read",
+      "clipboard-write",
+    ]);
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
+
+    await authenticatedPage.locator("#isPublic").click();
+
+    await authenticatedPage.getByRole("button", { name: /Copy/ }).click();
+
+    const clipboardText = await authenticatedPage.evaluate(
+      () => navigator.clipboard.readText()
+    );
+
+    expect(clipboardText).toContain(`/public/boards/${board.id}`);
+
+    await authenticatedPage.click('button:has-text("Save settings")');
+
+    await authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+
+    const unauthContext = await browser.newContext();
+    const unauthPage = await unauthContext.newPage();
+
+    await unauthPage.goto(clipboardText);
+
+    await expect(unauthPage.locator(`text=${board.name}`)).toBeVisible();
+
+    await unauthContext.close();
+  });
 });
