@@ -43,7 +43,14 @@ import { toast } from "sonner";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { cn } from "@/lib/utils";
 
 interface OrganizationInvite {
@@ -68,7 +75,9 @@ interface SelfServeInvite {
   };
 }
 
-const organizationNameFormSchema = z.object({organizationName: z.string().min(1, "Organization name is required")})
+const organizationNameFormSchema = z.object({
+  organizationName: z.string().min(1, "Organization name is required"),
+});
 
 export default function OrganizationSettingsPage() {
   const { user, loading, refreshUser } = useUser();
@@ -172,7 +181,7 @@ export default function OrganizationSettingsPage() {
       });
 
       if (response.ok) {
-        organizationNameForm.reset(values)
+        organizationNameForm.reset(values);
         refreshUser();
       } else {
         const errorData = await response.json();
@@ -189,7 +198,7 @@ export default function OrganizationSettingsPage() {
         title: "Failed to update organization",
         description: "Failed to update organization",
       });
-    } 
+    }
   };
 
   const handleSaveSlack = async () => {
@@ -506,56 +515,58 @@ export default function OrganizationSettingsPage() {
             </p>
           </div>
           <Form {...organizationNameForm}>
-            <form onSubmit={organizationNameForm.handleSubmit(handleSaveOrgName)} className="space-y-6">
+            <form
+              onSubmit={organizationNameForm.handleSubmit(handleSaveOrgName)}
+              className="space-y-6"
+            >
               <FormField
-              control={organizationNameForm.control}
-              name="organizationName"
-              render={({ field, fieldState }) => (
-                <FormItem>
-                  <FormLabel className="text-zinc-800 dark:text-zinc-200">
-                    Organization Name
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      placeholder="Enter organization name"
-                      disabled={!user?.isAdmin}
-                      className={cn(
-                            "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100",
-                            fieldState.error && "border-red-500 dark:border-red-500 focus-visible:ring-red-500 dark:focus-visible:ring-red-500"
-                          )}
-                    />
-                  </FormControl>
-                  <FormMessage className="text-xs text-red-500 dark:text-red-400" />
-                </FormItem>
-              )}
-            />
-
-            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-              <Button
-                type="submit"
-                disabled={
-                  organizationNameForm.formState.isSubmitting ||
-                  !organizationNameForm.formState.isDirty ||
-                  !user?.isAdmin
-                }
-                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-                title={
-                  !user?.isAdmin
-                    ? "Only admins can update organization settings"
-                    : undefined
-                }
-              >
-                {organizationNameForm.formState.isSubmitting ? (
-                  <>
-                  <Loader size="sm" className="animate-spin" />
-                  <span>Saving</span>
-                  </>
-                ): (
-                  "Save Changes"
+                control={organizationNameForm.control}
+                name="organizationName"
+                render={({ field, fieldState }) => (
+                  <FormItem>
+                    <FormLabel className="text-zinc-800 dark:text-zinc-200">
+                      Organization Name
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        placeholder="Enter organization name"
+                        disabled={!user?.isAdmin}
+                        className={cn(
+                          "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100",
+                          fieldState.error &&
+                            "border-red-500 dark:border-red-500 focus-visible:ring-red-500 dark:focus-visible:ring-red-500"
+                        )}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-xs text-red-500 dark:text-red-400" />
+                  </FormItem>
                 )}
-              </Button>
-            </div>
+              />
+
+              <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+                <Button
+                  type="submit"
+                  disabled={
+                    organizationNameForm.formState.isSubmitting ||
+                    !organizationNameForm.formState.isDirty ||
+                    !user?.isAdmin
+                  }
+                  className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+                  title={
+                    !user?.isAdmin ? "Only admins can update organization settings" : undefined
+                  }
+                >
+                  {organizationNameForm.formState.isSubmitting ? (
+                    <>
+                      <Loader size="sm" className="animate-spin" />
+                      <span>Saving</span>
+                    </>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </Button>
+              </div>
             </form>
           </Form>
         </div>
