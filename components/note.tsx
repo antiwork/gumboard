@@ -118,7 +118,6 @@ export function Note({
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
   const handleToggleChecklistItem = async (itemId: string) => {
-    
     if (!note.checklistItems || !canEdit) return;
 
     const updatedItems = note.checklistItems.map((item) =>
