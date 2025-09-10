@@ -183,7 +183,7 @@ test.describe("Board Settings", () => {
     await checkbox.uncheck();
     await expect(checkbox).not.toBeChecked();
 
-    await authenticatedPage.click('button:has-text("Cancel")');
+    await authenticatedPage.getByTitle("close").click();
 
     await expect(authenticatedPage.locator("text=Board settings")).not.toBeVisible();
 
