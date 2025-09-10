@@ -538,7 +538,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     pendingUnarchiveTimeoutsRef.current[noteId] = timeoutId;
 
-    toast("Note unarchive", {
+    toast("Note unarchived", {
       action: {
         label: "Undo",
         onClick: () => {
