@@ -245,7 +245,46 @@ test.describe("Board Settings", () => {
       authenticatedPage.locator("text=This board doesn't exist or is not publicly accessible.")
     ).toBeVisible();
   });
-  test("should make board public and copy link", async ({
+
+
+  test("should delete board and redirect to dashboard", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Test Board"),
+        description: testContext.prefix("A test board"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
+
+    await authenticatedPage.getByRole("button", { name: "Delete Board" }).click();
+
+    const deleteResponse = authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}`) &&
+        resp.request().method() === "DELETE" &&
+        resp.ok()
+    );
+
+    await authenticatedPage.getByRole("button", { name: "Delete Board" }).last().click();
+
+    await deleteResponse;
+
+    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
+
+    const deletedBoard = await testPrisma.board.findUnique({
+      where: { id: board.id },
+    });
+    expect(deletedBoard).toBeNull();
+  });
+ test("should make board public and copy link", async ({
     authenticatedPage,
     browser,
     testPrisma,
@@ -262,7 +301,10 @@ test.describe("Board Settings", () => {
       },
     });
 
-    await authenticatedPage.context().grantPermissions(["clipboard-read", "clipboard-write"]);
+    await authenticatedPage.context().grantPermissions([
+      "clipboard-read",
+      "clipboard-write",
+    ]);
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
@@ -272,7 +314,9 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.getByRole("button", { name: /Copy/ }).click();
 
-    const clipboardText = await authenticatedPage.evaluate(() => navigator.clipboard.readText());
+    const clipboardText = await authenticatedPage.evaluate(
+      () => navigator.clipboard.readText()
+    );
 
     expect(clipboardText).toContain(`/public/boards/${board.id}`);
 
@@ -294,4 +338,4 @@ test.describe("Board Settings", () => {
 
     await unauthContext.close();
   });
-});
+  });

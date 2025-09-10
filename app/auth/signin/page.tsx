@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { BetaBadge } from "@/components/ui/beta-badge";
+import { isValidEmail } from "@/lib/utils";
 import Image from "next/image";
 
 const emailProviders = [
@@ -79,6 +80,7 @@ function SignInContent() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isResent, setIsResent] = useState(false);
+  const [emailError, setEmailError] = useState("");
   const router = useRouter();
 
   useEffect(() => {
@@ -95,9 +97,32 @@ function SignInContent() {
     }
   }, [searchParams, router]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEmailChange = useCallback(
+    (value: string) => {
+      setEmail(value);
+      if (emailError) setEmailError("");
+    },
+    [emailError]
+  );
+
+  useEffect(() => {
     if (!email) return;
+
+    const timeoutId = setTimeout(() => {
+      if (email && !isValidEmail(email)) {
+        setEmailError("Please enter a valid email address");
+      }
+    }, 1000);
+
+    return () => clearTimeout(timeoutId);
+  }, [email]);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!isValidEmail(email)) {
+      setEmailError(email ? "Please enter a valid email address" : "Email address is required");
+      return;
+    }
 
     setIsLoading(true);
     try {
@@ -233,18 +258,25 @@ function SignInContent() {
                 type="email"
                 placeholder="Enter your email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleEmailChange(e.target.value)}
                 disabled={isLoading || !!searchParams.get("email")}
                 required
-                className="h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400 hover:border-gray-400  transition-colors"
+                autoComplete="email"
+                inputMode="email"
+                className={`h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400 hover:border-gray-400 transition-colors ${
+                  emailError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
+                }`}
               />
+              {emailError && (
+                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{emailError}</p>
+              )}
             </div>
           </CardContent>
           <CardFooter className="flex flex-col">
             <Button
               type="submit"
               className="w-full h-12 font-medium mt-4 bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
-              disabled={isLoading || !email}
+              disabled={isLoading || !email || !!emailError}
               aria-busy={isLoading}
             >
               {isLoading ? (
