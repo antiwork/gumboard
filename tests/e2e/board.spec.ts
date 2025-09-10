@@ -263,7 +263,7 @@ test.describe("Board Management", () => {
       await expect(authenticatedPage).toHaveURL("/boards/archive");
     });
   });
-   test("should delete board and redirect to dashboard", async ({
+  test("should delete board and redirect to dashboard", async ({
     authenticatedPage,
     testContext,
     testPrisma,
