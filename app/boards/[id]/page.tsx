@@ -386,9 +386,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             label: "Undo",
             onClick: async () => {
               setNotes((prev) => prev.filter((n) => n.id !== note.id));
-              
+
               try {
-                  await fetch(`/api/boards/${targetBoardId}/notes/${note.id}`, {
+                await fetch(`/api/boards/${targetBoardId}/notes/${note.id}`, {
                   method: "DELETE",
                 });
               } catch (error) {
