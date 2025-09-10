@@ -246,7 +246,6 @@ test.describe("Board Settings", () => {
     ).toBeVisible();
   });
 
-
   test("should delete board and redirect to dashboard", async ({
     authenticatedPage,
     testContext,
@@ -284,7 +283,7 @@ test.describe("Board Settings", () => {
     });
     expect(deletedBoard).toBeNull();
   });
- test("should make board public and copy link", async ({
+  test("should make board public and copy link", async ({
     authenticatedPage,
     browser,
     testPrisma,
@@ -301,10 +300,7 @@ test.describe("Board Settings", () => {
       },
     });
 
-    await authenticatedPage.context().grantPermissions([
-      "clipboard-read",
-      "clipboard-write",
-    ]);
+    await authenticatedPage.context().grantPermissions(["clipboard-read", "clipboard-write"]);
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
@@ -314,9 +310,7 @@ test.describe("Board Settings", () => {
 
     await authenticatedPage.getByRole("button", { name: /Copy/ }).click();
 
-    const clipboardText = await authenticatedPage.evaluate(
-      () => navigator.clipboard.readText()
-    );
+    const clipboardText = await authenticatedPage.evaluate(() => navigator.clipboard.readText());
 
     expect(clipboardText).toContain(`/public/boards/${board.id}`);
 
@@ -338,4 +332,4 @@ test.describe("Board Settings", () => {
 
     await unauthContext.close();
   });
-  });
+});
