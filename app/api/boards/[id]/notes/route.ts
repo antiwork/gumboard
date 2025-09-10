@@ -54,6 +54,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     if (board.isPublic) {
+      const hasSession = !!session?.user?.id;
+      if (!hasSession) {
+        const sanitizedNotes = board.notes.map((n) => ({
+          ...n,
+          user: n.user
+            ? {
+                name: n.user.name ?? null,
+                image: n.user.image ?? null,
+              }
+            : null,
+        }));
+        return NextResponse.json({ notes: sanitizedNotes });
+      }
       return NextResponse.json({ notes: board.notes });
     }
 
