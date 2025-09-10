@@ -425,9 +425,7 @@ export function Note({
                 </TooltipContent>
               </Tooltip>
             )}
-          </div>
-          {canEdit && onArchive && (
-            <div className="flex items-center">
+            {canEdit && onArchive && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -447,8 +445,8 @@ export function Note({
                   <p>Archive note</p>
                 </TooltipContent>
               </Tooltip>
-            </div>
-          )}
+            )}
+          </div>
           {canEdit && onUnarchive && (
             <div className="flex items-center">
               <Tooltip>
