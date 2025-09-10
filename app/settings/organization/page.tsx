@@ -710,30 +710,34 @@ export default function OrganizationSettingsPage() {
           {invites.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Pending Invites</h4>
-              {invites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 break-words">
-                      {invite.email}
-                    </p>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Invited on {new Date(invite.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => handleCancelInvite(invite.id)}
-                    variant="outline"
-                    size="sm"
-                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900 border-red-600 hover:bg-inherit hover:border-red-600 disabled:opacity-70 disabled:text-red-300"
-                    disabled={cancellingInviteIds.includes(invite.id)}
-                  >
-                    {cancellingInviteIds.includes(invite.id) ? "Cancelling..." : "Cancel"}
-                  </Button>
+              <div className="max-h-80 overflow-y-auto pr-1">
+                <div className="space-y-2">
+                  {invites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100 break-words">
+                          {invite.email}
+                        </p>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Invited on {new Date(invite.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleCancelInvite(invite.id)}
+                        variant="outline"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900 border-red-600 hover:bg-inherit hover:border-red-600 disabled:opacity-70 disabled:text-red-300"
+                        disabled={cancellingInviteIds.includes(invite.id)}
+                      >
+                        {cancellingInviteIds.includes(invite.id) ? "Cancelling..." : "Cancel"}
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
@@ -867,15 +871,17 @@ export default function OrganizationSettingsPage() {
           {selfServeInvites.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Active Invite Links</h4>
-              {selfServeInvites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
-                    deletingInviteToken === invite.token
-                      ? "opacity-50 pointer-events-none transition-opacity duration-100"
-                      : ""
-                  } truncate max-w-full overflow-scroll whitespace-nowrap`}
-                >
+              <div className="max-h-135 overflow-y-auto pr-1">
+                <div className="space-y-3">
+                  {selfServeInvites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
+                        deletingInviteToken === invite.token
+                          ? "opacity-50 pointer-events-none transition-opacity duration-100"
+                          : ""
+                      }`}
+                    >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
@@ -949,8 +955,10 @@ export default function OrganizationSettingsPage() {
                       </div>
                     </div>
                   </div>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
