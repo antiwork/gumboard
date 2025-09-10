@@ -82,8 +82,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: string;
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const pendingArchiveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const pendingUnarchiveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
   const [boardSettings, setBoardSettings] = useState({
     name: "",
@@ -251,7 +249,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           fetch(`/api/boards/archive/notes`),
         ]);
 
-        // Set virtual board immediately
         setBoard({
           id: "archive",
           name: "Archive",
@@ -451,14 +448,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
-    const timeoutId = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ archivedAt: new Date().toISOString() }),
-        });
-
+    // Archive immediately instead of after 4 seconds
+    fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+    })
+      .then((response) => {
         if (!response.ok) {
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
@@ -467,7 +463,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             description: "Failed to archive note. Please try again.",
           });
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error("Error archiving note:", error);
         setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
@@ -475,23 +472,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           title: "Archive Failed",
           description: "Failed to archive note. Please try again.",
         });
-      } finally {
-        delete pendingArchiveTimeoutsRef.current[noteId];
-      }
-    }, 4000);
-
-    pendingArchiveTimeoutsRef.current[noteId] = timeoutId;
+      });
 
     toast("Note archived", {
       action: {
         label: "Undo",
-        onClick: () => {
-          const t = pendingArchiveTimeoutsRef.current[noteId];
-          if (t) {
-            clearTimeout(t);
-            delete pendingArchiveTimeoutsRef.current[noteId];
-          }
+        onClick: async () => {
           setNotes((prev) => [currentNote, ...prev]);
+          try {
+            await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ archivedAt: null }),
+            });
+          } catch (error) {
+            console.error("Error undoing archive:", error);
+            setNotes((prev) => prev.filter((n) => n.id !== noteId));
+          }
         },
       },
       duration: 4000,
@@ -507,14 +504,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
-    const timeoutId = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ archivedAt: null }),
-        });
-
+    // Unarchive immediately instead of after 4 seconds
+    fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archivedAt: null }),
+    })
+      .then((response) => {
         if (!response.ok) {
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
@@ -523,7 +519,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             description: "Failed to unarchive note. Please try again.",
           });
         }
-      } catch (error) {
+      })
+      .catch((error) => {
         console.error("Error unarchiving note:", error);
         setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
@@ -531,23 +528,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           title: "Unarchive Failed",
           description: "Failed to unarchive note. Please try again.",
         });
-      } finally {
-        delete pendingUnarchiveTimeoutsRef.current[noteId];
-      }
-    }, 4000);
-
-    pendingUnarchiveTimeoutsRef.current[noteId] = timeoutId;
+      });
 
     toast("Note unarchived", {
       action: {
         label: "Undo",
-        onClick: () => {
-          const t = pendingUnarchiveTimeoutsRef.current[noteId];
-          if (t) {
-            clearTimeout(t);
-            delete pendingUnarchiveTimeoutsRef.current[noteId];
-          }
+        onClick: async () => {
           setNotes((prev) => [currentNote, ...prev]);
+          try {
+            await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+            });
+          } catch (error) {
+            console.error("Error undoing unarchive:", error);
+            setNotes((prev) => prev.filter((n) => n.id !== noteId));
+          }
         },
       },
       duration: 4000,
@@ -682,7 +679,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         <div className="mx-0.5 md:mx-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 items-center h-auto md:h-16 p-2 md:p-0">
           <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Company Name */}
-            <Link href="/dashboard" className="flex-shrink-0 pl-1">
+            <Link href="/dashboard" className="flex-shrink-0 pl-1 w-fit">
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
                 Gumboard
                 <BetaBadge />
@@ -1141,7 +1138,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onCheckedChange={(checked) =>
                   setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
                 }
-                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
+                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600"
               />
               <label
                 htmlFor="sendSlackUpdates"

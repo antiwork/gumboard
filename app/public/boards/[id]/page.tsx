@@ -52,7 +52,11 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
 
   const fetchBoardData = async () => {
     try {
-      const boardResponse = await fetch(`/api/boards/${boardId}`);
+      const [boardResponse, notesResponse] = await Promise.all([
+        fetch(`/api/boards/${boardId}`),
+        fetch(`/api/boards/${boardId}/notes`),
+      ]);
+
       if (boardResponse.status === 404 || boardResponse.status === 403) {
         setBoard(null);
         setLoading(false);
@@ -69,7 +73,6 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
         }
       }
 
-      const notesResponse = await fetch(`/api/boards/${boardId}/notes`);
       if (notesResponse.ok) {
         const { notes } = await notesResponse.json();
         setNotes(notes);
