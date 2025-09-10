@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { NOTE_COLORS } from "@/lib/constants";
 
 const checklistItemSchema = z.object({
   id: z.string().optional(),
@@ -9,7 +10,7 @@ const checklistItemSchema = z.object({
 
 export const noteSchema = z.object({
   boardId: z.string(),
-  color: z.string().optional(),
+  color: z.enum(NOTE_COLORS).optional(),
   archivedAt: z
     .string()
     .nullable()

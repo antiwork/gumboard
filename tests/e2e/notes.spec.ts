@@ -80,7 +80,7 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
       },
@@ -145,7 +145,7 @@ test.describe("Note Management", () => {
     const testItemContent = testContext.prefix("Test item");
     await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -360,7 +360,7 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
       },
@@ -417,7 +417,7 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
       },
@@ -479,7 +479,7 @@ test.describe("Note Management", () => {
 
       const note = await testPrisma.note.create({
         data: {
-          color: "#fef3c7",
+          color: "#fff2a8",
           boardId: board.id,
           createdBy: testContext.userId,
         },
@@ -572,7 +572,7 @@ test.describe("Note Management", () => {
 
       const note1 = await testPrisma.note.create({
         data: {
-          color: "#fef3c7",
+          color: "#fff2a8",
           boardId: board.id,
           createdBy: testContext.userId,
         },
@@ -590,7 +590,7 @@ test.describe("Note Management", () => {
 
       const note2 = await testPrisma.note.create({
         data: {
-          color: "#fef3c7",
+          color: "#fff2a8",
           boardId: board.id,
           createdBy: testContext.userId,
         },
@@ -735,7 +735,7 @@ test.describe("Note Management", () => {
 
       const note = await testPrisma.note.create({
         data: {
-          color: "#fef3c7",
+          color: "#fff2a8",
           boardId: board.id,
           createdBy: testContext.userId,
         },
@@ -936,7 +936,7 @@ test.describe("Note Management", () => {
       for (let i = 0; i < 3; i++) {
         await testPrisma.note.create({
           data: {
-            color: "#fef3c7",
+            color: "#fff2a8",
             boardId: board.id,
             createdBy: testContext.userId,
             createdAt: new Date(),
@@ -948,7 +948,7 @@ test.describe("Note Management", () => {
       for (let i = 0; i < 2; i++) {
         await testPrisma.note.create({
           data: {
-            color: "#fef3c7",
+            color: "#fff2a8",
             boardId: board.id,
             createdBy: testContext.userId,
             createdAt: addDays(new Date(), -5),
@@ -1023,7 +1023,7 @@ test.describe("Note Management", () => {
       for (let index = 0; index < 3; index++) {
         await testPrisma.note.create({
           data: {
-            color: "#fef3c7",
+            color: "#fff2a8",
             boardId: board.id,
             createdBy: testContext.userId,
           },
@@ -1034,7 +1034,7 @@ test.describe("Note Management", () => {
       for (let index = 0; index < 2; index++) {
         await testPrisma.note.create({
           data: {
-            color: "#fef3c7",
+            color: "#fff2a8",
             boardId: board.id,
             createdBy: otherUserId,
           },
@@ -1071,7 +1071,7 @@ test.describe("Note Management", () => {
 
     const originalNote = await testPrisma.note.create({
       data: {
-        color: "#f3e8ff",
+        color: "#c7b7ff",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -1198,7 +1198,7 @@ test.describe("Note Management", () => {
 
     const originalNote = await testPrisma.note.create({
       data: {
-        color: "#dbeafe",
+        color: "#cde4ff",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -1284,7 +1284,7 @@ test.describe("Note Management", () => {
 
     await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: otherUser.id,
         checklistItems: {
@@ -1333,7 +1333,7 @@ test.describe("Note Management", () => {
 
     await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
         archivedAt: new Date(),
@@ -1351,7 +1351,7 @@ test.describe("Note Management", () => {
 
     await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
