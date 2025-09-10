@@ -81,8 +81,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: string;
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const pendingArchiveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const pendingUnarchiveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
   const [boardSettings, setBoardSettings] = useState({
     name: "",
@@ -250,7 +248,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           fetch(`/api/boards/archive/notes`),
         ]);
 
-        // Set virtual board immediately
         setBoard({
           id: "archive",
           name: "Archive",
@@ -450,14 +447,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
-    const timeoutId = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ archivedAt: new Date().toISOString() }),
-        });
-
+    // Archive immediately instead of after 4 seconds
+    fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+    })
+      .then(response => {
         if (!response.ok) {
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
@@ -466,7 +462,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             description: "Failed to archive note. Please try again.",
           });
         }
-      } catch (error) {
+      })
+      .catch(error => {
         console.error("Error archiving note:", error);
         setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
@@ -474,23 +471,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           title: "Archive Failed",
           description: "Failed to archive note. Please try again.",
         });
-      } finally {
-        delete pendingArchiveTimeoutsRef.current[noteId];
-      }
-    }, 4000);
-
-    pendingArchiveTimeoutsRef.current[noteId] = timeoutId;
+      });
 
     toast("Note archived", {
       action: {
         label: "Undo",
-        onClick: () => {
-          const t = pendingArchiveTimeoutsRef.current[noteId];
-          if (t) {
-            clearTimeout(t);
-            delete pendingArchiveTimeoutsRef.current[noteId];
-          }
+        onClick: async () => {
           setNotes((prev) => [currentNote, ...prev]);
+          try {
+            await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ archivedAt: null }),
+            });
+          } catch (error) {
+            console.error("Error undoing archive:", error);
+            setNotes((prev) => prev.filter((n) => n.id !== noteId));
+          }
         },
       },
       duration: 4000,
@@ -506,14 +503,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
-    const timeoutId = setTimeout(async () => {
-      try {
-        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ archivedAt: null }),
-        });
-
+    // Unarchive immediately instead of after 4 seconds
+    fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ archivedAt: null }),
+    })
+      .then(response => {
         if (!response.ok) {
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
@@ -522,7 +518,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             description: "Failed to unarchive note. Please try again.",
           });
         }
-      } catch (error) {
+      })
+      .catch(error => {
         console.error("Error unarchiving note:", error);
         setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
@@ -530,23 +527,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           title: "Unarchive Failed",
           description: "Failed to unarchive note. Please try again.",
         });
-      } finally {
-        delete pendingUnarchiveTimeoutsRef.current[noteId];
-      }
-    }, 4000);
-
-    pendingUnarchiveTimeoutsRef.current[noteId] = timeoutId;
+      });
 
     toast("Note unarchived", {
       action: {
         label: "Undo",
-        onClick: () => {
-          const t = pendingUnarchiveTimeoutsRef.current[noteId];
-          if (t) {
-            clearTimeout(t);
-            delete pendingUnarchiveTimeoutsRef.current[noteId];
-          }
+        onClick: async () => {
           setNotes((prev) => [currentNote, ...prev]);
+          try {
+            await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+            });
+          } catch (error) {
+            console.error("Error undoing unarchive:", error);
+            setNotes((prev) => prev.filter((n) => n.id !== noteId));
+          }
         },
       },
       duration: 4000,
