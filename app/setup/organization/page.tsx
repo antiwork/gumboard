@@ -115,7 +115,7 @@ export default async function OrganizationSetup() {
                   {session.user.name?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <CardTitle className="text-lg sm:text-xl text-blue-700 dark:text-blue-300">
+              <CardTitle className="text-lg sm:text-xl text-blue-700 dark:text-blue-300 truncate max-w-full overflow-hidden whitespace-nowrap">
                 Welcome, {session.user.name}!
               </CardTitle>
               <CardDescription className="text-sm sm:text-base text-muted-foreground dark:text-zinc-400">
