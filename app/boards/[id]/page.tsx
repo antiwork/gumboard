@@ -453,7 +453,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ archivedAt: new Date().toISOString() }),
     })
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
@@ -463,7 +463,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           });
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Error archiving note:", error);
         setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
@@ -509,7 +509,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ archivedAt: null }),
     })
-      .then(response => {
+      .then((response) => {
         if (!response.ok) {
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
@@ -519,7 +519,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           });
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Error unarchiving note:", error);
         setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
