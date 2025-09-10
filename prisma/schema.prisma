@@ -55,6 +55,7 @@ model User {
   image          String?
   accounts       Account[]
   sessions       Session[]
+  comments       Comment[]
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   organizationId String?
@@ -122,19 +123,38 @@ model Note {
 }
 
 model ChecklistItem {
-  id             String   @id @default(cuid())
-  content        String   @db.Text
-  checked        Boolean  @default(false)
-  order          Int      @default(0)
+  id             String    @id @default(cuid())
+  content        String    @db.Text
+  checked        Boolean   @default(false)
+  order          Int       @default(0)
   noteId         String
   slackMessageId String?
-  note           Note     @relation(fields: [noteId], references: [id], onDelete: Cascade)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  note           Note      @relation(fields: [noteId], references: [id], onDelete: Cascade)
+  comments       Comment[] // Add this line
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   @@map("checklist_items")
   @@index([noteId])
   @@index([noteId, order])
+}
+
+model Comment {
+  id              String        @id @default(cuid())
+  content         String        @db.Text
+  authorId        String        // References User.id
+  author          User          @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  checklistItemId String
+  checklistItem   ChecklistItem @relation(fields: [checklistItemId], references: [id], onDelete: Cascade)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?     // Following your soft delete pattern
+
+  // Performance indexes
+  @@index([checklistItemId, deletedAt], name: "idx_comment_item_deleted")
+  @@index([checklistItemId, createdAt], name: "idx_comment_item_created")
+  @@index([authorId], name: "idx_comment_author")
+  @@map("comments")
 }
 
 model OrganizationInvite {

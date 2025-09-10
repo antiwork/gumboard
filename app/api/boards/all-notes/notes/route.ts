@@ -46,7 +46,25 @@ export async function GET(request: NextRequest) {
             name: true,
           },
         },
-        checklistItems: { orderBy: { order: "asc" } },
+        checklistItems: {
+          orderBy: { order: "asc" },
+          include: {
+            comments: {
+              where: { deletedAt: null },
+              include: {
+                author: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -141,7 +159,25 @@ export async function POST(request: NextRequest) {
             name: true,
           },
         },
-        checklistItems: { orderBy: { order: "asc" } },
+        checklistItems: {
+          orderBy: { order: "asc" },
+          include: {
+            comments: {
+              where: { deletedAt: null },
+              include: {
+                author: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
       },
     });
 

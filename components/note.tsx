@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
+  Comment,
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
@@ -87,6 +88,7 @@ export function Note({
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
   const [newItemContent, setNewItemContent] = useState("");
+  const [expandedComments, setExpandedComments] = useState<Set<string>>(new Set());
 
   const canEdit = !readonly && (currentUser?.id === note.user.id || currentUser?.isAdmin);
 
@@ -331,6 +333,112 @@ export function Note({
     }
   };
 
+  const handleToggleComments = (itemId: string) => {
+    setExpandedComments((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(itemId)) {
+        newSet.delete(itemId);
+      } else {
+        newSet.add(itemId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleAddComment = async (itemId: string, content: string) => {
+    try {
+      const response = await fetch(`/api/checklist-items/${itemId}/comments`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (response.ok) {
+        const { comment } = await response.json();
+
+        // Update the note with the new comment
+        const updatedItems = note.checklistItems?.map((item) =>
+          item.id === itemId ? { ...item, comments: [...(item.comments || []), comment] } : item
+        );
+
+        const updatedNote = {
+          ...note,
+          checklistItems: updatedItems,
+        };
+
+        onUpdate?.(updatedNote);
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+    }
+  };
+
+  const handleUpdateComment = async (commentId: string, content: string, itemId: string) => {
+    try {
+      const response = await fetch(`/api/checklist-items/${itemId}/comments/${commentId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ content }),
+      });
+
+      if (response.ok) {
+        const { comment } = await response.json();
+
+        // Update the note with the updated comment
+        const updatedItems = note.checklistItems?.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                comments: item.comments?.map((c) => (c.id === commentId ? comment : c)) || [],
+              }
+            : item
+        );
+
+        const updatedNote = {
+          ...note,
+          checklistItems: updatedItems,
+        };
+
+        onUpdate?.(updatedNote);
+      }
+    } catch (error) {
+      console.error("Error updating comment:", error);
+    }
+  };
+
+  const handleDeleteComment = async (commentId: string, itemId: string) => {
+    try {
+      const response = await fetch(`/api/checklist-items/${itemId}/comments/${commentId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        // Remove the comment from the note
+        const updatedItems = note.checklistItems?.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                comments: item.comments?.filter((c) => c.id !== commentId) || [],
+              }
+            : item
+        );
+
+        const updatedNote = {
+          ...note,
+          checklistItems: updatedItems,
+        };
+
+        onUpdate?.(updatedNote);
+      }
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -501,6 +609,16 @@ export function Note({
                     onStopEdit={handleStopEditItem}
                     readonly={readonly}
                     showDeleteButton={canEdit}
+                    comments={item.comments || []}
+                    showComments={expandedComments.has(item.id)}
+                    onToggleComments={() => handleToggleComments(item.id)}
+                    onAddComment={(content: string) => handleAddComment(item.id, content)}
+                    onUpdateComment={(commentId: string, content: string) =>
+                      handleUpdateComment(commentId, content, item.id)
+                    }
+                    onDeleteComment={(commentId: string) => handleDeleteComment(commentId, item.id)}
+                    currentUser={currentUser}
+                    canEdit={canEdit}
                   />
                 </DraggableItem>
               ))}
@@ -532,6 +650,7 @@ export function Note({
                 readonly={false}
                 showDeleteButton={false}
                 className="gap-3"
+                // No comment props for new items
               />
             )}
           </DraggableRoot>
