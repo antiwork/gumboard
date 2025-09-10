@@ -1,4 +1,10 @@
-import { cn, formatLastActivity } from "../utils";
+import {
+  cn,
+  formatLastActivity,
+  getUniqueAuthors,
+  filterAndSortNotes,
+} from "../utils";
+import type { Note } from "@/components/note";
 
 describe("cn utility function", () => {
   it("should combine class names correctly", () => {
@@ -131,5 +137,143 @@ describe("formatLastActivity utility function", () => {
     const date = new Date("2021-10-15T12:00:00Z");
     const result = formatLastActivity(date.toISOString());
     expect(result).toBe("2y 3mo ago");
+  });
+});
+
+describe("getUniqueAuthors", () => {
+  const notes: Note[] = [
+    {
+      id: "1",
+      color: "",
+      createdAt: "2024-01-10T12:00:00Z",
+      updatedAt: "2024-01-10T12:00:00Z",
+      boardId: "b1",
+      user: { id: "1", name: "Alice", email: "alice@example.com" },
+    },
+    {
+      id: "2",
+      color: "",
+      createdAt: "2024-01-15T12:00:00Z",
+      updatedAt: "2024-01-15T12:00:00Z",
+      boardId: "b1",
+      user: { id: "2", name: "Bob", email: "bob@example.com" },
+    },
+    {
+      id: "3",
+      color: "",
+      createdAt: "2024-02-01T12:00:00Z",
+      updatedAt: "2024-02-01T12:00:00Z",
+      boardId: "b1",
+      user: { id: "1", name: "Alice", email: "alice@example.com" },
+    },
+    {
+      id: "4",
+      color: "",
+      createdAt: "2024-03-01T12:00:00Z",
+      updatedAt: "2024-03-01T12:00:00Z",
+      boardId: "b1",
+      user: { id: "3", name: null, email: "charlie@example.com" },
+    },
+  ];
+
+  it("should return unique authors sorted alphabetically", () => {
+    const authors = getUniqueAuthors(notes);
+    expect(authors).toEqual([
+      { id: "1", name: "Alice", email: "alice@example.com", image: undefined },
+      { id: "2", name: "Bob", email: "bob@example.com", image: undefined },
+      { id: "3", name: "charlie", email: "charlie@example.com", image: undefined },
+    ]);
+  });
+});
+
+describe("filterAndSortNotes", () => {
+  const notes: Note[] = [
+    {
+      id: "1",
+      color: "",
+      createdAt: "2024-01-10T12:00:00Z",
+      updatedAt: "2024-01-10T12:00:00Z",
+      boardId: "b1",
+      user: { id: "1", name: "Alice", email: "alice@example.com" },
+    },
+    {
+      id: "2",
+      color: "",
+      createdAt: "2024-01-15T12:00:00Z",
+      updatedAt: "2024-01-15T12:00:00Z",
+      boardId: "b1",
+      user: { id: "2", name: "Bob", email: "bob@example.com" },
+    },
+    {
+      id: "3",
+      color: "",
+      createdAt: "2024-02-01T12:00:00Z",
+      updatedAt: "2024-02-01T12:00:00Z",
+      boardId: "b1",
+      user: { id: "1", name: "Alice", email: "alice@example.com" },
+    },
+    {
+      id: "4",
+      color: "",
+      createdAt: "2024-03-01T12:00:00Z",
+      updatedAt: "2024-03-01T12:00:00Z",
+      boardId: "b1",
+      user: { id: "3", name: null, email: "charlie@example.com" },
+    },
+  ];
+
+  const cloneNotes = () => notes.map((n) => ({ ...n, user: { ...n.user } }));
+
+  it("should filter notes by author id", () => {
+    const result = filterAndSortNotes(
+      cloneNotes(),
+      "",
+      { startDate: null, endDate: null },
+      "1"
+    );
+    expect(result.map((n) => n.id)).toEqual(["3", "1"]);
+  });
+
+  it("should return empty array when author has no notes", () => {
+    const result = filterAndSortNotes(
+      cloneNotes(),
+      "",
+      { startDate: null, endDate: null },
+      "999"
+    );
+    expect(result).toEqual([]);
+  });
+
+  it("should filter notes within a date range", () => {
+    const result = filterAndSortNotes(
+      cloneNotes(),
+      "",
+      {
+        startDate: new Date("2024-01-01"),
+        endDate: new Date("2024-01-31"),
+      },
+      null
+    );
+    expect(result.map((n) => n.id)).toEqual(["2", "1"]);
+  });
+
+  it("should filter notes with only a start date", () => {
+    const result = filterAndSortNotes(
+      cloneNotes(),
+      "",
+      { startDate: new Date("2024-01-15"), endDate: null },
+      null
+    );
+    expect(result.map((n) => n.id)).toEqual(["4", "3", "2"]);
+  });
+
+  it("should filter notes with only an end date", () => {
+    const result = filterAndSortNotes(
+      cloneNotes(),
+      "",
+      { startDate: null, endDate: new Date("2024-01-15") },
+      null
+    );
+    expect(result.map((n) => n.id)).toEqual(["2", "1"]);
   });
 });
