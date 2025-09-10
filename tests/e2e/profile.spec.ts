@@ -1,10 +1,7 @@
 import { test, expect } from "../fixtures/test-helpers";
 
 test.describe("Profile settings", () => {
-  test("should display current user information", async ({
-    authenticatedPage,
-    testContext,
-  }) => {
+  test("should display current user information", async ({ authenticatedPage, testContext }) => {
     await authenticatedPage.goto("/settings");
 
     const expectedName = `Test User ${testContext.testId}`;
@@ -17,9 +14,7 @@ test.describe("Profile settings", () => {
     await expect(saveButton).toBeDisabled();
   });
 
-  test("should keep save button disabled when name is empty", async ({
-    authenticatedPage,
-  }) => {
+  test("should keep save button disabled when name is empty", async ({ authenticatedPage }) => {
     await authenticatedPage.goto("/settings");
 
     const nameInput = authenticatedPage.locator("#name");
@@ -75,9 +70,7 @@ test.describe("Profile settings", () => {
 
     const saveResponse = authenticatedPage.waitForResponse(
       (resp) =>
-        resp.url().includes("/api/user/profile") &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
+        resp.url().includes("/api/user/profile") && resp.request().method() === "PUT" && resp.ok()
     );
 
     await saveButton.click();
