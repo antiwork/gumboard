@@ -14,4 +14,3 @@ test.describe("Filter tooltip", () => {
     ).toBeVisible();
   });
 });
-
