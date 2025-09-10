@@ -255,6 +255,12 @@ test.describe("Home Page", () => {
     const testEditInput = authenticatedPage.locator("textarea").first();
     await expect(testEditInput).toBeVisible();
 
+    // Move cursor to a specific position
+    await testEditInput.press("Home");
+    for (let i = 0; i < 10; i++) {
+      await testEditInput.press("ArrowRight");
+    }
+
     // Actually change the content to trigger an API call
     const modifiedContent = splitTestContent + " (edited)";
 
