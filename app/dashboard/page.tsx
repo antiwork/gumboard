@@ -9,13 +9,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
-import { Plus, Grid3x3, Archive } from "lucide-react";
+import { Plus, Grid3x3, Archive, EllipsisVertical, Trash2, Copy } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
   AlertDialog,
   AlertDialogAction,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -49,6 +52,7 @@ export type DashboardBoard = Board & {
   createdAt: string;
   updatedAt: string;
   isPublic: boolean;
+  sendSlackUpdates?: boolean;
   lastActivityAt: string;
   _count: { notes: number };
 };
@@ -66,6 +70,16 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAddBoardDialogOpen, setIsAddBoardDialogOpen] = useState(false);
+  const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [selectedBoard, setSelectedBoard] = useState<DashboardBoard | null>(null);
+  const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
+  const [boardSettings, setBoardSettings] = useState({
+    name: "",
+    description: "",
+    isPublic: false,
+    sendSlackUpdates: true,
+  });
 
   const [errorDialog, setErrorDialog] = useState<{
     open: boolean;
@@ -128,6 +142,94 @@ export default function Dashboard() {
   useEffect(() => {
     fetchUserAndBoards();
   }, [fetchUserAndBoards]);
+
+  const handleOpenBoardSettings = (board: DashboardBoard, event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setSelectedBoard(board);
+    setBoardSettings({
+      name: board.name,
+      description: board.description || "",
+      isPublic: board.isPublic,
+      sendSlackUpdates: board.sendSlackUpdates ?? true,
+    });
+    setBoardSettingsDialog(true);
+  };
+
+  const handleUpdateBoardSettings = async (settings: {
+    name?: string;
+    description?: string;
+    isPublic?: boolean;
+    sendSlackUpdates: boolean;
+  }) => {
+    if (!selectedBoard) return;
+
+    try {
+      const response = await fetch(`/api/boards/${selectedBoard.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(settings),
+      });
+
+      if (response.ok) {
+        const { board } = await response.json();
+        setBoards((prevBoards) => prevBoards.map((b) => (b.id === board.id ? board : b)));
+        setBoardSettings({
+          name: board.name,
+          description: board.description || "",
+          isPublic: board.isPublic,
+          sendSlackUpdates: board.sendSlackUpdates ?? true,
+        });
+        setBoardSettingsDialog(false);
+      }
+    } catch (error) {
+      console.error("Error updating board settings:", error);
+    }
+  };
+
+  const handleCopyPublicUrl = async () => {
+    if (!selectedBoard) return;
+
+    const publicUrl = `${window.location.origin}/public/boards/${selectedBoard.id}`;
+    try {
+      await navigator.clipboard.writeText(publicUrl);
+      setCopiedPublicUrl(true);
+      setTimeout(() => setCopiedPublicUrl(false), 2000);
+    } catch (error) {
+      console.error("Failed to copy URL:", error);
+    }
+  };
+
+  const handleDeleteBoard = async () => {
+    if (!selectedBoard) return;
+
+    try {
+      const response = await fetch(`/api/boards/${selectedBoard.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setBoards((prevBoards) => prevBoards.filter((b) => b.id !== selectedBoard.id));
+        setDeleteConfirmDialog(false);
+        setBoardSettingsDialog(false);
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete board",
+          description: errorData.error || "Failed to delete board",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting board:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete board",
+        description: "Failed to delete board",
+      });
+    }
+    setDeleteConfirmDialog(false);
+  };
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
     const { name, description } = values;
@@ -313,36 +415,57 @@ export default function Dashboard() {
               </Link>
 
               {boards.map((board) => (
-                <Link href={`/boards/${board.id}`} key={board.id}>
+                <div key={board.id} className="relative">
                   <Card
                     data-board-id={board.id}
                     className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer whitespace-nowrap bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
                   >
-                    <CardHeader>
-                      <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
-                        <CardTitle
-                          className="text-lg dark:text-zinc-100 truncate"
-                          title={board.name}
-                        >
-                          {board.name}
-                        </CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
-                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {board.description && (
-                        <p className="text-slate-600 dark:text-zinc-300 truncate mb-2">
-                          {board.description}
+                    <div
+                      className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        handleOpenBoardSettings(board, e);
+                      }}
+                    >
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Board settings"
+                        title="Board settings"
+                        className="flex items-center size-8"
+                        tabIndex={0}
+                      >
+                        <EllipsisVertical className="size-4" />
+                      </Button>
+                    </div>
+                    <Link href={`/boards/${board.id}`} className="block focus:outline-none">
+                      <CardHeader>
+                        <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
+                          <CardTitle
+                            className="text-lg dark:text-zinc-100 truncate"
+                            title={board.name}
+                          >
+                            {board.name}
+                          </CardTitle>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
+                            {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {board.description && (
+                          <p className="text-slate-600 dark:text-zinc-300 truncate mb-2">
+                            {board.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-500 dark:text-zinc-400">
+                          Last active: {formatLastActivity(board.lastActivityAt)}
                         </p>
-                      )}
-                      <p className="text-xs text-slate-500 dark:text-zinc-400">
-                        Last active: {formatLastActivity(board.lastActivityAt)}
-                      </p>
-                    </CardContent>
+                      </CardContent>
+                    </Link>
                   </Card>
-                </Link>
+                </div>
               ))}
             </div>
           </>
@@ -370,6 +493,168 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      <AlertDialog open={boardSettingsDialog} onOpenChange={setBoardSettingsDialog}>
+        <AlertDialogContent className="board-settings-modal bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              Board settings
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Configure settings for &quot;{selectedBoard?.name}&quot; board.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <div className="space-y-6">
+            <div>
+              <label className="text-sm font-medium text-foreground dark:text-zinc-100">
+                Board name
+              </label>
+              <Input
+                value={boardSettings.name}
+                onChange={(e) => setBoardSettings((prev) => ({ ...prev, name: e.target.value }))}
+                placeholder="Enter board name"
+                className="mt-1 bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+              />
+            </div>
+            <div>
+              <label className="text-sm font-medium text-foreground dark:text-zinc-100">
+                Description (optional)
+              </label>
+              <Input
+                value={boardSettings.description}
+                onChange={(e) =>
+                  setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
+                }
+                placeholder="Enter board description"
+                className="mt-1 bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+              />
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isPublic"
+                  checked={boardSettings.isPublic}
+                  onCheckedChange={(checked) =>
+                    setBoardSettings((prev) => ({ ...prev, isPublic: checked as boolean }))
+                  }
+                />
+                <label
+                  htmlFor="isPublic"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
+                >
+                  Make board public
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
+                When enabled, anyone with the link can view this board
+              </p>
+
+              {boardSettings.isPublic && (
+                <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-foreground dark:text-zinc-100">
+                        Public link
+                      </p>
+                      <p className="text-xs text-muted-foreground dark:text-zinc-400 break-all">
+                        {typeof window !== "undefined" && selectedBoard
+                          ? `${window.location.origin}/public/boards/${selectedBoard.id}`
+                          : ""}
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleCopyPublicUrl}
+                      size="sm"
+                      variant="outline"
+                      className="ml-3 flex items-center space-x-1"
+                    >
+                      {copiedPublicUrl ? (
+                        <>
+                          <span className="text-xs">✓</span>
+                          <span className="text-xs">Copied!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="w-3 h-3" />
+                          <span className="text-xs">Copy</span>
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="sendSlackUpdates"
+                checked={boardSettings.sendSlackUpdates}
+                onCheckedChange={(checked) =>
+                  setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
+                }
+                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600"
+              />
+              <label
+                htmlFor="sendSlackUpdates"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
+              >
+                Send updates to Slack
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
+              When enabled, note updates will be sent to your organization&apos;s Slack channel
+            </p>
+          </div>
+
+          <AlertDialogFooter className="flex !flex-row justify-between">
+            <Button
+              onClick={() => setDeleteConfirmDialog(true)}
+              variant="destructive"
+              className="mr-auto flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden lg:inline">Delete Board</span>
+            </Button>
+            <div className="flex space-x-2 items-center">
+              <AlertDialogCancel className="border-gray-400 text-foreground dark:text-zinc-100 dark:border-zinc-700 hover:bg-zinc-100 hover:text-foreground hover:border-gray-200 dark:hover:bg-zinc-800">
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => handleUpdateBoardSettings(boardSettings)}
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
+              >
+                Save settings
+              </AlertDialogAction>
+            </div>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>
+        <AlertDialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground dark:text-zinc-100">
+              Delete Board
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Are you sure you want to delete &quot;{selectedBoard?.name}&quot;? This action cannot
+              be undone and will permanently delete all notes in this board.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteBoard}
+              className="bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+            >
+              Delete Board
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={errorDialog.open}
