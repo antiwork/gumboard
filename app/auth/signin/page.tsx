@@ -97,14 +97,17 @@ function SignInContent() {
     }
   }, [searchParams, router]);
 
-  const handleEmailChange = useCallback((value: string) => {
-    setEmail(value);
-    if (emailError) setEmailError("");
-  }, [emailError]);
+  const handleEmailChange = useCallback(
+    (value: string) => {
+      setEmail(value);
+      if (emailError) setEmailError("");
+    },
+    [emailError]
+  );
 
   useEffect(() => {
     if (!email) return;
-    
+
     const timeoutId = setTimeout(() => {
       if (email && !isValidEmail(email)) {
         setEmailError("Please enter a valid email address");
