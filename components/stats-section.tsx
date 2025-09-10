@@ -56,10 +56,10 @@ export function StatsSection() {
           </p>
         </div>
 
-        <div className="flex flex-col lg:flex-row items-center justify-center gap-4 lg:gap-6">
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-4 xl:gap-6">
           {statsData.map((stat, index) => (
             <React.Fragment key={stat.key}>
-              <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[180px]">
+              <Card className="bg-white dark:bg-zinc-800 border-gray-200 dark:border-zinc-700 w-full lg:w-auto lg:min-w-[150px] xl:min-w-[180px]">
                 <CardHeader className="pb-2 text-center">
                   <CardDescription className="text-xs text-gray-600 dark:text-gray-400">
                     {stat.label}
@@ -70,7 +70,7 @@ export function StatsSection() {
                 </CardHeader>
               </Card>
               {index < statsData.length - 1 && (
-                <ArrowRight className="hidden lg:block w-6 h-6 text-gray-400 dark:text-zinc-500" />
+                <ArrowRight className="hidden lg:block size-5 text-gray-400 dark:text-zinc-500" />
               )}
             </React.Fragment>
           ))}

@@ -85,7 +85,11 @@ export default function Dashboard() {
 
   const fetchUserAndBoards = useCallback(async () => {
     try {
-      const userResponse = await fetch("/api/user");
+      const [userResponse, boardsResponse] = await Promise.all([
+        fetch("/api/user"),
+        fetch("/api/boards"),
+      ]);
+
       if (userResponse.status === 401) {
         router.push("/auth/signin");
         return;
@@ -104,7 +108,6 @@ export default function Dashboard() {
         }
       }
 
-      const boardsResponse = await fetch("/api/boards");
       if (boardsResponse.ok) {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
