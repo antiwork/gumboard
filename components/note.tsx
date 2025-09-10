@@ -92,7 +92,7 @@ export function Note({
 
   const handleToggleChecklistItem = async (itemId: string) => {
     try {
-      if (!note.checklistItems) return;
+      if (!note.checklistItems || !canEdit) return;
 
       const updatedItems = note.checklistItems.map((item) =>
         item.id === itemId ? { ...item, checked: !item.checked } : item
