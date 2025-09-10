@@ -40,6 +40,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
 import { toast } from "sonner";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { cn } from "@/lib/utils";
 
 interface OrganizationInvite {
   id: string;
@@ -63,13 +68,12 @@ interface SelfServeInvite {
   };
 }
 
+const organizationNameFormSchema = z.object({organizationName: z.string().min(1, "Organization name is required")})
+
 export default function OrganizationSettingsPage() {
   const { user, loading, refreshUser } = useUser();
   const router = useRouter();
-  const [savingOrg, setSavingOrg] = useState(false);
   const [savingSlack, setSavingSlack] = useState(false);
-  const [orgName, setOrgName] = useState("");
-  const [originalOrgName, setOriginalOrgName] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
@@ -102,12 +106,16 @@ export default function OrganizationSettingsPage() {
   const [creating, setCreating] = useState(false);
   const [copiedInviteToken, setCopiedInviteToken] = useState<string | null>(null);
 
+  const organizationNameForm = useForm<z.infer<typeof organizationNameFormSchema>>({
+    resolver: zodResolver(organizationNameFormSchema),
+    defaultValues: {
+      organizationName: user?.organization?.name || "",
+    },
+  });
+
   useEffect(() => {
     if (user?.organization) {
-      const orgNameValue = user.organization.name || "";
       const slackWebhookValue = user.organization.slackWebhookUrl || "";
-      setOrgName(orgNameValue);
-      setOriginalOrgName(orgNameValue);
       setSlackWebhookUrl(slackWebhookValue);
       setOriginalSlackWebhookUrl(slackWebhookValue);
     }
@@ -150,8 +158,7 @@ export default function OrganizationSettingsPage() {
     }
   };
 
-  const handleSaveOrgName = async () => {
-    setSavingOrg(true);
+  const handleSaveOrgName = async (values: z.infer<typeof organizationNameFormSchema>) => {
     try {
       const response = await fetch("/api/organization", {
         method: "PUT",
@@ -159,13 +166,12 @@ export default function OrganizationSettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: orgName,
-          slackWebhookUrl: slackWebhookUrl,
+          name: values.organizationName,
         }),
       });
 
       if (response.ok) {
-        setOriginalOrgName(orgName);
+        organizationNameForm.reset(values)
         refreshUser();
       } else {
         const errorData = await response.json();
@@ -182,9 +188,7 @@ export default function OrganizationSettingsPage() {
         title: "Failed to update organization",
         description: "Failed to update organization",
       });
-    } finally {
-      setSavingOrg(false);
-    }
+    } 
   };
 
   const handleSaveSlack = async () => {
@@ -206,7 +210,6 @@ export default function OrganizationSettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name: orgName,
           slackWebhookUrl: slackWebhookUrl,
         }),
       });
@@ -501,32 +504,59 @@ export default function OrganizationSettingsPage() {
               Manage your organization and team members.
             </p>
           </div>
-
-          <div>
-            <Label htmlFor="orgName" className="text-zinc-800 dark:text-zinc-200">
-              Organization Name
-            </Label>
-            <Input
-              id="orgName"
-              type="text"
-              value={orgName}
-              onChange={(e) => setOrgName(e.target.value)}
-              placeholder="Enter organization name"
-              className="mt-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              disabled={!user?.isAdmin}
+          <Form {...organizationNameForm}>
+            <form onSubmit={organizationNameForm.handleSubmit(handleSaveOrgName)} className="space-y-6">
+              <FormField
+              control={organizationNameForm.control}
+              name="organizationName"
+              render={({ field, fieldState }) => (
+                <FormItem>
+                  <FormLabel className="text-zinc-800 dark:text-zinc-200">
+                    Organization Name
+                  </FormLabel>
+                  <FormControl>
+                    <Input
+                      {...field}
+                      placeholder="Enter organization name"
+                      disabled={!user?.isAdmin}
+                      className={cn(
+                            "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100",
+                            fieldState.error && "border-red-500 dark:border-red-500 focus-visible:ring-red-500 dark:focus-visible:ring-red-500"
+                          )}
+                    />
+                  </FormControl>
+                  <FormMessage className="text-xs text-red-500 dark:text-red-400" />
+                </FormItem>
+              )}
             />
-          </div>
 
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <Button
-              onClick={handleSaveOrgName}
-              disabled={savingOrg || orgName === originalOrgName || !user?.isAdmin}
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
-            >
-              {savingOrg ? "Saving..." : "Save Changes"}
-            </Button>
-          </div>
+            <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+              <Button
+                type="submit"
+                disabled={
+                  organizationNameForm.formState.isSubmitting ||
+                  !organizationNameForm.formState.isDirty ||
+                  !user?.isAdmin
+                }
+                className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+                title={
+                  !user?.isAdmin
+                    ? "Only admins can update organization settings"
+                    : undefined
+                }
+              >
+                {organizationNameForm.formState.isSubmitting ? (
+                  <>
+                  <Loader size="sm" className="animate-spin" />
+                  <span>Saving</span>
+                  </>
+                ): (
+                  "Save Changes"
+                )}
+              </Button>
+            </div>
+            </form>
+          </Form>
         </div>
       </Card>
 
