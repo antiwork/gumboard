@@ -78,7 +78,7 @@ test.describe("Organization Settings", () => {
     await slackWebhookInput.fill(validSlackUrl);
 
     // Click save button for Slack integration
-    const slackSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
+    const slackSaveButton = authenticatedPage.locator('#saveSlackWebhookButton')
 
     // Wait for the save request to complete
     const saveResponse = authenticatedPage.waitForResponse(

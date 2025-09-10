@@ -220,6 +220,7 @@ export default function OrganizationSettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
+          name: user?.organization?.name,
           slackWebhookUrl: slackWebhookUrl,
         }),
       });
@@ -614,6 +615,7 @@ export default function OrganizationSettingsPage() {
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
+              id="saveSlackWebhookButton"
               onClick={handleSaveSlack}
               disabled={
                 savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin
