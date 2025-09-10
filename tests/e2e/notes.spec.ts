@@ -1052,6 +1052,65 @@ test.describe("Note Management", () => {
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(5);
       await expect(authenticatedPage.getByText("1", { exact: true })).not.toBeVisible();
     });
+
+    test("should allow selecting future dates in date range picker", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Future Date Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board for future date selection"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+      await testPrisma.note.create({
+        data: {
+          color: "#fef3c7",
+          boardId: board.id,
+          createdBy: testContext.userId,
+          createdAt: new Date(),
+        },
+      });
+
+      const today = new Date();
+      const futureDate = addDays(today, 7);
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+      await authenticatedPage.locator('[data-slot="filter-popover"]').click();
+      await authenticatedPage.getByRole("button", { name: "Select date range" }).click();
+
+      await authenticatedPage
+        .getByRole("button", { name: "Pick a start date", exact: true })
+        .click();
+      const startCalendar = authenticatedPage.locator('table[role="grid"]');
+      await expect(startCalendar).toBeVisible();
+
+      const futureDateStr = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, "0")}-${String(futureDate.getDate()).padStart(2, "0")}`;
+      const futureDateButton = startCalendar.locator(
+        `td[role="gridcell"][data-day="${futureDateStr}"] button:not([disabled])`
+      );
+      await expect(futureDateButton).toBeVisible();
+      await futureDateButton.click();
+
+      await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
+      const endCalendar = authenticatedPage.locator('table[role="grid"]');
+      await expect(endCalendar).toBeVisible();
+
+      const endFutureDate = addDays(futureDate, 7);
+      const endFutureDateStr = `${endFutureDate.getFullYear()}-${String(endFutureDate.getMonth() + 1).padStart(2, "0")}-${String(endFutureDate.getDate()).padStart(2, "0")}`;
+      const endFutureDateButton = endCalendar.locator(
+        `td[role="gridcell"][data-day="${endFutureDateStr}"] button:not([disabled])`
+      );
+      await expect(endFutureDateButton).toBeVisible();
+      await endFutureDateButton.click();
+
+      await authenticatedPage.getByRole("button", { name: "Apply" }).click();
+      await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(0);
+    });
   });
 
   test("should copy a note with all its checklist items", async ({
