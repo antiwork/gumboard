@@ -167,6 +167,7 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           name: values.organizationName,
+          slackWebhookUrl: slackWebhookUrl,
         }),
       });
 
