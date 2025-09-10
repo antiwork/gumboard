@@ -94,9 +94,7 @@ export async function POST(request: NextRequest) {
     try {
       validatedBody = boardSchema
         .extend({
-          name: z
-            .string()
-            .min(1, "Board name is required and cannot be empty or only whitespace"),
+          name: z.string().min(1, "Board name is required and cannot be empty or only whitespace"),
         })
         .parse(body);
     } catch (error) {
