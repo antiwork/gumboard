@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense, useCallback } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { BetaBadge } from "@/components/ui/beta-badge";
+import { isValidEmail } from "@/lib/utils";
 import Image from "next/image";
 import { z } from "zod";
 import { useForm } from "react-hook-form";

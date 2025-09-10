@@ -59,12 +59,12 @@ export default async function ProfileSetup() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
+    <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto space-y-8">
           {/* Header */}
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2 text-blue-700 dark:text-blue-300">
+            <h1 className="text-3xl font-bold mb-2 font-bold text-foreground dark:text-zinc-100">
               Complete Your Profile
             </h1>
             <p className="text-muted-foreground dark:text-zinc-400">
@@ -75,12 +75,14 @@ export default async function ProfileSetup() {
           {/* Profile Setup Card */}
           <Card className="border-2 bg-white dark:bg-zinc-900 dark:border-zinc-800">
             <CardHeader className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full mx-auto mb-4 flex items-center justify-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-blue-600 dark:from-zinc-800 dark:to-blue-900 rounded-full mx-auto mb-4 flex items-center justify-center">
                 <span className="text-2xl font-bold text-white">
                   {session.user.email?.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <CardTitle className="text-xl text-blue-700 dark:text-blue-300">Welcome!</CardTitle>
+              <CardTitle className="text-xl font-bold text-foreground dark:text-zinc-100 ">
+                Welcome!
+              </CardTitle>
               <CardDescription className="text-base text-muted-foreground dark:text-zinc-400">
                 {session.user.email}
               </CardDescription>
