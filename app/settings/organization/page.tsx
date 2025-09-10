@@ -64,7 +64,8 @@ interface SelfServeInvite {
 export default function OrganizationSettingsPage() {
   const { user, loading, refreshUser } = useUser();
   const router = useRouter();
-  const [saving, setSaving] = useState(false);
+  const [savingOrg, setSavingOrg] = useState(false);
+  const [savingSlack, setSavingSlack] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
@@ -146,8 +147,45 @@ export default function OrganizationSettingsPage() {
     }
   };
 
-  const handleSaveOrganization = async () => {
-    setSaving(true);
+  const handleSaveOrgName = async () => {
+    setSavingOrg(true);
+    try {
+      const response = await fetch("/api/organization", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: orgName,
+          slackWebhookUrl: slackWebhookUrl,
+        }),
+      });
+
+      if (response.ok) {
+        setOriginalOrgName(orgName);
+        refreshUser();
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update organization",
+          description: errorData.error || "Failed to update organization",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating organization:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to update organization",
+        description: "Failed to update organization",
+      });
+    } finally {
+      setSavingOrg(false);
+    }
+  };
+
+  const handleSaveSlack = async () => {
+    setSavingSlack(true);
     try {
       if (slackWebhookUrl && !SLACK_WEBHOOK_REGEX.test(slackWebhookUrl)) {
         setErrorDialog({
@@ -171,8 +209,6 @@ export default function OrganizationSettingsPage() {
       });
 
       if (response.ok) {
-        // Update the original values to reflect the saved state
-        setOriginalOrgName(orgName);
         setOriginalSlackWebhookUrl(slackWebhookUrl);
         refreshUser();
       } else {
@@ -184,14 +220,14 @@ export default function OrganizationSettingsPage() {
         });
       }
     } catch (error) {
-      console.error("Error updating organization:", error);
+      console.error("Error updating Slack webhook URL:", error);
       setErrorDialog({
         open: true,
         title: "Failed to update organization",
         description: "Failed to update organization",
       });
     } finally {
-      setSaving(false);
+      setSavingSlack(false);
     }
   };
 
@@ -486,12 +522,12 @@ export default function OrganizationSettingsPage() {
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
-              onClick={handleSaveOrganization}
-              disabled={saving || orgName === originalOrgName || !user?.isAdmin}
+              onClick={handleSaveOrgName}
+              disabled={savingOrg || orgName === originalOrgName || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
-              {saving ? "Saving..." : "Save Changes"}
+              {savingOrg ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </div>
@@ -539,12 +575,14 @@ export default function OrganizationSettingsPage() {
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <Button
-              onClick={handleSaveOrganization}
-              disabled={saving || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
+              onClick={handleSaveSlack}
+              disabled={
+                savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin
+              }
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
-              {saving ? "Saving..." : "Save changes"}
+              {savingSlack ? "Saving..." : "Save changes"}
             </Button>
           </div>
         </div>

@@ -184,4 +184,75 @@ test.describe("Organization Settings", () => {
       "Only admins can update organization settings"
     );
   });
+
+  test("should independently handle save operations for organization name and Slack webhook", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    // Set initial organization data
+    const initialName = "Initial Org Name";
+    const updatedName = "Updated Org Name";
+    const slackWebhookUrl =
+      "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX";
+
+    await testPrisma.organization.update({
+      where: { id: testContext.organizationId },
+      data: {
+        name: initialName,
+        slackWebhookUrl: null,
+      },
+    });
+
+    await authenticatedPage.goto("/settings/organization");
+    await expect(authenticatedPage.locator("text=Organization Settings")).toBeVisible();
+
+    // Get both save buttons
+    const orgNameSaveButton = authenticatedPage.locator('button:has-text("Save changes")').first();
+    const slackSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
+
+    // Test 1: Update only organization name
+    const OrganizationName = authenticatedPage.getByRole("textbox", { name: "Organization Name" });
+    await OrganizationName.fill(updatedName);
+
+    // Only organization name save button should be enabled
+    await expect(orgNameSaveButton).toBeEnabled();
+    await expect(slackSaveButton).toBeDisabled();
+
+    // Save organization name
+    await orgNameSaveButton.click();
+
+    // Wait for the save to complete and verify the button is disabled again
+    await expect(orgNameSaveButton).toBeDisabled();
+
+    await authenticatedPage.waitForTimeout(1000);
+
+    // Verify the organization name was updated
+    const orgAfterNameUpdate = await testPrisma.organization.findUnique({
+      where: { id: testContext.organizationId },
+    });
+    expect(orgAfterNameUpdate?.name).toBe(updatedName);
+    expect(orgAfterNameUpdate?.slackWebhookUrl).toBeNull();
+
+    // Test 2: Update only Slack webhook
+    const slackWebhookInput = authenticatedPage.getByRole("textbox", { name: "Slack Webhook URL" });
+    await slackWebhookInput.fill(slackWebhookUrl);
+
+    // Only Slack save button should be enabled
+    await expect(slackSaveButton).toBeEnabled();
+    await expect(orgNameSaveButton).toBeDisabled();
+
+    // Save Slack webhook
+    await slackSaveButton.click();
+
+    // Wait for the save to complete and verify the button is disabled again
+    await expect(slackSaveButton).toBeDisabled();
+
+    // Verify the Slack webhook was updated
+    const orgAfterSlackUpdate = await testPrisma.organization.findUnique({
+      where: { id: testContext.organizationId },
+    });
+    expect(orgAfterSlackUpdate?.name).toBe(updatedName); // Name should remain unchanged
+    expect(orgAfterSlackUpdate?.slackWebhookUrl).toBe(slackWebhookUrl);
+  });
 });

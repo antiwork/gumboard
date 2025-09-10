@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { DateRangePicker } from "./date-range-picker";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 interface FilterPopoverProps {
   startDate?: Date | null;
@@ -47,26 +48,34 @@ function FilterPopover({
   return (
     <div className={cn("relative", className)}>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            disabled={disabled}
-            className={cn(
-              "flex items-center text-sm py-2",
-              filterCount > 0 ? "gap-1" : "gap-0",
-              disabled && "opacity-50 cursor-not-allowed"
-            )}
-          >
-            <ListFilter className="w-4 h-4 text-muted-foreground" />
-            <span className="text-foreground">
-              {filterCount > 0 && (
-                <span className="px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded">
-                  {filterCount}
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <PopoverTrigger asChild>
+              <Button
+                aria-label="Filters"
+                variant="ghost"
+                disabled={disabled}
+                className={cn(
+                  "flex items-center text-sm py-2",
+                  filterCount > 0 ? "gap-1" : "gap-0",
+                  disabled && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                <ListFilter className="w-4 h-4 text-muted-foreground" />
+                <span className="text-foreground">
+                  {filterCount > 0 && (
+                    <span className="px-1.5 py-0.5 text-xs bg-sky-100 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded">
+                      {filterCount}
+                    </span>
+                  )}
                 </span>
-              )}
-            </span>
-          </Button>
-        </PopoverTrigger>
+              </Button>
+            </PopoverTrigger>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Filters</p>
+          </TooltipContent>
+        </Tooltip>
         <PopoverContent className="w-full sm:w-80">
           <div className="space-y-4">
             <div className="space-y-2">
@@ -91,7 +100,7 @@ function FilterPopover({
                     variant="ghost"
                     onClick={() => onAuthorChange?.(null)}
                     className={cn(
-                      "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                      "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-2 h-auto",
                       !selectedAuthor &&
                         "bg-blue-50  hover:bg-blue-50 text-sky-600 dark:text-zinc-200 dark:bg-zinc-800"
                     )}
@@ -111,7 +120,7 @@ function FilterPopover({
                       variant="ghost"
                       onClick={() => onAuthorChange?.(author.id)}
                       className={cn(
-                        "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800",
+                        "w-full justify-start text-left flex items-center space-x-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 px-3 py-2 h-auto",
                         selectedAuthor === author.id &&
                           "bg-blue-50 dark:bg-zinc-800 hover:bg-blue-50 text-blue-600 dark:text-zinc-200"
                       )}
