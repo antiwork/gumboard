@@ -59,7 +59,6 @@ export default async function ProfileSetup() {
   }
 
   return (
-
     <div className="min-h-screen bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900">
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-md mx-auto space-y-8">
