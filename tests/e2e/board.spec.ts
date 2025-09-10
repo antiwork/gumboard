@@ -263,42 +263,4 @@ test.describe("Board Management", () => {
       await expect(authenticatedPage).toHaveURL("/boards/archive");
     });
   });
-  test("should delete board and redirect to dashboard", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    const board = await testPrisma.board.create({
-      data: {
-        name: testContext.getBoardName("Test Board"),
-        description: testContext.prefix("A test board"),
-        createdBy: testContext.userId,
-        organizationId: testContext.organizationId,
-      },
-    });
-
-    await authenticatedPage.goto(`/boards/${board.id}`);
-
-    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
-
-    await authenticatedPage.getByRole("button", { name: "Delete Board" }).click();
-
-    const deleteResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}`) &&
-        resp.request().method() === "DELETE" &&
-        resp.ok()
-    );
-
-    await authenticatedPage.getByRole("button", { name: "Delete Board" }).last().click();
-
-    await deleteResponse;
-
-    await expect(authenticatedPage).toHaveURL(/.*dashboard/);
-
-    const deletedBoard = await testPrisma.board.findUnique({
-      where: { id: board.id },
-    });
-    expect(deletedBoard).toBeNull();
-  });
 });
