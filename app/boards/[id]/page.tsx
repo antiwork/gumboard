@@ -6,11 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical } from "lucide-react";
+import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical, StickyNote, Plus } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
-import { NoNotesCreated } from "@/components/ui/no-notes-created";
 import { Note as NoteCard } from "@/components/note";
 
 import {
@@ -901,22 +900,39 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
         {/* No Notes Created State */}
         {notes.length === 0 && (
-          <NoNotesCreated
-            onCreateNote={
-              boardId !== "archive"
-                ? () => {
-                    if (boardId === "all-notes" && allBoards.length > 0) {
-                      handleAddNote(allBoards[0].id);
-                    } else {
-                      handleAddNote();
-                    }
+          <div className="absolute inset-0 flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
+            <div className="mb-4">
+              <StickyNote className="w-12 h-12 text-muted-foreground dark:text-zinc-400 mx-auto" />
+            </div>
+
+            <h3 className="text-xl font-semibold text-foreground dark:text-zinc-100 mb-2">
+              {boardId === "archive" ? "No archived notes" : "No notes yet"}
+            </h3>
+
+            <p className="text-muted-foreground dark:text-zinc-400 mb-6 max-w-md">
+              {boardId === "archive"
+                ? "Notes that you archive will appear here. Archived notes are hidden from your active boards but can be restored anytime."
+                : board?.name
+                  ? `Start organizing your ideas by creating your first note in ${board.name}.`
+                  : "Start organizing your ideas by creating your first note."}
+            </p>
+
+            {boardId !== "archive" && (
+              <Button
+                onClick={() => {
+                  if (boardId === "all-notes" && allBoards.length > 0) {
+                    handleAddNote(allBoards[0].id);
+                  } else {
+                    handleAddNote();
                   }
-                : undefined
-            }
-            boardName={board?.name}
-            isArchive={boardId === "archive"}
-            className="absolute inset-0"
-          />
+                }}
+                className="flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                Create your first note
+              </Button>
+            )}
+          </div>
         )}
 
         {/* Filtered Empty State */}
