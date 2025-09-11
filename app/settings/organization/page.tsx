@@ -822,6 +822,7 @@ export default function OrganizationSettingsPage() {
                       }}
                       autoFocus
                       showOutsideDays={true}
+                      disabled={{ before: new Date() }}
                       classNames={{
                         weekday:
                           "w-(--cell-size) text-center text-zinc-900 dark:text-zinc-100 font-normal text-[0.8rem] select-none",
