@@ -861,23 +861,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </div>
             )}
 
-        <div className="flex gap-2">
-            <Button
-              onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else {
-                  handleAddNote();
-                }
-              }}
-              disabled={boardId === "archive"}
-              className="col-span-2 md:col-span-1 flex-1"
-            >
-              <span>Add note</span>
-            </Button>
-            {notes.length==0 &&<ProfileDropdown user={user} />}
-        </div>
-
+            <div className="flex gap-2">
+              <Button
+                onClick={() => {
+                  if (boardId === "all-notes" && allBoards.length > 0) {
+                    handleAddNote(allBoards[0].id);
+                  } else {
+                    handleAddNote();
+                  }
+                }}
+                disabled={boardId === "archive"}
+                className="col-span-2 md:col-span-1 flex-1"
+              >
+                <span>Add note</span>
+              </Button>
+              {notes.length == 0 && <ProfileDropdown user={user} />}
+            </div>
           </div>
         </div>
       </div>
