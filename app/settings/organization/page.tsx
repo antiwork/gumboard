@@ -713,27 +713,27 @@ export default function OrganizationSettingsPage() {
               <div className="max-h-80 overflow-y-auto pr-1">
                 <div className="space-y-2">
                   {invites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 break-words">
-                      {invite.email}
-                    </p>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Invited on {new Date(invite.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => handleCancelInvite(invite.id)}
-                    variant="outline"
-                    size="sm"
-                    className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-400 border border-red-600 dark:border-red-500 font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-60"
-                    disabled={cancellingInviteIds.includes(invite.id)}
-                  >
-                    {cancellingInviteIds.includes(invite.id) ? "Cancelling..." : "Cancel"}
-                  </Button>
+                    <div
+                      key={invite.id}
+                      className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100 break-words">
+                          {invite.email}
+                        </p>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Invited on {new Date(invite.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleCancelInvite(invite.id)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-400 border border-red-600 dark:border-red-500 font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-60"
+                        disabled={cancellingInviteIds.includes(invite.id)}
+                      >
+                        {cancellingInviteIds.includes(invite.id) ? "Cancelling..." : "Cancel"}
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -874,30 +874,32 @@ export default function OrganizationSettingsPage() {
               <div className="max-h-135 overflow-y-auto pr-1">
                 <div className="space-y-3">
                   {selfServeInvites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
-                    deletingInviteToken === invite.token
-                      ? "opacity-50 pointer-events-none transition-opacity duration-100"
-                      : ""
-                  } truncate max-w-full overflow-x-auto whitespace-nowrap`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
-                            {invite.name}
-                          </h5>
-                          {(invite.expiresAt ? new Date(invite.expiresAt) < new Date() : false) ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                              Expired
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              Active
-                            </span>
-                          )}
+                    <div
+                      key={invite.id}
+                      className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
+                        deletingInviteToken === invite.token
+                          ? "opacity-50 pointer-events-none transition-opacity duration-100"
+                          : ""
+                      } truncate max-w-full overflow-x-auto whitespace-nowrap`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
+                                {invite.name}
+                              </h5>
+                              {(
+                                invite.expiresAt ? new Date(invite.expiresAt) < new Date() : false
+                              ) ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                                  Expired
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                  Active
+                                </span>
+                              )}
                             </div>
                             <div className="flex items-center space-x-2 ml-4">
                               <Button
