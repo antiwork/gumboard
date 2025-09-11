@@ -11,7 +11,7 @@ import { isRedirectError } from "next/dist/client/components/redirect-error";
 async function joinOrganization(token: string) {
   "use server";
 
-  try{
+  try {
     const session = await auth();
     if (!session?.user?.id || !session?.user?.email) {
       throw new Error("Not authenticated");
@@ -71,15 +71,12 @@ async function joinOrganization(token: string) {
 
     console.log("Redirecting to dashboard");
     redirect("/dashboard");
-  }
-  catch(error){
+  } catch (error) {
     // Re-throw NEXT_REDIRECT errors as they are handled by Next.js
     if (isRedirectError(error)) {
       throw error;
     }
-    redirect(
-      `/join/${token}`
-    );   
+    redirect(`/join/${token}`);
   }
 }
 
@@ -171,8 +168,8 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
       `/api/auth/set-session?token=${sessionToken}&redirectTo=${encodeURIComponent("/dashboard")}`
     );
   } catch (error) {
-    if(isRedirectError(error)){
-      throw error
+    if (isRedirectError(error)) {
+      throw error;
     }
     console.error("Auto-join error:", error);
     // Fallback to regular auth flow

@@ -4,10 +4,16 @@ test.describe("Join Organization", () => {
   test("should show invalid invitation error for non-existent token", async ({ page }) => {
     await page.goto("/join/non-existent-token");
     await expect(page.locator("text=Invalid Invitation")).toBeVisible();
-    await expect(page.locator("text=This invitation link is invalid or has expired.")).toBeVisible();
+    await expect(
+      page.locator("text=This invitation link is invalid or has expired.")
+    ).toBeVisible();
   });
 
-  test("should show expired invitation error", async ({ authenticatedPage, testContext, testPrisma }) => {
+  test("should show expired invitation error", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
     const expiredInvite = await testPrisma.organizationSelfServeInvite.create({
       data: {
         name: `Expired Invite ${testContext.testId}`,
@@ -41,10 +47,16 @@ test.describe("Join Organization", () => {
     await page.goto(`/join/${limitReachedInvite.token}`);
 
     await expect(page.locator("text=Invitation Limit Reached")).toBeVisible();
-    await expect(page.locator("text=This invitation has reached its maximum usage limit of 2 uses.")).toBeVisible();
+    await expect(
+      page.locator("text=This invitation has reached its maximum usage limit of 2 uses.")
+    ).toBeVisible();
   });
 
-  test("should show join form for unauthenticated users", async ({ page, testContext, testPrisma }) => {
+  test("should show join form for unauthenticated users", async ({
+    page,
+    testContext,
+    testPrisma,
+  }) => {
     const validInvite = await testPrisma.organizationSelfServeInvite.create({
       data: {
         name: `Valid Invite ${testContext.testId}`,
@@ -128,7 +140,7 @@ test.describe("Join Organization", () => {
     await page.goto(`/join/${validInvite.token}`);
 
     // Should show join confirmation (since user is authenticated but not in the target org)
-    await expect(page.locator(`text=Join ${org.name} on Gumboard!`)).toBeVisible();  
+    await expect(page.locator(`text=Join ${org.name} on Gumboard!`)).toBeVisible();
     await expect(page.locator('button[type="submit"]')).toBeVisible();
   });
 
@@ -179,7 +191,7 @@ test.describe("Join Organization", () => {
     // Set the session cookie
     await page.context().addCookies([
       {
-        name: "authjs.session-token",                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+        name: "authjs.session-token",
         value: sessionToken,
         domain: "localhost",
         path: "/",
@@ -195,4 +207,4 @@ test.describe("Join Organization", () => {
     await expect(page.locator("text=Already in Organization")).toBeVisible();
     await expect(page.locator(`text=You are already a member of ${otherOrg.name}`)).toBeVisible();
   });
-})
+});
