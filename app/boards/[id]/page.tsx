@@ -12,7 +12,8 @@ import {
   Copy,
   Trash2,
   X,
-  EllipsisVertical, XIcon,
+  EllipsisVertical,
+  XIcon,
   StickyNote,
   Plus,
 } from "lucide-react";
@@ -1070,14 +1071,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         <AlertDialogContent className="board-settings-modal bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 p-4 lg:p-6">
           <AlertDialogHeader>
             <AlertDialogCancel asChild>
-            <Button
-              className="absolute right-4 top-3 md:right-4 md:top-5 border-0 p-1"
-              aria-label="Close"
-              title="close"
-            >
-              <XIcon className="text-4" />
-            </Button>
-          </AlertDialogCancel>
+              <Button
+                className="absolute right-4 top-3 md:right-4 md:top-5 border-0 p-1"
+                aria-label="Close"
+                title="close"
+              >
+                <XIcon className="text-4" />
+              </Button>
+            </AlertDialogCancel>
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Board settings
             </AlertDialogTitle>
@@ -1192,21 +1193,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           <AlertDialogFooter className="flex !flex-row justify-start md:justify-between">
-             <Button
+            <Button
               onClick={() => setDeleteConfirmDialog(true)}
               variant="destructive"
               className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-              >
-                <Trash2 className="w-4 h-4" />
-                <span className="hidden lg:inline">Delete Board</span>
-              </Button>
-          
-              <AlertDialogAction
-                onClick={() => handleUpdateBoardSettings(boardSettings)}
-                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
-              >
-                Save settings
-              </AlertDialogAction>
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden lg:inline">Delete Board</span>
+            </Button>
+
+            <AlertDialogAction
+              onClick={() => handleUpdateBoardSettings(boardSettings)}
+              className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
+            >
+              Save settings
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
