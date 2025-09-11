@@ -60,6 +60,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -1087,22 +1088,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 value={boardSettings.name}
                 onChange={(e) => setBoardSettings((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="Enter board name"
-                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
                 Description (optional)
               </label>
-              <textarea
+              <Textarea
                 value={boardSettings.description}
                 onChange={(e) =>
                   setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
                 }
                 placeholder="Enter board description"
-                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 
-                w-full min-h-[80px] text-base md:text-sm rounded-md px-3 py-2 outline-none 
-                focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus:border-blue-500"
               />
             </div>
             <div className="space-y-4">
