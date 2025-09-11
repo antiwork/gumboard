@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { organizationSchema } from "@/lib/types";
 
 export async function PUT(request: NextRequest) {
   try {
@@ -10,11 +12,22 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { name, slackWebhookUrl } = await request.json();
+    const body = await request.json();
 
-    if (!name || typeof name !== "string") {
-      return NextResponse.json({ error: "Organization name is required" }, { status: 400 });
+    let validatedBody;
+    try {
+      validatedBody = organizationSchema.parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
     }
+
+    const { name, slackWebhookUrl } = validatedBody;
 
     // Get user with organization
     const user = await db.user.findUnique({

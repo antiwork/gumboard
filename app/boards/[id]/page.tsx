@@ -6,7 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
-import { ChevronDown, Search, Copy, Trash2, X, EllipsisVertical, XIcon } from "lucide-react";
+import {
+  ChevronDown,
+  Search,
+  Copy,
+  Trash2,
+  X,
+  EllipsisVertical, XIcon,
+  StickyNote,
+  Plus,
+} from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { FilterPopover } from "@/components/ui/filter-popover";
@@ -358,6 +367,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       const checklistItems =
         originalNote.checklistItems?.map((item, index) => ({
+          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           content: item.content,
           checked: item.checked,
           order: index,
@@ -709,21 +719,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </PopoverTrigger>
 
               <PopoverContent
-                className="p-2 w-full sm:w-64 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                className="p-2 max-w-screen md:max-w-72 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 overflow-x-hidden"
                 align="start"
               >
                 <div className="flex flex-col gap-1">
-                  <div className="max-h-50 overflow-y-auto">
+                  <div className="max-h-50 overflow-y-auto overflow-x-hidden">
                     {allBoards.map((b) => (
                       <Link
                         key={b.id}
                         href={`/boards/${b.id}`}
                         data-board-id={b.id}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white truncate ${
                           b.id === boardId
                             ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
                             : "text-foreground dark:text-zinc-100"
-                        }`}
+                        } turncate whitespace-nowrap`}
                       >
                         <div data-board-name={b.name}>{b.name}</div>
                       </Link>
@@ -821,34 +831,35 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           {/* Right side - Search, Add Note and User dropdown */}
           <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Search Box */}
-            <div className="relative h-9">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
-              </div>
-              <input
-                aria-label="Search notes"
-                type="text"
-                placeholder="Search notes..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
-                className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
-              />
-              {searchTerm && (
-                <Button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setDebouncedSearchTerm("");
-                    updateURL("");
+            {notes.length > 0 && (
+              <div className="relative h-9">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
+                </div>
+                <input
+                  aria-label="Search notes"
+                  type="text"
+                  placeholder="Search notes..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
                   }}
-                  className="absolute top-[5px] right-1 size-7 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-white dark:hover:text-zinc-100 cursor-pointer bg-transparent"
-                >
-                  <X className="h-4 w-4 " />
-                </Button>
-              )}
-            </div>
-
+                  className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                />
+                {searchTerm && (
+                  <Button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setDebouncedSearchTerm("");
+                      updateURL("");
+                    }}
+                    className="absolute top-[5px] right-1 size-7 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-white dark:hover:text-zinc-100 cursor-pointer bg-transparent"
+                  >
+                    <X className="h-4 w-4 " />
+                  </Button>
+                )}
+              </div>
+            )}
             <Button
               onClick={() => {
                 if (boardId === "all-notes" && allBoards.length > 0) {
@@ -898,7 +909,44 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           ))}
         </div>
 
-        {/* Empty State */}
+        {/* No Notes Created State */}
+        {notes.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
+            <div className="mb-4">
+              <StickyNote className="w-12 h-12 text-muted-foreground dark:text-zinc-400 mx-auto" />
+            </div>
+
+            <h3 className="text-xl font-semibold text-foreground dark:text-zinc-100 mb-2">
+              {boardId === "archive" ? "No archived notes" : "No notes yet"}
+            </h3>
+
+            <p className="text-muted-foreground dark:text-zinc-400 mb-6 max-w-md">
+              {boardId === "archive"
+                ? "Notes that you archive will appear here. Archived notes are hidden from your active boards but can be restored anytime."
+                : board?.name
+                  ? `Start organizing your ideas by creating your first note in ${board.name}.`
+                  : "Start organizing your ideas by creating your first note."}
+            </p>
+
+            {boardId !== "archive" && (
+              <Button
+                onClick={() => {
+                  if (boardId === "all-notes" && allBoards.length > 0) {
+                    handleAddNote(allBoards[0].id);
+                  } else {
+                    handleAddNote();
+                  }
+                }}
+                className="flex items-center gap-2 cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                Create your first note
+              </Button>
+            )}
+          </div>
+        )}
+
+        {/* Filtered Empty State */}
         {filteredNotes.length === 0 &&
           notes.length > 0 &&
           (searchTerm || dateRange.startDate || dateRange.endDate || selectedAuthor) && (
@@ -974,9 +1022,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   <FormItem>
                     <FormLabel>Description (Optional)</FormLabel>
                     <FormControl>
-                      <Input
+                      <textarea
                         placeholder="Enter board description"
-                        className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
+                        className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 
+                        w-full min-h-[60px] text-base md:text-sm rounded-md px-3 py-2 outline-none 
+                        focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus:border-blue-500"
                         {...field}
                       />
                     </FormControl>
@@ -1053,14 +1103,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               <label className="block text-sm font-medium text-foreground dark:text-zinc-200 mb-1">
                 Description (optional)
               </label>
-              <Input
-                type="text"
+              <textarea
                 value={boardSettings.description}
                 onChange={(e) =>
                   setBoardSettings((prev) => ({ ...prev, description: e.target.value }))
                 }
                 placeholder="Enter board description"
-                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700"
+                className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 
+                w-full min-h-[80px] text-base md:text-sm rounded-md px-3 py-2 outline-none 
+                focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus:border-blue-500"
               />
             </div>
             <div className="space-y-4">

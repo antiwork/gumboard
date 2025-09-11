@@ -80,7 +80,7 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
       },
@@ -145,7 +145,7 @@ test.describe("Note Management", () => {
     const testItemContent = testContext.prefix("Test item");
     await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -360,7 +360,7 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
       },
@@ -417,7 +417,7 @@ test.describe("Note Management", () => {
 
     const note = await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
       },
@@ -479,7 +479,7 @@ test.describe("Note Management", () => {
 
       const note = await testPrisma.note.create({
         data: {
-          color: "#fef3c7",
+          color: "#fff2a8",
           boardId: board.id,
           createdBy: testContext.userId,
         },
@@ -572,7 +572,7 @@ test.describe("Note Management", () => {
 
       const note1 = await testPrisma.note.create({
         data: {
-          color: "#fef3c7",
+          color: "#fff2a8",
           boardId: board.id,
           createdBy: testContext.userId,
         },
@@ -590,7 +590,7 @@ test.describe("Note Management", () => {
 
       const note2 = await testPrisma.note.create({
         data: {
-          color: "#fef3c7",
+          color: "#fff2a8",
           boardId: board.id,
           createdBy: testContext.userId,
         },
@@ -735,7 +735,7 @@ test.describe("Note Management", () => {
 
       const note = await testPrisma.note.create({
         data: {
-          color: "#fef3c7",
+          color: "#fff2a8",
           boardId: board.id,
           createdBy: testContext.userId,
         },
@@ -936,7 +936,7 @@ test.describe("Note Management", () => {
       for (let i = 0; i < 3; i++) {
         await testPrisma.note.create({
           data: {
-            color: "#fef3c7",
+            color: "#fff2a8",
             boardId: board.id,
             createdBy: testContext.userId,
             createdAt: new Date(),
@@ -948,7 +948,7 @@ test.describe("Note Management", () => {
       for (let i = 0; i < 2; i++) {
         await testPrisma.note.create({
           data: {
-            color: "#fef3c7",
+            color: "#fff2a8",
             boardId: board.id,
             createdBy: testContext.userId,
             createdAt: addDays(new Date(), -5),
@@ -1023,7 +1023,7 @@ test.describe("Note Management", () => {
       for (let index = 0; index < 3; index++) {
         await testPrisma.note.create({
           data: {
-            color: "#fef3c7",
+            color: "#fff2a8",
             boardId: board.id,
             createdBy: testContext.userId,
           },
@@ -1034,7 +1034,7 @@ test.describe("Note Management", () => {
       for (let index = 0; index < 2; index++) {
         await testPrisma.note.create({
           data: {
-            color: "#fef3c7",
+            color: "#fff2a8",
             boardId: board.id,
             createdBy: otherUserId,
           },
@@ -1051,6 +1051,65 @@ test.describe("Note Management", () => {
       await authenticatedPage.locator('[data-slot="all-authors-button"]').click({ force: true });
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(5);
       await expect(authenticatedPage.getByText("1", { exact: true })).not.toBeVisible();
+    });
+
+    test("should allow selecting future dates in date range picker", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Future Date Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: testContext.prefix("Test board for future date selection"),
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+      await testPrisma.note.create({
+        data: {
+          color: "#fef3c7",
+          boardId: board.id,
+          createdBy: testContext.userId,
+          createdAt: new Date(),
+        },
+      });
+
+      const today = new Date();
+      const futureDate = addDays(today, 7);
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+      await authenticatedPage.locator('[data-slot="filter-popover"]').click();
+      await authenticatedPage.getByRole("button", { name: "Select date range" }).click();
+
+      await authenticatedPage
+        .getByRole("button", { name: "Pick a start date", exact: true })
+        .click();
+      const startCalendar = authenticatedPage.locator('table[role="grid"]');
+      await expect(startCalendar).toBeVisible();
+
+      const futureDateStr = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, "0")}-${String(futureDate.getDate()).padStart(2, "0")}`;
+      const futureDateButton = startCalendar.locator(
+        `td[role="gridcell"][data-day="${futureDateStr}"] button:not([disabled])`
+      );
+      await expect(futureDateButton).toBeVisible();
+      await futureDateButton.click();
+
+      await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
+      const endCalendar = authenticatedPage.locator('table[role="grid"]');
+      await expect(endCalendar).toBeVisible();
+
+      const endFutureDate = addDays(futureDate, 7);
+      const endFutureDateStr = `${endFutureDate.getFullYear()}-${String(endFutureDate.getMonth() + 1).padStart(2, "0")}-${String(endFutureDate.getDate()).padStart(2, "0")}`;
+      const endFutureDateButton = endCalendar.locator(
+        `td[role="gridcell"][data-day="${endFutureDateStr}"] button:not([disabled])`
+      );
+      await expect(endFutureDateButton).toBeVisible();
+      await endFutureDateButton.click();
+
+      await authenticatedPage.getByRole("button", { name: "Apply" }).click();
+      await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(0);
     });
   });
 
@@ -1071,7 +1130,7 @@ test.describe("Note Management", () => {
 
     const originalNote = await testPrisma.note.create({
       data: {
-        color: "#f3e8ff",
+        color: "#c7b7ff",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -1198,7 +1257,7 @@ test.describe("Note Management", () => {
 
     const originalNote = await testPrisma.note.create({
       data: {
-        color: "#dbeafe",
+        color: "#cde4ff",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -1284,7 +1343,7 @@ test.describe("Note Management", () => {
 
     await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: otherUser.id,
         checklistItems: {
@@ -1333,7 +1392,7 @@ test.describe("Note Management", () => {
 
     await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
         archivedAt: new Date(),
@@ -1351,7 +1410,7 @@ test.describe("Note Management", () => {
 
     await testPrisma.note.create({
       data: {
-        color: "#fef3c7",
+        color: "#fff2a8",
         boardId: board.id,
         createdBy: testContext.userId,
         checklistItems: {
@@ -1388,5 +1447,124 @@ test.describe("Note Management", () => {
 
     await archivedNote.hover();
     await expect(archivedNote.getByRole("button", { name: "Copy note" })).not.toBeVisible();
+  });
+
+  test.describe("Empty State", () => {
+    test("should display empty state and create note when button is clicked", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const boardName = testContext.getBoardName("Empty Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: "A test board",
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      await authenticatedPage.goto(`/boards/${board.id}`);
+
+      // Wait for notes API call
+      await authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes`) && resp.request().method() === "GET"
+      );
+
+      // Verify empty state elements
+      await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
+      await expect(
+        authenticatedPage.locator(
+          `text=Start organizing your ideas by creating your first note in ${boardName}.`
+        )
+      ).toBeVisible();
+
+      const createButton = authenticatedPage.getByRole("button", {
+        name: "Create your first note",
+      });
+      await expect(createButton).toBeVisible();
+
+      // Click create button and wait for API response
+      const createNoteResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes`) &&
+          resp.request().method() === "POST" &&
+          resp.ok()
+      );
+
+      await createButton.click();
+      await createNoteResponse;
+
+      // Verify empty state is gone and note was created
+      await expect(authenticatedPage.locator("text=No notes yet")).not.toBeVisible();
+
+      const createdNotes = await testPrisma.note.findMany({
+        where: { boardId: board.id, createdBy: testContext.userId },
+      });
+      expect(createdNotes).toHaveLength(1);
+    });
+
+    test("should show archive empty state without create button", async ({ authenticatedPage }) => {
+      await authenticatedPage.goto("/boards/archive");
+
+      await authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes("/api/boards/archive/notes") && resp.request().method() === "GET"
+      );
+
+      // Verify archive-specific empty state
+      await expect(authenticatedPage.locator("text=No archived notes")).toBeVisible();
+      await expect(
+        authenticatedPage.locator("text=Notes that you archive will appear here")
+      ).toBeVisible();
+
+      // Verify no create button in archive
+      await expect(
+        authenticatedPage.getByRole("button", { name: "Create your first note" })
+      ).not.toBeVisible();
+    });
+
+    test("should create note in first board from all-notes view", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+    }) => {
+      const board = await testPrisma.board.create({
+        data: {
+          name: testContext.getBoardName("Test Board"),
+          description: "A test board",
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+        },
+      });
+
+      await authenticatedPage.goto("/boards/all-notes");
+
+      await authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes("/api/boards/all-notes/notes") && resp.request().method() === "GET"
+      );
+
+      // Verify empty state and click create button
+      await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
+
+      const createNoteResponse = authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes("/api/boards/all-notes/notes") &&
+          resp.request().method() === "POST" &&
+          resp.ok()
+      );
+
+      await authenticatedPage.getByRole("button", { name: "Create your first note" }).click();
+      await createNoteResponse;
+
+      // Verify note was created in the board
+      const createdNotes = await testPrisma.note.findMany({
+        where: { boardId: board.id, createdBy: testContext.userId },
+      });
+      expect(createdNotes).toHaveLength(1);
+    });
   });
 });
