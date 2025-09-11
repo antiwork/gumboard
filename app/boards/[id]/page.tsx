@@ -710,11 +710,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </PopoverTrigger>
 
               <PopoverContent
-                className="p-2 w-full sm:w-64 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                className="p-2 mt-2 w-[calc(100vw-1.75rem)] sm:w-80 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
                 align="start"
+                alignOffset={-10}
               >
                 <div className="flex flex-col gap-1">
-                  <div className="max-h-50 overflow-y-auto">
+                  <div className="max-h-[50dvh] overflow-y-auto">
                     {allBoards.map((b) => (
                       <Link
                         key={b.id}
