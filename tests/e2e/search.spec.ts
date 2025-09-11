@@ -308,4 +308,24 @@ test.describe("Search Functionality", () => {
     const newNoteTextarea = authenticatedPage.locator("textarea").first();
     await expect(newNoteTextarea).toBeVisible();
   });
+
+  test("should hide search when there are no notes", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("Empty Board Search Test");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: testContext.prefix("Empty board for search test"),
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+    const searchInput = authenticatedPage.locator('input[placeholder="Search notes..."]');
+    await expect(searchInput).not.toBeVisible();
+  });
 });

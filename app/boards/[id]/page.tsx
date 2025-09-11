@@ -822,34 +822,35 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           {/* Right side - Search, Add Note and User dropdown */}
           <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Search Box */}
-            <div className="relative h-9">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
-              </div>
-              <input
-                aria-label="Search notes"
-                type="text"
-                placeholder="Search notes..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                }}
-                className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
-              />
-              {searchTerm && (
-                <Button
-                  onClick={() => {
-                    setSearchTerm("");
-                    setDebouncedSearchTerm("");
-                    updateURL("");
+            {notes.length > 0 && (
+              <div className="relative h-9">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
+                </div>
+                <input
+                  aria-label="Search notes"
+                  type="text"
+                  placeholder="Search notes..."
+                  value={searchTerm}
+                  onChange={(e) => {
+                    setSearchTerm(e.target.value);
                   }}
-                  className="absolute top-[5px] right-1 size-7 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-white dark:hover:text-zinc-100 cursor-pointer bg-transparent"
-                >
-                  <X className="h-4 w-4 " />
-                </Button>
-              )}
-            </div>
-
+                  className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                />
+                {searchTerm && (
+                  <Button
+                    onClick={() => {
+                      setSearchTerm("");
+                      setDebouncedSearchTerm("");
+                      updateURL("");
+                    }}
+                    className="absolute top-[5px] right-1 size-7 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-white dark:hover:text-zinc-100 cursor-pointer bg-transparent"
+                  >
+                    <X className="h-4 w-4 " />
+                  </Button>
+                )}
+              </div>
+            )}
             <Button
               onClick={() => {
                 if (boardId === "all-notes" && allBoards.length > 0) {
