@@ -1417,10 +1417,14 @@ test.describe("Note Management", () => {
       // Verify empty state elements
       await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
       await expect(
-        authenticatedPage.locator(`text=Start organizing your ideas by creating your first note in ${boardName}.`)
+        authenticatedPage.locator(
+          `text=Start organizing your ideas by creating your first note in ${boardName}.`
+        )
       ).toBeVisible();
 
-      const createButton = authenticatedPage.getByRole("button", { name: "Create your first note" });
+      const createButton = authenticatedPage.getByRole("button", {
+        name: "Create your first note",
+      });
       await expect(createButton).toBeVisible();
 
       // Click create button and wait for API response
@@ -1443,9 +1447,7 @@ test.describe("Note Management", () => {
       expect(createdNotes).toHaveLength(1);
     });
 
-    test("should show archive empty state without create button", async ({
-      authenticatedPage,
-    }) => {
+    test("should show archive empty state without create button", async ({ authenticatedPage }) => {
       await authenticatedPage.goto("/boards/archive");
 
       await authenticatedPage.waitForResponse(
@@ -1458,7 +1460,7 @@ test.describe("Note Management", () => {
       await expect(
         authenticatedPage.locator("text=Notes that you archive will appear here")
       ).toBeVisible();
-      
+
       // Verify no create button in archive
       await expect(
         authenticatedPage.getByRole("button", { name: "Create your first note" })
@@ -1488,7 +1490,7 @@ test.describe("Note Management", () => {
 
       // Verify empty state and click create button
       await expect(authenticatedPage.locator("text=No notes yet")).toBeVisible();
-      
+
       const createNoteResponse = authenticatedPage.waitForResponse(
         (resp) =>
           resp.url().includes("/api/boards/all-notes/notes") &&
