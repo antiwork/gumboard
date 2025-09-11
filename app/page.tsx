@@ -52,7 +52,7 @@ export default async function HomePage() {
               <div className="flex flex-col justify-center space-y-6 lg:mt-14">
                 <div className="flex items-center gap-3">
                   <Link href="https://gumboard.com/" passHref>
-                  <Image src="/logo/gumboard.svg" alt="Gumboard" width={50} height={50} />
+                    <Image src="/logo/gumboard.svg" alt="Gumboard" width={50} height={50} />
                   </Link>
                   <span className="text-4xl font-bold">Gumboard</span>
                   <BetaBadge />
