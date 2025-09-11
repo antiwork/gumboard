@@ -709,21 +709,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </PopoverTrigger>
 
               <PopoverContent
-                className="p-2 w-full sm:w-64 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800"
+                className="p-2 max-w-screen md:max-w-72 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 overflow-x-hidden"
                 align="start"
               >
                 <div className="flex flex-col gap-1">
-                  <div className="max-h-50 overflow-y-auto">
+                  <div className="max-h-50 overflow-y-auto overflow-x-hidden">
                     {allBoards.map((b) => (
                       <Link
                         key={b.id}
                         href={`/boards/${b.id}`}
                         data-board-id={b.id}
-                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white ${
+                        className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 dark:hover:text-white truncate ${
                           b.id === boardId
                             ? "bg-sky-50 dark:bg-sky-600 text-foreground dark:text-zinc-100 font-semibold"
                             : "text-foreground dark:text-zinc-100"
-                        }`}
+                        } turncate whitespace-nowrap`}
                       >
                         <div data-board-name={b.name}>{b.name}</div>
                       </Link>

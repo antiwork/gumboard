@@ -352,7 +352,7 @@ export function Note({
       style={style}
     >
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
-        <div className="flex items-center space-x-2">
+        <div className="flex-1 min-w-0 flex items-center space-x-2">
           <Avatar className="h-7 w-7">
             <AvatarFallback className="bg-white/50 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
               {note.user.name
@@ -366,7 +366,7 @@ export function Note({
             />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 max-w-20">
+            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 max-w-40 overflow-x-hidden truncate">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
