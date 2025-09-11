@@ -60,6 +60,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { BulkActionBar } from "@/components/bulk-action-bar";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -90,6 +91,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: string;
   }>({ open: false, title: "", description: "" });
   const pendingDeleteTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingArchiveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const pendingUnarchiveTimeoutsRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const [boardSettingsDialog, setBoardSettingsDialog] = useState(false);
   const [boardSettings, setBoardSettings] = useState({
     name: "",
@@ -102,7 +105,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
-
+  const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
+  
   useEffect(() => {
     if (!userLoading && !user) {
       router.push("/auth/signin");
@@ -121,6 +125,199 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       description: "",
     },
   });
+
+   
+
+  const handleBulkDelete = () => {
+  if (selectedNotes.length === 0) return;
+
+  const notesToDelete = notes.filter((n) => selectedNotes.includes(n.id));
+  const targetBoardId = notesToDelete[0]?.board?.id ?? notesToDelete[0]?.boardId;
+  if (!targetBoardId) return;
+
+  // Optimistic UI update
+  setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
+
+  const timeoutId = setTimeout(async () => {
+    try {
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedNotes }),
+      });
+
+      if (!response.ok) {
+        setNotes((prev) => [...notesToDelete, ...prev]); // rollback
+        const errorData = await response.json().catch(() => null);
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete notes",
+          description: errorData?.error || "Failed to delete notes",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting notes:", error);
+      setNotes((prev) => [...notesToDelete, ...prev]);
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete notes",
+        description: "Failed to delete notes",
+      });
+    } finally {
+      delete pendingDeleteTimeoutsRef.current["bulk"];
+      setSelectedNotes([]);
+    }
+  }, 4000);
+
+  pendingDeleteTimeoutsRef.current["bulk"] = timeoutId;
+
+  toast(`${selectedNotes.length} note(s) deleted`, {
+    action: {
+      label: "Undo",
+      onClick: () => {
+        const t = pendingDeleteTimeoutsRef.current["bulk"];
+        if (t) {
+          clearTimeout(t);
+          delete pendingDeleteTimeoutsRef.current["bulk"];
+        }
+        setNotes((prev) => [...notesToDelete, ...prev]);
+      },
+    },
+    duration: 4000,
+  });
+};
+
+
+ 
+  const handleBulkArchive = () => {
+  if (selectedNotes.length === 0) return;
+
+  const notesToArchive = notes.filter((n) => selectedNotes.includes(n.id));
+  const targetBoardId = notesToArchive[0]?.board?.id ?? notesToArchive[0]?.boardId;
+  if (!targetBoardId) return;
+
+  setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
+
+  const timeoutId = setTimeout(async () => {
+    try {
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedNotes, archivedAt: new Date().toISOString() }),
+      });
+
+      if (!response.ok) {
+        setNotes((prev) => [...notesToArchive, ...prev]);
+        setErrorDialog({
+          open: true,
+          title: "Archive Failed",
+          description: "Failed to archive notes. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error archiving notes:", error);
+      setNotes((prev) => [...notesToArchive, ...prev]);
+      setErrorDialog({
+        open: true,
+        title: "Archive Failed",
+        description: "Failed to archive notes. Please try again.",
+      });
+    } finally {
+      delete pendingArchiveTimeoutsRef.current["bulk"];
+      setSelectedNotes([]);
+
+    }
+  }, 4000);
+
+  pendingArchiveTimeoutsRef.current["bulk"] = timeoutId;
+
+  toast(`${selectedNotes.length} note(s) archived`, {
+    action: {
+      label: "Undo",
+      onClick: () => {
+        const t = pendingArchiveTimeoutsRef.current["bulk"];
+        if (t) {
+          clearTimeout(t);
+          delete pendingArchiveTimeoutsRef.current["bulk"];
+        }
+        setNotes((prev) => [...notesToArchive, ...prev]);
+      },
+    },
+    duration: 4000,
+  });
+};
+
+
+  
+  
+  const handleBulkUnarchive = () => {
+  if (selectedNotes.length === 0) return;
+
+  const notesToUnarchive = notes.filter((n) => selectedNotes.includes(n.id));
+  const targetBoardId = notesToUnarchive[0]?.board?.id ?? notesToUnarchive[0]?.boardId;
+  if (!targetBoardId) return;
+
+  setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
+
+  const timeoutId = setTimeout(async () => {
+    try {
+      const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedNotes, archivedAt: null }),
+      });
+
+      if (!response.ok) {
+        setNotes((prev) => [...notesToUnarchive, ...prev]);
+        setErrorDialog({
+          open: true,
+          title: "Unarchive Failed",
+          description: "Failed to unarchive notes. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error unarchiving notes:", error);
+      setNotes((prev) => [...notesToUnarchive, ...prev]);
+      setErrorDialog({
+        open: true,
+        title: "Unarchive Failed",
+        description: "Failed to unarchive notes. Please try again.",
+      });
+    } finally {
+      delete pendingUnarchiveTimeoutsRef.current["bulk"];
+      setSelectedNotes([]);
+    }
+  }, 4000);
+
+  pendingUnarchiveTimeoutsRef.current["bulk"] = timeoutId;
+
+  toast(`${selectedNotes.length} note(s) unarchived`, {
+    action: {
+      label: "Undo",
+      onClick: () => {
+        const t = pendingUnarchiveTimeoutsRef.current["bulk"];
+        if (t) {
+          clearTimeout(t);
+          delete pendingUnarchiveTimeoutsRef.current["bulk"];
+        }
+        setNotes((prev) => [...notesToUnarchive, ...prev]);
+      },
+    },
+    duration: 4000,
+  });
+};
+
+  const handleSelectAll = () => {
+    if (selectedNotes.length === filteredNotes.length) {
+      setSelectedNotes([]);
+    } else {
+      setSelectedNotes(filteredNotes.map((note) => note.id));
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSelectedNotes([]);
+  };
 
   // Update URL with current filter state
   const updateURL = useCallback(
@@ -257,6 +454,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           fetch(`/api/boards/archive/notes`),
         ]);
 
+        // Set virtual board immediately
         setBoard({
           id: "archive",
           name: "Archive",
@@ -367,7 +565,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       const checklistItems =
         originalNote.checklistItems?.map((item, index) => ({
-          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
           content: item.content,
           checked: item.checked,
           order: index,
@@ -457,13 +654,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
-    // Archive immediately instead of after 4 seconds
-    fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ archivedAt: new Date().toISOString() }),
-    })
-      .then((response) => {
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+        });
+
         if (!response.ok) {
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
@@ -472,8 +670,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             description: "Failed to archive note. Please try again.",
           });
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error archiving note:", error);
         setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
@@ -481,23 +678,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           title: "Archive Failed",
           description: "Failed to archive note. Please try again.",
         });
-      });
+      } finally {
+        delete pendingArchiveTimeoutsRef.current[noteId];
+      }
+    }, 4000);
+
+    pendingArchiveTimeoutsRef.current[noteId] = timeoutId;
 
     toast("Note archived", {
       action: {
         label: "Undo",
-        onClick: async () => {
-          setNotes((prev) => [currentNote, ...prev]);
-          try {
-            await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ archivedAt: null }),
-            });
-          } catch (error) {
-            console.error("Error undoing archive:", error);
-            setNotes((prev) => prev.filter((n) => n.id !== noteId));
+        onClick: () => {
+          const t = pendingArchiveTimeoutsRef.current[noteId];
+          if (t) {
+            clearTimeout(t);
+            delete pendingArchiveTimeoutsRef.current[noteId];
           }
+          setNotes((prev) => [currentNote, ...prev]);
         },
       },
       duration: 4000,
@@ -513,13 +710,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
     setNotes((prev) => prev.filter((n) => n.id !== noteId));
 
-    // Unarchive immediately instead of after 4 seconds
-    fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ archivedAt: null }),
-    })
-      .then((response) => {
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ archivedAt: null }),
+        });
+
         if (!response.ok) {
           setNotes((prev) => [currentNote, ...prev]);
           setErrorDialog({
@@ -528,8 +726,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             description: "Failed to unarchive note. Please try again.",
           });
         }
-      })
-      .catch((error) => {
+      } catch (error) {
         console.error("Error unarchiving note:", error);
         setNotes((prev) => [currentNote, ...prev]);
         setErrorDialog({
@@ -537,23 +734,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           title: "Unarchive Failed",
           description: "Failed to unarchive note. Please try again.",
         });
-      });
+      } finally {
+        delete pendingUnarchiveTimeoutsRef.current[noteId];
+      }
+    }, 4000);
+
+    pendingUnarchiveTimeoutsRef.current[noteId] = timeoutId;
 
     toast("Note unarchived", {
       action: {
         label: "Undo",
-        onClick: async () => {
-          setNotes((prev) => [currentNote, ...prev]);
-          try {
-            await fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ archivedAt: new Date().toISOString() }),
-            });
-          } catch (error) {
-            console.error("Error undoing unarchive:", error);
-            setNotes((prev) => prev.filter((n) => n.id !== noteId));
+        onClick: () => {
+          const t = pendingUnarchiveTimeoutsRef.current[noteId];
+          if (t) {
+            clearTimeout(t);
+            delete pendingUnarchiveTimeoutsRef.current[noteId];
           }
+          setNotes((prev) => [currentNote, ...prev]);
         },
       },
       duration: 4000,
@@ -688,7 +885,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         <div className="mx-0.5 md:mx-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 items-center h-auto md:h-16 p-2 md:p-0">
           <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Company Name */}
-            <Link href="/dashboard" className="flex-shrink-0 pl-1 w-fit">
+            <Link href="/dashboard" className="flex-shrink-0 pl-1">
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
                 Gumboard
                 <BetaBadge />
@@ -889,21 +1086,32 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           {columnsData.map((column, index) => (
             <div key={index} className="flex-1 flex flex-col gap-4">
               {column.map((note) => (
-                <NoteCard
-                  key={note.id}
-                  note={note}
-                  currentUser={user as User}
-                  onUpdate={handleUpdateNoteFromComponent}
-                  onDelete={handleDeleteNote}
-                  onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
-                  onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
-                  onCopy={handleCopyNote}
-                  showBoardName={boardId === "all-notes" || boardId === "archive"}
-                  className="shadow-md shadow-black/10 p-4"
-                  style={{
-                    backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
-                  }}
-                />
+                <div key={note.id} className="relative">
+                  <Checkbox
+                    checked={selectedNotes.includes(note.id)}
+                    onCheckedChange={(checked) => {
+                      setSelectedNotes((prev) =>
+                        checked ? [...prev, note.id] : prev.filter((id) => id !== note.id)
+                      );
+                    }}
+                    className="absolute top-4 left-4 border-none z-10 rounded-full h-7 w-7"
+                    aria-label={`Select note ${note.id}`}
+                  />
+                  <NoteCard
+                    note={note}
+                    currentUser={user as User}
+                    onUpdate={handleUpdateNoteFromComponent}
+                    onDelete={handleDeleteNote}
+                    onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                    onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
+                    onCopy={handleCopyNote}
+                    showBoardName={boardId === "all-notes" || boardId === "archive"}
+                    className="shadow-md shadow-black/10 p-4"
+                    style={{
+                      backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
+                    }}
+                  />
+                </div>
               ))}
             </div>
           ))}
@@ -984,6 +1192,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </div>
           )}
       </div>
+
 
       <Dialog open={showAddBoard} onOpenChange={setShowAddBoard}>
         <DialogContent className="bg-white dark:bg-zinc-950  sm:max-w-[425px] ">
@@ -1168,7 +1377,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 onCheckedChange={(checked) =>
                   setBoardSettings((prev) => ({ ...prev, sendSlackUpdates: checked as boolean }))
                 }
-                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600"
+                className="border-slate-500 bg-white/50 dark:bg-zinc-800 dark:text-zinc-300 dark:border-zinc-600 mt-1"
               />
               <label
                 htmlFor="sendSlackUpdates"
@@ -1231,6 +1440,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    {
+      selectedNotes.length > 0 ? (
+    <BulkActionBar clearSelection={handleAddNote} handleBulkDelete={handleBulkDelete} handleBulkArchive={handleBulkArchive} handleBulkUnarchive={handleBulkUnarchive} handleSelectAll={handleSelectAll} handleClearSelection={handleClearSelection} boardId={boardId} selectedNotes={selectedNotes}/>
+      ):
+      null
+    }
+
     </div>
   );
 }
