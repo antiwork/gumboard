@@ -920,7 +920,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               {boardId === "archive" ? "No archived notes" : "No notes yet"}
             </h3>
 
-            <p className="text-muted-foreground dark:text-zinc-400 mb-6 max-w-md">
+            <p className="text-muted-foreground dark:text-zinc-400 mb-6 max-w-md [overflow-wrap:anywhere]">
               {boardId === "archive"
                 ? "Notes that you archive will appear here. Archived notes are hidden from your active boards but can be restored anytime."
                 : board?.name
