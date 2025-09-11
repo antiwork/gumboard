@@ -6,6 +6,8 @@ import GitHubProvider from "next-auth/providers/github";
 import { db as prisma } from "@/lib/db";
 import { env } from "@/lib/env";
 
+const isE2E = process.env.E2E === "1" || process.env.NODE_ENV === "test";
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
@@ -23,6 +25,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       allowDangerousEmailAccountLinking: true,
     }),
   ],
+  logger: isE2E
+    ? {
+        error: () => {},
+        warn: () => {},
+        debug: () => {},
+      }
+    : undefined,
   pages: {
     signIn: "/auth/signin",
     verifyRequest: "/auth/verify-request",
