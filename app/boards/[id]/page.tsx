@@ -1094,7 +1094,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         checked ? [...prev, note.id] : prev.filter((id) => id !== note.id)
                       );
                     }}
-                    className="absolute top-4 left-4 border-none z-10 rounded-full h-7 w-7"
+                    className="absolute top-4 left-4 border-none z-10 cursor-pointer rounded-full h-7 w-7"
                     aria-label={`Select note ${note.id}`}
                   />
                   <NoteCard

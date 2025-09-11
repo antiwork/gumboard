@@ -6,13 +6,13 @@ export function BulkActionBar({ boardId, selectedNotes,handleBulkDelete, handleB
   if (selectedNotes.length === 0) return null;
 
   return (
-    <div className="fixed top-2 left-1/2 -translate-x-1/2 z-50">
+    <div className="fixed bottom-2 md:top-2 left-1/2 -translate-x-1/2 z-50 ">
       <Card className="flex items-center flex-row gap-1 px-3 py-3 shadow-sm rounded-lg border">
         {selectedNotes.length > 0 ? (
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-sm text-muted-foreground px-3 py-1 border rounded-lg border-dashed border-gray-300">
+        <div className="flex items-center justify-center gap-2 ">
+          <div className="text-sm text-muted-foreground px-3 py-1 border rounded-lg border-dashed border-gray-300 min-w-24 text-center">
             {selectedNotes.length} selected
-          </span>
+          </div>
           <div className="flex gap-1 items-center ">
         <Button
             variant="destructive"
