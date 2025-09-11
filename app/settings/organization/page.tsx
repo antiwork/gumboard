@@ -820,6 +820,11 @@ export default function OrganizationSettingsPage() {
                           expiresAt: formattedDate,
                         }));
                       }}
+                      disabled={(date) => {
+                        const today = new Date();
+                        today.setHours(0, 0, 0, 0);
+                        return date < today;
+                      }}                      
                       autoFocus
                       showOutsideDays={true}
                       classNames={{
@@ -874,10 +879,10 @@ export default function OrganizationSettingsPage() {
                     deletingInviteToken === invite.token
                       ? "opacity-50 pointer-events-none transition-opacity duration-100"
                       : ""
-                  } truncate max-w-full overflow-scroll whitespace-nowrap`}
+                  }`}
                 >
                   <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                    <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
                           <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
@@ -940,8 +945,8 @@ export default function OrganizationSettingsPage() {
                           {new Date(invite.createdAt).toLocaleDateString()}
                         </p>
                       </div>
-                      <div className="w-fit mt-3 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
-                        <code className="text-sm text-zinc-700 dark:text-zinc-200 break-all">
+                      <div className="w-full mt-3 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
+                        <code className="block text-sm text-zinc-700 dark:text-zinc-200 truncate">
                           {typeof window !== "undefined"
                             ? `${window.location.origin}/join/${invite.token}`
                             : `/join/${invite.token}`}
