@@ -869,8 +869,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 }
               }}
               disabled={boardId === "archive"}
-              className="col-span-2 md:col-span-1"
+              className="col-span-2 md:col-span-1 flex items-center"
             >
+              <Plus className="w-4 h-4" />
               <span>Add note</span>
             </Button>
 
