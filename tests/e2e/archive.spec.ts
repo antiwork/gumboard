@@ -217,7 +217,6 @@ test.describe("Archive Functionality", () => {
     await authenticatedPage.goto("/boards/archive");
 
     await expect(authenticatedPage).toHaveURL("/boards/archive");
- 
   });
 
   test("should show unarchive button instead of archive button on Archive board", async ({
