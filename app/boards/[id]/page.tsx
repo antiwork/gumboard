@@ -860,9 +860,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 )}
               </div>
             )}
-
-        <div className="flex gap-2">
-            {notes.length==0 &&<ProfileDropdown user={user} />}
             <Button
               onClick={() => {
                 if (boardId === "all-notes" && allBoards.length > 0) {
@@ -872,12 +869,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 }
               }}
               disabled={boardId === "archive"}
-              className="col-span-2 md:col-span-1 flex-1"
+              className="col-span-2 md:col-span-1"
             >
               <span>Add note</span>
             </Button>
-        </div>
 
+            {/* User Dropdown */}
+            <ProfileDropdown user={user} />
           </div>
         </div>
       </div>
