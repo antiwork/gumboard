@@ -1022,7 +1022,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <AlertDialogTitle className="text-foreground dark:text-zinc-100">
               Board settings
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400 break-all">
+            <AlertDialogDescription className="text-muted-foreground dark:text-zinc-400 [overflow-wrap:anywhere]">
               Configure settings for &quot;{board?.name}&quot; board.
             </AlertDialogDescription>
           </AlertDialogHeader>
