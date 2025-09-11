@@ -238,7 +238,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-zinc-950 p-4">
         <div className="w-full max-w-md space-y-8">
-          <div className="text-center space-y-3 break-all">
+          <div className="text-center space-y-3 [overflow-wrap:anywhere] ">
             <h1 className="text-3xl font-bold text-slate-900 dark:text-slate-100">
               Join {invite.organization.name} on Gumboard!
             </h1>
@@ -257,7 +257,7 @@ export default async function JoinPage({ params }: JoinPageProps) {
                   {invite.organization.name.charAt(0).toUpperCase()}
                 </span>
               </div>
-              <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100 -mt-5 break-all">
+              <CardTitle className="text-2xl font-semibold text-slate-900 dark:text-slate-100 -mt-5  [overflow-wrap:anywhere]">
                 {invite.organization.name}
               </CardTitle>
             </CardHeader>
