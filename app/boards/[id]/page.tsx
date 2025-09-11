@@ -1191,24 +1191,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </p>
           </div>
 
-          <AlertDialogFooter className="flex !flex-row justify-between">
-           
-            <div className="flex gap-2 items-center">
-              <Button
+          <AlertDialogFooter className="flex !flex-row justify-start md:justify-between">
+             <Button
               onClick={() => setDeleteConfirmDialog(true)}
               variant="destructive"
-              className="mr-auto flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
               >
                 <Trash2 className="w-4 h-4" />
                 <span className="hidden lg:inline">Delete Board</span>
               </Button>
+          
               <AlertDialogAction
                 onClick={() => handleUpdateBoardSettings(boardSettings)}
                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-500 dark:hover:bg-blue-600 dark:text-white"
               >
                 Save settings
               </AlertDialogAction>
-            </div>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
