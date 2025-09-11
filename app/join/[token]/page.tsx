@@ -6,68 +6,81 @@ import { db } from "@/lib/db";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { isRedirectError } from "next/dist/client/components/redirect-error";
 
 async function joinOrganization(token: string) {
   "use server";
 
-  const session = await auth();
-  if (!session?.user?.id || !session?.user?.email) {
-    throw new Error("Not authenticated");
+  try{
+    const session = await auth();
+    if (!session?.user?.id || !session?.user?.email) {
+      throw new Error("Not authenticated");
+    }
+
+    // Find the self-serve invite by token
+    const invite = await db.organizationSelfServeInvite.findUnique({
+      where: { token: token },
+      include: { organization: true },
+    });
+
+    if (!invite) {
+      throw new Error("Invalid or expired invitation link");
+    }
+
+    if (!invite.isActive) {
+      throw new Error("This invitation link has been deactivated");
+    }
+
+    // Check if invite has expired
+    if (invite.expiresAt && invite.expiresAt < new Date()) {
+      throw new Error("This invitation link has expired");
+    }
+
+    // Check if usage limit has been reached
+    if (invite.usageLimit && invite.usageCount >= invite.usageLimit) {
+      throw new Error("This invitation link has reached its usage limit");
+    }
+
+    // Check if user is already in an organization
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      include: { organization: true },
+    });
+
+    if (user?.organizationId === invite.organizationId) {
+      throw new Error("You are already a member of this organization");
+    }
+
+    if (user?.organizationId) {
+      throw new Error(
+        "You are already a member of another organization. Please leave your current organization first."
+      );
+    }
+
+    // Join the organization
+    await db.user.update({
+      where: { id: session.user.id },
+      data: { organizationId: invite.organizationId },
+    });
+
+    // Increment usage count
+    await db.organizationSelfServeInvite.update({
+      where: { token: token },
+      data: { usageCount: { increment: 1 } },
+    });
+
+    console.log("Redirecting to dashboard");
+    redirect("/dashboard");
   }
-
-  // Find the self-serve invite by token
-  const invite = await db.organizationSelfServeInvite.findUnique({
-    where: { token: token },
-    include: { organization: true },
-  });
-
-  if (!invite) {
-    throw new Error("Invalid or expired invitation link");
+  catch(error){
+    // Re-throw NEXT_REDIRECT errors as they are handled by Next.js
+    if (isRedirectError(error)) {
+      throw error;
+    }
+    redirect(
+      `/join/${token}`
+    );   
   }
-
-  if (!invite.isActive) {
-    throw new Error("This invitation link has been deactivated");
-  }
-
-  // Check if invite has expired
-  if (invite.expiresAt && invite.expiresAt < new Date()) {
-    throw new Error("This invitation link has expired");
-  }
-
-  // Check if usage limit has been reached
-  if (invite.usageLimit && invite.usageCount >= invite.usageLimit) {
-    throw new Error("This invitation link has reached its usage limit");
-  }
-
-  // Check if user is already in an organization
-  const user = await db.user.findUnique({
-    where: { id: session.user.id },
-    include: { organization: true },
-  });
-
-  if (user?.organizationId === invite.organizationId) {
-    throw new Error("You are already a member of this organization");
-  }
-
-  if (user?.organizationId) {
-    throw new Error(
-      "You are already a member of another organization. Please leave your current organization first."
-    );
-  }
-
-  // Join the organization
-  await db.user.update({
-    where: { id: session.user.id },
-    data: { organizationId: invite.organizationId },
-  });
-
-  // Increment usage count
-  await db.organizationSelfServeInvite.update({
-    where: { token: token },
-    data: { usageCount: { increment: 1 } },
-  });
-
-  redirect("/dashboard");
 }
 
 async function autoCreateAccountAndJoin(token: string, formData: FormData) {
@@ -158,6 +171,9 @@ async function autoCreateAccountAndJoin(token: string, formData: FormData) {
       `/api/auth/set-session?token=${sessionToken}&redirectTo=${encodeURIComponent("/dashboard")}`
     );
   } catch (error) {
+    if(isRedirectError(error)){
+      throw error
+    }
     console.error("Auto-join error:", error);
     // Fallback to regular auth flow
     redirect(
