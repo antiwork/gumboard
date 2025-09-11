@@ -237,7 +237,7 @@ test.describe("Board Management", () => {
 
       await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
 
-      await authenticatedPage.getByText("All notes").click();
+      await authenticatedPage.getByRole("link", { name: "All notes" }).click();
       await expect(authenticatedPage).toHaveURL("/boards/all-notes");
     });
 
@@ -259,7 +259,7 @@ test.describe("Board Management", () => {
 
       await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
 
-      await authenticatedPage.getByText("All archived").click();
+      await authenticatedPage.getByRole("link", { name: "All archived" }).click();
       await expect(authenticatedPage).toHaveURL("/boards/archive");
     });
   });

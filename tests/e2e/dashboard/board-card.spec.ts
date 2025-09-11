@@ -73,7 +73,6 @@ test.describe("Board Card", () => {
     await expect(newBoardCard).toBeVisible();
 
     // go to card header then search for span that contain notes count
-    const noteCount = newBoardCard.locator("span");
-    await expect(noteCount).toHaveText(/^\d+ note(s)?$/);
+    await expect(newBoardCard.locator("span").filter({ hasText: /^\d+ notes?$/ })).toBeVisible();
   });
 });
