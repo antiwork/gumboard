@@ -859,26 +859,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   </Button>
                 )}
               </div>
-            )}           {
-            boardId !== "archive" ? (
+            )}{" "}
+            {boardId !== "archive" ? (
               <Button
-              onClick={() => {
-                if (allBoards.length > 0) {
-                  handleAddNote(allBoards[0].id);
-                } else {
-                  handleAddNote();
-                }
-              }}
-              
-              className="col-span-2 md:col-span-1"
+                onClick={() => {
+                  if (allBoards.length > 0) {
+                    handleAddNote(allBoards[0].id);
+                  } else {
+                    handleAddNote();
+                  }
+                }}
+                className="col-span-2 md:col-span-1"
               >
                 <span>Add note</span>
               </Button>
-            ):
-            null
-           }
-           
-
+            ) : null}
             {/* User Dropdown */}
             <ProfileDropdown user={user} />
           </div>
