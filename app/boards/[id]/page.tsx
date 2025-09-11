@@ -849,20 +849,25 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </Button>
               )}
             </div>
-
-            <Button
+           {
+            boardId !== "archive" ? (
+              <Button
               onClick={() => {
-                if (boardId === "all-notes" && allBoards.length > 0) {
+                if (allBoards.length > 0) {
                   handleAddNote(allBoards[0].id);
                 } else {
                   handleAddNote();
                 }
               }}
-              disabled={boardId === "archive"}
+              
               className="col-span-2 md:col-span-1"
-            >
-              <span>Add note</span>
-            </Button>
+              >
+                <span>Add note</span>
+              </Button>
+            ):
+            null
+           }
+           
 
             {/* User Dropdown */}
             <ProfileDropdown user={user} />
