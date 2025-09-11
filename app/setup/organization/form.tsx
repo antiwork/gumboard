@@ -80,7 +80,7 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
 
         <div className="space-y-3">
           {teamEmails.map((email, index) => (
-            <div key={index} className="flex gap-2">
+            <div key={index} className="flex items-center gap-2">
               <Input
                 type="email"
                 placeholder="teammate@company.com"
@@ -94,7 +94,7 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
                   variant="outline"
                   size="icon"
                   onClick={() => removeEmailField(index)}
-                  className="shrink-0"
+                  className="shrink-0 h-9 w-9 flex items-center justify-center"
                 >
                   <X className="h-4 w-4" />
                 </Button>
