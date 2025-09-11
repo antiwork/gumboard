@@ -1,6 +1,8 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
+import { memberSchema } from "@/lib/types";
 
 // Update member (toggle admin role)
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -11,8 +13,22 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { isAdmin } = await request.json();
+    const body = await request.json();
     const memberId = (await params).id;
+
+    let validatedBody;
+    try {
+      validatedBody = memberSchema.parse(body);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return NextResponse.json(
+          { error: "Validation failed", details: error.errors },
+          { status: 400 }
+        );
+      }
+      throw error;
+    }
+    const { isAdmin } = validatedBody;
 
     // Get current user with organization
     const currentUser = await db.user.findUnique({
@@ -46,7 +62,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     // Update the member's admin status
     const updatedMember = await db.user.update({
       where: { id: memberId },
-      data: { isAdmin: typeof isAdmin === "boolean" ? isAdmin : false },
+      data: { isAdmin },
     });
 
     return NextResponse.json({ member: updatedMember });
