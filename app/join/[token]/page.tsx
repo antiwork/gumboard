@@ -296,7 +296,10 @@ export default async function JoinPage({ params }: JoinPageProps) {
                     placeholder="Enter your email address"
                   />
                 </div>
-                <Button type="submit" className="w-full px-4 py-5 truncate break-all text-ellipsis whitespace-nowrap overflow-hidden text-ellipsis ">
+                <Button
+                  type="submit"
+                  className="w-full px-4 py-5 truncate break-all text-ellipsis whitespace-nowrap overflow-hidden text-ellipsis "
+                >
                   Join {invite.organization.name}
                 </Button>
               </form>
