@@ -862,7 +862,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 )}
               </div>
             )}
-           {boardId !== "archive" ? (
+            {boardId !== "archive" ? (
               <Button
                 onClick={() => {
                   if (allBoards.length > 0) {
@@ -873,7 +873,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 }}
                 className="col-span-2 md:col-span-1 flex items-center"
               >
-               <Plus className="w-4 h-4" />
+                <Plus className="w-4 h-4" />
                 <span>Add note</span>
               </Button>
             ) : null}

@@ -451,7 +451,6 @@ test.describe("Archive Functionality", () => {
     expect(thirdTextarea).toContain(testContext.prefix("Third item"));
   });
 
-
   test("should enable Add note button on regular boards", async ({
     authenticatedPage,
     testContext,
