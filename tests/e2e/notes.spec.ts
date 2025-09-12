@@ -1567,4 +1567,65 @@ test.describe("Note Management", () => {
       expect(createdNotes).toHaveLength(1);
     });
   });
+
+  test("should make URLs in notes clickable", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const boardName = testContext.getBoardName("URL Test Board");
+    const board = await testPrisma.board.create({
+      data: {
+        name: boardName,
+        description: "Test board for URL handling",
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    // Create a note with a checklist item containing URLs
+    const note = await testPrisma.note.create({
+      data: {
+        color: "yellow",
+        boardId: board.id,
+        createdBy: testContext.userId,
+      },
+    });
+
+    // Add a checklist item with URLs
+    await testPrisma.checklistItem.create({
+      data: {
+        content: "Check out this link: https://example.com and this one http://test.org",
+        noteId: note.id,
+        order: 0,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    // Wait for the note to be visible using the aria-label
+    const noteElement = authenticatedPage.locator(`[aria-label="Note ${note.id}"]`);
+    await expect(noteElement).toBeVisible({ timeout: 10000 });
+
+    // Check that the URLs are rendered as links
+    const firstLink = noteElement.locator('a[href="https://example.com"]');
+    await expect(firstLink).toBeVisible();
+    await expect(firstLink).toHaveText("https://example.com");
+    await expect(firstLink).toHaveAttribute("target", "_blank");
+    await expect(firstLink).toHaveAttribute("rel", "noopener noreferrer");
+
+    const secondLink = noteElement.locator('a[href="http://test.org"]');
+    await expect(secondLink).toBeVisible();
+    await expect(secondLink).toHaveText("http://test.org");
+    await expect(secondLink).toHaveAttribute("target", "_blank");
+    await expect(secondLink).toHaveAttribute("rel", "noopener noreferrer");
+
+    // Test that clicking the link opens in a new tab
+    const newPagePromise = authenticatedPage.context().waitForEvent("page");
+    await firstLink.click();
+    const newPage = await newPagePromise;
+    await newPage.waitForLoadState();
+    expect(newPage.url()).toContain("example.com");
+    await newPage.close();
+  });
 });
