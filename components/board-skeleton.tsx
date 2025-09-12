@@ -1,7 +1,9 @@
+import { usePathname } from "next/navigation";
 import { Skeleton } from "./ui/skeleton";
 
 export const BoardPageSkeleton = () => {
   const skeletonNoteCount = 5;
+   const path = usePathname();
   return (
     <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
@@ -21,7 +23,7 @@ export const BoardPageSkeleton = () => {
           <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 flex flex-wrap sm:flex-nowrap items-center sm:space-x-3 w-full sm:w-auto">
             <div className="flex justify-between gap-2 items-center w-full sm:w-auto">
               <Skeleton className="h-10 w-42 sm:w-64 pl-10 pr-8" />
-              <Skeleton className="h-10 w-24 rounded-md" />
+              {path !== "/boards/archive" ? <Skeleton className="h-10 w-24 rounded-md" /> : null}
               <Skeleton className="h-10 w-10 rounded-full" />
             </div>
           </div>

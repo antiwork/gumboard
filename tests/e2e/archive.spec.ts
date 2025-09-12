@@ -217,7 +217,6 @@ test.describe("Archive Functionality", () => {
     await authenticatedPage.goto("/boards/archive");
 
     await expect(authenticatedPage).toHaveURL("/boards/archive");
-    await expect(authenticatedPage.getByRole("button", { name: "Add note" })).toBeDisabled();
   });
 
   test("should show unarchive button instead of archive button on Archive board", async ({
@@ -452,64 +451,6 @@ test.describe("Archive Functionality", () => {
     expect(thirdTextarea).toContain(testContext.prefix("Third item"));
   });
 
-  test("should disable Add note button on Archive board", async ({
-    authenticatedPage,
-    testContext,
-    testPrisma,
-  }) => {
-    // Create a regular board and note first
-    const board = await testPrisma.board.create({
-      data: {
-        name: testContext.getBoardName("Test Board"),
-        description: testContext.prefix("A test board"),
-        createdBy: testContext.userId,
-        organizationId: testContext.organizationId,
-      },
-    });
-
-    await testPrisma.note.create({
-      data: {
-        color: "#fef3c7",
-        archivedAt: new Date(),
-        createdBy: testContext.userId,
-        boardId: board.id,
-        checklistItems: {
-          create: [
-            {
-              content: testContext.prefix("Archived note content"),
-              checked: false,
-              order: 0,
-            },
-          ],
-        },
-      },
-    });
-
-    // Navigate to archive board
-    await authenticatedPage.goto("/boards/archive");
-
-    // Verify Add note button is disabled
-    const addNoteButton = authenticatedPage.getByRole("button", { name: "Add note" });
-    await expect(addNoteButton).toBeVisible();
-    await expect(addNoteButton).toBeDisabled();
-
-    // Verify button cannot be clicked (should not trigger any action)
-    await addNoteButton.click({ force: true });
-
-    // Wait a moment and verify no new note was created
-    await authenticatedPage.waitForTimeout(1000);
-
-    // Count existing notes (should remain the same)
-    const noteCount = await testPrisma.note.count({
-      where: {
-        createdBy: testContext.userId,
-        deletedAt: null,
-      },
-    });
-
-    // Should still have only the one note we created
-    expect(noteCount).toBe(1);
-  });
 
   test("should enable Add note button on regular boards", async ({
     authenticatedPage,
