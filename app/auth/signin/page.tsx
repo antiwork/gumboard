@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import Link from "next/link";
+import { useState, useEffect, Suspense} from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -210,10 +211,12 @@ function SignInContent() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
       <Card className="w-full bg-white max-w-sm sm:max-w-md dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-4">
-            <Image src="/logo/gumboard.svg" alt="Gumboard Logo" width={48} height={48} />
-          </div>
-          <CardTitle className="text-xl sm:text-2xl font-bold dark:text-zinc-100 flex items-center gap-2 justify-center">
+          <Link href="https://gumboard.com/" passHref>
+            <div className="mx-auto mb-4">
+              <Image src="/logo/gumboard.svg" alt="Gumboard Logo" width={48} height={48} />
+            </div>
+          </Link>
+          <CardTitle className="text-xl sm:text-2xl font-bold text-foreground dark:text-zinc-100 flex items-center gap-2 justify-center">
             Welcome to Gumboard
             <BetaBadge />
           </CardTitle>
