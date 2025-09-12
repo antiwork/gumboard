@@ -710,30 +710,34 @@ export default function OrganizationSettingsPage() {
           {invites.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Pending Invites</h4>
-              {invites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
-                >
-                  <div className="min-w-0">
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100 break-words">
-                      {invite.email}
-                    </p>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                      Invited on {new Date(invite.createdAt).toLocaleDateString()}
-                    </p>
-                  </div>
-                  <Button
-                    onClick={() => handleCancelInvite(invite.id)}
-                    variant="outline"
-                    size="sm"
-                    className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-400 border border-red-600 dark:border-red-500 font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-60"
-                    disabled={cancellingInviteIds.includes(invite.id)}
-                  >
-                    {cancellingInviteIds.includes(invite.id) ? "Cancelling..." : "Cancel"}
-                  </Button>
+              <div className="max-h-80 overflow-y-auto pr-1">
+                <div className="space-y-2">
+                  {invites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900 rounded-lg border border-yellow-200 dark:border-yellow-800"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100 break-words">
+                          {invite.email}
+                        </p>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Invited on {new Date(invite.createdAt).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleCancelInvite(invite.id)}
+                        variant="outline"
+                        size="sm"
+                        className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-400 border border-red-600 dark:border-red-500 font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-60"
+                        disabled={cancellingInviteIds.includes(invite.id)}
+                      >
+                        {cancellingInviteIds.includes(invite.id) ? "Cancelling..." : "Cancel"}
+                      </Button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
@@ -867,90 +871,98 @@ export default function OrganizationSettingsPage() {
           {selfServeInvites.length > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium text-zinc-900 dark:text-zinc-100">Active Invite Links</h4>
-              {selfServeInvites.map((invite) => (
-                <div
-                  key={invite.id}
-                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
-                    deletingInviteToken === invite.token
-                      ? "opacity-50 pointer-events-none transition-opacity duration-100"
-                      : ""
-                  } truncate max-w-full overflow-x-auto whitespace-nowrap`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
-                            {invite.name}
-                          </h5>
-                          {(invite.expiresAt ? new Date(invite.expiresAt) < new Date() : false) ? (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
-                              Expired
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-                              Active
-                            </span>
-                          )}
+              <div className="max-h-135 overflow-y-auto pr-1">
+                <div className="space-y-3">
+                  {selfServeInvites.map((invite) => (
+                    <div
+                      key={invite.id}
+                      className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
+                        deletingInviteToken === invite.token
+                          ? "opacity-50 pointer-events-none transition-opacity duration-100"
+                          : ""
+                      } truncate max-w-full overflow-x-auto whitespace-nowrap`}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-2">
+                              <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
+                                {invite.name}
+                              </h5>
+                              {(
+                                invite.expiresAt ? new Date(invite.expiresAt) < new Date() : false
+                              ) ? (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
+                                  Expired
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                  Active
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Button
+                                onClick={() => copyInviteLink(invite.token)}
+                                variant="outline"
+                                size="sm"
+                                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-zinc-800"
+                                title="Copy invite link"
+                              >
+                                {copiedInviteToken === invite.token ? (
+                                  <Check className="w-4 h-4" data-testid="check-icon" />
+                                ) : (
+                                  <Copy className="w-4 h-4" data-testid="copy-icon" />
+                                )}
+                              </Button>
+                              {user?.isAdmin && (
+                                <Button
+                                  onClick={() =>
+                                    handleDeleteSelfServeInvite(invite.token, invite.name)
+                                  }
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                                  title="Delete invite link"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                          <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
+                            <div className="flex items-center space-x-4">
+                              <span className="flex items-center">
+                                <Users className="w-4 h-4 mr-1" />
+                                {invite.usageLimit
+                                  ? `${invite.usageCount}/${invite.usageLimit} used`
+                                  : `${invite.usageCount} joined`}
+                              </span>
+                              {invite.expiresAt && (
+                                <span className="flex items-center">
+                                  <CalendarIconLucide className="w-4 h-4 mr-1" />
+                                  Expires {new Date(invite.expiresAt).toLocaleDateString()}
+                                </span>
+                              )}
+                            </div>
+                            <p>
+                              Created by {invite.user.name || invite.user.email} on{" "}
+                              {new Date(invite.createdAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="w-fit mt-3 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
+                            <code className="text-sm text-zinc-700 dark:text-zinc-200 break-all">
+                              {typeof window !== "undefined"
+                                ? `${window.location.origin}/join/${invite.token}`
+                                : `/join/${invite.token}`}
+                            </code>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <Button
-                            onClick={() => copyInviteLink(invite.token)}
-                            variant="outline"
-                            size="sm"
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:text-blue-300 dark:hover:bg-zinc-800"
-                            title="Copy invite link"
-                          >
-                            {copiedInviteToken === invite.token ? (
-                              <Check className="w-4 h-4" data-testid="check-icon" />
-                            ) : (
-                              <Copy className="w-4 h-4" data-testid="copy-icon" />
-                            )}
-                          </Button>
-                          {user?.isAdmin && (
-                            <Button
-                              onClick={() => handleDeleteSelfServeInvite(invite.token, invite.name)}
-                              variant="outline"
-                              size="sm"
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
-                              title="Delete invite link"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                      <div className="space-y-1 text-sm text-zinc-600 dark:text-zinc-400">
-                        <div className="flex items-center space-x-4">
-                          <span className="flex items-center">
-                            <Users className="w-4 h-4 mr-1" />
-                            {invite.usageLimit
-                              ? `${invite.usageCount}/${invite.usageLimit} used`
-                              : `${invite.usageCount} joined`}
-                          </span>
-                          {invite.expiresAt && (
-                            <span className="flex items-center">
-                              <CalendarIconLucide className="w-4 h-4 mr-1" />
-                              Expires {new Date(invite.expiresAt).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                        <p>
-                          Created by {invite.user.name || invite.user.email} on{" "}
-                          {new Date(invite.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="w-fit mt-3 p-2 bg-white dark:bg-zinc-900 rounded border border-zinc-200 dark:border-zinc-700">
-                        <code className="text-sm text-zinc-700 dark:text-zinc-200 break-all">
-                          {typeof window !== "undefined"
-                            ? `${window.location.origin}/join/${invite.token}`
-                            : `/join/${invite.token}`}
-                        </code>
                       </div>
                     </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
           )}
         </div>
