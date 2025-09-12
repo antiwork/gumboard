@@ -633,7 +633,7 @@ export default function OrganizationSettingsPage() {
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   {/* Only show admin toggle to current admins and not for yourself */}
                   {user?.isAdmin && member.id !== user.id && (
                     <Button
