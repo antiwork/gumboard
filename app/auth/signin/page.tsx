@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -14,11 +14,20 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { BetaBadge } from "@/components/ui/beta-badge";
-import { isValidEmail } from "@/lib/utils";
 import Image from "next/image";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 const emailProviders = [
   {
@@ -74,22 +83,19 @@ const oauthProviders = [
   },
 ];
 
+const formSchema = z.object({
+  email: z.string().email("Invalid email address"),
+});
+
 function SignInContent() {
+  const router = useRouter();
   const searchParams = useSearchParams();
-  const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const emailParam = searchParams.get("email");
+  const callbackUrl = searchParams.get("callbackUrl") || "/";
+
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [isResent, setIsResent] = useState(false);
-  const [emailError, setEmailError] = useState("");
-  const router = useRouter();
-
-  useEffect(() => {
-    const emailParam = searchParams.get("email");
-    if (emailParam) {
-      setEmail(emailParam);
-    }
-  }, [searchParams]);
 
   useEffect(() => {
     const errorParam = searchParams.get("error");
@@ -98,55 +104,34 @@ function SignInContent() {
     }
   }, [searchParams, router]);
 
-  const handleEmailChange = useCallback(
-    (value: string) => {
-      setEmail(value);
-      if (emailError) setEmailError("");
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      email: emailParam || "",
     },
-    [emailError]
-  );
+  });
 
-  useEffect(() => {
-    if (!email) return;
+  const { isSubmitting } = form.formState;
+  const email = form.watch("email");
 
-    const timeoutId = setTimeout(() => {
-      if (email && !isValidEmail(email)) {
-        setEmailError("Please enter a valid email address");
-      }
-    }, 1000);
-
-    return () => clearTimeout(timeoutId);
-  }, [email]);
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!isValidEmail(email)) {
-      setEmailError(email ? "Please enter a valid email address" : "Email address is required");
-      return;
-    }
-
-    setIsLoading(true);
+  const handleSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      const callbackUrl = searchParams.get("callbackUrl") || "/";
       await signIn("resend", {
-        email,
+        email: values.email,
         redirect: false,
         callbackUrl,
       });
       setIsSubmitted(true);
     } catch (error) {
       console.error("Sign in error:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleResendEmail = async () => {
     setIsResending(true);
     try {
-      const callbackUrl = searchParams.get("callbackUrl") || "/";
       await signIn("resend", {
-        email,
+        email: form.getValues("email"),
         redirect: false,
         callbackUrl,
       });
@@ -169,16 +154,14 @@ function SignInContent() {
             <div className="mx-auto w-12 h-12 bg-green-100 dark:bg-green-900/40 rounded-full flex items-center justify-center mb-4 ring-1 ring-green-200/60 dark:ring-green-800/40">
               <Mail className="w-6 h-6 text-green-700 dark:text-green-400" />
             </div>
-            <CardTitle className="text-2xl text-foreground dark:text-zinc-100">
-              Check your email
-            </CardTitle>
-            <CardDescription className="text-muted-foreground dark:text-zinc-400">
+            <CardTitle className="text-2xl dark:text-zinc-100">Check your email</CardTitle>
+            <CardDescription className="dark:text-zinc-400">
               We&apos;ve sent a magic link to{" "}
-              <strong className="text-foreground dark:text-zinc-100">{email}</strong>
+              <strong className="dark:text-zinc-100">{form.getValues("email")}</strong>
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground text-center mb-4 dark:text-zinc-400">
+            <p className="text-sm text-center mb-4 dark:text-zinc-400">
               Click the link in the email to sign in to your account. The link will expire in 24
               hours.
             </p>
@@ -204,7 +187,7 @@ function SignInContent() {
               variant="outline"
               className="w-full bg-white border-gray-200 text-gray-900 dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-900 transition-all active:scale-95 focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
               onClick={handleResendEmail}
-              disabled={isResending}
+              disabled={isResending || isResent}
               aria-busy={isResending}
             >
               {isResending ? (
@@ -226,10 +209,10 @@ function SignInContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-slate-50 dark:from-zinc-950 dark:to-zinc-900 p-4 sm:p-6">
-      <Card className="w-full bg-white max-w-sm sm:max-w-md dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition-shadow">
+      <Card className="w-full bg-white max-w-sm sm:max-w-md dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
         <CardHeader className="text-center">
           <Link href="https://gumboard.com/" passHref>
-            <div className="mx-auto w-12 h-12 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center mb-4 ring-1 ring-blue-200/60 dark:ring-blue-800/40">
+            <div className="mx-auto mb-4">
               <Image src="/logo/gumboard.svg" alt="Gumboard Logo" width={48} height={48} />
             </div>
           </Link>
@@ -237,93 +220,93 @@ function SignInContent() {
             Welcome to Gumboard
             <BetaBadge />
           </CardTitle>
-          <CardDescription className="text-muted-foreground dark:text-zinc-400">
-            {searchParams.get("email")
+          <CardDescription className="text-balance dark:text-zinc-400">
+            {emailParam
               ? "we'll send you a magic link to verify your email address"
               : "Enter your email address and we'll send you a magic link to sign in"}
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {searchParams.get("email") && (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md p-3">
-                <p className="text-sm text-blue-800 dark:text-blue-300">
-                  📧 You&apos;re signing in from an organization invitation
-                </p>
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email" className="text-foreground dark:text-zinc-200">
-                Email address
-              </Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => handleEmailChange(e.target.value)}
-                disabled={isLoading || !!searchParams.get("email")}
-                required
-                autoComplete="email"
-                inputMode="email"
-                className={`h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400 hover:border-gray-400 transition-colors ${
-                  emailError ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
-                }`}
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <CardContent className="space-y-4">
+              {emailParam && (
+                <div className="flex items-center justify-center gap-2 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300 border border-blue-200 dark:border-blue-800 rounded-md p-3">
+                  <Mail size={16} />
+                  <p className="text-sm">You&apos;re signing in from an organization invitation</p>
+                </div>
+              )}
+
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-foreground dark:text-zinc-200">
+                      Email address
+                    </FormLabel>
+                    <FormControl>
+                      <Input
+                        className="h-12 bg-white border-gray-300 text-foreground placeholder:text-gray-400 hover:border-gray-400 transition-colors"
+                        placeholder="Enter your email"
+                        disabled={isSubmitting || !!emailParam}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage className="text-red-600 dark:text-red-400 text-xs" />
+                  </FormItem>
+                )}
               />
-              {emailError && (
-                <p className="text-sm text-red-600 dark:text-red-400 mt-1">{emailError}</p>
-              )}
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col">
-            <Button
-              type="submit"
-              className="w-full h-12 font-medium mt-4 bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
-              disabled={isLoading || !email || !!emailError}
-              aria-busy={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Sending magic link...
-                </>
-              ) : (
-                <>
-                  Continue with Email
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
+            </CardContent>
+            <CardFooter className="flex flex-col">
+              <Button
+                className="w-full h-12 font-medium mt-4 bg-blue-600 text-white hover:bg-blue-700 active:scale-[0.98] dark:bg-zinc-800 dark:text-zinc-100 dark:hover:bg-zinc-700 transition-all focus-visible:ring-2 focus-visible:ring-blue-500 dark:focus-visible:ring-zinc-600 focus-visible:ring-offset-2 focus-visible:ring-offset-white dark:focus-visible:ring-offset-zinc-900"
+                type="submit"
+                disabled={isSubmitting || !email}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Sending magic link...
+                  </>
+                ) : (
+                  <>
+                    Continue with Email
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
 
-            {/* Divider */}
-            <div className="relative mt-6 w-full">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t border-gray-200 dark:border-zinc-700" />
+              {/* Divider */}
+              <div className="relative mt-6 w-full">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t border-gray-200 dark:border-zinc-700" />
+                </div>
+                <div className="relative flex justify-center text-sm">
+                  <span className="bg-white px-2 text-muted-foreground dark:bg-zinc-900 dark:text-zinc-400">
+                    or continue with
+                  </span>
+                </div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-muted-foreground dark:bg-zinc-900 dark:text-zinc-400">
-                  or continue with
-                </span>
-              </div>
-            </div>
 
-            {/* OAuth Buttons */}
-            <div className="space-y-3 w-full mt-4">
-              {oauthProviders.map((provider) => (
-                <Button
-                  key={provider.id}
-                  type="button"
-                  variant="outline"
-                  className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
-                  onClick={() => signIn(provider.id, { callbackUrl: "/" })}
-                >
-                  {provider.icon}
-                  Continue with {provider.name}
-                </Button>
-              ))}
-            </div>
-          </CardFooter>
-        </form>
+              {/* OAuth Buttons */}
+              <div className="space-y-3 w-full mt-4">
+                {oauthProviders.map((provider) => (
+                  <Button
+                    key={provider.id}
+                    type="button"
+                    variant="outline"
+                    disabled={isSubmitting}
+                    className="w-full h-12 justify-center bg-white border-gray-200 text-gray-900 active:scale-[0.98] dark:bg-zinc-950 dark:border-zinc-800 dark:text-zinc-100 cursor-pointer dark:hover:bg-zinc-900 transition-all"
+                    onClick={() => signIn(provider.id, { callbackUrl: "/" })}
+                  >
+                    {provider.icon}
+                    Continue with {provider.name}
+                  </Button>
+                ))}
+              </div>
+            </CardFooter>
+          </form>
+        </Form>
       </Card>
     </div>
   );
