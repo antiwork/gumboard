@@ -65,7 +65,25 @@ export async function PUT(
       include: {
         board: true,
         user: { select: { id: true, name: true, email: true } },
-        checklistItems: { orderBy: { order: "asc" } },
+        checklistItems: {
+          orderBy: { order: "asc" },
+          include: {
+            comments: {
+              where: { deletedAt: null },
+              include: {
+                author: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
       },
     });
 
@@ -179,7 +197,25 @@ export async function PUT(
         include: {
           user: { select: { id: true, name: true, email: true, image: true } },
           board: { select: { name: true, sendSlackUpdates: true } },
-          checklistItems: { orderBy: { order: "asc" } },
+          checklistItems: {
+            orderBy: { order: "asc" },
+            include: {
+              comments: {
+                where: { deletedAt: null },
+                include: {
+                  author: {
+                    select: {
+                      id: true,
+                      name: true,
+                      email: true,
+                      image: true,
+                    },
+                  },
+                },
+                orderBy: { createdAt: "asc" },
+              },
+            },
+          },
         },
       });
     });

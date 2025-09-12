@@ -36,7 +36,26 @@ export async function GET() {
         createdAt: true,
         updatedAt: true,
         archivedAt: true,
-        checklistItems: { orderBy: { order: "asc" } },
+        checklistItems: {
+          orderBy: { order: "asc" },
+          include: {
+            comments: {
+              where: { deletedAt: null },
+              include: {
+                author: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    image: true,
+                  },
+                },
+              },
+              orderBy: { createdAt: "asc" },
+            },
+          },
+        },
+
         user: {
           select: {
             id: true,
