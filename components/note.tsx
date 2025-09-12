@@ -346,6 +346,7 @@ export function Note({
         "before:bg-gradient-to-b before:from-black/5 before:to-transparent dark:before:from-white/5",
         className
       )}
+      data-testid="note-card"
       aria-label={`Note ${note.id}`}
       onFocusCapture={() => {}}
       onBlurCapture={() => {}}
