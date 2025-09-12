@@ -347,6 +347,7 @@ export function Note({
         className
       )}
       data-testid="note-card"
+      aria-label={`Note ${note.id}`}
       onFocusCapture={() => {}}
       onBlurCapture={() => {}}
       style={style}

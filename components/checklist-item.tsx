@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
+import Link from "next/link";
 
 export interface ChecklistItem {
   id: string;
@@ -105,23 +106,53 @@ export function ChecklistItem({
     onStopEdit?.();
   };
 
-  return (
-    <div
-      className={cn(
-        "flex items-start group/item rounded gap-2 transition-all duration-200",
-        className
-      )}
-      // To avoid flaky test locators
-      data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
-      data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
-    >
-      <Checkbox
-        checked={item.checked}
-        onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-zinc-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
-        disabled={readonly}
-      />
+  const renderContent = (content: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
 
+    if (!isEditing && content && urlRegex.test(content)) {
+      const parts = content.split(urlRegex);
+
+      return (
+        <div
+          className={cn(
+            "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 break-words whitespace-pre-wrap outline-none",
+            item.checked && "text-zinc-500 dark:text-zinc-500 line-through"
+          )}
+          onClick={() => {
+            if (!readonly && !isEditing) onStartEdit?.(item.id);
+          }}
+          role="textbox"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if ((e.key === "Enter" || e.key === " ") && !readonly && !isEditing) {
+              e.preventDefault();
+              onStartEdit?.(item.id);
+            }
+          }}
+        >
+          {parts.map((part, i) => {
+            if (urlRegex.test(part)) {
+              const url = part.startsWith("http") ? part : `https://${part}`;
+              return (
+                <Link
+                  key={i}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 dark:text-blue-400 hover:underline break-all"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {part}
+                </Link>
+              );
+            }
+            return <span key={i}>{part}</span>;
+          })}
+        </div>
+      );
+    }
+
+    return (
       <textarea
         ref={textareaRef}
         value={editContent ?? item.content}
@@ -159,6 +190,27 @@ export function ChecklistItem({
           }
         }}
       />
+    );
+  };
+
+  return (
+    <div
+      className={cn(
+        "flex items-start group/item rounded gap-2 transition-all duration-200",
+        className
+      )}
+      // To avoid flaky test locators
+      data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
+      data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
+    >
+      <Checkbox
+        checked={item.checked}
+        onCheckedChange={() => !readonly && onToggle?.(item.id)}
+        className="border-zinc-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
+        disabled={readonly}
+      />
+
+      {renderContent(item.content)}
 
       {showDeleteButton && !readonly && (
         <Button
