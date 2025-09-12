@@ -246,9 +246,11 @@ export default function Dashboard() {
                     <FormItem>
                       <FormLabel>Description (Optional)</FormLabel>
                       <FormControl>
-                        <Input
+                        <textarea
                           placeholder="Enter board description"
-                          className="border border-zinc-200 dark:border-zinc-800 text-muted-foreground dark:text-zinc-200"
+                          className="bg-white dark:bg-zinc-900 text-foreground dark:text-zinc-100 border border-gray-200 dark:border-zinc-700 
+                        w-full min-h-[60px] text-base md:text-sm rounded-md px-3 py-2 outline-none 
+                        focus-visible:ring-1 focus-visible:ring-blue-500 focus-visible:border-blue-500 focus:border-blue-500"
                           {...field}
                         />
                       </FormControl>
