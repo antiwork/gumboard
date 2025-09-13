@@ -126,17 +126,16 @@ async function autoVerifyAndCreateSession(email: string, token: string) {
 }
 
 interface InviteAcceptPageProps {
-  searchParams: Promise<{
+  searchParams: {
     token?: string;
     verified?: string;
-  }>;
+  };
 }
 
 export default async function InviteAcceptPage({ searchParams }: InviteAcceptPageProps) {
   const session = await auth();
-  const resolvedSearchParams = await searchParams;
-  const token = resolvedSearchParams.token;
-  const isJustVerified = resolvedSearchParams.verified === "true";
+  const token = searchParams.token;
+  const isJustVerified = searchParams.verified === "true";
 
   if (!token) {
     return (
