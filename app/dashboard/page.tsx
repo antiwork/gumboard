@@ -60,6 +60,12 @@ const formSchema = (boards: DashboardBoard[]) =>
       .min(1, "Board name is required")
       .transform((val) => val.trim())
       .superRefine((val, ctx) => {
+        if(val.length === 0){
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Board name cannot be empty",
+          });
+        }
         const exists = boards.some(
           (b) => b.name.trim().toLowerCase() === val.toLowerCase()
         );
