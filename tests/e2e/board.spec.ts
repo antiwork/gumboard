@@ -37,6 +37,34 @@ test.describe("Board Management", () => {
     expect(board?.createdBy).toBe(testContext.userId);
   });
 
+  test("should create a new board with unique name only", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    
+    await authenticatedPage.goto("/dashboard");
+    const boardName = testContext.getBoardName("Test Board");
+    const boardDescription = "Test board description";
+
+    await testPrisma.board.create({
+      data:{
+        name: boardName,
+        description: boardDescription,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      }
+    });
+
+    await authenticatedPage.click('button:has-text("Add Board")');
+    await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
+    await authenticatedPage.fill('input[placeholder*="board description"]', boardDescription);
+
+    await authenticatedPage.click('button:has-text("Create Board")');
+    await expect(authenticatedPage.locator("text=A board with this name already exists")).toBeVisible();
+    
+  });
+
   test("should display empty state when no boards exist", async ({
     authenticatedPage,
     testContext,
