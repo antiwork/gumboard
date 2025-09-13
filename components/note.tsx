@@ -14,6 +14,7 @@ import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/u
 import { cn } from "@/lib/utils";
 import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { nanoid } from "nanoid";
 
 // Core domain types
 export interface User {
@@ -260,7 +261,7 @@ export function Note({
   const handleAddChecklistItem = async (content: string) => {
     try {
       const newItem = {
-        id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        id: nanoid(),
         content,
         checked: false,
         order: note.checklistItems?.length ?? 0,

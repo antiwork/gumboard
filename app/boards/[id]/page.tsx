@@ -62,6 +62,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Textarea } from "@/components/ui/textarea";
+import { nanoid } from "nanoid";
 
 export default function BoardPage({ params }: { params: Promise<{ id: string }> }) {
   const [board, setBoard] = useState<Board | null>(null);
@@ -369,7 +370,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
       const checklistItems =
         originalNote.checklistItems?.map((item, index) => ({
-          id: `item_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: nanoid(),
           content: item.content,
           checked: item.checked,
           order: index,
