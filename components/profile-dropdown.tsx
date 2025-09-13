@@ -16,7 +16,7 @@ export function ProfileDropdown({ user }: Props) {
   return (
     <Popover>
       <PopoverTrigger asChild>
-         <button
+        <button
           type="button"
           aria-label="Open profile menu"
           className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
@@ -34,7 +34,7 @@ export function ProfileDropdown({ user }: Props) {
                   : user?.email?.charAt(0).toUpperCase()}
               </span>
             </AvatarFallback>
-           </Avatar>
+          </Avatar>
         </button>
       </PopoverTrigger>
       <PopoverContent className="w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 p-2">
@@ -53,7 +53,7 @@ export function ProfileDropdown({ user }: Props) {
             Settings
           </Link>
 
-         <button
+          <button
             type="button"
             onClick={handleSignOut}
             aria-label="Sign out"
