@@ -93,7 +93,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       throw error;
     }
 
-    const { name, description, isPublic, sendSlackUpdates } = validatedBody;
+    const { name, description, isPublic, sendSlackUpdates, archivedAt } = validatedBody;
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
@@ -138,11 +138,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       description?: string | null;
       isPublic?: boolean;
       sendSlackUpdates?: boolean;
+      archivedAt?: Date | null;
     } = {};
     if (name !== undefined) updateData.name = name.trim() || board.name;
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates;
+    if (archivedAt !== undefined) updateData.archivedAt = archivedAt ? new Date(archivedAt) : null;
 
     const updatedBoard = await db.board.update({
       where: { id: boardId },

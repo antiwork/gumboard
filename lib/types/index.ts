@@ -20,9 +20,11 @@ export const noteSchema = z.object({
 });
 
 export const boardSchema = z.object({
+  name: z.string().min(1, "Board name is required"),
   description: z.string().optional(),
   isPublic: z.boolean().optional(),
   sendSlackUpdates: z.boolean().optional(),
+  archivedAt: z.string().datetime().nullable().optional(),
 });
 
 export const organizationSchema = z.object({

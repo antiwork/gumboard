@@ -28,6 +28,7 @@ export interface Board {
   id: string;
   name: string;
   description: string | null;
+  archivedAt?: string | null;
 }
 
 export interface Note {
