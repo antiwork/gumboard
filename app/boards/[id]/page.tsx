@@ -7,6 +7,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import {
+  Archive,
+  ArchiveRestore,
   ChevronDown,
   Search,
   Copy,
@@ -50,6 +52,13 @@ import {
 } from "@/components/ui/form";
 // Use shared types from components
 import type { Note, Board, User } from "@/components/note";
+
+interface ArchivedBoard extends Board {
+  archivedAt: string;
+  _count: {
+    notes: number;
+  };
+}
 import { useTheme } from "next-themes";
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { toast } from "sonner";
@@ -68,6 +77,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [notes, setNotes] = useState<Note[]>([]);
   const { resolvedTheme } = useTheme();
   const [allBoards, setAllBoards] = useState<Board[]>([]);
+  const [archivedBoards, setArchivedBoards] = useState<ArchivedBoard[]>([]);
   const columnMeta = useBoardColumnMeta();
   const [notesloading, setNotesLoading] = useState(true);
   const { user, loading: userLoading } = useUser();
@@ -75,6 +85,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [boardId, setBoardId] = useState<string | null>(null);
+  
+  useEffect(() => {
+    if (boardId === "archived-boards") {
+      const fetchArchivedBoards = async () => {
+        try {
+          const response = await fetch("/api/boards/archive");
+          if (response.ok) {
+            const data = await response.json();
+            setArchivedBoards(data.boards || []);
+          }
+        } catch (error) {
+          console.error("Error fetching archived boards:", error);
+          setArchivedBoards([]);
+        }
+      };
+      fetchArchivedBoards();
+    }
+  }, [boardId]);
   const [searchTerm, setSearchTerm] = useState("");
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [dateRange, setDateRange] = useState<{
@@ -263,6 +291,22 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           id: "archive",
           name: "Archive",
           description: "Archived notes from all boards",
+        });
+      } else if (boardId === "archived-boards") {
+        [allBoardsResponse] = await Promise.all([
+          fetch("/api/boards"),
+        ]);
+
+        const archivedBoardsResponse = await fetch("/api/boards/archive");
+        if (archivedBoardsResponse.ok) {
+          const { boards: archivedBoards } = await archivedBoardsResponse.json();
+          setAllBoards(archivedBoards);
+        }
+
+        setBoard({
+          id: "archived-boards",
+          name: "Archived boards",
+          description: "Archived boards from your organization",
         });
       } else {
         [allBoardsResponse, boardResponse, notesResponse] = await Promise.all([
@@ -667,6 +711,101 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setDeleteConfirmDialog(false);
   };
 
+  const handleArchiveBoard = async () => {
+    if (!boardId || boardId === "all-notes" || boardId === "archive") return;
+
+    try {
+      const response = await fetch(`/api/boards/${boardId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+      });
+
+      if (response.ok) {
+        router.push("/dashboard");
+        toast("Board archived", {
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                await fetch(`/api/boards/${boardId}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ archivedAt: null }),
+                });
+              } catch (error) {
+                console.error("Error undoing archive:", error);
+              }
+            },
+          },
+          duration: 4000,
+        });
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Archive failed",
+          description: errorData.error || "Failed to archive board",
+        });
+      }
+    } catch (error) {
+      console.error("Error archiving board:", error);
+      setErrorDialog({
+        open: true,
+        title: "Archive failed",
+        description: "Failed to archive board",
+      });
+    }
+  };
+
+  const handleUnarchiveBoard = async () => {
+    if (!boardId || boardId === "all-notes" || boardId === "archive") return;
+
+    try {
+      const response = await fetch(`/api/boards/${boardId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archivedAt: null }),
+      });
+
+      if (response.ok) {
+        router.push("/dashboard");
+        toast("Board unarchived", {
+          action: {
+            label: "Undo",
+            onClick: async () => {
+              try {
+                await fetch(`/api/boards/${boardId}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+                });
+              } catch (error) {
+                console.error("Error undoing unarchive:", error);
+              }
+            },
+          },
+          duration: 4000,
+        });
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Unarchive failed",
+          description: errorData.error || "Failed to unarchive board",
+        });
+      }
+    } catch (error) {
+      console.error("Error unarchiving board:", error);
+      setErrorDialog({
+        open: true,
+        title: "Unarchive failed",
+        description: "Failed to unarchive board",
+      });
+    }
+  };
+
+
   if (userLoading || notesloading) {
     return <BoardPageSkeleton />;
   }
@@ -711,7 +850,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       ? "All notes"
                       : boardId === "archive"
                         ? "Archive"
-                        : board?.name}
+                        : boardId === "archived-boards"
+                          ? "Archived boards"
+                          : board?.name}
                   </div>
                   <ChevronDown
                     size={16}
@@ -806,26 +947,51 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   className="h-9"
                 />
               </div>
-              {boardId !== "all-notes" && boardId !== "archive" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setBoardSettings({
-                      name: board?.name || "",
-                      description: board?.description || "",
-                      isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                      sendSlackUpdates:
-                        (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                    });
-                    setBoardSettingsDialog(true);
-                  }}
-                  aria-label="Board settings"
-                  title="Board settings"
-                  className="flex items-center size-9"
-                >
-                  <EllipsisVertical className="size-4" />
-                </Button>
+              {boardId !== "all-notes" && boardId !== "archive" && boardId !== "archived-boards" && (
+                <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label="Board settings"
+                      title="Board settings"
+                      className="flex items-center size-9"
+                    >
+                      <EllipsisVertical className="size-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
+                    <div className="space-y-1">
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
+                        onClick={() => {
+                          setBoardSettings({
+                            name: board?.name || "",
+                            description: board?.description || "",
+                            isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+                            sendSlackUpdates:
+                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                          });
+                          setBoardSettingsDialog(true);
+                          setShowBoardDropdown(false);
+                        }}
+                      >
+                        Board settings
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
+                        onClick={() => {
+                          handleArchiveBoard();
+                          setShowBoardDropdown(false);
+                        }}
+                      >
+                        Archive board
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
           </div>
@@ -870,7 +1036,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
-              disabled={boardId === "archive"}
+              disabled={boardId === "archive" || boardId === "archived-boards"}
               className="col-span-2 md:col-span-1 flex items-center"
             >
               <Plus className="w-4 h-4" />
@@ -913,7 +1079,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
 
         {/* No Notes Created State */}
-        {notes.length === 0 && (
+        {notes.length === 0 && boardId !== "archived-boards" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
             <div className="mb-4">
               <StickyNote className="w-12 h-12 text-muted-foreground dark:text-zinc-400 mx-auto" />
@@ -945,6 +1111,92 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 <Plus className="w-4 h-4" />
                 Create your first note
               </Button>
+            )}
+          </div>
+        )}
+
+        {/* Archived Boards View */}
+        {boardId === "archived-boards" && (
+          <div className="absolute inset-0 p-8">
+            {archivedBoards.length === 0 ? (
+              <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
+                <div className="mb-4">
+                  <StickyNote className="w-12 h-12 text-muted-foreground dark:text-zinc-400 mx-auto" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground dark:text-zinc-100 mb-2">
+                  No archived boards
+                </h3>
+                <p className="text-muted-foreground dark:text-zinc-400 mb-6 max-w-md">
+                  Archived boards will appear here
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 sm:gap-6">
+                {archivedBoards.map((archivedBoard) => (
+                  <div
+                    key={archivedBoard.id}
+                    className="group h-full min-h-34 bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 border rounded-lg p-4 hover:shadow-lg transition-shadow"
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-lg font-medium text-gray-900 dark:text-zinc-100 truncate">
+                        {archivedBoard.name}
+                      </h3>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={async () => {
+                          try {
+                            const response = await fetch(`/api/boards/${archivedBoard.id}`, {
+                              method: "PUT",
+                              headers: { "Content-Type": "application/json" },
+                              body: JSON.stringify({ archivedAt: null }),
+                            });
+
+                            if (response.ok) {
+                              router.push("/dashboard");
+                              toast("Board unarchived", {
+                                action: {
+                                  label: "Undo",
+                                  onClick: async () => {
+                                    try {
+                                      await fetch(`/api/boards/${archivedBoard.id}`, {
+                                        method: "PUT",
+                                        headers: { "Content-Type": "application/json" },
+                                        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+                                      });
+                                    } catch (error) {
+                                      console.error("Error undoing unarchive:", error);
+                                    }
+                                  },
+                                },
+                                duration: 4000,
+                              });
+                            }
+                          } catch (error) {
+                            console.error("Error unarchiving board:", error);
+                          }
+                        }}
+                      >
+                        Unarchive
+                      </Button>
+                    </div>
+                    {archivedBoard.description && (
+                      <p className="text-slate-600 dark:text-zinc-300 text-sm mb-2 truncate">
+                        {archivedBoard.description}
+                      </p>
+                    )}
+                    <div className="flex justify-between items-center text-xs text-slate-500 dark:text-zinc-400">
+                      <span>
+                        {(archivedBoard as ArchivedBoard)._count?.notes || 0} {((archivedBoard as ArchivedBoard)._count?.notes || 0) === 1 ? "note" : "notes"}
+                      </span>
+                      <span>
+                        Archived: {new Date((archivedBoard as ArchivedBoard).archivedAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
@@ -1191,14 +1443,35 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           <AlertDialogFooter className="flex !flex-row justify-start md:justify-between">
-            <Button
-              onClick={() => setDeleteConfirmDialog(true)}
-              variant="destructive"
-              className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
-            >
-              <Trash2 className="w-4 h-4" />
-              <span className="hidden lg:inline">Delete Board</span>
-            </Button>
+            <div className="flex items-center gap-2">
+              {board?.archivedAt ? (
+                <Button
+                  onClick={handleUnarchiveBoard}
+                  variant="outline"
+                  className="flex items-center gap-2 border-green-600 text-green-600 hover:bg-green-50 dark:border-green-500 dark:text-green-500 dark:hover:bg-green-950"
+                >
+                  <ArchiveRestore className="w-4 h-4" />
+                  <span className="hidden lg:inline">Unarchive board</span>
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleArchiveBoard}
+                  variant="outline"
+                  className="flex items-center gap-2 border-orange-600 text-orange-600 hover:bg-orange-50 dark:border-orange-500 dark:text-orange-500 dark:hover:bg-orange-950"
+                >
+                  <Archive className="w-4 h-4" />
+                  <span className="hidden lg:inline">Archive board</span>
+                </Button>
+              )}
+              <Button
+                onClick={() => setDeleteConfirmDialog(true)}
+                variant="destructive"
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white dark:bg-red-600 dark:hover:bg-red-700"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="hidden lg:inline">Delete board</span>
+              </Button>
+            </div>
 
             <AlertDialogAction
               onClick={() => handleUpdateBoardSettings(boardSettings)}

@@ -312,6 +312,23 @@ export default function Dashboard() {
                 </Card>
               </Link>
 
+              {/* Archived Boards */}
+              <Link href="/boards/archived-boards">
+                <Card className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
+                  <CardHeader>
+                    <div className="flex items-center space-x-2">
+                      <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+                      <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
+                        Archived boards
+                      </CardTitle>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700 dark:text-gray-300 truncate">View archived boards</p>
+                  </CardContent>
+                </Card>
+              </Link>
+
               {boards.map((board) => (
                 <Link href={`/boards/${board.id}`} key={board.id}>
                   <Card

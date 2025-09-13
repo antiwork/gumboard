@@ -88,6 +88,7 @@ model Board {
   description    String?
   isPublic       Boolean      @default(false)
   sendSlackUpdates Boolean    @default(true)
+  archivedAt     DateTime?    // Track archived status
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy      String
@@ -97,6 +98,7 @@ model Board {
 
   // Performance indexes
   @@index([organizationId, createdAt], name: "idx_board_org_created")
+  @@index([organizationId, archivedAt], name: "idx_board_org_archived")
   @@map("boards")
 }
 

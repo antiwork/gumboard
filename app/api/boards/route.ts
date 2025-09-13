@@ -25,7 +25,10 @@ export async function GET() {
 
     // Get all boards for the organization
     const boards = await db.board.findMany({
-      where: { organizationId: user.organizationId },
+      where: { 
+        organizationId: user.organizationId,
+        archivedAt: null,
+      },
       select: {
         id: true,
         name: true,
