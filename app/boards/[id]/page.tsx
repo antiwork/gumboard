@@ -883,7 +883,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
             {/* User Dropdown */}
             <div className="hidden md:block">
-            <ProfileDropdown user={user} />
+              <ProfileDropdown user={user} />
             </div>
           </div>
         </div>
