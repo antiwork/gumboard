@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BetaBadge } from "@/components/ui/beta-badge";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Plus, Grid3x3, Archive } from "lucide-react";
 import { useRouter } from "next/navigation";
 import {
@@ -53,12 +53,24 @@ export type DashboardBoard = Board & {
   _count: { notes: number };
 };
 
-const formSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Board name is required")
-    .refine((value) => value.trim().length > 0, "Board name cannot be empty"),
-  description: z.string().optional(),
+const formSchema = (boards: DashboardBoard[]) =>
+  z.object({
+    name: z
+      .string()
+      .min(1, "Board name is required")
+      .transform((val) => val.trim())
+      .superRefine((val, ctx) => {
+        const exists = boards.some(
+          (b) => b.name.trim().toLowerCase() === val.toLowerCase()
+        );
+        if (exists) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "A board with this name already exists",
+          });
+        }
+      }),
+    description: z.string().optional(),
 });
 
 export default function Dashboard() {
@@ -75,12 +87,11 @@ export default function Dashboard() {
 
   const router = useRouter();
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      name: "",
-      description: "",
-    },
+  const schema = useMemo(() => formSchema(boards), [boards]);
+
+  const form = useForm<z.infer<typeof schema>>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: "", description: "" },
   });
 
   const fetchUserAndBoards = useCallback(async () => {
@@ -129,7 +140,7 @@ export default function Dashboard() {
     fetchUserAndBoards();
   }, [fetchUserAndBoards]);
 
-  const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
+  const handleAddBoard = async (values: z.infer<typeof schema>) => {
     const { name, description } = values;
     const trimmedName = name.trim();
     try {
