@@ -824,8 +824,9 @@ export default function OrganizationSettingsPage() {
                       showOutsideDays={true}
                       classNames={{
                         weekday:
-                        "w-(--cell-size) text-center text-zinc-900 dark:text-zinc-100 font-normal text-[0.8rem] select-none",
-                        outside:"text-zinc-400 dark:text-zinc-700 opacity-60 cursor-pointer hover:bg-blue-500 hover:text-white",
+                          "w-(--cell-size) text-center text-zinc-900 dark:text-zinc-100 font-normal text-[0.8rem] select-none",
+                        outside:
+                          "text-zinc-400 dark:text-zinc-700 opacity-60 cursor-pointer hover:bg-blue-500 hover:text-white",
                         caption_label: "text-sm font-semibold text-zinc-200 dark:text-zinc-100",
                         day: "cursor-pointer hover:bg-blue-500 hover:text-white rounded-md",
                         day_selected: "bg-blue-500 text-white hover:bg-blue-600 rounded-md",
