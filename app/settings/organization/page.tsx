@@ -633,7 +633,7 @@ export default function OrganizationSettingsPage() {
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   {/* Only show admin toggle to current admins and not for yourself */}
                   {user?.isAdmin && member.id !== user.id && (
                     <Button
@@ -883,7 +883,8 @@ export default function OrganizationSettingsPage() {
                           <h5 className="font-medium text-zinc-900 dark:text-zinc-100">
                             {invite.name}
                           </h5>
-                          {(invite.expiresAt ? new Date(invite.expiresAt) < new Date() : false) ? (
+                          {(invite.expiresAt && new Date(invite.expiresAt) < new Date()) ||
+                          (invite.usageLimit && invite.usageCount >= invite.usageLimit) ?  (
                             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">
                               Expired
                             </span>
@@ -928,12 +929,6 @@ export default function OrganizationSettingsPage() {
                               ? `${invite.usageCount}/${invite.usageLimit} used`
                               : `${invite.usageCount} joined`}
                           </span>
-                          {invite.expiresAt && (
-                            <span className="flex items-center">
-                              <CalendarIconLucide className="w-4 h-4 mr-1" />
-                              Expires {new Date(invite.expiresAt).toLocaleDateString()}
-                            </span>
-                          )}
                         </div>
                         <p>
                           Created by {invite.user.name || invite.user.email} on{" "}
