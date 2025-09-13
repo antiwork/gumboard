@@ -633,7 +633,7 @@ export default function OrganizationSettingsPage() {
                     <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   {/* Only show admin toggle to current admins and not for yourself */}
                   {user?.isAdmin && member.id !== user.id && (
                     <Button
@@ -727,7 +727,7 @@ export default function OrganizationSettingsPage() {
                     onClick={() => handleCancelInvite(invite.id)}
                     variant="outline"
                     size="sm"
-                    className="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900 border-red-600 hover:bg-inherit hover:border-red-600 disabled:opacity-70 disabled:text-red-300"
+                    className="bg-red-600 text-white hover:bg-red-700 dark:bg-red-500 dark:hover:bg-red-400 border border-red-600 dark:border-red-500 font-medium px-4 py-2 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-red-400 focus:ring-offset-2 dark:focus:ring-offset-gray-900 disabled:opacity-60"
                     disabled={cancellingInviteIds.includes(invite.id)}
                   >
                     {cancellingInviteIds.includes(invite.id) ? "Cancelling..." : "Cancel"}
@@ -874,7 +874,7 @@ export default function OrganizationSettingsPage() {
                     deletingInviteToken === invite.token
                       ? "opacity-50 pointer-events-none transition-opacity duration-100"
                       : ""
-                  } truncate max-w-full overflow-scroll whitespace-nowrap`}
+                  } truncate max-w-full overflow-x-auto whitespace-nowrap`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
