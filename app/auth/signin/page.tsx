@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Mail, ArrowRight, Loader2, ExternalLink } from "lucide-react";
 import { BetaBadge } from "@/components/ui/beta-badge";
-import { isValidEmail } from "@/lib/utils";
+import { inviteSchema } from "@/lib/types";
 import Image from "next/image";
 
 const emailProviders = [
@@ -73,6 +73,7 @@ const oauthProviders = [
     ),
   },
 ];
+const emailSchema = inviteSchema.shape.email;
 
 function SignInContent() {
   const searchParams = useSearchParams();
@@ -110,8 +111,8 @@ function SignInContent() {
     if (!email) return;
 
     const timeoutId = setTimeout(() => {
-      if (email && !isValidEmail(email)) {
-        setEmailError("Please enter a valid email address");
+      if (!emailSchema.safeParse(email).success) {
+                setEmailError("Please enter a valid email address");
       }
     }, 1000);
 
@@ -120,7 +121,8 @@ function SignInContent() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!isValidEmail(email)) {
+    const result = emailSchema.safeParse(email);
+    if (!result.success) {
       setEmailError(email ? "Please enter a valid email address" : "Email address is required");
       return;
     }
@@ -128,8 +130,10 @@ function SignInContent() {
     setIsLoading(true);
     try {
       const callbackUrl = searchParams.get("callbackUrl") || "/";
+           const parsedEmail = result.data;
+      setEmail(parsedEmail);
       await signIn("resend", {
-        email,
+        email: parsedEmail,
         redirect: false,
         callbackUrl,
       });
