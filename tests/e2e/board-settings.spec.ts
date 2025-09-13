@@ -34,6 +34,39 @@ test.describe("Board Settings", () => {
     await expect(checkbox).toBeChecked();
   });
 
+  test("should show toast when saving board settings", async ({
+    authenticatedPage,
+    testContext,
+    testPrisma,
+  }) => {
+    const board = await testPrisma.board.create({
+      data: {
+        name: testContext.getBoardName("Toast Board"),
+        description: testContext.prefix("Board for toast test"),
+        sendSlackUpdates: true,
+        createdBy: testContext.userId,
+        organizationId: testContext.organizationId,
+      },
+    });
+
+    await authenticatedPage.goto(`/boards/${board.id}`);
+
+    await authenticatedPage.getByRole("button", { name: "Board settings" }).click();
+
+    await authenticatedPage.click('button:has-text("Save settings")');
+
+    // Ensure the PUT request succeeds
+    await authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}`) &&
+        resp.request().method() === "PUT" &&
+        resp.ok()
+    );
+
+    // Assert the Sonner toast is displayed
+    await expect(authenticatedPage.getByText("Settings saved")).toBeVisible();
+  });
+
   test("should toggle Slack updates setting and save changes", async ({
     authenticatedPage,
     testContext,

@@ -623,9 +623,24 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
         });
         setBoardSettingsDialog(false);
+        toast("Settings saved", {
+          description: "Your board settings have been updated.",
+        });
+      } else {
+        let errorMsg = "Failed to save settings";
+        try {
+          const errorData = await response.json();
+          errorMsg = errorData?.error || errorMsg;
+        } catch {}
+        toast("Failed to save settings", {
+          description: errorMsg,
+        });
       }
     } catch (error) {
       console.error("Error updating board settings:", error);
+      toast("Failed to save settings", {
+        description: "An unexpected error occurred. Please try again.",
+      });
     }
   };
 
