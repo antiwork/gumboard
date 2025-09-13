@@ -313,13 +313,13 @@ export default function Dashboard() {
               </Link>
 
               {/* Archived Boards */}
-              <Link href="/boards/archived-boards">
+              <Link href="/boards/archive">
                 <Card className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer bg-gray-50 dark:bg-zinc-900 border-gray-200 dark:border-zinc-800 dark:hover:bg-zinc-900/75">
                   <CardHeader>
                     <div className="flex items-center space-x-2">
                       <Archive className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                       <CardTitle className="text-lg text-gray-900 dark:text-gray-200">
-                        Archived boards
+                        All archived
                       </CardTitle>
                     </div>
                   </CardHeader>

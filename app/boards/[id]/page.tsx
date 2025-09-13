@@ -87,7 +87,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [boardId, setBoardId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (boardId === "archived-boards") {
+    if (boardId === "archive") {
       const fetchArchivedBoards = async () => {
         try {
           const response = await fetch("/api/boards/archive");
@@ -292,7 +292,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           name: "Archive",
           description: "Archived notes from all boards",
         });
-      } else if (boardId === "archived-boards") {
+      } else if (boardId === "archive") {
         [allBoardsResponse] = await Promise.all([fetch("/api/boards")]);
 
         const archivedBoardsResponse = await fetch("/api/boards/archive");
@@ -302,7 +302,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         }
 
         setBoard({
-          id: "archived-boards",
+          id: "archive",
           name: "Archived boards",
           description: "Archived boards from your organization",
         });
@@ -847,9 +847,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       ? "All notes"
                       : boardId === "archive"
                         ? "Archive"
-                        : boardId === "archived-boards"
-                          ? "Archived boards"
-                          : board?.name}
+                        : board?.name}
                   </div>
                   <ChevronDown
                     size={16}
@@ -945,8 +943,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 />
               </div>
               {boardId !== "all-notes" &&
-                boardId !== "archive" &&
-                boardId !== "archived-boards" && (
+                boardId !== "archive" && (
                   <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
                     <PopoverTrigger asChild>
                       <Button
@@ -1035,7 +1032,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
-              disabled={boardId === "archive" || boardId === "archived-boards"}
+              disabled={boardId === "archive"}
               className="col-span-2 md:col-span-1 flex items-center"
             >
               <Plus className="w-4 h-4" />
@@ -1078,7 +1075,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
 
         {/* No Notes Created State */}
-        {notes.length === 0 && boardId !== "archived-boards" && (
+        {notes.length === 0 && boardId !== "archive" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
             <div className="mb-4">
               <StickyNote className="w-12 h-12 text-muted-foreground dark:text-zinc-400 mx-auto" />
@@ -1115,7 +1112,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         )}
 
         {/* Archived Boards View */}
-        {boardId === "archived-boards" && (
+        {boardId === "archive" && (
           <div className="absolute inset-0 p-8">
             {archivedBoards.length === 0 ? (
               <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
