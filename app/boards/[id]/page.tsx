@@ -827,11 +827,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   <EllipsisVertical className="size-4" />
                 </Button>
               )}
+
+              <div className="md:hidden">
+                <ProfileDropdown user={user} />
+              </div>
             </div>
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Search Box */}
             {notes.length > 0 && (
               <div className="relative h-9">
@@ -878,7 +882,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             </Button>
 
             {/* User Dropdown */}
+            <div className="hidden md:block">
             <ProfileDropdown user={user} />
+            </div>
           </div>
         </div>
       </div>
