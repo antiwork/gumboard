@@ -85,7 +85,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [showBoardDropdown, setShowBoardDropdown] = useState(false);
   const [showAddBoard, setShowAddBoard] = useState(false);
   const [boardId, setBoardId] = useState<string | null>(null);
-  
+
   useEffect(() => {
     if (boardId === "archived-boards") {
       const fetchArchivedBoards = async () => {
@@ -293,9 +293,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           description: "Archived notes from all boards",
         });
       } else if (boardId === "archived-boards") {
-        [allBoardsResponse] = await Promise.all([
-          fetch("/api/boards"),
-        ]);
+        [allBoardsResponse] = await Promise.all([fetch("/api/boards")]);
 
         const archivedBoardsResponse = await fetch("/api/boards/archive");
         if (archivedBoardsResponse.ok) {
@@ -805,7 +803,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-
   if (userLoading || notesloading) {
     return <BoardPageSkeleton />;
   }
@@ -947,52 +944,54 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   className="h-9"
                 />
               </div>
-              {boardId !== "all-notes" && boardId !== "archive" && boardId !== "archived-boards" && (
-                <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Board settings"
-                      title="Board settings"
-                      className="flex items-center size-9"
-                    >
-                      <EllipsisVertical className="size-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
-                    <div className="space-y-1">
+              {boardId !== "all-notes" &&
+                boardId !== "archive" &&
+                boardId !== "archived-boards" && (
+                  <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
+                    <PopoverTrigger asChild>
                       <Button
                         variant="ghost"
-                        className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
-                        onClick={() => {
-                          setBoardSettings({
-                            name: board?.name || "",
-                            description: board?.description || "",
-                            isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                            sendSlackUpdates:
-                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                          });
-                          setBoardSettingsDialog(true);
-                          setShowBoardDropdown(false);
-                        }}
+                        size="sm"
+                        aria-label="Board settings"
+                        title="Board settings"
+                        className="flex items-center size-9"
                       >
-                        Board settings
+                        <EllipsisVertical className="size-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
-                        onClick={() => {
-                          handleArchiveBoard();
-                          setShowBoardDropdown(false);
-                        }}
-                      >
-                        Archive board
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
+                      <div className="space-y-1">
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
+                          onClick={() => {
+                            setBoardSettings({
+                              name: board?.name || "",
+                              description: board?.description || "",
+                              isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+                              sendSlackUpdates:
+                                (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                            });
+                            setBoardSettingsDialog(true);
+                            setShowBoardDropdown(false);
+                          }}
+                        >
+                          Board settings
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
+                          onClick={() => {
+                            handleArchiveBoard();
+                            setShowBoardDropdown(false);
+                          }}
+                        >
+                          Archive board
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
             </div>
           </div>
 
@@ -1163,7 +1162,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                                       await fetch(`/api/boards/${archivedBoard.id}`, {
                                         method: "PUT",
                                         headers: { "Content-Type": "application/json" },
-                                        body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+                                        body: JSON.stringify({
+                                          archivedAt: new Date().toISOString(),
+                                        }),
                                       });
                                     } catch (error) {
                                       console.error("Error undoing unarchive:", error);
@@ -1188,10 +1189,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     )}
                     <div className="flex justify-between items-center text-xs text-slate-500 dark:text-zinc-400">
                       <span>
-                        {(archivedBoard as ArchivedBoard)._count?.notes || 0} {((archivedBoard as ArchivedBoard)._count?.notes || 0) === 1 ? "note" : "notes"}
+                        {(archivedBoard as ArchivedBoard)._count?.notes || 0}{" "}
+                        {((archivedBoard as ArchivedBoard)._count?.notes || 0) === 1
+                          ? "note"
+                          : "notes"}
                       </span>
                       <span>
-                        Archived: {new Date((archivedBoard as ArchivedBoard).archivedAt).toLocaleDateString()}
+                        Archived:{" "}
+                        {new Date((archivedBoard as ArchivedBoard).archivedAt).toLocaleDateString()}
                       </span>
                     </div>
                   </div>

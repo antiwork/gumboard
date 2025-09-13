@@ -324,7 +324,9 @@ export default function Dashboard() {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <p className="text-gray-700 dark:text-gray-300 truncate">View archived boards</p>
+                    <p className="text-gray-700 dark:text-gray-300 truncate">
+                      View archived boards
+                    </p>
                   </CardContent>
                 </Card>
               </Link>

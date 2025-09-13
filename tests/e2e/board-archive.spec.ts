@@ -43,9 +43,7 @@ test.describe("Board Archive Functionality", () => {
 
     await expect(authenticatedPage).toHaveURL("/boards/archived-boards");
 
-    await expect(
-      authenticatedPage.getByText(testContext.getBoardName("Test Board"))
-    ).toBeVisible();
+    await expect(authenticatedPage.getByText(testContext.getBoardName("Test Board"))).toBeVisible();
   });
 
   test("should archive a board and remove it from dashboard", async ({
@@ -154,9 +152,7 @@ test.describe("Board Archive Functionality", () => {
     await expect(authenticatedPage.getByText("Archived boards will appear here")).toBeVisible();
   });
 
-  test("should not show archive button for special boards", async ({
-    authenticatedPage,
-  }) => {
+  test("should not show archive button for special boards", async ({ authenticatedPage }) => {
     await authenticatedPage.goto("/boards/archive");
     await expect(authenticatedPage.locator('button:has-text("Archive board")')).not.toBeVisible();
 
