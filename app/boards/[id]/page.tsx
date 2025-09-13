@@ -973,37 +973,37 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     </PopoverTrigger>
                     <PopoverContent className="w-48 p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
                       <div className="space-y-1">
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
-                        onClick={() => {
-                          setBoardSettings({
-                            name: board?.name || "",
-                            description: board?.description || "",
-                            isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                            sendSlackUpdates:
-                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                          });
-                          setBoardSettingsDialog(true);
-                          setShowBoardDropdown(false);
-                        }}
-                      >
-                        Board settings
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
-                        onClick={() => {
-                          handleArchiveBoard();
-                          setShowBoardDropdown(false);
-                        }}
-                      >
-                        Archive board
-                      </Button>
-                    </div>
-                  </PopoverContent>
-                </Popover>
-              )}
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
+                          onClick={() => {
+                            setBoardSettings({
+                              name: board?.name || "",
+                              description: board?.description || "",
+                              isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+                              sendSlackUpdates:
+                                (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                            });
+                            setBoardSettingsDialog(true);
+                            setShowBoardDropdown(false);
+                          }}
+                        >
+                          Board settings
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
+                          onClick={() => {
+                            handleArchiveBoard();
+                            setShowBoardDropdown(false);
+                          }}
+                        >
+                          Archive board
+                        </Button>
+                      </div>
+                    </PopoverContent>
+                  </Popover>
+                )}
             </div>
           </div>
 
@@ -1075,7 +1075,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   currentUser={user as User}
                   onUpdate={handleUpdateNoteFromComponent}
                   onDelete={handleDeleteNote}
-                  onArchive={boardId !== "archive" && boardId !== "archived-boards" ? handleArchiveNote : undefined}
+                  onArchive={
+                    boardId !== "archive" && boardId !== "archived-boards"
+                      ? handleArchiveNote
+                      : undefined
+                  }
                   onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
                   onCopy={handleCopyNote}
                   showBoardName={boardId === "all-notes" || boardId === "archive"}
