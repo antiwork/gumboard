@@ -42,18 +42,17 @@ test.describe("Board Management", () => {
     testContext,
     testPrisma,
   }) => {
-    
     await authenticatedPage.goto("/dashboard");
     const boardName = testContext.getBoardName("Test Board");
     const boardDescription = "Test board description";
 
     await testPrisma.board.create({
-      data:{
+      data: {
         name: boardName,
         description: boardDescription,
         createdBy: testContext.userId,
         organizationId: testContext.organizationId,
-      }
+      },
     });
 
     await authenticatedPage.click('button:has-text("Add Board")');
@@ -61,8 +60,9 @@ test.describe("Board Management", () => {
     await authenticatedPage.fill('input[placeholder*="board description"]', boardDescription);
 
     await authenticatedPage.click('button:has-text("Create Board")');
-    await expect(authenticatedPage.locator("text=A board with this name already exists")).toBeVisible();
-    
+    await expect(
+      authenticatedPage.locator("text=A board with this name already exists")
+    ).toBeVisible();
   });
 
   test("should display empty state when no boards exist", async ({

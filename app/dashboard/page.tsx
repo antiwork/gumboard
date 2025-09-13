@@ -60,15 +60,13 @@ const formSchema = (boards: DashboardBoard[]) =>
       .min(1, "Board name is required")
       .transform((val) => val.trim())
       .superRefine((val, ctx) => {
-        if(val.length === 0){
+        if (val.length === 0) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "Board name cannot be empty",
           });
         }
-        const exists = boards.some(
-          (b) => b.name.trim().toLowerCase() === val.toLowerCase()
-        );
+        const exists = boards.some((b) => b.name.trim().toLowerCase() === val.toLowerCase());
         if (exists) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -77,7 +75,7 @@ const formSchema = (boards: DashboardBoard[]) =>
         }
       }),
     description: z.string().optional(),
-});
+  });
 
 export default function Dashboard() {
   const [boards, setBoards] = useState<DashboardBoard[]>([]);
