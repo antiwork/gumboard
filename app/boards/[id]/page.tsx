@@ -87,7 +87,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [boardId, setBoardId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (boardId === "archive") {
+    if (boardId === "archived-boards") {
       const fetchArchivedBoards = async () => {
         try {
           const response = await fetch("/api/boards/archive");
@@ -292,7 +292,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           name: "Archive",
           description: "Archived notes from all boards",
         });
-      } else if (boardId === "archive") {
+      } else if (boardId === "archived-boards") {
         [allBoardsResponse] = await Promise.all([fetch("/api/boards")]);
 
         const archivedBoardsResponse = await fetch("/api/boards/archive");
@@ -302,7 +302,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         }
 
         setBoard({
-          id: "archive",
+          id: "archived-boards",
           name: "Archived boards",
           description: "Archived boards from your organization",
         });
@@ -847,7 +847,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       ? "All notes"
                       : boardId === "archive"
                         ? "Archive"
-                        : board?.name}
+                        : boardId === "archived-boards"
+                          ? "Archived boards"
+                          : board?.name}
                   </div>
                   <ChevronDown
                     size={16}
@@ -905,6 +907,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   >
                     <div>All archived</div>
                   </Link>
+
+                  {/* Archived Boards Option */}
+                  <Link
+                    href="/boards/archived-boards"
+                    className={`rounded-lg block font-medium px-3 py-1.5 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${
+                      boardId === "archived-boards"
+                        ? "bg-zinc-100 dark:bg-zinc-800 dark:text-white font-semibold"
+                        : "text-foreground dark:text-white"
+                    }`}
+                  >
+                    <div>Archived boards</div>
+                  </Link>
                   <div className="border-t border-zinc-100 dark:border-zinc-800 my-1"></div>
                   <Button
                     variant="outline"
@@ -942,21 +956,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   className="h-9"
                 />
               </div>
-              {boardId !== "all-notes" && boardId !== "archive" && (
-                <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label="Board settings"
-                      title="Board settings"
-                      className="flex items-center size-9"
-                    >
-                      <EllipsisVertical className="size-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-48 p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
-                    <div className="space-y-1">
+              {boardId !== "all-notes" &&
+                boardId !== "archive" &&
+                boardId !== "archived-boards" && (
+                  <Popover open={showBoardDropdown} onOpenChange={setShowBoardDropdown}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Board settings"
+                        title="Board settings"
+                        className="flex items-center size-9"
+                      >
+                        <EllipsisVertical className="size-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-48 p-2 bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-800">
+                      <div className="space-y-1">
                       <Button
                         variant="ghost"
                         className="w-full justify-start text-sm hover:bg-gray-100 dark:hover:bg-zinc-800"
@@ -1031,7 +1047,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   handleAddNote();
                 }
               }}
-              disabled={boardId === "archive"}
+              disabled={boardId === "archive" || boardId === "archived-boards"}
               className="col-span-2 md:col-span-1 flex items-center"
             >
               <Plus className="w-4 h-4" />
@@ -1059,7 +1075,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   currentUser={user as User}
                   onUpdate={handleUpdateNoteFromComponent}
                   onDelete={handleDeleteNote}
-                  onArchive={boardId !== "archive" ? handleArchiveNote : undefined}
+                  onArchive={boardId !== "archive" && boardId !== "archived-boards" ? handleArchiveNote : undefined}
                   onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
                   onCopy={handleCopyNote}
                   showBoardName={boardId === "all-notes" || boardId === "archive"}
@@ -1074,7 +1090,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         </div>
 
         {/* No Notes Created State */}
-        {notes.length === 0 && boardId !== "archive" && (
+        {notes.length === 0 && boardId !== "archived-boards" && (
           <div className="absolute inset-0 flex flex-col items-center justify-center min-h-[400px] p-8 text-center">
             <div className="mb-4">
               <StickyNote className="w-12 h-12 text-muted-foreground dark:text-zinc-400 mx-auto" />
@@ -1111,7 +1127,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         )}
 
         {/* Archived Boards View */}
-        {boardId === "archive" && (
+        {boardId === "archived-boards" && (
           <div className="absolute inset-0 p-8">
             {archivedBoards.length === 0 ? (
               <div className="flex flex-col items-center justify-center min-h-[400px] text-center">
