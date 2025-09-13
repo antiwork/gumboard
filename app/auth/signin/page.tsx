@@ -112,7 +112,7 @@ function SignInContent() {
 
     const timeoutId = setTimeout(() => {
       if (!emailSchema.safeParse(email).success) {
-                setEmailError("Please enter a valid email address");
+        setEmailError("Please enter a valid email address");
       }
     }, 1000);
 
@@ -130,7 +130,7 @@ function SignInContent() {
     setIsLoading(true);
     try {
       const callbackUrl = searchParams.get("callbackUrl") || "/";
-           const parsedEmail = result.data;
+      const parsedEmail = result.data;
       setEmail(parsedEmail);
       await signIn("resend", {
         email: parsedEmail,
