@@ -373,7 +373,7 @@ export function Note({
               {showBoardName && note.board && (
                 <Link
                   href={`/boards/${note.board.id}`}
-                  className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
+                  className="text-xs text-blue-600 dark:text-blue-700 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
                 >
                   {note.board.name}
                 </Link>
@@ -392,7 +392,7 @@ export function Note({
                       e.stopPropagation();
                       onCopy?.(note);
                     }}
-                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-white/20 rounded"
+                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-zinc-700 dark:hover:text-white hover:bg-white/20 rounded"
                     variant="ghost"
                     size="icon"
                   >
@@ -413,7 +413,7 @@ export function Note({
                       e.stopPropagation();
                       onDelete?.(note.id);
                     }}
-                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white hover:bg-white/20 rounded"
+                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-zinc-700 dark:hover:text-white hover:bg-white/20 rounded"
                     variant="ghost"
                     size="icon"
                   >
@@ -433,7 +433,7 @@ export function Note({
                       e.stopPropagation();
                       onArchive(note.id);
                     }}
-                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-gray-400 dark:hover:text-white hover:bg-white/20 rounded"
+                    className="p-1 text-zinc-600 hover:text-zinc-900 dark:text-gray-700 dark:hover:text-white hover:bg-white/20 rounded"
                     variant="ghost"
                     size="icon"
                     aria-label="Archive note"
