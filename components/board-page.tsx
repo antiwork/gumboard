@@ -703,7 +703,7 @@ export function BoardPage({ params, isPublic }: BoardPageProps) {
     return <BoardPageSkeleton />;
   }
 
-  if (!board && (boardId !== "all-notes" && boardId !== "archive")) {
+  if (!board && boardId !== "all-notes" && boardId !== "archive") {
     if (isPublic) {
       return (
         <div className="min-h-screen dark:bg-zinc-950 dark:text-zinc-100 flex items-center justify-center">
