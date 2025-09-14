@@ -315,7 +315,12 @@ export default function Dashboard() {
               </Link>
 
               {boards.map((board) => (
-                <BoardContextMenu setBoards={setBoards} boards={boards} key={board.id} board={board}>
+                <BoardContextMenu
+                  setBoards={setBoards}
+                  boards={boards}
+                  key={board.id}
+                  board={board}
+                >
                   <Card
                     data-board-id={board.id}
                     className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer whitespace-nowrap bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"

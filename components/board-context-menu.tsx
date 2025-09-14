@@ -1,10 +1,10 @@
 import { DashboardBoard } from "@/app/dashboard/page";
 import {
-    ContextMenu,
-    ContextMenuCheckboxItem,
-    ContextMenuContent,
-    ContextMenuItem,
-    ContextMenuTrigger,
+  ContextMenu,
+  ContextMenuCheckboxItem,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { SquareArrowOutUpRight } from "lucide-react";
 import { useTheme } from "next-themes";
@@ -16,47 +16,50 @@ type BoardContextMenuProps = {
   setBoards: (boards: DashboardBoard[]) => void;
 };
 
-export default function BoardContextMenu({ children, board , boards, setBoards }: BoardContextMenuProps) {
-    const { resolvedTheme } = useTheme()
-    const handleDeleteBoard = async () => {
-      try {
-        const response = await fetch(`/api/boards/${board.id}`, {
-          method: "DELETE",
-        });
-  
-        if (response.ok) {
-            setBoards(boards.filter((b) => b.id !== board.id));
-        } else {
-          const errorData = await response.json();
-          console.error("Failed to delete board:", errorData.error);
-        }
-      } catch (error) {
-        console.error("Error deleting board:", error);
+export default function BoardContextMenu({
+  children,
+  board,
+  boards,
+  setBoards,
+}: BoardContextMenuProps) {
+  const { resolvedTheme } = useTheme();
+  const handleDeleteBoard = async () => {
+    try {
+      const response = await fetch(`/api/boards/${board.id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        setBoards(boards.filter((b) => b.id !== board.id));
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to delete board:", errorData.error);
       }
+    } catch (error) {
+      console.error("Error deleting board:", error);
     }
+  };
 
-    const handleSlackUpdateChekbox = async () => {
-      try {
-        const response = await fetch(`/api/boards/${board.id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ sendSlackUpdates: !board.sendSlackUpdates }),
-        });
-  
-        if (response.ok) {
-          const { board } = await response.json();
-          console.log(board);
-          setBoards(boards.map((b) => (b.id === board.id ? board : b)));
-        } else {
-          const errorData = await response.json();
-          console.error("Failed to update board:", errorData.error);
-        }
-      } catch (error) {
-        console.error("Error updating board:", error);
+  const handleSlackUpdateChekbox = async () => {
+    try {
+      const response = await fetch(`/api/boards/${board.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sendSlackUpdates: !board.sendSlackUpdates }),
+      });
+
+      if (response.ok) {
+        const { board } = await response.json();
+        console.log(board);
+        setBoards(boards.map((b) => (b.id === board.id ? board : b)));
+      } else {
+        const errorData = await response.json();
+        console.error("Failed to update board:", errorData.error);
       }
+    } catch (error) {
+      console.error("Error updating board:", error);
     }
-
-
+  };
 
   return (
     <ContextMenu key={board.id}>
@@ -66,7 +69,12 @@ export default function BoardContextMenu({ children, board , boards, setBoards }
           <SquareArrowOutUpRight />
           <p>Open in new tab</p>
         </ContextMenuItem>
-        <ContextMenuCheckboxItem checked={board.sendSlackUpdates} onClick={handleSlackUpdateChekbox}>Slack Updates</ContextMenuCheckboxItem>
+        <ContextMenuCheckboxItem
+          checked={board.sendSlackUpdates}
+          onClick={handleSlackUpdateChekbox}
+        >
+          Slack Updates
+        </ContextMenuCheckboxItem>
         <ContextMenuItem variant="destructive" onClick={handleDeleteBoard}>
           <svg
             fill={resolvedTheme === "dark" ? "#fff" : "#000"}
