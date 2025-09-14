@@ -1064,7 +1064,6 @@ export function BoardPage({ params, isPublic }: BoardPageProps) {
           )}
       </div>
 
-      {/* Dialogs and Modals - only for non-public mode */}
       <Dialog open={showAddBoard} onOpenChange={setShowAddBoard}>
         <DialogContent className="bg-white dark:bg-zinc-950  sm:max-w-[425px] ">
           <DialogHeader>
