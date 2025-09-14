@@ -132,4 +132,28 @@ describe("formatLastActivity utility function", () => {
     const result = formatLastActivity(date.toISOString());
     expect(result).toBe("2y 3mo ago");
   });
+
+  it("handles exactly one day difference", () => {
+    const date = new Date("2024-01-14T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1d ago");
+  });
+
+  it("handles exactly one week difference", () => {
+    const date = new Date("2024-01-08T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1w ago");
+  });
+
+  it("handles exactly one month difference", () => {
+    const date = new Date("2023-12-15T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1mo ago");
+  });
+
+  it("handles exactly one year difference", () => {
+    const date = new Date("2023-01-15T12:00:00Z");
+    const result = formatLastActivity(date.toISOString());
+    expect(result).toBe("1y ago");
+  });
 });

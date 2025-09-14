@@ -1,6 +1,17 @@
 import { Note } from "@/components/note";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import {
+  addMonths,
+  addWeeks,
+  differenceInDays,
+  differenceInHours,
+  differenceInMinutes,
+  differenceInMonths,
+  differenceInSeconds,
+  differenceInWeeks,
+  differenceInYears,
+} from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -9,66 +20,39 @@ export function cn(...inputs: ClassValue[]) {
 export function formatLastActivity(dateString: string): string {
   const date = new Date(dateString);
   const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
 
-  const minute = 60 * 1000;
-  const hour = 60 * minute;
-  const day = 24 * hour;
-  const week = 7 * day;
-  if (diffMs < minute) return "Just now";
+  if (differenceInSeconds(now, date) < 60) return "Just now";
 
-  let years = now.getFullYear() - date.getFullYear();
-  let months = now.getMonth() - date.getMonth();
-
-  if (months < 0) {
-    years--;
-    months += 12;
-  }
-
-  if (now.getDate() < date.getDate()) {
-    months--;
-    if (months < 0) {
-      years--;
-      months += 12;
-    }
-  }
-
+  const years = differenceInYears(now, date);
   if (years > 0) {
+    const months = differenceInMonths(now, date) - years * 12;
     if (years > 1) {
       return months > 0 ? `${years}y ${months}mo ago` : `${years}y ago`;
-    } else {
-      return months > 0 ? `1y ${months}mo ago` : "1y ago";
     }
+    return months > 0 ? `1y ${months}mo ago` : "1y ago";
   }
 
+  const months = differenceInMonths(now, date);
   if (months > 0) {
-    const tempDate = new Date(date);
-    tempDate.setMonth(tempDate.getMonth() + months);
-    const remainingMs = now.getTime() - tempDate.getTime();
-    const weeks = Math.floor(remainingMs / week);
-
+    const weeks = differenceInWeeks(now, addMonths(date, months));
     if (months > 1) {
       return weeks > 0 ? `${months}mo ${weeks}w ago` : `${months}mo ago`;
-    } else {
-      return weeks > 0 ? `1mo ${weeks}w ago` : "1mo ago";
     }
+    return weeks > 0 ? `1mo ${weeks}w ago` : "1mo ago";
   }
 
-  if (diffMs >= week) {
-    const weeks = Math.floor(diffMs / week);
-    const remainingMs = diffMs % week;
-    const days = Math.floor(remainingMs / day);
-
+  const weeks = differenceInWeeks(now, date);
+  if (weeks > 0) {
+    const days = differenceInDays(now, addWeeks(date, weeks));
     if (weeks > 1) {
       return days > 0 ? `${weeks}w ${days}d ago` : `${weeks}w ago`;
-    } else {
-      return days > 0 ? `1w ${days}d ago` : "1w ago";
     }
+    return days > 0 ? `1w ${days}d ago` : "1w ago";
   }
 
-  const days = Math.floor(diffMs / day);
-  const hours = Math.floor((diffMs % day) / hour);
-  const minutes = Math.floor((diffMs % hour) / minute);
+  const days = differenceInDays(now, date);
+  const hours = differenceInHours(now, date) - days * 24;
+  const minutes = differenceInMinutes(now, date) - days * 24 * 60 - hours * 60;
 
   const parts: string[] = [];
 
