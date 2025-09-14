@@ -64,7 +64,7 @@ export default function BoardContextMenu({
   return (
     <ContextMenu key={board.id}>
       <ContextMenuTrigger>{children}</ContextMenuTrigger>
-      <ContextMenuContent className="w-52">
+      <ContextMenuContent className="w-52" data-testid="board-card-context-menu">
         <ContextMenuItem onClick={() => window.open(`/boards/${board.id}`, "_blank")}>
           <SquareArrowOutUpRight />
           <p>Open in new tab</p>
