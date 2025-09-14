@@ -118,7 +118,7 @@ export function ChecklistItem({
       <Checkbox
         checked={item.checked}
         onCheckedChange={() => !readonly && onToggle?.(item.id)}
-        className="border-zinc-500 bg-white/50 dark:bg-zinc-800 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
+        className="border-zinc-500 bg-white/50 dark:bg-zinc-400 dark:opacity-70 dark:border-zinc-600 mt-1.5 text-zinc-900 dark:text-zinc-100"
         disabled={readonly}
       />
 
@@ -130,7 +130,7 @@ export function ChecklistItem({
         placeholder={isNewItem ? "Start typing…" : undefined}
         className={cn(
           "flex-1 border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
-          item.checked && "text-zinc-500 dark:text-zinc-500 line-through"
+          item.checked && "text-zinc-500 dark:text-zinc-700 line-through"
         )}
         onBlur={handleBlur}
         onKeyDown={handleKeyDown}
@@ -164,7 +164,7 @@ export function ChecklistItem({
         <Button
           variant="ghost"
           size="icon"
-          className="h-6 w-6 opacity-50 rounded-sm hover:bg-white/20 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
+          className="h-6 w-6 opacity-50 rounded-sm hover:bg-white/20 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-zinc-900 dark:text-zinc-700 dark:hover:text-white"
           onMouseDown={() => {
             deletingRef.current = true;
           }}
