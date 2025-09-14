@@ -906,7 +906,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   style={{
                     backgroundColor:
                       resolvedTheme === "dark"
-                        ? `color-mix(in srgb, ${note.color} 80%, black)`
+                        ? `color-mix(in srgb, ${note.color} 70%, black)`
                         : note.color,
                   }}
                 />
