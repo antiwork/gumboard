@@ -316,12 +316,14 @@ export default function Dashboard() {
                 <Link href={`/boards/${board.id}`} key={board.id}>
                   <Card
                     data-board-id={board.id}
-                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer border-2 border-gray-200 dark:border-zinc-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 hover:dark:bg-zinc-900/75">
+                    className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer border-2 border-gray-200 dark:border-zinc-800 bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-zinc-900 dark:to-zinc-950 hover:dark:bg-zinc-900/75"
+                  >
                     <CardHeader>
                       <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
                         <CardTitle
                           className="text-lg text-blue-900 dark:text-blue-200"
-                          title={board.name}>
+                          title={board.name}
+                        >
                           {board.name}
                         </CardTitle>
                         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
