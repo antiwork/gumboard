@@ -219,7 +219,7 @@ test.describe("Board Settings", () => {
 
     await expect(page.locator(`text=${board.name}`)).toBeVisible();
     await expect(page.locator("text=Public").first()).toBeVisible();
-    await expect(page.locator("text=No notes found")).toBeVisible();
+    await expect(page.locator("text=No notes yet")).toBeVisible();
   });
 
   test("shows not found for private board on public route", async ({

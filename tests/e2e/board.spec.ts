@@ -233,7 +233,7 @@ test.describe("Board Management", () => {
           organizationId: testContext.organizationId,
         },
       });
-      authenticatedPage.goto(`/boards/${board.id}`);
+      await authenticatedPage.goto(`/boards/${board.id}`);
 
       await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
 
@@ -255,7 +255,7 @@ test.describe("Board Management", () => {
           organizationId: testContext.organizationId,
         },
       });
-      authenticatedPage.goto(`/boards/${board.id}`);
+      await authenticatedPage.goto(`/boards/${board.id}`);
 
       await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
 

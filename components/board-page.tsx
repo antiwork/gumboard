@@ -240,7 +240,12 @@ export function BoardPage({ params, isPublic }: BoardPageProps) {
       let notesResponse: Response | undefined;
       let boardResponse: Response | undefined;
 
-      if (boardId === "all-notes") {
+      if (isPublic) {
+        [boardResponse, notesResponse] = await Promise.all([
+          fetch(`/api/boards/${boardId}`),
+          fetch(`/api/boards/${boardId}/notes`),
+        ]);
+      } else if (boardId === "all-notes") {
         // For all notes view, create a virtual board object and fetch all notes
         [allBoardsResponse, notesResponse] = await Promise.all([
           fetch("/api/boards"),
@@ -269,7 +274,7 @@ export function BoardPage({ params, isPublic }: BoardPageProps) {
         ]);
       }
 
-      if (allBoardsResponse.ok) {
+      if (allBoardsResponse && allBoardsResponse.ok) {
         const { boards } = await allBoardsResponse.json();
         setAllBoards(boards);
       }
@@ -287,6 +292,12 @@ export function BoardPage({ params, isPublic }: BoardPageProps) {
           }
           if (boardResponse.ok) {
             const { board } = await boardResponse.json();
+            setBoardSettings({
+              name: board.name,
+              description: board.description || "",
+              isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+              sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+            });
             if (board.isPublic) {
               setBoard(board);
             } else {
@@ -310,7 +321,7 @@ export function BoardPage({ params, isPublic }: BoardPageProps) {
         setNotes(notes);
       }
 
-      if (boardId && boardId !== "all-notes") {
+      if (!isPublic && boardId && boardId !== "all-notes") {
         try {
           localStorage.setItem("gumboard-last-visited-board", boardId);
         } catch (error) {
@@ -695,8 +706,9 @@ export function BoardPage({ params, isPublic }: BoardPageProps) {
         title: "Failed to delete board",
         description: "Failed to delete board",
       });
+    } finally {
+      setDeleteConfirmDialog(false);
     }
-    setDeleteConfirmDialog(false);
   };
 
   if (userLoading || notesloading) {
@@ -988,9 +1000,11 @@ export function BoardPage({ params, isPublic }: BoardPageProps) {
             <p className="text-muted-foreground dark:text-zinc-400 mb-6 max-w-md">
               {boardId === "archive"
                 ? "Notes that you archive will appear here. Archived notes are hidden from your active boards but can be restored anytime."
-                : board?.name
-                  ? `Start organizing your ideas by creating your first note in ${board.name}.`
-                  : "Start organizing your ideas by creating your first note."}
+                : isPublic
+                  ? "This board doesn't have any notes yet."
+                  : board?.name
+                    ? `Start organizing your ideas by creating your first note in ${board.name}.`
+                    : "Start organizing your ideas by creating your first note."}
             </p>
 
             {!isPublic && boardId !== "archive" && (
