@@ -50,7 +50,6 @@ export default function BoardContextMenu({
 
       if (response.ok) {
         const { board } = await response.json();
-        console.log(board);
         setBoards(boards.map((b) => (b.id === board.id ? board : b)));
       } else {
         const errorData = await response.json();
