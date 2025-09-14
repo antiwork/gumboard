@@ -31,6 +31,7 @@ export async function GET() {
         name: true,
         description: true,
         isPublic: true,
+        sendSlackUpdates: true,
         createdBy: true,
         createdAt: true,
         updatedAt: true,
@@ -69,6 +70,7 @@ export async function GET() {
       createdBy: board.createdBy,
       createdAt: board.createdAt,
       updatedAt: board.updatedAt,
+      sendSlackUpdates: board.sendSlackUpdates,
       _count: board._count,
       lastActivityAt: board.notes[0]?.updatedAt ?? board.updatedAt,
     }));
