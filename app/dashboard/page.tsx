@@ -42,6 +42,7 @@ import {
 import { ProfileDropdown } from "@/components/profile-dropdown";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatLastActivity } from "@/lib/utils";
+import BoardContextMenu from "@/components/board-context-menu";
 
 // Dashboard-specific extended types
 export type DashboardBoard = Board & {
@@ -50,6 +51,7 @@ export type DashboardBoard = Board & {
   updatedAt: string;
   isPublic: boolean;
   lastActivityAt: string;
+  sendSlackUpdates: boolean;
   _count: { notes: number };
 };
 
@@ -313,36 +315,38 @@ export default function Dashboard() {
               </Link>
 
               {boards.map((board) => (
-                <Link href={`/boards/${board.id}`} key={board.id}>
+                <BoardContextMenu setBoards={setBoards} boards={boards} key={board.id} board={board}>
                   <Card
                     data-board-id={board.id}
                     className="group h-full min-h-34 hover:shadow-lg transition-shadow cursor-pointer whitespace-nowrap bg-white dark:bg-zinc-900 border-gray-200 dark:border-zinc-800"
                   >
-                    <CardHeader>
-                      <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
-                        <CardTitle
-                          className="text-lg dark:text-zinc-100 truncate"
-                          title={board.name}
-                        >
-                          {board.name}
-                        </CardTitle>
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
-                          {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      {board.description && (
-                        <p className="text-slate-600 dark:text-zinc-300 truncate mb-2">
-                          {board.description}
+                    <Link href={`/boards/${board.id}`} key={board.id}>
+                      <CardHeader>
+                        <div className="grid grid-cols-[1fr_auto] items-start justify-between gap-2">
+                          <CardTitle
+                            className="text-lg dark:text-zinc-100 truncate"
+                            title={board.name}
+                          >
+                            {board.name}
+                          </CardTitle>
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 mt-0.5">
+                            {board._count.notes} {board._count.notes === 1 ? "note" : "notes"}
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        {board.description && (
+                          <p className="text-slate-600 dark:text-zinc-300 truncate mb-2">
+                            {board.description}
+                          </p>
+                        )}
+                        <p className="text-xs text-slate-500 dark:text-zinc-400">
+                          Last active: {formatLastActivity(board.lastActivityAt)}
                         </p>
-                      )}
-                      <p className="text-xs text-slate-500 dark:text-zinc-400">
-                        Last active: {formatLastActivity(board.lastActivityAt)}
-                      </p>
-                    </CardContent>
+                      </CardContent>
+                    </Link>
                   </Card>
-                </Link>
+                </BoardContextMenu>
               ))}
             </div>
           </>
