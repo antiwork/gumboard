@@ -114,8 +114,6 @@ export default function Dashboard() {
         setBoards(prev =>
           [...prev].sort((a: DashboardBoard, b: DashboardBoard) => ( new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime() )
         ));
-
-        console.log(boards)
       }
     } catch (error) {
       console.error("Error fetching data:", error);
