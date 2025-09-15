@@ -111,6 +111,11 @@ export default function Dashboard() {
       if (boardsResponse.ok) {
         const { boards } = await boardsResponse.json();
         setBoards(boards);
+        setBoards(prev =>
+          [...prev].sort((a: DashboardBoard, b: DashboardBoard) => ( new Date(b.lastActivityAt).getTime() - new Date(a.lastActivityAt).getTime() )
+        ));
+
+        console.log(boards)
       }
     } catch (error) {
       console.error("Error fetching data:", error);
