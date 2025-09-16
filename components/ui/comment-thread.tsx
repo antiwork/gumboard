@@ -5,7 +5,18 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { getRelativeTime } from "@/lib/utils";
+
+const getRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+  
+  if (diffInSeconds < 60) return 'just now';
+  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
+  return date.toLocaleDateString();
+};
 
 interface Comment {
   id: string;
@@ -68,33 +79,28 @@ function CommentItem({
   onStopEdit,
 }: CommentItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
-  const previousContentRef = React.useRef<string>("");
-  const deletingRef = React.useRef<boolean>(false);
   const [relativeTime, setRelativeTime] = React.useState(getRelativeTime(comment.createdAt));
+  const deletingRef = React.useRef<boolean>(false);
 
   const adjustTextareaHeight = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = "auto";
     textarea.style.height = textarea.scrollHeight + "px";
   };
 
-  // Update relative time every minute
   React.useEffect(() => {
     const updateTime = () => {
       setRelativeTime(getRelativeTime(comment.createdAt));
     };
-
-    const interval = setInterval(updateTime, 60000); // Update every minute
-    updateTime(); // Initial update
-
+    const interval = setInterval(updateTime, 60000);
+    updateTime();
     return () => clearInterval(interval);
   }, [comment.createdAt]);
 
   React.useEffect(() => {
     if (isEditing && textareaRef.current) {
       adjustTextareaHeight(textareaRef.current);
-      previousContentRef.current = editContent ?? comment.content;
     }
-  }, [isEditing, editContent, comment.content]);
+  }, [isEditing, editContent]);
 
   React.useEffect(() => {
     if (!isEditing && textareaRef.current) {
@@ -127,41 +133,43 @@ function CommentItem({
       return;
     }
     if (isEditing && editContent !== undefined && onUpdate) {
-      onUpdate(comment.id, editContent);
+      if (editContent !== comment.content) {
+        onUpdate(comment.id, editContent);
+      }
     }
     onStopEdit?.();
   };
 
   const canEditThis = canEdit && currentUser?.id === comment.authorId;
   const authorName = comment.author.name?.split(" ")[0] || comment.author.email.split("@")[0];
+  const isOwnComment = currentUser?.id === comment.authorId;
 
   return (
-    <div className="flex items-start group/comment rounded gap-2 transition-all duration-200 relative">
+    <div className="flex items-start group/comment gap-2 transition-all duration-200 relative">
       {/* Connection dot */}
       <div className="absolute left-[-13px] top-3 w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
-
+      
       <Avatar className="w-6 h-6 mt-0.5">
         <AvatarImage src={comment.author.image || undefined} />
-        <AvatarFallback className="text-xs">{authorName.charAt(0).toUpperCase()}</AvatarFallback>
+        <AvatarFallback className="text-xs bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium">
+          {authorName.charAt(0).toUpperCase()}
+        </AvatarFallback>
       </Avatar>
 
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
           <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">{authorName}</span>
+          {isOwnComment && (
+            <span className="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded font-medium">
+              You
+            </span>
+          )}
           <span
             className="text-xs text-zinc-500 dark:text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-300 cursor-help transition-colors"
             title={new Date(comment.createdAt).toLocaleString()}
           >
             {relativeTime}
           </span>
-          {comment.createdAt !== comment.updatedAt && (
-            <span
-              className="text-xs text-zinc-400 dark:text-zinc-500 italic cursor-help"
-              title={`Edited ${new Date(comment.updatedAt).toLocaleString()}`}
-            >
-              (edited)
-            </span>
-          )}
         </div>
 
         <textarea
@@ -172,7 +180,7 @@ function CommentItem({
           className={cn(
             "w-full border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
             !canEditThis && "cursor-default",
-            canEditThis && !isEditing && "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded"
+            canEditThis && !isEditing && "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded cursor-text"
           )}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
@@ -193,12 +201,7 @@ function CommentItem({
           style={{ height: "auto" }}
           onInput={(e) => {
             const target = e.target as HTMLTextAreaElement;
-            const currentContent = target.value;
-
-            if (currentContent !== previousContentRef.current) {
-              adjustTextareaHeight(target);
-              previousContentRef.current = currentContent;
-            }
+            adjustTextareaHeight(target);
           }}
         />
       </div>
@@ -299,7 +302,7 @@ export function CommentThread({
 
   return (
     <div className="space-y-2">
-      {comments.map((comment, index) => (
+      {comments.map((comment) => (
         <CommentItem
           key={comment.id}
           comment={comment}
@@ -323,7 +326,7 @@ export function CommentThread({
 
           <Avatar className="w-6 h-6 mt-0.5">
             <AvatarImage src={currentUser.image || undefined} />
-            <AvatarFallback className="text-xs">
+            <AvatarFallback className="text-xs bg-gradient-to-br from-green-400 to-blue-500 text-white font-medium">
               {currentUserName.charAt(0).toUpperCase()}
             </AvatarFallback>
           </Avatar>
@@ -332,6 +335,9 @@ export function CommentThread({
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-xs font-medium text-zinc-700 dark:text-zinc-300">
                   {currentUserName}
+                </span>
+                <span className="text-xs px-1.5 py-0.5 bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300 rounded font-medium">
+                  You
                 </span>
               </div>
             )}
@@ -342,7 +348,7 @@ export function CommentThread({
               placeholder={isAddingComment ? "Write a comment..." : "Add a comment..."}
               className={cn(
                 "w-full border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none placeholder:text-zinc-500 dark:placeholder:text-zinc-400",
-                !isAddingComment && "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded"
+                !isAddingComment && "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded cursor-text"
               )}
               onKeyDown={handleKeyDown}
               onFocus={handleFocus}

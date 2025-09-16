@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import {
   ChecklistItem as ChecklistItemComponent,
   ChecklistItem,
-  Comment,
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
