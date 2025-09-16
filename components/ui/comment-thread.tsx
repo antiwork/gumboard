@@ -10,8 +10,8 @@ const getRelativeTime = (dateString: string) => {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
-  if (diffInSeconds < 60) return 'just now';
+
+  if (diffInSeconds < 60) return "just now";
   if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
   if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
   if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
@@ -148,7 +148,7 @@ function CommentItem({
     <div className="flex items-start group/comment gap-2 transition-all duration-200 relative">
       {/* Connection dot */}
       <div className="absolute left-[-13px] top-3 w-2 h-2 bg-zinc-300 dark:bg-zinc-600 rounded-full" />
-      
+
       <Avatar className="w-6 h-6 mt-0.5">
         <AvatarImage src={comment.author.image || undefined} />
         <AvatarFallback className="text-xs bg-gradient-to-br from-blue-400 to-purple-500 text-white font-medium">
@@ -180,7 +180,9 @@ function CommentItem({
           className={cn(
             "w-full border-none bg-transparent px-1 py-1 text-sm text-zinc-900 dark:text-zinc-100 resize-none overflow-hidden outline-none",
             !canEditThis && "cursor-default",
-            canEditThis && !isEditing && "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded cursor-text"
+            canEditThis &&
+              !isEditing &&
+              "hover:bg-zinc-50 dark:hover:bg-zinc-800/50 rounded cursor-text"
           )}
           onBlur={handleBlur}
           onKeyDown={handleKeyDown}
