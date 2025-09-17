@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 
-export interface ChecklistItem {
+export interface ChecklistItemData {
   id: string;
   content: string;
   checked: boolean;
@@ -14,7 +14,7 @@ export interface ChecklistItem {
 }
 
 interface ChecklistItemProps {
-  item: ChecklistItem;
+  item: ChecklistItemData;
   onToggle?: (itemId: string) => void;
   onEdit?: (itemId: string, content: string) => void;
   onDelete?: (itemId: string) => void;
@@ -28,6 +28,11 @@ interface ChecklistItemProps {
   className?: string;
   isNewItem?: boolean;
   onCreateItem?: (content: string) => void;
+
+  // drag-drop grouping
+  onDragStart?: (itemId: string) => void;
+  onDragOver?: (e: React.DragEvent<HTMLDivElement>, targetId: string) => void;
+  onDrop?: (e: React.DragEvent<HTMLDivElement>, targetId: string) => void;
 }
 
 export function ChecklistItem({
@@ -45,6 +50,9 @@ export function ChecklistItem({
   className,
   isNewItem = false,
   onCreateItem,
+  onDragStart,
+  onDragOver,
+  onDrop,
 }: ChecklistItemProps) {
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const previousContentRef = React.useRef<string>("");
@@ -67,19 +75,18 @@ export function ChecklistItem({
       adjustTextareaHeight(textareaRef.current);
     }
   }, [item.content, isEditing]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       if (isNewItem && editContent?.trim() && onCreateItem) {
         onCreateItem(editContent.trim());
       } else {
-        const target = e.target as HTMLTextAreaElement;
-        target.blur();
+        (e.target as HTMLTextAreaElement).blur();
       }
     }
     if (e.key === "Enter" && e.shiftKey) {
-      const target = e.target as HTMLTextAreaElement;
-      setTimeout(() => adjustTextareaHeight(target), 0);
+      setTimeout(() => adjustTextareaHeight(e.target as HTMLTextAreaElement), 0);
     }
     if (e.key === "Escape") {
       onStopEdit?.();
@@ -107,13 +114,13 @@ export function ChecklistItem({
 
   return (
     <div
-      className={cn(
-        "flex items-start group/item rounded gap-2 transition-all duration-200",
-        className
-      )}
-      // To avoid flaky test locators
+      className={cn("flex items-start group/item rounded gap-2 transition-all duration-200", className)}
       data-testid={process.env.NODE_ENV !== "production" ? item.id : undefined}
       data-testorder={process.env.NODE_ENV !== "production" ? item.order : undefined}
+      draggable={!readonly}
+      onDragStart={() => onDragStart?.(item.id)}
+      onDragOver={(e) => onDragOver?.(e, item.id)}
+      onDrop={(e) => onDrop?.(e, item.id)}
     >
       <Checkbox
         checked={item.checked}
@@ -165,9 +172,7 @@ export function ChecklistItem({
           variant="ghost"
           size="icon"
           className="h-6 w-6 opacity-50 rounded-sm hover:bg-white/20 md:opacity-0 md:group-hover/item:opacity-50 md:hover:opacity-100 text-zinc-500 hover:text-zinc-900 dark:text-zinc-300 dark:hover:text-white"
-          onMouseDown={() => {
-            deletingRef.current = true;
-          }}
+          onMouseDown={() => (deletingRef.current = true)}
           onClick={(e) => {
             e.stopPropagation();
             onDelete?.(item.id);

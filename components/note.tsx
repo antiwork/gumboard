@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 import {
   ChecklistItem as ChecklistItemComponent,
-  ChecklistItem,
+  ChecklistItemData,
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,7 @@ export interface Note {
   archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
-  checklistItems?: ChecklistItem[];
+  checklistItems?: ChecklistItemData[];
   user: {
     id: string;
     name: string | null;
@@ -209,20 +209,10 @@ export function Note({
     }
   };
 
-  const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItem[]) => {
+  const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItemData[]) => {
     try {
       if (!note.checklistItems) return;
       const allItemsChecked = newItems.every((item) => item.checked);
-      // Disallow unchecked items to be after checked items
-      const firstCheckedIndex = newItems.findIndex((element) => element.checked);
-      const lastUncheckedIndex = newItems.map((element) => element.checked).lastIndexOf(false);
-      if (
-        firstCheckedIndex !== -1 &&
-        lastUncheckedIndex !== -1 &&
-        lastUncheckedIndex > firstCheckedIndex
-      ) {
-        return;
-      }
 
       const updatedItems = newItems.map((item, index) => ({ ...item, order: index }));
 
