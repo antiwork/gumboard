@@ -184,18 +184,17 @@ export default function OrganizationSettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ channelId, channelName }),
-      })
+      });
 
       if (res.ok) {
         refreshUser();
       }
 
       console.log(await res.json());
-      
     } catch (error) {
       console.error("Error saving Slack channel:", error);
     }
-  }
+  };
 
   const handleSaveOrgName = async () => {
     setSavingOrg(true);
@@ -526,33 +525,31 @@ export default function OrganizationSettingsPage() {
       setTimeout(() => setCopiedInviteToken(null), 3000);
     }
   };
-// TODOD: MAKE THIS BETTER
+  // TODOD: MAKE THIS BETTER
   const handleConnectSlack = async () => {
     const width = 600;
-  const height = 700;
-  const left = window.screenX + (window.outerWidth - width) / 2;
-  const top = window.screenY + (window.outerHeight - height) / 2;
+    const height = 700;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
 
-  const popup = window.open(
-    "/api/slack/oauth/install", // your API route will handle redirect to Slack
-    "Connect Slack",
-    `width=${width},height=${height},left=${left},top=${top}`
-  );
+    const popup = window.open(
+      "/api/slack/oauth/install", // your API route will handle redirect to Slack
+      "Connect Slack",
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
 
-  const messageListener = (event: MessageEvent) => {
-    if (event.origin !== window.location.origin) return;
-    if (event.data.type === "SLACK_CONNECTED") {
-      popup?.close();
-      window.removeEventListener("message", messageListener);
-      setIsSlackConnected(true);
-      // refresh UI or show success
-    }
+    const messageListener = (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      if (event.data.type === "SLACK_CONNECTED") {
+        popup?.close();
+        window.removeEventListener("message", messageListener);
+        setIsSlackConnected(true);
+        // refresh UI or show success
+      }
+    };
+
+    window.addEventListener("message", messageListener);
   };
-
-  window.addEventListener("message", messageListener);
-  }
-
-
 
   if (loading) {
     return (
@@ -646,8 +643,12 @@ export default function OrganizationSettingsPage() {
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="ghost" className=" text-sm">
-                {user?.organization?.slackChannelName ? user.organization.slackChannelName : "Select Channel"}
-              <span><ArrowBigDown /></span>
+                {user?.organization?.slackChannelName
+                  ? user.organization.slackChannelName
+                  : "Select Channel"}
+                <span>
+                  <ArrowBigDown />
+                </span>
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
@@ -659,7 +660,9 @@ export default function OrganizationSettingsPage() {
                         onClick={() => handleSaveSlackChannel(channel.id, channel.name)}
                         variant="ghost"
                         className="w-full justify-start rounded-none"
-                        >{channel.name}</Button>
+                      >
+                        {channel.name}
+                      </Button>
                     </div>
                   ))}
                 </div>
@@ -669,8 +672,12 @@ export default function OrganizationSettingsPage() {
             </PopoverContent>
           </Popover>
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <Button onClick={handleConnectSlack} variant={isSlackConnected ? "destructive" : "default"} className="mr-4">
-              {isSlackConnected ? "Disconnect Slack" : "Connect Slack" }
+            <Button
+              onClick={handleConnectSlack}
+              variant={isSlackConnected ? "destructive" : "default"}
+              className="mr-4"
+            >
+              {isSlackConnected ? "Disconnect Slack" : "Connect Slack"}
             </Button>
             <Button
               onClick={handleSaveSlack}

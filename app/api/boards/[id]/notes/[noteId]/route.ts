@@ -186,7 +186,12 @@ export async function PUT(
       });
     });
 
-    if (archivedAt !== undefined && user.organization?.slackBotToken && note.slackMessageId && user.organization.slackChannelId) {
+    if (
+      archivedAt !== undefined &&
+      user.organization?.slackBotToken &&
+      note.slackMessageId &&
+      user.organization.slackChannelId
+    ) {
       const userName = note.user?.name || note.user?.email || "Unknown User";
       const boardName = note.board.name;
       const isArchived = archivedAt !== null;
@@ -194,13 +199,13 @@ export async function PUT(
       const noteContent =
         note.checklistItems && note.checklistItems.length > 0 ? note.checklistItems[0].content : "";
       await updateSlackMessage(
-           user.organization.slackBotToken,         // token
-            user.organization.slackChannelId,        // channel
-            note.slackMessageId,                     // ts (from first send)
-            noteContent, // original text
-            isArchived,
-            boardName,
-            userName
+        user.organization.slackBotToken, // token
+        user.organization.slackChannelId, // channel
+        note.slackMessageId, // ts (from first send)
+        noteContent, // original text
+        isArchived,
+        boardName,
+        userName
       );
     }
 

@@ -58,9 +58,8 @@ export async function GET(req: NextRequest) {
     // Option 1: return JSON (API usage)
     // return NextResponse.json({ success: true });
 
-
     // TODO : Figutre oout how to close when login is complete
-      const html = `
+    const html = `
         <html>
         <body>
           <script>
@@ -72,7 +71,7 @@ export async function GET(req: NextRequest) {
         </html>
     `;
     return new Response(html, {
-      headers: { "Content-Type": "text/html" }
+      headers: { "Content-Type": "text/html" },
     });
 
     // Option 2: redirect to a dashboard/settings page

@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import {  NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export async function GET() {
   const session = await auth();
@@ -31,11 +31,11 @@ export async function GET() {
     headers: { Authorization: `Bearer ${org.slackBotToken}` },
   });
 
-    const data = await res.json();
+  const data = await res.json();
 
-    console.log("Slack channels data:", data);
-    
-    return NextResponse.json(data);
+  console.log("Slack channels data:", data);
+
+  return NextResponse.json(data);
 }
 
 async function joinChannel(token: string, channel: string): Promise<boolean> {
@@ -48,10 +48,8 @@ async function joinChannel(token: string, channel: string): Promise<boolean> {
     body: JSON.stringify({ channel }),
   });
 
-  
-  
   const data = await response.json();
-  console.log("________________________JOIN__________________________ \n",data);
+  console.log("________________________JOIN__________________________ \n", data);
   if (!data.ok) {
     console.error(`Failed to join channel: ${data.error}`);
     return false;
@@ -70,7 +68,7 @@ export async function PUT(req: Request) {
   const { channelId, channelName } = await req.json();
 
   console.log("Received channelId:", channelId, "channelName:", channelName);
-  
+
   if (!channelId || !channelName) {
     return NextResponse.json({ error: "Channel ID and name are required" }, { status: 400 });
   }
@@ -84,18 +82,21 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "No organization found" }, { status: 404 });
   }
 
-    const org = await db.organization.findUnique({
+  const org = await db.organization.findUnique({
     where: { id: user.organizationId },
     select: { slackBotToken: true },
   });
 
-    if (!org?.slackBotToken) {
+  if (!org?.slackBotToken) {
     return NextResponse.json({ error: "Slack bot not connected" }, { status: 400 });
   }
 
-    const joined = await joinChannel(org.slackBotToken, channelId);
+  const joined = await joinChannel(org.slackBotToken, channelId);
   if (!joined) {
-    return NextResponse.json({ error: "Failed to join channel. If private, invite the bot manually." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Failed to join channel. If private, invite the bot manually." },
+      { status: 400 }
+    );
   }
 
   const organization = await db.organization.update({
