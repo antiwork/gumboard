@@ -1,19 +1,15 @@
 interface SlackMessage {
   text: string;
+  channel: string; // required now
   username?: string;
   icon_emoji?: string;
 }
 
 export function hasValidContent(content: string | null | undefined): boolean {
-  if (!content) {
-    return false;
-  }
+  if (!content) return false;
 
   const trimmed = content.trim();
-
-  if (trimmed.length === 0) {
-    return false;
-  }
+  if (trimmed.length === 0) return false;
 
   const hasSubstantiveContent =
     /[a-zA-Z0-9\u00C0-\u017F\u4e00-\u9fff\u3040-\u309f\u30a0-\u30ff]/.test(trimmed);
@@ -30,13 +26,8 @@ export function shouldSendNotification(
   boardName: string,
   sendSlackUpdates: boolean = true
 ): boolean {
-  if (boardName.startsWith("Test")) {
-    return false;
-  }
-
-  if (!sendSlackUpdates) {
-    return false;
-  }
+  if (boardName.startsWith("Test")) return false;
+  if (!sendSlackUpdates) return false;
 
   const key = `${userId}-${boardId}`;
   const now = Date.now();
@@ -50,25 +41,36 @@ export function shouldSendNotification(
   return true;
 }
 
+/**
+ * Send a message to Slack using bot token
+ */
 export async function sendSlackMessage(
-  webhookUrl: string,
+  token: string,
   message: SlackMessage
 ): Promise<string | null> {
   try {
-    const response = await fetch(webhookUrl, {
+    const response = await fetch("https://slack.com/api/chat.postMessage", {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(message),
+      body: JSON.stringify({
+        channel: message.channel,
+        text: message.text,
+        username: message.username ?? "Gumboard",
+        icon_emoji: message.icon_emoji ?? ":clipboard:",
+      }),
     });
 
-    if (!response.ok) {
-      console.error(`Failed to send Slack message: ${response.status} ${response.statusText}`);
+    const data = await response.json();
+
+    if (!data.ok) {
+      console.error(`Failed to send Slack message: ${data.error}`);
       return null;
     }
 
-    return Date.now().toString();
+    return data.ts; // Slack timestamp ID for the message
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
     console.error(`Error sending Slack message: ${errorMessage}`);
@@ -76,8 +78,13 @@ export async function sendSlackMessage(
   }
 }
 
+/**
+ * Update an existing message (requires ts + channel)
+ */
 export async function updateSlackMessage(
-  webhookUrl: string,
+  token: string,
+  channel: string,
+  ts: string,
   originalText: string,
   completed: boolean,
   boardName: string,
@@ -88,20 +95,22 @@ export async function updateSlackMessage(
       ? `:white_check_mark: ${originalText} by ${userName} in ${boardName}`
       : `:heavy_plus_sign: ${originalText} by ${userName} in ${boardName}`;
 
-    const response = await fetch(webhookUrl, {
+    const response = await fetch("https://slack.com/api/chat.update", {
       method: "POST",
       headers: {
+        Authorization: `Bearer ${token}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        channel,
+        ts,
         text: updatedText,
-        username: "Gumboard",
-        icon_emoji: ":clipboard:",
       }),
     });
 
-    if (!response.ok) {
-      console.error(`Failed to update Slack message: ${response.status} ${response.statusText}`);
+    const data = await response.json();
+    if (!data.ok) {
+      console.error(`Failed to update Slack message: ${data.error}`);
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
@@ -114,7 +123,6 @@ export function formatNoteForSlack(
   boardName: string,
   userName: string
 ): string {
-  // Get content from first checklist item
   const content =
     note.checklistItems && note.checklistItems.length > 0
       ? note.checklistItems[0].content
@@ -135,14 +143,16 @@ export function formatTodoForSlack(
 }
 
 export async function sendTodoNotification(
-  webhookUrl: string,
+  token: string,
+  channel: string,
   todoContent: string,
   boardName: string,
   userName: string,
   action: "added" | "completed"
 ): Promise<string | null> {
   const message = formatTodoForSlack(todoContent, boardName, userName, action);
-  return await sendSlackMessage(webhookUrl, {
+  return await sendSlackMessage(token, {
+    channel,
     text: message,
     username: "Gumboard",
     icon_emoji: ":clipboard:",

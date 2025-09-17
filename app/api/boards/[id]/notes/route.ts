@@ -123,6 +123,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         organization: {
           select: {
             slackWebhookUrl: true,
+            slackChannelId: true,
+            slackBotToken: true,
           },
         },
         name: true,
@@ -203,13 +205,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       noteWithItems.checklistItems.some((item) => hasValidContent(item.content));
 
     if (
-      user.organization?.slackWebhookUrl &&
+      user.organization?.slackChannelId &&
+      user.organization.slackBotToken &&
       hasContent &&
       shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)
     ) {
       const slackMessage = formatNoteForSlack(noteWithItems, board.name, user.name || user.email);
-      const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
+      const messageId = await sendSlackMessage(user.organization.slackBotToken, {
         text: slackMessage,
+        channel: user.organization.slackChannelId,
         username: "Gumboard",
         icon_emoji: ":clipboard:",
       });

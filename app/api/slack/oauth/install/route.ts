@@ -29,7 +29,7 @@ export async function GET() {
 
   const url = new URL("https://slack.com/oauth/v2/authorize");
   url.searchParams.set("client_id", process.env.SLACK_CLIENT_ID!);
-  url.searchParams.set("scope", "chat:write,im:history,app_mentions:read");
+  url.searchParams.set("scope", "chat:write,im:history,app_mentions:read,channels:read, channels:join");
   url.searchParams.set("redirect_uri", process.env.SLACK_REDIRECT_URI!);
   url.searchParams.set("state", state);
 

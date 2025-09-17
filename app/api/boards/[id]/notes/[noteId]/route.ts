@@ -51,6 +51,8 @@ export async function PUT(
             id: true,
             name: true,
             slackWebhookUrl: true,
+            slackBotToken: true,
+            slackChannelId: true,
           },
         },
       },
@@ -184,7 +186,7 @@ export async function PUT(
       });
     });
 
-    if (archivedAt !== undefined && user.organization?.slackWebhookUrl && note.slackMessageId) {
+    if (archivedAt !== undefined && user.organization?.slackBotToken && note.slackMessageId && user.organization.slackChannelId) {
       const userName = note.user?.name || note.user?.email || "Unknown User";
       const boardName = note.board.name;
       const isArchived = archivedAt !== null;
@@ -192,15 +194,17 @@ export async function PUT(
       const noteContent =
         note.checklistItems && note.checklistItems.length > 0 ? note.checklistItems[0].content : "";
       await updateSlackMessage(
-        user.organization.slackWebhookUrl,
-        noteContent,
-        isArchived,
-        boardName,
-        userName
+           user.organization.slackBotToken,         // token
+            user.organization.slackChannelId,        // channel
+            note.slackMessageId,                     // ts (from first send)
+            noteContent, // original text
+            isArchived,
+            boardName,
+            userName
       );
     }
 
-    if (user.organization?.slackWebhookUrl && checklistChanges) {
+    if (user.organization?.slackBotToken && user.organization?.slackChannelId && checklistChanges) {
       const boardName = updatedNote.board.name;
       const userName = user.name || user.email || "Unknown User";
 
@@ -215,7 +219,8 @@ export async function PUT(
           )
         ) {
           await sendTodoNotification(
-            user.organization.slackWebhookUrl,
+            user.organization.slackBotToken,
+            user.organization.slackChannelId,
             item.content,
             boardName,
             userName,
@@ -236,7 +241,8 @@ export async function PUT(
           )
         ) {
           await sendTodoNotification(
-            user.organization.slackWebhookUrl,
+            user.organization.slackBotToken,
+            user.organization.slackChannelId,
             u.content,
             boardName,
             userName,

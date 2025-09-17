@@ -51,7 +51,6 @@ export async function GET(req: NextRequest) {
         slackTeamId: data.team?.id,
         slackTeamName: data.team?.name,
         slackBotToken: data.access_token,
-        slackBotUserId: data.bot_user_id,
         slackAppId: data.app_id,
       },
     });
@@ -59,8 +58,22 @@ export async function GET(req: NextRequest) {
     // Option 1: return JSON (API usage)
     // return NextResponse.json({ success: true });
 
-    const baseUrl = process.env.NEXTAUTH_URL!;
-    return NextResponse.redirect(`${baseUrl}/settings/organization?slack=connected`);
+
+    // TODO : Figutre oout how to close when login is complete
+      const html = `
+        <html>
+        <body>
+          <script>
+            window.opener.postMessage({ type: "SLACK_CONNECTED", success: true }, "${process.env.NEXT_PUBLIC_APP_URL}");
+            window.close();
+          </script>
+          <p>Slack connected! You can close this window.</p>
+        </body>
+        </html>
+    `;
+    return new Response(html, {
+      headers: { "Content-Type": "text/html" }
+    });
 
     // Option 2: redirect to a dashboard/settings page
   } catch (error) {
