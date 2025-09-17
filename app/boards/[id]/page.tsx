@@ -686,7 +686,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
         <div className="mx-0.5 md:mx-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 items-center h-auto md:h-16 p-2 md:p-0">
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-start auto-rows-auto grid-flow-dense">
             {/* Company Name */}
             <Link href="/dashboard" className="flex-shrink-0 pl-1 w-fit">
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
@@ -701,7 +701,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               <PopoverTrigger
                 asChild
                 data-testid="board-dropdown-trigger"
-                className="board-dropdown mr-0 min-w-32 sm:max-w-64 col-span-2 sm:col-span-1"
+                className="board-dropdown mr-0 min-w-32 md:max-w-64 col-span-2 md:col-span-1"
               >
                 <Button variant="ghost" className="flex items-center justify-between p-2 w-full">
                   <div className="text-sm font-semibold text-foreground dark:text-zinc-100 truncate">
@@ -782,7 +782,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </div>
               </PopoverContent>
             </Popover>
-            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden sm:block" />
+            <div className="h-6 w-px m-1.5 bg-zinc-100 dark:bg-zinc-700 hidden md:block" />
 
             {/* Filter Popover */}
             <div className="flex flex-nowrap space-x-1">
@@ -829,23 +829,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
-            {/* Search Box */}
+          <div className="flex items-center bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 gap-2">
+            {/* Search Box - only when there are notes */}
             {notes.length > 0 && (
-              <div className="relative h-9">
+              <div className="relative h-9 flex-grow min-w-0 transition-all duration-300 ease-in-out">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
                 </div>
+
                 <input
                   aria-label="Search notes"
                   type="text"
                   placeholder="Search notes..."
                   value={searchTerm}
-                  onChange={(e) => {
-                    setSearchTerm(e.target.value);
-                  }}
-                  className="w-full pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400"
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full min-w-0 pl-10 pr-8 py-2 border border-zinc-100 dark:border-zinc-800 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-600 dark:focus:ring-sky-600 focus:border-transparent text-sm bg-background dark:bg-zinc-900 text-foreground dark:text-zinc-100 placeholder:text-muted-foreground dark:placeholder:text-zinc-400 transition-colors duration-200"
                 />
+
                 {searchTerm && (
                   <Button
                     onClick={() => {
@@ -855,11 +855,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     }}
                     className="absolute top-[5px] right-1 size-7 flex items-center text-muted-foreground dark:text-zinc-400 hover:text-white dark:hover:text-zinc-100 cursor-pointer bg-transparent"
                   >
-                    <X className="h-4 w-4 " />
+                    <X className="h-4 w-4" />
                   </Button>
                 )}
               </div>
             )}
+
+            {/* Add Note Button */}
             <Button
               onClick={() => {
                 if (boardId === "all-notes" && allBoards.length > 0) {
@@ -869,13 +871,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 }
               }}
               disabled={boardId === "archive"}
-              className="col-span-2 md:col-span-1"
+              // full width if no search, auto if search exists
+              className={`${notes.length === 0 ? "flex-grow" : "flex-none"} min-w-0 transition-all duration-300 ease-in-out`}
             >
-              <span>Add note</span>
+              <span className="whitespace-nowrap">Add note</span>
             </Button>
 
-            {/* User Dropdown */}
-            <ProfileDropdown user={user} />
+            {/* Profile */}
+            <div className="flex-none">
+              <ProfileDropdown user={user} />
+            </div>
           </div>
         </div>
       </div>
