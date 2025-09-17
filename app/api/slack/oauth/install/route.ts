@@ -21,9 +21,11 @@ export async function GET() {
   }
 
   // encode orgId in state
-  const state = encodeURIComponent(JSON.stringify({
-    orgId: user.organizationId,
-  }));
+  const state = encodeURIComponent(
+    JSON.stringify({
+      orgId: user.organizationId,
+    })
+  );
 
   const url = new URL("https://slack.com/oauth/v2/authorize");
   url.searchParams.set("client_id", process.env.SLACK_CLIENT_ID!);

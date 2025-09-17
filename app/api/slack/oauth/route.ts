@@ -3,8 +3,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   try {
-    console.log("REQ ------------------------------",);
-    
+    console.log("REQ ------------------------------");
+
     const params = req.nextUrl.searchParams;
     const { code, state } = Object.fromEntries(params);
 
@@ -23,8 +23,6 @@ export async function GET(req: NextRequest) {
       }),
     });
 
-    
-    
     const data = await response.json();
     console.log(data);
 
@@ -37,12 +35,11 @@ export async function GET(req: NextRequest) {
     //   where: { id: session.user.id },
     //   select: { organizationId: true },
     // });
-    
+
     // const organizationId = user?.organizationId;
-    
+
     const { orgId } = JSON.parse(decodeURIComponent(state));
     console.log("ORGID", orgId);
-    
 
     // if (!organizationId) {
     //   return NextResponse.json({ error: "No organization found" }, { status: 404 });
@@ -66,8 +63,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.redirect(`${baseUrl}/settings/organization?slack=connected`);
 
     // Option 2: redirect to a dashboard/settings page
-} catch (error) {
+  } catch (error) {
     console.error("Slack OAuth error:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
-}
+  }
 }
