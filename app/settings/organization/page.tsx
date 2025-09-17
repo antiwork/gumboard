@@ -571,6 +571,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <Button onClick={() => window.location.href = "/api/slack/oauth/install"} >Connect Slack</Button>
             <Button
               onClick={handleSaveSlack}
               disabled={
