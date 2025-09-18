@@ -7,6 +7,7 @@ import {
   sendTodoNotification,
   hasValidContent,
   shouldSendNotification,
+  formatTodoForSlack,
 } from "@/lib/slack";
 import { noteSchema } from "@/lib/types";
 
@@ -110,7 +111,7 @@ export async function PUT(
             content: string;
             checked: boolean;
             order: number;
-            previous: { content: string; checked: boolean; order: number };
+            previous: { content: string; checked: boolean; order: number, slackMessageId: string | null};
           }>;
           deleted: Array<{ id: string; content: string; checked: boolean; order: number }>;
         }
@@ -165,6 +166,7 @@ export async function PUT(
               content: existingMap.get(i.id)!.content,
               checked: existingMap.get(i.id)!.checked,
               order: existingMap.get(i.id)!.order,
+              slackMessageId: existingMap.get(i.id)!.slackMessageId,
             },
           })),
           deleted: toDelete,
@@ -187,75 +189,106 @@ export async function PUT(
     });
 
     if (
-      archivedAt !== undefined &&
-      user.organization?.slackBotToken &&
-      note.slackMessageId &&
-      user.organization.slackChannelId
-    ) {
-      const userName = note.user?.name || note.user?.email || "Unknown User";
-      const boardName = note.board.name;
-      const isArchived = archivedAt !== null;
-      // Get content from first checklist item for Slack message
-      const noteContent =
-        note.checklistItems && note.checklistItems.length > 0 ? note.checklistItems[0].content : "";
-      await updateSlackMessage(
-        user.organization.slackBotToken, // token
-        user.organization.slackChannelId, // channel
-        note.slackMessageId, // ts (from first send)
-        noteContent, // original text
-        isArchived,
+  archivedAt !== undefined &&
+  user.organization?.slackBotToken &&
+  note.slackMessageId &&
+  user.organization.slackChannelId
+) {
+  const userName = note.user?.name || note.user?.email || "Unknown User";
+  const boardName = note.board.name;
+  const isArchived = archivedAt !== null;
+
+  const noteContent =
+    note.checklistItems && note.checklistItems.length > 0
+      ? note.checklistItems[0].content
+      : "";
+
+  const newText = isArchived
+    ? `:archive: ${noteContent} archived by ${userName} in ${boardName}`
+    : `${noteContent} (restored) by ${userName} in ${boardName}`;
+
+  await updateSlackMessage(
+    user.organization.slackBotToken,
+    user.organization.slackChannelId,
+    note.slackMessageId,
+    newText
+  );
+}
+
+   if (user.organization?.slackBotToken && user.organization?.slackChannelId && checklistChanges) {
+  const boardName = updatedNote.board.name;
+  const userName = user.name || user.email || "Unknown User";
+
+  // Handle created checklist items → send + save Slack ts
+  for (const item of checklistChanges.created) {
+    if (
+      hasValidContent(item.content) &&
+      shouldSendNotification(
+        session.user.id,
+        boardId,
         boardName,
-        userName
+        updatedNote.board.sendSlackUpdates
+      )
+    ) {
+      const ts = await sendTodoNotification(
+        user.organization.slackBotToken,
+        user.organization.slackChannelId,
+        item.content,
+        boardName,
+        userName,
+        "added"
       );
-    }
 
-    if (user.organization?.slackBotToken && user.organization?.slackChannelId && checklistChanges) {
-      const boardName = updatedNote.board.name;
-      const userName = user.name || user.email || "Unknown User";
-
-      for (const item of checklistChanges.created) {
-        if (
-          hasValidContent(item.content) &&
-          shouldSendNotification(
-            session.user.id,
-            boardId,
-            boardName,
-            updatedNote.board.sendSlackUpdates
-          )
-        ) {
-          await sendTodoNotification(
-            user.organization.slackBotToken,
-            user.organization.slackChannelId,
-            item.content,
-            boardName,
-            userName,
-            "added"
-          );
-        }
-      }
-
-      for (const u of checklistChanges.updated) {
-        if (
-          !u.previous.checked &&
-          u.checked &&
-          shouldSendNotification(
-            session.user.id,
-            boardId,
-            boardName,
-            updatedNote.board.sendSlackUpdates
-          )
-        ) {
-          await sendTodoNotification(
-            user.organization.slackBotToken,
-            user.organization.slackChannelId,
-            u.content,
-            boardName,
-            userName,
-            "completed"
-          );
-        }
+      if (ts) {
+        await db.checklistItem.update({
+          where: { id: item.id },
+          data: { slackMessageId: ts },
+        });
       }
     }
+  }
+
+  // Handle updated checklist items → update Slack message instead of sending new one
+  for (const u of checklistChanges.updated) {
+    if (
+      !u.previous.checked &&
+      u.checked &&
+      shouldSendNotification(
+        session.user.id,
+        boardId,
+        boardName,
+        updatedNote.board.sendSlackUpdates
+      )
+    ) {
+      if (u.previous.slackMessageId) {
+        const newText = formatTodoForSlack(u.content, boardName, userName, "completed");
+        await updateSlackMessage(
+          user.organization.slackBotToken,
+          user.organization.slackChannelId,
+          u.previous.slackMessageId,
+          newText
+        );
+      } else {
+        // fallback: no Slack message yet → send one and save ts
+        const ts = await sendTodoNotification(
+          user.organization.slackBotToken,
+          user.organization.slackChannelId,
+          u.content,
+          boardName,
+          userName,
+          "completed"
+        );
+
+        if (ts) {
+          await db.checklistItem.update({
+            where: { id: u.id },
+            data: { slackMessageId: ts },
+          });
+        }
+      }
+    }
+  }
+}
 
     return NextResponse.json({ note: updatedNote });
   } catch (error) {

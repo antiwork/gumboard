@@ -85,16 +85,9 @@ export async function updateSlackMessage(
   token: string,
   channel: string,
   ts: string,
-  originalText: string,
-  completed: boolean,
-  boardName: string,
-  userName: string
-): Promise<void> {
+  newText: string
+): Promise<boolean> {
   try {
-    const updatedText = completed
-      ? `:white_check_mark: ${originalText} by ${userName} in ${boardName}`
-      : `:heavy_plus_sign: ${originalText} by ${userName} in ${boardName}`;
-
     const response = await fetch("https://slack.com/api/chat.update", {
       method: "POST",
       headers: {
@@ -104,17 +97,19 @@ export async function updateSlackMessage(
       body: JSON.stringify({
         channel,
         ts,
-        text: updatedText,
+        text: newText,
       }),
     });
 
     const data = await response.json();
     if (!data.ok) {
       console.error(`Failed to update Slack message: ${data.error}`);
+      return false;
     }
+    return true;
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error(`Error updating Slack message: ${errorMessage}`);
+    console.error(`Error updating Slack message: ${error}`);
+    return false;
   }
 }
 

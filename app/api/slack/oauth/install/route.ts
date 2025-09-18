@@ -31,7 +31,7 @@ export async function GET() {
   url.searchParams.set("client_id", process.env.SLACK_CLIENT_ID!);
   url.searchParams.set(
     "scope",
-    "chat:write,im:history,app_mentions:read,channels:read, channels:join"
+    "chat:write,im:history,app_mentions:read,channels:read,channels:join"
   );
   url.searchParams.set("redirect_uri", process.env.SLACK_REDIRECT_URI!);
   url.searchParams.set("state", state);
