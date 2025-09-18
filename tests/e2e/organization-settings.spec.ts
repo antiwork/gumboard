@@ -8,8 +8,6 @@ test.describe("Organization Settings", () => {
       data: { isAdmin: true },
     });
   });
-
-  // test("should validate Slack webhook URL and show error for invalid URL", async ({
   //   authenticatedPage,
   //   testContext,
   //   testPrisma,

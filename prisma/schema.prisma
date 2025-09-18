@@ -71,6 +71,7 @@ model User {
 model Organization {
   id                String                        @id @default(cuid())
   name              String
+  slackWebhookUrl   String?
   slackTeamId       String? // Slack workspace (team_id)
   slackTeamName     String? // Slack workspace name
   slackBotToken     String?                       @db.Text // Bot access token
