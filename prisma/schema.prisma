@@ -75,7 +75,6 @@ model Organization {
   slackTeamName     String? // Slack workspace name
   slackBotToken     String?                       @db.Text // Bot access token
   slackAppId        String? // Slack App ID
-  slackWebhookUrl   String?
   slackChannelId    String? // Default channel ID for notifications
   slackChannelName  String? // Default channel name for notifications
   createdAt         DateTime                      @default(now())

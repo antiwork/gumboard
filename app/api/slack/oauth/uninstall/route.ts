@@ -34,7 +34,6 @@ export async function PUT() {
         slackTeamName: null,
         slackBotToken: null,
         slackAppId: null,
-        slackWebhookUrl: null,
         slackChannelId: null,
         slackChannelName: null,
       },

@@ -51,7 +51,6 @@ export async function PUT(
           select: {
             id: true,
             name: true,
-            slackWebhookUrl: true,
             slackBotToken: true,
             slackChannelId: true,
           },

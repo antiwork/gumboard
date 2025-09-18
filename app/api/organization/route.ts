@@ -27,7 +27,7 @@ export async function PUT(request: NextRequest) {
       throw error;
     }
 
-    const { name, slackWebhookUrl } = validatedBody;
+    const { name } = validatedBody;
 
     // Get user with organization
     const user = await db.user.findUnique({
@@ -59,7 +59,6 @@ export async function PUT(request: NextRequest) {
       where: { id: user.organizationId },
       data: {
         name: name.trim(),
-        ...(slackWebhookUrl !== undefined && { slackWebhookUrl: slackWebhookUrl?.trim() || null }),
       },
     });
 
@@ -91,7 +90,6 @@ export async function PUT(request: NextRequest) {
         ? {
             id: updatedUser!.organization.id,
             name: updatedUser!.organization.name,
-            slackWebhookUrl: updatedUser!.organization.slackWebhookUrl,
             members: updatedUser!.organization.members,
           }
         : null,

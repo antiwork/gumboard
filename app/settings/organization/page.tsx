@@ -74,10 +74,8 @@ export default function OrganizationSettingsPage() {
   const { user, loading, refreshUser } = useUser();
   const router = useRouter();
   const [savingOrg, setSavingOrg] = useState(false);
-  // const [savingSlack, setSavingSlack] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
-  // const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [slackChannelName, setSlackChannelName] = useState("");
   const [disconnectingSlack, setDisconnectingSlack] = useState(false);
   const [savingSlackChannel, setSavingSlackChannel] = useState(false);
@@ -225,7 +223,6 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           name: orgName,
-          // slackWebhookUrl: slackWebhookUrl,
         }),
       });
 

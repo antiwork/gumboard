@@ -12,7 +12,6 @@ import React, {
 export type Organization = {
   id: string;
   name: string;
-  slackWebhookUrl?: string | null;
   slackAppId?: string | null;
   slackChannelName?: string | null;
   members: User[];

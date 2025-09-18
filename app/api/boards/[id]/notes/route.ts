@@ -122,7 +122,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         organizationId: true,
         organization: {
           select: {
-            slackWebhookUrl: true,
             slackChannelId: true,
             slackBotToken: true,
           },

@@ -19,7 +19,6 @@ export async function GET() {
             id: true,
             name: true,
             slackAppId: true,
-            slackWebhookUrl: true,
             slackChannelName: true,
             members: {
               select: {
@@ -50,7 +49,6 @@ export async function GET() {
             id: user.organization.id,
             name: user.organization.name,
             slackAppId: user.organization.slackAppId,
-            slackWebhookUrl: user.organization.slackWebhookUrl,
             slackChannelName: user.organization.slackChannelName,
             members: user.organization.members,
           }
