@@ -16,6 +16,7 @@ import {
   XIcon,
   StickyNote,
   Plus,
+  Archive,
 } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
@@ -101,6 +102,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState<Set<string>>(new Set());
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -667,6 +670,164 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     setDeleteConfirmDialog(false);
   };
 
+  // Multi-select handlers
+  const handleNoteClick = (noteId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent event from bubbling to board area
+    
+    if (event.ctrlKey || event.metaKey) {
+      event.preventDefault();
+      setSelectedNotes(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(noteId)) {
+          newSet.delete(noteId);
+        } else {
+          newSet.add(noteId);
+        }
+        return newSet;
+      });
+      setIsMultiSelectMode(true);
+    } else if (isMultiSelectMode) {
+      // Clear selection if clicking without Ctrl
+      setSelectedNotes(new Set());
+      setIsMultiSelectMode(false);
+    }
+  };
+
+  const handleNoteDoubleClick = (noteId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent event from bubbling to board area
+    
+    if (!isMultiSelectMode) {
+      event.preventDefault();
+      setSelectedNotes(new Set([noteId]));
+      setIsMultiSelectMode(true);
+    }
+  };
+
+  const handleSelectAll = () => {
+    setSelectedNotes(new Set(filteredNotes.map(note => note.id)));
+    setIsMultiSelectMode(true);
+  };
+
+  const handleClearSelection = () => {
+    setSelectedNotes(new Set());
+    setIsMultiSelectMode(false);
+  };
+
+  const handleBulkDelete = async () => {
+    const notesToDelete = Array.from(selectedNotes);
+    if (notesToDelete.length === 0) return;
+
+    // Optimistically remove from UI
+    setNotes(prev => prev.filter(note => !selectedNotes.has(note.id)));
+    setSelectedNotes(new Set());
+    setIsMultiSelectMode(false);
+
+    // Delete from server
+    try {
+      const deletePromises = notesToDelete.map(noteId => {
+        const note = notes.find(n => n.id === noteId);
+        const targetBoardId = note?.board?.id ?? note?.boardId;
+        return fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "DELETE",
+        });
+      });
+
+      const results = await Promise.allSettled(deletePromises);
+      const failedDeletes = results
+        .map((result, index) => ({ result, noteId: notesToDelete[index] }))
+        .filter(({ result }) => result.status === 'rejected');
+
+      if (failedDeletes.length > 0) {
+        // Re-add failed notes to UI
+        const failedNoteIds = failedDeletes.map(({ noteId }) => noteId);
+        const failedNotes = notes.filter(note => failedNoteIds.includes(note.id));
+        setNotes(prev => [...prev, ...failedNotes]);
+        
+        setErrorDialog({
+          open: true,
+          title: "Failed to delete some notes",
+          description: `Failed to delete ${failedDeletes.length} out of ${notesToDelete.length} notes.`,
+        });
+      } else {
+        toast(`Deleted ${notesToDelete.length} note${notesToDelete.length > 1 ? 's' : ''}`);
+      }
+    } catch (error) {
+      console.error("Error bulk deleting notes:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to delete notes",
+        description: "An error occurred while deleting the selected notes.",
+      });
+    }
+  };
+
+  const handleBulkArchive = async () => {
+    const notesToArchive = Array.from(selectedNotes);
+    if (notesToArchive.length === 0) return;
+
+    // Optimistically remove from UI
+    setNotes(prev => prev.filter(note => !selectedNotes.has(note.id)));
+    setSelectedNotes(new Set());
+    setIsMultiSelectMode(false);
+
+    // Archive on server
+    try {
+      const archivePromises = notesToArchive.map(noteId => {
+        const note = notes.find(n => n.id === noteId);
+        const targetBoardId = note?.board?.id ?? note?.boardId;
+        return fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ archivedAt: new Date().toISOString() }),
+        });
+      });
+
+      const results = await Promise.allSettled(archivePromises);
+      const failedArchives = results
+        .map((result, index) => ({ result, noteId: notesToArchive[index] }))
+        .filter(({ result }) => result.status === 'rejected');
+
+      if (failedArchives.length > 0) {
+        // Re-add failed notes to UI
+        const failedNoteIds = failedArchives.map(({ noteId }) => noteId);
+        const failedNotes = notes.filter(note => failedNoteIds.includes(note.id));
+        setNotes(prev => [...prev, ...failedNotes]);
+        
+        setErrorDialog({
+          open: true,
+          title: "Failed to archive some notes",
+          description: `Failed to archive ${failedArchives.length} out of ${notesToArchive.length} notes.`,
+        });
+      } else {
+        toast(`Archived ${notesToArchive.length} note${notesToArchive.length > 1 ? 's' : ''}`);
+      }
+    } catch (error) {
+      console.error("Error bulk archiving notes:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to archive notes",
+        description: "An error occurred while archiving the selected notes.",
+      });
+    }
+  };
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey || event.metaKey) {
+        if (event.key === 'a') {
+          event.preventDefault();
+          handleSelectAll();
+        }
+      } else if (event.key === 'Escape') {
+        handleClearSelection();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [filteredNotes]);
+
   if (userLoading || notesloading) {
     return <BoardPageSkeleton />;
   }
@@ -685,7 +846,15 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
+    <div 
+      className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots"
+      onClick={(e) => {
+        // Clear selection when clicking anywhere on the page except on notes
+        if (e.target === e.currentTarget) {
+          handleClearSelection();
+        }
+      }}
+    >
       <div>
         <div className="mx-0.5 md:mx-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 items-center h-auto md:h-16 p-2 md:p-0">
           <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
@@ -807,25 +976,65 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 />
               </div>
               {boardId !== "all-notes" && boardId !== "archive" && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    setBoardSettings({
-                      name: board?.name || "",
-                      description: board?.description || "",
-                      isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
-                      sendSlackUpdates:
-                        (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                    });
-                    setBoardSettingsDialog(true);
-                  }}
-                  aria-label="Board settings"
-                  title="Board settings"
-                  className="flex items-center size-9"
-                >
-                  <EllipsisVertical className="size-4" />
-                </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      aria-label="Board actions"
+                      title="Board actions"
+                      className="flex items-center size-9"
+                    >
+                      <EllipsisVertical className="size-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-48 p-1" align="end">
+                    <div className="flex flex-col">
+                      {selectedNotes.size > 0 && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleBulkDelete}
+                            className="justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-950"
+                          >
+                            <Trash2 className="w-4 h-4 mr-2" />
+                            Delete ({selectedNotes.size})
+                          </Button>
+                          {boardId !== "archive" && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={handleBulkArchive}
+                              className="justify-start text-orange-600 hover:text-orange-700 hover:bg-orange-50 dark:text-orange-400 dark:hover:text-orange-300 dark:hover:bg-orange-950"
+                            >
+                              <Archive className="w-4 h-4 mr-2" />
+                              Archive ({selectedNotes.size})
+                            </Button>
+                          )}
+                          <div className="border-t border-zinc-200 dark:border-zinc-700 my-1" />
+                        </>
+                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setBoardSettings({
+                            name: board?.name || "",
+                            description: board?.description || "",
+                            isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
+                            sendSlackUpdates:
+                              (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                          });
+                          setBoardSettingsDialog(true);
+                        }}
+                        className="justify-start"
+                      >
+                        Board Settings
+                      </Button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               )}
             </div>
           </div>
@@ -887,7 +1096,23 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       <div
         ref={boardRef}
         className="relative w-full min-h-[calc(100vh-236px)] sm:min-h-[calc(100vh-64px)] p-3 md:p-5"
+        onClick={(e) => {
+          // Only clear selection if clicking on the board area itself, not on notes
+          if (e.target === e.currentTarget) {
+            handleClearSelection();
+          }
+        }}
       >
+        {/* Multi-select instruction */}
+        {isMultiSelectMode && selectedNotes.size === 0 && (
+          <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <p className="text-sm text-blue-700 dark:text-blue-300">
+              <strong>Multi-select mode:</strong> Hold Ctrl (or Cmd on Mac) and click on notes to select multiple, or double-click any note to start selecting. 
+              Click anywhere outside notes to deselect all. Press <kbd className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs">Ctrl+A</kbd> to select all, 
+              or <kbd className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs">Esc</kbd> to exit.
+            </p>
+          </div>
+        )}
         <div className={`flex gap-${columnMeta.gap}`}>
           {columnsData.map((column, index) => (
             <div key={index} className="flex-1 flex flex-col gap-4">
@@ -902,10 +1127,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   onUnarchive={boardId === "archive" ? handleUnarchiveNote : undefined}
                   onCopy={handleCopyNote}
                   showBoardName={boardId === "all-notes" || boardId === "archive"}
-                  className="shadow-md shadow-black/10 p-4"
+                  className={`shadow-md shadow-black/10 p-4 cursor-pointer transition-all duration-200 ${
+                    selectedNotes.has(note.id) 
+                      ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-800' 
+                      : ''
+                  }`}
                   style={{
                     backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
                   }}
+                  isSelected={selectedNotes.has(note.id)}
+                  onNoteClick={(event) => handleNoteClick(note.id, event)}
+                  onNoteDoubleClick={(event) => handleNoteDoubleClick(note.id, event)}
                 />
               ))}
             </div>

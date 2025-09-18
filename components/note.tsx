@@ -68,6 +68,9 @@ interface NoteProps {
   showBoardName?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  isSelected?: boolean;
+  onNoteClick?: (event: React.MouseEvent) => void;
+  onNoteDoubleClick?: (event: React.MouseEvent) => void;
 }
 
 export function Note({
@@ -83,6 +86,9 @@ export function Note({
   className,
   syncDB = true,
   style,
+  isSelected = false,
+  onNoteClick,
+  onNoteDoubleClick,
 }: NoteProps) {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
@@ -349,10 +355,21 @@ export function Note({
       data-testid="note-card"
       onFocusCapture={() => {}}
       onBlurCapture={() => {}}
+      onClick={onNoteClick}
+      onDoubleClick={onNoteDoubleClick}
       style={style}
     >
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex-1 min-w-0 flex items-center space-x-2">
+          {isSelected && (
+            <div className="flex-shrink-0">
+              <div className="w-4 h-4 bg-blue-500 rounded-sm flex items-center justify-center">
+                <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                </svg>
+              </div>
+            </div>
+          )}
           <Avatar className="h-7 w-7">
             <AvatarFallback className="bg-white/50 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
               {note.user.name
