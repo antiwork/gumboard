@@ -146,15 +146,24 @@ export function formatNoteForSlack(
 }
 
 export function formatTodoForSlack(
-  todoContent: string,
+  content: string,
+  checked: boolean,
   boardName: string,
   userName: string,
-  action: "added" | "completed"
+  action: "added" | "completed" | "uncompleted" | "updated"
 ): string {
-  if (action === "completed") {
-    return `:white_check_mark: ${todoContent} by ${userName} in ${boardName}`;
+  switch (action) {
+    case "added":
+      return `✖️ ${content} by ${userName} in ${boardName}`; // just plain text when added
+    case "completed":
+      return `✅ ${content} by ${userName} in ${boardName}`; // checkmark for completed
+    case "uncompleted":
+      return `✖️ ${content} by ${userName} in ${boardName}`; // cross for uncompleted
+    case "updated":
+      return checked
+        ? `✅ ${content} by ${userName} in ${boardName}`
+        : `✖️ ${content} by ${userName} in ${boardName}`; // just update text without extra icons
   }
-  return `:heavy_plus_sign: ${todoContent} by ${userName} in ${boardName}`;
 }
 
 export async function sendTodoNotification(
@@ -163,9 +172,10 @@ export async function sendTodoNotification(
   todoContent: string,
   boardName: string,
   userName: string,
-  action: "added" | "completed"
+  checked: boolean,
+  action: "added" | "completed" | "uncompleted" | "updated"
 ): Promise<string | null> {
-  const message = formatTodoForSlack(todoContent, boardName, userName, action);
+  const message = formatTodoForSlack(todoContent, checked, boardName, userName, action);
   return await sendSlackMessage(token, {
     channel,
     text: message,

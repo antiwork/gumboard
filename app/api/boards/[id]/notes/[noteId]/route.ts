@@ -239,6 +239,7 @@ export async function PUT(
             item.content,
             boardName,
             userName,
+            item.checked,
             "added"
           );
 
@@ -251,10 +252,13 @@ export async function PUT(
         }
       }
 
-      // Handle updated checklist items → update Slack message instead of sending new one
+      // Handle updated checklist items → update Slack message
       for (const u of checklistChanges.updated) {
+        const prev = u.previous;
+
+        //  Case 1: Checked (completed)
         if (
-          !u.previous.checked &&
+          !prev.checked &&
           u.checked &&
           shouldSendNotification(
             session.user.id,
@@ -263,31 +267,92 @@ export async function PUT(
             updatedNote.board.sendSlackUpdates
           )
         ) {
-          if (u.previous.slackMessageId) {
-            const newText = formatTodoForSlack(u.content, boardName, userName, "completed");
+          if (prev.slackMessageId) {
+            const newText = formatTodoForSlack(
+              u.content,
+              u.checked,
+              boardName,
+              userName,
+              "completed"
+            );
             await updateSlackMessage(
               user.organization.slackBotToken,
               user.organization.slackChannelId,
-              u.previous.slackMessageId,
+              prev.slackMessageId,
               newText
             );
           } else {
-            // fallback: no Slack message yet → send one and save ts
+            // fallback → send a new one
             const ts = await sendTodoNotification(
               user.organization.slackBotToken,
               user.organization.slackChannelId,
               u.content,
               boardName,
               userName,
+              u.checked,
               "completed"
             );
-
             if (ts) {
               await db.checklistItem.update({
                 where: { id: u.id },
                 data: { slackMessageId: ts },
               });
             }
+          }
+        }
+
+        //  Case 2: Unchecked
+        else if (
+          prev.checked &&
+          !u.checked &&
+          shouldSendNotification(
+            session.user.id,
+            boardId,
+            boardName,
+            updatedNote.board.sendSlackUpdates
+          )
+        ) {
+          if (prev.slackMessageId) {
+            const newText = formatTodoForSlack(
+              u.content,
+              u.checked,
+              boardName,
+              userName,
+              "uncompleted"
+            );
+            await updateSlackMessage(
+              user.organization.slackBotToken,
+              user.organization.slackChannelId,
+              prev.slackMessageId,
+              newText
+            );
+          }
+        }
+
+        // Case 3: Content updated
+        else if (
+          prev.content !== u.content &&
+          shouldSendNotification(
+            session.user.id,
+            boardId,
+            boardName,
+            updatedNote.board.sendSlackUpdates
+          )
+        ) {
+          if (prev.slackMessageId) {
+            const newText = formatTodoForSlack(
+              u.content,
+              u.checked,
+              boardName,
+              userName,
+              "updated"
+            );
+            await updateSlackMessage(
+              user.organization.slackBotToken,
+              user.organization.slackChannelId,
+              prev.slackMessageId,
+              newText
+            );
           }
         }
       }
