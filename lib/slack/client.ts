@@ -1,6 +1,6 @@
-import { WebClient } from '@slack/web-api';
-import { NextRequest } from 'next/server';
-import crypto from 'crypto';
+import { WebClient } from "@slack/web-api";
+import { NextRequest } from "next/server";
+import crypto from "crypto";
 
 // Define proper types instead of any
 interface SlackMessageOptions {
@@ -20,9 +20,9 @@ export class SlackClient {
 
   // Verify Slack request signature
   verifySlackRequest(request: NextRequest, body: string): boolean {
-    const timestamp = request.headers.get('x-slack-request-timestamp');
-    const signature = request.headers.get('x-slack-signature');
-    
+    const timestamp = request.headers.get("x-slack-request-timestamp");
+    const signature = request.headers.get("x-slack-signature");
+
     if (!timestamp || !signature) return false;
 
     // Check timestamp (prevent replay attacks)
@@ -31,13 +31,10 @@ export class SlackClient {
 
     // Verify signature
     const baseString = `v0:${timestamp}:${body}`;
-    const hmac = crypto.createHmac('sha256', this.signingSecret);
-    const expectedSignature = `v0=${hmac.update(baseString).digest('hex')}`;
-    
-    return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expectedSignature)
-    );
+    const hmac = crypto.createHmac("sha256", this.signingSecret);
+    const expectedSignature = `v0=${hmac.update(baseString).digest("hex")}`;
+
+    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
   }
 
   // Send message to Slack
@@ -46,10 +43,10 @@ export class SlackClient {
       return await this.client.chat.postMessage({
         channel,
         text,
-        ...options
+        ...options,
       });
     } catch (error) {
-      console.error('Error sending Slack message:', error);
+      console.error("Error sending Slack message:", error);
       throw error;
     }
   }
@@ -60,7 +57,7 @@ export class SlackClient {
       const result = await this.client.users.info({ user: userId });
       return result.user;
     } catch (error) {
-      console.error('Error getting user info:', error);
+      console.error("Error getting user info:", error);
       return null;
     }
   }
@@ -72,10 +69,10 @@ export class SlackClient {
         client_id: process.env.SLACK_CLIENT_ID!,
         client_secret: process.env.SLACK_CLIENT_SECRET!,
         code,
-        redirect_uri: redirectUri
+        redirect_uri: redirectUri,
       });
     } catch (error) {
-      console.error('OAuth error:', error);
+      console.error("OAuth error:", error);
       throw error;
     }
   }

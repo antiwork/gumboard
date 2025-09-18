@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma';
-import { Prisma } from '@prisma/client';
+import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 
 export interface ConversationContext {
   userId: string;
@@ -21,9 +21,9 @@ export class ContextManager {
         where: {
           userId_channelId: {
             userId,
-            channelId
-          }
-        }
+            channelId,
+          },
+        },
       });
 
       if (!session || session.expiresAt < new Date()) {
@@ -35,17 +35,17 @@ export class ContextManager {
         channelId: session.channelId,
         organizationId: session.organizationId,
         lastAction: session.lastAction || undefined,
-        conversationData: session.conversationData || undefined
+        conversationData: session.conversationData || undefined,
       };
     } catch (error) {
-      console.error('Error getting context:', error);
+      console.error("Error getting context:", error);
       return null;
     }
   }
 
   async updateContext(
-    userId: string, 
-    channelId: string, 
+    userId: string,
+    channelId: string,
     organizationId: string,
     updates: Partial<ConversationContext>
   ): Promise<void> {
@@ -57,8 +57,8 @@ export class ContextManager {
         where: {
           userId_channelId: {
             userId,
-            channelId
-          }
+            channelId,
+          },
         },
         create: {
           userId,
@@ -66,29 +66,29 @@ export class ContextManager {
           organizationId,
           lastAction: updates.lastAction,
           conversationData: (updates.conversationData as Prisma.JsonValue) || Prisma.JsonNull,
-          expiresAt
+          expiresAt,
         },
         update: {
           lastAction: updates.lastAction,
           conversationData: (updates.conversationData as Prisma.JsonValue) || Prisma.JsonNull,
-          expiresAt
-        }
+          expiresAt,
+        },
       });
     } catch (error) {
-      console.error('Error updating context:', error);
+      console.error("Error updating context:", error);
     }
   }
 
   async setLastTasks(
-    userId: string, 
-    channelId: string, 
+    userId: string,
+    channelId: string,
     organizationId: string,
     tasks: Array<{ id: string; content: string; index: number }>
   ): Promise<void> {
     await this.updateContext(userId, channelId, organizationId, {
-      lastAction: 'list',
+      lastAction: "list",
       lastTasks: tasks,
-      conversationData: { lastTasks: tasks } as Prisma.JsonValue
+      conversationData: { lastTasks: tasks } as Prisma.JsonValue,
     });
   }
 
@@ -101,23 +101,23 @@ export class ContextManager {
     if (!context || !context.lastTasks) return null;
 
     // Handle numeric references
-    if (typeof reference === 'number') {
+    if (typeof reference === "number") {
       const task = context.lastTasks[reference - 1];
       return task?.id || null;
     }
 
     // Handle text references
-    if (typeof reference === 'string') {
+    if (typeof reference === "string") {
       const lowerRef = reference.toLowerCase();
-      
+
       // Handle "that", "it", "the last one"
-      if (lowerRef.includes('that') || lowerRef.includes('it') || lowerRef === 'last') {
+      if (lowerRef.includes("that") || lowerRef.includes("it") || lowerRef === "last") {
         const lastTask = context.lastTasks[context.lastTasks.length - 1];
         return lastTask?.id || null;
       }
 
       // Find by partial content match
-      const matchingTask = context.lastTasks.find(task => 
+      const matchingTask = context.lastTasks.find((task) =>
         task.content.toLowerCase().includes(lowerRef)
       );
       return matchingTask?.id || null;

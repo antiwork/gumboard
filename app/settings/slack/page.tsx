@@ -1,31 +1,31 @@
-import { auth } from '@/auth';
-import { prisma } from '@/lib/prisma';
-import { SlackSetup } from '@/components/slack/setup';
-import { redirect } from 'next/navigation';
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { SlackSetup } from "@/components/slack/setup";
+import { redirect } from "next/navigation";
 
 export default async function SlackSettingsPage() {
   const session = await auth();
   if (!session?.user?.id) {
-    redirect('/auth/signin');
+    redirect("/auth/signin");
     return null;
   }
 
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    include: { 
+    include: {
       organization: {
         select: {
           id: true,
           name: true,
           slackEnabled: true,
           slackTeamId: true,
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   if (!user?.organization) {
-    redirect('/settings?error=no_organization');
+    redirect("/settings?error=no_organization");
     return null;
   }
 
@@ -46,7 +46,7 @@ export default async function SlackSettingsPage() {
             Connect Gumboard to your Slack workspace for seamless task management.
           </p>
         </div>
-        
+
         <SlackSetup organization={organizationProps} />
       </div>
     </div>

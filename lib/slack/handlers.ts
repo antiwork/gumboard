@@ -1,6 +1,6 @@
-import { prisma } from '@/lib/prisma';
-import { nlpService, NLPIntent } from './nlp';
-import { contextManager } from './context';
+import { prisma } from "@/lib/prisma";
+import { nlpService, NLPIntent } from "./nlp";
+import { contextManager } from "./context";
 // Remove unused import: slackClient
 
 export class MessageHandler {
@@ -13,7 +13,7 @@ export class MessageHandler {
     try {
       // Get organization from Slack team ID
       const organization = await prisma.organization.findFirst({
-        where: { slackTeamId: teamId }
+        where: { slackTeamId: teamId },
       });
 
       if (!organization) {
@@ -22,11 +22,11 @@ export class MessageHandler {
 
       // Parse user intent
       const intent = await nlpService.parseIntent(text);
-      
+
       // Route to appropriate handler
       return await this.routeIntent(intent, userId, channelId, organization.id);
     } catch (error) {
-      console.error('Error handling message:', error);
+      console.error("Error handling message:", error);
       return "Sorry, I encountered an error processing your request. Please try again.";
     }
   }
@@ -38,17 +38,17 @@ export class MessageHandler {
     organizationId: string
   ): Promise<string> {
     switch (intent.action) {
-      case 'list':
+      case "list":
         return await this.handleList(userId, channelId, organizationId);
-      case 'add':
+      case "add":
         return await this.handleAdd(intent, userId, channelId, organizationId);
-      case 'complete':
+      case "complete":
         return await this.handleComplete(intent, userId, channelId, organizationId);
-      case 'remove':
+      case "remove":
         return await this.handleRemove(intent, userId, channelId, organizationId);
-      case 'edit':
+      case "edit":
         return await this.handleEdit(intent, userId, channelId, organizationId);
-      case 'help':
+      case "help":
         return this.getHelpMessage();
       default:
         return this.getUnknownMessage(intent.confidence);
@@ -56,8 +56,8 @@ export class MessageHandler {
   }
 
   private async handleList(
-    userId: string, 
-    channelId: string, 
+    userId: string,
+    channelId: string,
     organizationId: string
   ): Promise<string> {
     // Get user's tasks across all boards in the organization
@@ -66,22 +66,19 @@ export class MessageHandler {
         note: {
           createdBy: userId,
           board: {
-            organizationId: organizationId
+            organizationId: organizationId,
           },
-          deletedAt: null
-        }
+          deletedAt: null,
+        },
       },
       include: {
         note: {
           include: {
-            board: true
-          }
-        }
+            board: true,
+          },
+        },
       },
-      orderBy: [
-        { note: { createdAt: 'desc' } },
-        { order: 'asc' }
-      ]
+      orderBy: [{ note: { createdAt: "desc" } }, { order: "asc" }],
     });
 
     if (tasks.length === 0) {
@@ -92,19 +89,21 @@ export class MessageHandler {
     const taskContext = tasks.map((task, index) => ({
       id: task.id,
       content: task.content,
-      index: index + 1
+      index: index + 1,
     }));
 
     await contextManager.setLastTasks(userId, channelId, organizationId, taskContext);
 
     // Format task list
-    const taskList = tasks.map((task, index) => {
-      const status = task.checked ? '✅' : '⏳';
-      const boardName = task.note.board.name;
-      return `${index + 1}. ${task.content} ${status} _[${boardName}]_`;
-    }).join('\n');
+    const taskList = tasks
+      .map((task, index) => {
+        const status = task.checked ? "✅" : "⏳";
+        const boardName = task.note.board.name;
+        return `${index + 1}. ${task.content} ${status} _[${boardName}]_`;
+      })
+      .join("\n");
 
-    const completedCount = tasks.filter(t => t.checked).length;
+    const completedCount = tasks.filter((t) => t.checked).length;
     const pendingCount = tasks.length - completedCount;
 
     return `📋 **Your Tasks:**\n\n${taskList}\n\n📊 *${pendingCount} pending* • *${completedCount} completed*`;
@@ -126,20 +125,17 @@ export class MessageHandler {
       let board = await prisma.board.findFirst({
         where: {
           organizationId: organizationId,
-          OR: [
-            { name: 'Personal' },
-            { name: 'Default' }
-          ]
-        }
+          OR: [{ name: "Personal" }, { name: "Default" }],
+        },
       });
 
       if (!board) {
         board = await prisma.board.create({
           data: {
-            name: 'Personal',
+            name: "Personal",
             organizationId: organizationId,
-            createdBy: userId
-          }
+            createdBy: userId,
+          },
         });
       }
 
@@ -147,8 +143,8 @@ export class MessageHandler {
       const note = await prisma.note.create({
         data: {
           boardId: board.id,
-          createdBy: userId
-        }
+          createdBy: userId,
+        },
       });
 
       // Create the checklist item
@@ -157,17 +153,17 @@ export class MessageHandler {
           content: taskText,
           noteId: note.id,
           slackUserId: userId,
-          order: 0
-        }
+          order: 0,
+        },
       });
 
       await contextManager.updateContext(userId, channelId, organizationId, {
-        lastAction: 'add'
+        lastAction: "add",
       });
 
       return `✅ **Added:** ${taskText}\n_Added to ${board.name} board_`;
     } catch (error) {
-      console.error('Error adding task:', error);
+      console.error("Error adding task:", error);
       return "Sorry, I couldn't add that task. Please try again.";
     }
   }
@@ -183,14 +179,14 @@ export class MessageHandler {
     // Resolve task by index or text
     if (intent.entities.taskIndex) {
       taskId = await contextManager.resolveTaskReference(
-        userId, 
-        channelId, 
+        userId,
+        channelId,
         intent.entities.taskIndex
       );
     } else if (intent.entities.taskText) {
       taskId = await contextManager.resolveTaskReference(
-        userId, 
-        channelId, 
+        userId,
+        channelId,
         intent.entities.taskText
       );
     }
@@ -203,16 +199,16 @@ export class MessageHandler {
       // Update task as completed
       const task = await prisma.checklistItem.update({
         where: { id: taskId },
-        data: { checked: true }
+        data: { checked: true },
       });
 
       await contextManager.updateContext(userId, channelId, organizationId, {
-        lastAction: 'complete'
+        lastAction: "complete",
       });
 
       return `🎉 **Great work!** "${task.content}" is now completed.`;
     } catch (error) {
-      console.error('Error completing task:', error);
+      console.error("Error completing task:", error);
       return "Sorry, I couldn't complete that task. Please try again.";
     }
   }
@@ -227,14 +223,14 @@ export class MessageHandler {
 
     if (intent.entities.taskIndex) {
       taskId = await contextManager.resolveTaskReference(
-        userId, 
-        channelId, 
+        userId,
+        channelId,
         intent.entities.taskIndex
       );
     } else if (intent.entities.taskText) {
       taskId = await contextManager.resolveTaskReference(
-        userId, 
-        channelId, 
+        userId,
+        channelId,
         intent.entities.taskText
       );
     }
@@ -245,7 +241,7 @@ export class MessageHandler {
 
     try {
       const task = await prisma.checklistItem.findUnique({
-        where: { id: taskId }
+        where: { id: taskId },
       });
 
       if (!task) {
@@ -254,16 +250,16 @@ export class MessageHandler {
 
       // Delete the checklist item
       await prisma.checklistItem.delete({
-        where: { id: taskId }
+        where: { id: taskId },
       });
 
       await contextManager.updateContext(userId, channelId, organizationId, {
-        lastAction: 'remove'
+        lastAction: "remove",
       });
 
       return `🗑️ **Removed:** ${task.content}`;
     } catch (error) {
-      console.error('Error removing task:', error);
+      console.error("Error removing task:", error);
       return "Sorry, I couldn't remove that task. Please try again.";
     }
   }
@@ -283,8 +279,8 @@ export class MessageHandler {
 
     if (intent.entities.taskIndex) {
       taskId = await contextManager.resolveTaskReference(
-        userId, 
-        channelId, 
+        userId,
+        channelId,
         intent.entities.taskIndex
       );
     }
@@ -295,7 +291,7 @@ export class MessageHandler {
 
     try {
       const oldTask = await prisma.checklistItem.findUnique({
-        where: { id: taskId }
+        where: { id: taskId },
       });
 
       if (!oldTask) {
@@ -304,16 +300,16 @@ export class MessageHandler {
 
       const updatedTask = await prisma.checklistItem.update({
         where: { id: taskId },
-        data: { content: newText }
+        data: { content: newText },
       });
 
       await contextManager.updateContext(userId, channelId, organizationId, {
-        lastAction: 'edit'
+        lastAction: "edit",
       });
 
       return `✏️ **Updated:** "${oldTask.content}" → "${updatedTask.content}"`;
     } catch (error) {
-      console.error('Error editing task:', error);
+      console.error("Error editing task:", error);
       return "Sorry, I couldn't edit that task. Please try again.";
     }
   }
