@@ -64,6 +64,79 @@ When changing the database schema in `prisma/schema.prisma`, create and check in
 ```bash
 npm run db:migrate
 ```
+Here’s a **completed version** of your Slack integration setup guide with the missing steps filled in, including OAuth installation, token handling, and usage in your app:
+
+
+
+## Slack Integration Setup
+
+### 1. Create Slack OAuth Credentials
+
+1. Visit [https://api.slack.com/apps](https://api.slack.com/apps)
+2. Click **Create New App**
+3. Enter **App Name** and select your workspace
+4. Go to **OAuth & Permissions**
+5. Under **Bot Token Scopes**, add the following:
+
+   * `chat:write` – send messages as the bot
+   * `im:history` – read messages in direct messages the bot is part of
+   * `app_mentions:read` – read messages that mention the bot
+   * `channels:read` – view basic information about channels
+   * `channels:join` – join channels automatically
+
+> [!NOTE]
+> Slack requires HTTPS for redirect URLs. For local development, you can use **mkcert** + **local-ssl-proxy**. Alternatives: nginx reverse proxy, VSCode tunnel, or `ngrok`.
+> Make sure to also update **GitHub/Google callbacks** and `NEXTAUTH_URL`.
+
+---
+
+### 2. Local Certificates Setup
+
+Install `mkcert` and `local-ssl-proxy`:
+
+```bash
+# macOS
+brew install mkcert
+mkcert -install
+# For Linux/Windows, see instructions: 
+# https://github.com/FiloSottile/mkcert?tab=readme-ov-file#installation
+
+npm install -g local-ssl-proxy
+```
+
+Generate a local certificate:
+
+```bash
+mkcert localhost
+```
+
+Run HTTPS proxy (example: proxying port 3010 to 3000):
+
+```bash
+local-ssl-proxy --source 3010 --target 3000 --cert localhost.pem --key localhost-key.pem
+```
+
+---
+
+### 3. Configure Slack Redirect URL
+
+Add this URL in **OAuth & Permissions → Redirect URLs**:
+
+```
+https://localhost:3010/api/slack/oauth/callback
+```
+
+Update your `.env`:
+
+```env
+NEXTAUTH_URL=https://localhost:3010
+SLACK_CLIENT_ID=your_slack_client_id
+SLACK_CLIENT_SECRET=your_slack_client_secret
+SLACK_REDIRECT_URI=https://localhost:3010/api/slack/oauth/callback
+```
+
+---
+
 
 ## 🔐 Google OAuth Setup
 
