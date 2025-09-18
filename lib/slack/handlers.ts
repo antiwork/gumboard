@@ -139,7 +139,7 @@ export class MessageHandler {
             name: 'Personal',
             organizationId: organizationId,
             createdBy: userId
-          }
+          } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
         });
       }
 

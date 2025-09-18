@@ -71,17 +71,17 @@ model User {
 model Organization {
   id                 String                        @id @default(cuid())
   name               String
-  slackWebhookUrl    String? // EXISTING field
-  slackTeamId        String? // ADD this field
-  slackBotToken      String? // ADD this field  
-  slackChannelId     String? // ADD this field
-  slackEnabled       Boolean                       @default(false) // ADD this field
+  slackWebhookUrl    String?
+  slackTeamId        String? 
+  slackBotToken      String?   
+  slackChannelId     String? 
+  slackEnabled       Boolean                       @default(false)
   createdAt          DateTime                      @default(now())
   updatedAt          DateTime                      @updatedAt
   members            User[]
   boards             Board[]
   selfServeInvites   OrganizationSelfServeInvite[]
-  slackSessions      SlackSession[] // ADD this relation
+  slackSessions      SlackSession[]
   OrganizationInvite OrganizationInvite[]
 
   @@map("organizations")
@@ -89,7 +89,12 @@ model Organization {
 
 model Board {
   id               String       @id @default(cuid())
+  userId           String
+  channelId        String
   name             String
+  conversationData Json?
+  expiresAt        DateTime
+  lastAction       String?
   description      String?
   isPublic         Boolean      @default(false)
   sendSlackUpdates Boolean      @default(true)
