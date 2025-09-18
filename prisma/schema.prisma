@@ -51,6 +51,7 @@ model User {
   id                      String                        @id @default(cuid())
   name                    String?
   email                   String                        @unique
+  boards                  Board[]
   emailVerified           DateTime?
   image                   String?
   accounts                Account[]
@@ -72,9 +73,9 @@ model Organization {
   id                 String                        @id @default(cuid())
   name               String
   slackWebhookUrl    String?
-  slackTeamId        String? 
-  slackBotToken      String?   
-  slackChannelId     String? 
+  slackTeamId        String?
+  slackBotToken      String?
+  slackChannelId     String?
   slackEnabled       Boolean                       @default(false)
   createdAt          DateTime                      @default(now())
   updatedAt          DateTime                      @updatedAt
@@ -88,25 +89,20 @@ model Organization {
 }
 
 model Board {
-  id               String       @id @default(cuid())
-  userId           String
-  channelId        String
+  id               String   @id @default(cuid())
   name             String
-  conversationData Json?
-  expiresAt        DateTime
-  lastAction       String?
   description      String?
-  isPublic         Boolean      @default(false)
-  sendSlackUpdates Boolean      @default(true)
+  isPublic         Boolean  @default(false)
+  sendSlackUpdates Boolean  @default(false)
   organizationId   String
-  organization     Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy        String
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
-  notes            Note[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  // Performance indexes
-  @@index([organizationId, createdAt], name: "idx_board_org_created")
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  notes        Note[]
+
   @@map("boards")
 }
 
