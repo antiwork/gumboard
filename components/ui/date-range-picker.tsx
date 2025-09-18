@@ -129,7 +129,6 @@ function DateRangePicker({
                     mode="single"
                     selected={internalStartDate || undefined}
                     onSelect={handleStartCalendarSelect}
-                    disabled={(date) => date > new Date()}
                     modifiersClassNames={{
                       outside: "text-gray-400 opacity-50 pointer-events-none",
                     }}
@@ -166,9 +165,7 @@ function DateRangePicker({
                     mode="single"
                     selected={internalEndDate || undefined}
                     onSelect={handleEndCalendarSelect}
-                    disabled={(date) =>
-                      date > new Date() || (internalStartDate ? date < internalStartDate : false)
-                    }
+                    disabled={(date) => (internalStartDate ? date < internalStartDate : false)}
                     modifiersClassNames={{
                       outside: "text-gray-400 opacity-50 pointer-events-none",
                     }}

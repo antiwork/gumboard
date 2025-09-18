@@ -334,7 +334,7 @@ export function Note({
   return (
     <div
       className={cn(
-        "relative select-none group transition-shadow duration-200 flex flex-col dark:border-gray-600 dark:bg-zinc-900 box-border",
+        "relative select-none group transition-shadow duration-200 flex flex-col dark:border-gray-600 dark:bg-zinc-900 box-border border rounded-lg",
         // Focus highlight when any child is focused/being typed into
         "focus-within:ring-2 focus-within:ring-sky-500 dark:focus-within:ring-sky-400 focus-within:ring-offset-1 focus-within:ring-offset-white dark:focus-within:ring-offset-zinc-900",
         // Light theme variant
@@ -352,7 +352,7 @@ export function Note({
       style={style}
     >
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
-        <div className="flex items-center space-x-2">
+        <div className="flex-1 min-w-0 flex items-center space-x-2">
           <Avatar className="h-7 w-7">
             <AvatarFallback className="bg-white/50 dark:bg-zinc-700 text-zinc-700 dark:text-zinc-200 text-sm font-semibold">
               {note.user.name
@@ -366,7 +366,7 @@ export function Note({
             />
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 max-w-20">
+            <span className="text-sm font-bold text-gray-700 dark:text-zinc-100 max-w-40 overflow-x-hidden truncate">
               {note.user.name ? note.user.name.split(" ")[0] : note.user.email.split("@")[0]}
             </span>
             <div className="flex flex-col">
@@ -425,9 +425,7 @@ export function Note({
                 </TooltipContent>
               </Tooltip>
             )}
-          </div>
-          {canEdit && onArchive && (
-            <div className="flex items-center">
+            {canEdit && onArchive && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -447,8 +445,8 @@ export function Note({
                   <p>Archive note</p>
                 </TooltipContent>
               </Tooltip>
-            </div>
-          )}
+            )}
+          </div>
           {canEdit && onUnarchive && (
             <div className="flex items-center">
               <Tooltip>
