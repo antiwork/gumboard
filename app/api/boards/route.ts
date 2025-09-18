@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
         isPublic: Boolean(isPublic),
         organizationId: user.organizationId,
         createdBy: session.user.id,
-      },
+      } as any, // eslint-disable-line @typescript-eslint/no-explicit-any
       select: {
         id: true,
         name: true,

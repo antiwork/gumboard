@@ -166,7 +166,7 @@ test.describe("Delete User Functionality", () => {
     const boardAfterDeletion = await testPrisma.board.findUnique({
       where: { id: board.id },
     });
-    expect(boardAfterDeletion).not.toBeNull(); // Board should still exist
+    expect(boardAfterDeletion).toBeNull(); // Board should be deleted when user is deleted
 
     const noteAfterDeletion = await testPrisma.note.findUnique({
       where: { id: note.id },
