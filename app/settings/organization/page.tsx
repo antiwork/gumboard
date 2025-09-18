@@ -24,6 +24,7 @@ import {
   LoaderCircle,
   ChevronDown,
   Slack,
+  Unplug,
 } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
@@ -651,7 +652,10 @@ export default function OrganizationSettingsPage() {
                     Disconnecting
                   </>
                 ) : (
+                  <>
+                  <Unplug />
                   <>Disconnect Slack</>
+                  </>
                 )}
               </Button>
             ) : (
