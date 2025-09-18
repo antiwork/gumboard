@@ -195,24 +195,23 @@ export default function OrganizationSettingsPage() {
         refreshUser();
         return data;
       });
-      
+
       const data = toast.promise(promise, {
         loading: "Saving Slack channel...",
         success: "Slack channel saved successfully",
         error: "Failed to save Slack channel",
       });
-      
+
       console.log(data);
     } catch (error) {
       console.error("Error saving Slack channel:", error);
       setErrorDialog({
-          open: true,
-          title: "Failed to update organization",
-          description: "Failed to update organization",
-        });
+        open: true,
+        title: "Failed to update organization",
+        description: "Failed to update organization",
+      });
     } finally {
       setSavingSlackChannel(false);
-
     }
   };
 
@@ -534,13 +533,12 @@ export default function OrganizationSettingsPage() {
         setSlackChannelName("");
         refreshUser();
       }
-
     } catch (error) {
       console.log(error);
     } finally {
       setDisconnectingSlack(false);
     }
-  }
+  };
 
   if (loading) {
     return (
@@ -608,16 +606,19 @@ export default function OrganizationSettingsPage() {
             <PopoverTrigger>
               {isSlackConnected && (
                 <div className="flex flex-col items-start justify-start space-y-2 my-4">
-                <Label className="text-sm text-black dark:text-white ">Select a channel to send notifications</Label>
-              <Button variant="outline" className="text-sm">
-                {slackChannelName || "Select channel"}
-                <span>
-                  <ChevronDown className={`ml-2 ${channelDialogOpen ? "rotate-180" : ""} transition-transform`} />
-                </span>
-              </Button>
+                  <Label className="text-sm text-black dark:text-white ">
+                    Select a channel to send notifications
+                  </Label>
+                  <Button variant="outline" className="text-sm">
+                    {slackChannelName || "Select channel"}
+                    <span>
+                      <ChevronDown
+                        className={`ml-2 ${channelDialogOpen ? "rotate-180" : ""} transition-transform`}
+                      />
+                    </span>
+                  </Button>
                 </div>
-                
-              ) }
+              )}
             </PopoverTrigger>
             <PopoverContent className="w-auto p-0">
               {slackChannels && slackChannels.length > 0 ? (
@@ -642,24 +643,25 @@ export default function OrganizationSettingsPage() {
           </Popover>
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
             {isSlackConnected ? (
-              <Button disabled={!user?.isAdmin} variant="destructive" onClick={handleDisconnectSlack}>
+              <Button
+                disabled={!user?.isAdmin}
+                variant="destructive"
+                onClick={handleDisconnectSlack}
+              >
                 {disconnectingSlack ? (
                   <>
                     <LoaderCircle className="animate-spin" />
                     Disconnecting
                   </>
                 ) : (
-                  <>
-                  Disconnect Slack
-                  </>
+                  <>Disconnect Slack</>
                 )}
               </Button>
             ) : (
-              <Button
-              disabled={!user?.isAdmin}
-              variant="outline" onClick={handleConnectSlack}>
+              <Button disabled={!user?.isAdmin} variant="outline" onClick={handleConnectSlack}>
                 <Slack />
-                Connect Slack</Button>
+                Connect Slack
+              </Button>
             )}
           </div>
         </div>

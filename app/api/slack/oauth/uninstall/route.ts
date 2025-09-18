@@ -18,7 +18,7 @@ export async function PUT() {
     });
 
     if (!user?.isAdmin) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     if (!user?.organizationId) {
@@ -43,7 +43,6 @@ export async function PUT() {
     console.log(res);
 
     return NextResponse.json({ message: "Slack uninstalled successfully" });
-    
   } catch (error) {
     console.error("Error uninstalling Slack:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
