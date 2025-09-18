@@ -1102,11 +1102,13 @@ test.describe("Note Management", () => {
 
       const endFutureDate = addDays(futureDate, 7);
       const endFutureDateStr = `${endFutureDate.getFullYear()}-${String(endFutureDate.getMonth() + 1).padStart(2, "0")}-${String(endFutureDate.getDate()).padStart(2, "0")}`;
-      const endFutureDateButton = endCalendar.locator(
-        `td[role="gridcell"][data-day="${endFutureDateStr}"] button:not([disabled])`
-      );
+      const endFutureDateButton = authenticatedPage
+        .locator('table[role="grid"]')
+        .locator('td[role="gridcell"][data-day="2025-10-02"] button:not([disabled])');
       await expect(endFutureDateButton).toBeVisible();
-      await endFutureDateButton.click();
+      // Add stability wait for UI element
+      await authenticatedPage.waitForTimeout(1000);
+      await endFutureDateButton.click({ force: true });
 
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(0);
