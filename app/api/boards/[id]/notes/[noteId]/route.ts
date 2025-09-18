@@ -202,6 +202,7 @@ export async function PUT(
       const boardName = note.board.name;
       const isArchived = archivedAt !== null;
 
+      // Get content from first checklist item
       const noteContent =
         note.checklistItems && note.checklistItems.length > 0 ? note.checklistItems[0].content : "";
 

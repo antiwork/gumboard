@@ -41,7 +41,6 @@ import {
 import { useUser } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-// import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
 import { toast } from "sonner";
 
 interface OrganizationInvite {
@@ -170,7 +169,6 @@ export default function OrganizationSettingsPage() {
       if (response.ok) {
         const data = await response.json();
         setSlackChannels(data.channels);
-        console.log("CHANNELS", data);
       }
     } catch (error) {
       console.error("Error fetching Slack channels:", error);
@@ -190,18 +188,20 @@ export default function OrganizationSettingsPage() {
       }).then(async (res) => {
         if (!res.ok) throw new Error("Failed to save Slack channel");
         const data = await res.json();
-        setSlackChannelName(channelName);
-        refreshUser();
         return data;
       });
 
-      const data = toast.promise(promise, {
+      toast.promise(promise, {
         loading: "Saving Slack channel...",
         success: "Slack channel saved successfully",
         error: "Failed to save Slack channel",
+        finally: () => {
+          setSavingSlackChannel(false);
+          setSlackChannelName(channelName);
+          refreshUser();
+        }
       });
 
-      console.log(data);
     } catch (error) {
       console.error("Error saving Slack channel:", error);
       setErrorDialog({
@@ -495,7 +495,7 @@ export default function OrganizationSettingsPage() {
       setTimeout(() => setCopiedInviteToken(null), 3000);
     }
   };
-  // TODOD: MAKE THIS BETTER
+
   const handleConnectSlack = async () => {
     const width = 600;
     const height = 700;
@@ -503,7 +503,7 @@ export default function OrganizationSettingsPage() {
     const top = window.screenY + (window.outerHeight - height) / 2;
 
     const popup = window.open(
-      "/api/slack/oauth/install", // your API route will handle redirect to Slack
+      "/api/slack/oauth/install",
       "Connect Slack",
       `width=${width},height=${height},left=${left},top=${top}`
     );
@@ -618,7 +618,7 @@ export default function OrganizationSettingsPage() {
                 </div>
               )}
             </PopoverTrigger>
-            <PopoverContent className="w-auto p-0">
+            <PopoverContent className="w-auto p-1">
               {slackChannels && slackChannels.length > 0 ? (
                 <div className="max-h-60 overflow-y-auto">
                   {slackChannels.map((channel) => (
@@ -627,7 +627,7 @@ export default function OrganizationSettingsPage() {
                         disabled={savingSlackChannel}
                         onClick={() => handleSaveSlackChannel(channel.id, channel.name)}
                         variant="ghost"
-                        className="w-full justify-start rounded-none"
+                        className="w-full justify-start rounded-sm"
                       >
                         {channel.name}
                       </Button>
@@ -723,11 +723,10 @@ export default function OrganizationSettingsPage() {
                       onClick={() => handleToggleAdmin(member.id, !!member.isAdmin)}
                       variant="outline"
                       size="sm"
-                      className={`${
-                        member.isAdmin
-                          ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                          : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                      }`}
+                      className={`${member.isAdmin
+                        ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                        : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                        }`}
                       title={member.isAdmin ? "Remove admin role" : "Make admin"}
                     >
                       {member.isAdmin ? (
@@ -953,11 +952,10 @@ export default function OrganizationSettingsPage() {
               {selfServeInvites.map((invite) => (
                 <div
                   key={invite.id}
-                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
-                    deletingInviteToken === invite.token
-                      ? "opacity-50 pointer-events-none transition-opacity duration-100"
-                      : ""
-                  } truncate max-w-full overflow-x-auto whitespace-nowrap`}
+                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${deletingInviteToken === invite.token
+                    ? "opacity-50 pointer-events-none transition-opacity duration-100"
+                    : ""
+                    } truncate max-w-full overflow-x-auto whitespace-nowrap`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">

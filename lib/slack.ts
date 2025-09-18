@@ -1,6 +1,6 @@
 interface SlackMessage {
   text: string;
-  channel: string; // required now
+  channel: string;
   username?: string;
   icon_emoji?: string;
 }
@@ -111,6 +111,26 @@ export async function updateSlackMessage(
     console.error(`Error updating Slack message: ${error}`);
     return false;
   }
+}
+/**
+ * Join a Slack channel using bot token and channel ID
+ */
+export async function joinChannel(token: string, channel: string): Promise<boolean> {
+  const response = await fetch("https://slack.com/api/conversations.join", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ channel }),
+  });
+
+  const data = await response.json();
+  if (!data.ok) {
+    console.error(`Failed to join channel: ${data.error}`);
+    return false;
+  }
+  return true;
 }
 
 export function formatNoteForSlack(

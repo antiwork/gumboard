@@ -25,7 +25,7 @@ export async function PUT() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    const res = await db.organization.updateMany({
+    await db.organization.updateMany({
       where: {
         id: user.organizationId,
       },
@@ -38,8 +38,6 @@ export async function PUT() {
         slackChannelName: null,
       },
     });
-
-    console.log(res);
 
     return NextResponse.json({ message: "Slack uninstalled successfully" });
   } catch (error) {

@@ -13,8 +13,16 @@ export async function GET() {
     where: { id: session.user.id },
     select: {
       organizationId: true,
+      isAdmin: true,
     },
   });
+
+  if (!user?.isAdmin) {
+    return NextResponse.json(
+      { error: "Only admins can configure Slack integration" },
+      { status: 403 }
+    );
+  }
 
   if (!user?.organizationId) {
     return NextResponse.json({ error: "No organization found" }, { status: 404 });

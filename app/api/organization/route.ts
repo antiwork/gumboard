@@ -54,7 +54,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update organization name and Slack webhook URL
+    // Update organization name
     await db.organization.update({
       where: { id: user.organizationId },
       data: {

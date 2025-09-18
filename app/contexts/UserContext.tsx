@@ -55,8 +55,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
 
       const userData = await response.json();
-      console.log("userData:", userData);
-
       setUser(userData);
       setError(null);
     } catch (err) {
