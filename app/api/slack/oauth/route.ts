@@ -61,14 +61,17 @@ export async function GET(req: NextRequest) {
     // TODO : Figutre oout how to close when login is complete
     const html = `
         <html>
-        <body>
-          <script>
-            window.opener.postMessage({ type: "SLACK_CONNECTED", success: true }, "${process.env.NEXT_PUBLIC_APP_URL}");
-            window.close();
-          </script>
-          <p>Slack connected! You can close this window.</p>
-        </body>
-        </html>
+  <body>
+    <script>
+      window.opener.postMessage(
+        { type: "SLACK_CONNECTED", success: true },
+        window.location.origin
+      );
+      window.close();
+    </script>
+    <p>Slack connected! You can close this window.</p>
+  </body>
+  </html>
     `;
     return new Response(html, {
       headers: { "Content-Type": "text/html" },

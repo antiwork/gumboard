@@ -372,6 +372,7 @@ export function Note({
             <div className="flex flex-col">
               {showBoardName && note.board && (
                 <Link
+                  id="board-name-link"
                   href={`/boards/${note.board.id}`}
                   className="text-xs text-blue-600 dark:text-blue-400 opacity-80 font-medium truncate max-w-20 hover:opacity-100 transition-opacity"
                 >
