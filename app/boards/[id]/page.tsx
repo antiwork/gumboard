@@ -673,10 +673,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   // Multi-select handlers
   const handleNoteClick = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent event from bubbling to board area
-    
+
     if (event.ctrlKey || event.metaKey) {
       event.preventDefault();
-      setSelectedNotes(prev => {
+      setSelectedNotes((prev) => {
         const newSet = new Set(prev);
         if (newSet.has(noteId)) {
           newSet.delete(noteId);
@@ -695,7 +695,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   const handleNoteDoubleClick = (noteId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent event from bubbling to board area
-    
+
     if (!isMultiSelectMode) {
       event.preventDefault();
       setSelectedNotes(new Set([noteId]));
@@ -704,7 +704,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   };
 
   const handleSelectAll = () => {
-    setSelectedNotes(new Set(filteredNotes.map(note => note.id)));
+    setSelectedNotes(new Set(filteredNotes.map((note) => note.id)));
     setIsMultiSelectMode(true);
   };
 
@@ -718,14 +718,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     if (notesToDelete.length === 0) return;
 
     // Optimistically remove from UI
-    setNotes(prev => prev.filter(note => !selectedNotes.has(note.id)));
+    setNotes((prev) => prev.filter((note) => !selectedNotes.has(note.id)));
     setSelectedNotes(new Set());
     setIsMultiSelectMode(false);
 
     // Delete from server
     try {
-      const deletePromises = notesToDelete.map(noteId => {
-        const note = notes.find(n => n.id === noteId);
+      const deletePromises = notesToDelete.map((noteId) => {
+        const note = notes.find((n) => n.id === noteId);
         const targetBoardId = note?.board?.id ?? note?.boardId;
         return fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
           method: "DELETE",
@@ -735,21 +735,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const results = await Promise.allSettled(deletePromises);
       const failedDeletes = results
         .map((result, index) => ({ result, noteId: notesToDelete[index] }))
-        .filter(({ result }) => result.status === 'rejected');
+        .filter(({ result }) => result.status === "rejected");
 
       if (failedDeletes.length > 0) {
         // Re-add failed notes to UI
         const failedNoteIds = failedDeletes.map(({ noteId }) => noteId);
-        const failedNotes = notes.filter(note => failedNoteIds.includes(note.id));
-        setNotes(prev => [...prev, ...failedNotes]);
-        
+        const failedNotes = notes.filter((note) => failedNoteIds.includes(note.id));
+        setNotes((prev) => [...prev, ...failedNotes]);
+
         setErrorDialog({
           open: true,
           title: "Failed to delete some notes",
           description: `Failed to delete ${failedDeletes.length} out of ${notesToDelete.length} notes.`,
         });
       } else {
-        toast(`Deleted ${notesToDelete.length} note${notesToDelete.length > 1 ? 's' : ''}`);
+        toast(`Deleted ${notesToDelete.length} note${notesToDelete.length > 1 ? "s" : ""}`);
       }
     } catch (error) {
       console.error("Error bulk deleting notes:", error);
@@ -766,14 +766,14 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     if (notesToArchive.length === 0) return;
 
     // Optimistically remove from UI
-    setNotes(prev => prev.filter(note => !selectedNotes.has(note.id)));
+    setNotes((prev) => prev.filter((note) => !selectedNotes.has(note.id)));
     setSelectedNotes(new Set());
     setIsMultiSelectMode(false);
 
     // Archive on server
     try {
-      const archivePromises = notesToArchive.map(noteId => {
-        const note = notes.find(n => n.id === noteId);
+      const archivePromises = notesToArchive.map((noteId) => {
+        const note = notes.find((n) => n.id === noteId);
         const targetBoardId = note?.board?.id ?? note?.boardId;
         return fetch(`/api/boards/${targetBoardId}/notes/${noteId}`, {
           method: "PUT",
@@ -785,21 +785,21 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       const results = await Promise.allSettled(archivePromises);
       const failedArchives = results
         .map((result, index) => ({ result, noteId: notesToArchive[index] }))
-        .filter(({ result }) => result.status === 'rejected');
+        .filter(({ result }) => result.status === "rejected");
 
       if (failedArchives.length > 0) {
         // Re-add failed notes to UI
         const failedNoteIds = failedArchives.map(({ noteId }) => noteId);
-        const failedNotes = notes.filter(note => failedNoteIds.includes(note.id));
-        setNotes(prev => [...prev, ...failedNotes]);
-        
+        const failedNotes = notes.filter((note) => failedNoteIds.includes(note.id));
+        setNotes((prev) => [...prev, ...failedNotes]);
+
         setErrorDialog({
           open: true,
           title: "Failed to archive some notes",
           description: `Failed to archive ${failedArchives.length} out of ${notesToArchive.length} notes.`,
         });
       } else {
-        toast(`Archived ${notesToArchive.length} note${notesToArchive.length > 1 ? 's' : ''}`);
+        toast(`Archived ${notesToArchive.length} note${notesToArchive.length > 1 ? "s" : ""}`);
       }
     } catch (error) {
       console.error("Error bulk archiving notes:", error);
@@ -815,17 +815,17 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey) {
-        if (event.key === 'a') {
+        if (event.key === "a") {
           event.preventDefault();
           handleSelectAll();
         }
-      } else if (event.key === 'Escape') {
+      } else if (event.key === "Escape") {
         handleClearSelection();
       }
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [filteredNotes]);
 
   if (userLoading || notesloading) {
@@ -846,7 +846,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   }
 
   return (
-    <div 
+    <div
       className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots"
       onClick={(e) => {
         // Clear selection when clicking anywhere on the page except on notes
@@ -1107,9 +1107,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         {isMultiSelectMode && selectedNotes.size === 0 && (
           <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg">
             <p className="text-sm text-blue-700 dark:text-blue-300">
-              <strong>Multi-select mode:</strong> Hold Ctrl (or Cmd on Mac) and click on notes to select multiple, or double-click any note to start selecting. 
-              Click anywhere outside notes to deselect all. Press <kbd className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs">Ctrl+A</kbd> to select all, 
-              or <kbd className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs">Esc</kbd> to exit.
+              <strong>Multi-select mode:</strong> Hold Ctrl (or Cmd on Mac) and click on notes to
+              select multiple, or double-click any note to start selecting. Click anywhere outside
+              notes to deselect all. Press{" "}
+              <kbd className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs">Ctrl+A</kbd>{" "}
+              to select all, or{" "}
+              <kbd className="px-1 py-0.5 bg-blue-100 dark:bg-blue-900 rounded text-xs">Esc</kbd> to
+              exit.
             </p>
           </div>
         )}
@@ -1128,9 +1132,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   onCopy={handleCopyNote}
                   showBoardName={boardId === "all-notes" || boardId === "archive"}
                   className={`shadow-md shadow-black/10 p-4 cursor-pointer transition-all duration-200 ${
-                    selectedNotes.has(note.id) 
-                      ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-800' 
-                      : ''
+                    selectedNotes.has(note.id)
+                      ? "ring-2 ring-blue-500 ring-offset-2 ring-offset-white dark:ring-offset-zinc-800"
+                      : ""
                   }`}
                   style={{
                     backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
