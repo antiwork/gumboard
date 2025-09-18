@@ -653,8 +653,8 @@ export default function OrganizationSettingsPage() {
                   </>
                 ) : (
                   <>
-                  <Unplug />
-                  <>Disconnect Slack</>
+                    <Unplug />
+                    <>Disconnect Slack</>
                   </>
                 )}
               </Button>
