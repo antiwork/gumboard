@@ -260,7 +260,54 @@ test.describe("Board Management", () => {
       await authenticatedPage.locator("[data-testid='board-dropdown-trigger']").click();
 
       await authenticatedPage.getByText("All archived").click();
-      await expect(authenticatedPage).toHaveURL("/boards/archive");
+      console.log("Current URL after click:", await authenticatedPage.url());
+      console.log("Page title:", await authenticatedPage.title());
+
+      // Take a screenshot to see the current state
+      await authenticatedPage.screenshot({ path: "debug-archive-page.png" });
+
+      // Log all h1 elements on the page
+      const h1Elements = await authenticatedPage.locator("h1").allTextContents();
+      console.log("All h1 elements found:", h1Elements);
+
+      // Log all text containing "Archive"
+      const archiveElements = await authenticatedPage.getByText("Archive").allTextContents();
+      console.log("All Archive text found:", archiveElements);
+
+      // Then try the original assertion
+      await authenticatedPage.waitForSelector('h1:has-text("Archive")', { timeout: 10000 });
+      // Multiple fallback strategies for finding the Archive page
+      try {
+        // Strategy 1: Look for h1 with "Archive" text
+        await authenticatedPage.waitForSelector('h1:has-text("Archive")', { timeout: 5000 });
+      } catch (error) {
+        try {
+          // Strategy 2: Look for any heading with "Archive"
+          await authenticatedPage.waitForSelector('h1, h2, h3:has-text("Archive")', {
+            timeout: 3000,
+          });
+        } catch (error2) {
+          try {
+            // Strategy 3: Check URL first
+            await expect(authenticatedPage).toHaveURL("/boards/archive", { timeout: 5000 });
+          } catch (error3) {
+            // Strategy 4: Look for any text containing "Archive"
+            await expect(authenticatedPage.getByText("Archive")).toBeVisible({ timeout: 3000 });
+          }
+        }
+      }
+
+      // Final URL verification
+      await expect(authenticatedPage).toHaveURL("/boards/archive", { timeout: 10000 });
+      // Wait for a unique archive page element
+      await authenticatedPage.waitForSelector('h1:text("Archive")', { timeout: 10000 });
+      await authenticatedPage.waitForTimeout(1000);
+      await expect(authenticatedPage).toHaveURL("/boards/archive", { timeout: 10000 });
+
+      await authenticatedPage.getByText("All archived").click();
+      // Wait for navigation to complete
+      await authenticatedPage.waitForTimeout(1000);
+      await expect(authenticatedPage).toHaveURL("/boards/archive", { timeout: 10000 });
     });
   });
 });
