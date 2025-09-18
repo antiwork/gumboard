@@ -125,7 +125,7 @@ test.describe("Board Name Link Functionality", () => {
 
     await Promise.race([
       boardLink.click().then(() => authenticatedPage.waitForURL(`/boards/${board1.id}`)),
-      authenticatedPage.waitForTimeout(30000).then(() => {
+      authenticatedPage.waitForTimeout(15000).then(() => {
         throw new Error("Navigation timeout - link may not be working properly");
       }),
     ]);
