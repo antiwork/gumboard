@@ -64,9 +64,6 @@ When changing the database schema in `prisma/schema.prisma`, create and check in
 ```bash
 npm run db:migrate
 ```
-Here’s a **completed version** of your Slack integration setup guide with the missing steps filled in, including OAuth installation, token handling, and usage in your app:
-
-
 
 ## Slack Integration Setup
 
