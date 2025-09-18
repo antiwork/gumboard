@@ -8,7 +8,7 @@ test.describe("Public Board Security", () => {
       testContext,
     }) => {
       // Create a public board with notes
-    const board = await testPrisma.board.create({
+      const board = await testPrisma.board.create({
         data: {
           name: testContext.getBoardName("Public Security Test Board"),
           description: testContext.prefix("Testing data leakage prevention"),
