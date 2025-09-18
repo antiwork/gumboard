@@ -1,4 +1,3 @@
-// /api/slack/auth/install
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
