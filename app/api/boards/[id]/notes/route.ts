@@ -62,7 +62,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           ...n,
           user: n.user
             ? {
+                id: n.user.id ?? n.createdBy,
                 name: n.user.name ?? null,
+                email: "",
                 image: n.user.image ?? null,
               }
             : null,
