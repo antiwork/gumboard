@@ -425,7 +425,7 @@ export function Note({
                 </TooltipContent>
               </Tooltip>
             )}
-            {canEdit && (
+            {canEdit && !note.archivedAt && (
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
