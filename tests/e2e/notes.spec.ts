@@ -164,8 +164,10 @@ test.describe("Note Management", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     // Test 1: Toggle checklist item
-    const checkbox = authenticatedPage.locator('[data-state="unchecked"]').first();
+    // Select the first checkbox inside the note
+    const checkbox = authenticatedPage.getByRole("checkbox").first();
     await expect(checkbox).toBeVisible();
+
     const toggleResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
