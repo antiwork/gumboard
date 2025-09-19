@@ -113,39 +113,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   }, [user, userLoading, router]);
 
-  // Keyboard shortcuts for multi-select actions
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (selectedNoteIds.size === 0) return;
-      // Avoid when typing in inputs/textarea/contenteditable
-      const active = document.activeElement as HTMLElement | null;
-      if (active) {
-        const tag = active.tagName;
-        const isInput = tag === "INPUT" || tag === "TEXTAREA" || active.isContentEditable;
-        if (isInput) return;
-      }
-
-      // Delete selected notes on Delete key
-      if (event.key === "Delete") {
-        event.preventDefault();
-        const ids = Array.from(selectedNoteIds);
-        ids.forEach((id) => handleDeleteNote(id));
-        setSelectedNoteIds(new Set());
-        return;
-      }
-
-      // Archive selected notes on Ctrl/Cmd + Q
-      if ((event.ctrlKey || event.metaKey) && (event.key === "q" || event.key === "Q")) {
-        event.preventDefault();
-        if (boardId === "archive") return; // no archive in archive view
-        const ids = Array.from(selectedNoteIds);
-        ids.forEach((id) => handleArchiveNote(id));
-        setSelectedNoteIds(new Set());
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedNoteIds, boardId, handleArchiveNote, handleDeleteNote]);
+  
 
   // Click-outside clears selection
   useEffect(() => {
@@ -635,6 +603,40 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       duration: 4000,
     });
   };
+
+  // Keyboard shortcuts for multi-select actions
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (selectedNoteIds.size === 0) return;
+      // Avoid when typing in inputs/textarea/contenteditable
+      const active = document.activeElement as HTMLElement | null;
+      if (active) {
+        const tag = active.tagName;
+        const isInput = tag === "INPUT" || tag === "TEXTAREA" || active.isContentEditable;
+        if (isInput) return;
+      }
+
+      // Delete selected notes on Delete key
+      if (event.key === "Delete") {
+        event.preventDefault();
+        const ids = Array.from(selectedNoteIds);
+        ids.forEach((id) => handleDeleteNote(id));
+        setSelectedNoteIds(new Set());
+        return;
+      }
+
+      // Archive selected notes on Ctrl/Cmd + Q
+      if ((event.ctrlKey || event.metaKey) && (event.key === "q" || event.key === "Q")) {
+        event.preventDefault();
+        if (boardId === "archive") return; // no archive in archive view
+        const ids = Array.from(selectedNoteIds);
+        ids.forEach((id) => handleArchiveNote(id));
+        setSelectedNoteIds(new Set());
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedNoteIds, boardId, handleArchiveNote, handleDeleteNote]);
 
   const handleAddBoard = async (values: z.infer<typeof formSchema>) => {
     const { name, description } = values;
