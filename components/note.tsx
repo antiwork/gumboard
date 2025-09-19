@@ -213,16 +213,6 @@ export function Note({
     try {
       if (!note.checklistItems) return;
       const allItemsChecked = newItems.every((item) => item.checked);
-      // Disallow unchecked items to be after checked items
-      const firstCheckedIndex = newItems.findIndex((element) => element.checked);
-      const lastUncheckedIndex = newItems.map((element) => element.checked).lastIndexOf(false);
-      if (
-        firstCheckedIndex !== -1 &&
-        lastUncheckedIndex !== -1 &&
-        lastUncheckedIndex > firstCheckedIndex
-      ) {
-        return;
-      }
 
       const updatedItems = newItems.map((item, index) => ({ ...item, order: index }));
 
