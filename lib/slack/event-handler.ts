@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { executeCommand } from "./commands";
 import { getSlackClient } from "./slack-client";
 
-// export const client = new WebClient("xoxb-9525262392885-9523474013667-tI93W4ImXqcRAB6DT1FWrj9U");
 
 export async function handleSlackEvent(event: any) {
   console.log("Event received:", event);
