@@ -70,7 +70,7 @@ interface NoteProps {
   style?: React.CSSProperties;
   // Selection (optional)
   isSelected?: boolean;
-  onToggleSelect?: (noteId: string, additive: boolean) => void;
+  onToggleSelect?: (noteId: string) => void;
   onSelectExclusive?: (noteId: string) => void;
 }
 
@@ -362,14 +362,21 @@ export function Note({
       onClick={(event) => {
         // Ignore clicks coming from interactive elements inside the card
         const target = event.target as HTMLElement;
-        const interactiveTags = ["BUTTON", "TEXTAREA", "INPUT", "A", "SELECT", "LABEL"] as const;
-        if (interactiveTags.includes(target.tagName as any) || target.closest("button, textarea, input, a, [role='button']")) {
+        const interactiveTags: ReadonlyArray<string> = [
+          "BUTTON",
+          "TEXTAREA",
+          "INPUT",
+          "A",
+          "SELECT",
+          "LABEL",
+        ];
+        if (interactiveTags.includes(target.tagName) || target.closest("button, textarea, input, a, [role='button']")) {
           return;
         }
         // Support Ctrl/Cmd additive selection; otherwise exclusive selection
         const additive = event.ctrlKey || event.metaKey;
         if (onToggleSelect && additive) {
-          onToggleSelect(note.id, true);
+          onToggleSelect(note.id);
         } else if (onSelectExclusive) {
           onSelectExclusive(note.id);
         }

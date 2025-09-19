@@ -48,6 +48,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
     if (boardId) {
       fetchBoardData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [boardId]);
 
   const fetchBoardData = async () => {

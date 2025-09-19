@@ -145,7 +145,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedNoteIds, boardId]);
+  }, [selectedNoteIds, boardId, handleArchiveNote, handleDeleteNote]);
 
   // Click-outside clears selection
   useEffect(() => {
@@ -163,7 +163,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     return () => document.removeEventListener("mousedown", handleMouseDown);
   }, [selectedNoteIds]);
 
-  const handleToggleSelect = useCallback((noteId: string, _additive: boolean) => {
+  const handleToggleSelect = useCallback((noteId: string) => {
     setSelectedNoteIds((prev) => {
       const next = new Set(prev);
       if (next.has(noteId)) {
