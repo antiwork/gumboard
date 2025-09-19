@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 
-export interface ChecklistItemData {
+export interface ChecklistItem {
   id: string;
   content: string;
   checked: boolean;
@@ -14,7 +14,7 @@ export interface ChecklistItemData {
 }
 
 interface ChecklistItemProps {
-  item: ChecklistItemData;
+  item: ChecklistItem;
   onToggle?: (itemId: string) => void;
   onEdit?: (itemId: string, content: string) => void;
   onDelete?: (itemId: string) => void;

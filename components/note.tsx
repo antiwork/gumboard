@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 
 import {
   ChecklistItem as ChecklistItemComponent,
-  ChecklistItemData,
+  ChecklistItem,
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
@@ -36,7 +36,7 @@ export interface Note {
   archivedAt?: string | null;
   createdAt: string;
   updatedAt: string;
-  checklistItems?: ChecklistItemData[];
+  checklistItems?: ChecklistItem[];
   user: {
     id: string;
     name: string | null;
@@ -209,7 +209,7 @@ export function Note({
     }
   };
 
-  const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItemData[]) => {
+  const handleReorderChecklistItems = async (noteId: string, newItems: ChecklistItem[]) => {
     try {
       if (!note.checklistItems) return;
       const allItemsChecked = newItems.every((item) => item.checked);
