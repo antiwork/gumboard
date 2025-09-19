@@ -55,7 +55,6 @@ test.describe("Public Board Security", () => {
 
       // SECURITY CHECK: Ensure no sensitive organization data is leaked
       expect(apiData.board.organization.members).toBeUndefined();
-      expect(apiData.board.organization.slackWebhookUrl).toBeUndefined();
       expect(apiData.board.organization.createdAt).toBeUndefined();
       expect(apiData.board.organization.updatedAt).toBeUndefined();
     });
@@ -160,7 +159,6 @@ test.describe("Public Board Security", () => {
 
       // SECURITY CHECK: No sensitive org data from other organization
       expect(apiData.board.organization.members).toBeUndefined();
-      expect(apiData.board.organization.slackWebhookUrl).toBeUndefined();
     });
   });
 
