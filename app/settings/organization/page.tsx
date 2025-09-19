@@ -22,6 +22,7 @@ import {
   Users,
   ExternalLink,
   Calendar as CalendarIconLucide,
+  ChevronsLeftRightEllipsis,
 } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
@@ -38,8 +39,8 @@ import {
 import { useUser } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
 import { toast } from "sonner";
+import ConnectSlack from "@/components/connect-slack";
 
 interface OrganizationInvite {
   id: string;
@@ -67,11 +68,9 @@ export default function OrganizationSettingsPage() {
   const { user, loading, refreshUser } = useUser();
   const router = useRouter();
   const [savingOrg, setSavingOrg] = useState(false);
-  const [savingSlack, setSavingSlack] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
-  const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -105,13 +104,10 @@ export default function OrganizationSettingsPage() {
   useEffect(() => {
     if (user?.organization) {
       const orgNameValue = user.organization.name || "";
-      const slackWebhookValue = user.organization.slackWebhookUrl || "";
       setOrgName(orgNameValue);
       setOriginalOrgName(orgNameValue);
-      setSlackWebhookUrl(slackWebhookValue);
-      setOriginalSlackWebhookUrl(slackWebhookValue);
     }
-  }, [user?.organization?.name, user?.organization?.slackWebhookUrl]);
+  }, [user?.organization?.name]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -184,53 +180,6 @@ export default function OrganizationSettingsPage() {
       });
     } finally {
       setSavingOrg(false);
-    }
-  };
-
-  const handleSaveSlack = async () => {
-    setSavingSlack(true);
-    try {
-      if (slackWebhookUrl && !SLACK_WEBHOOK_REGEX.test(slackWebhookUrl)) {
-        setErrorDialog({
-          open: true,
-          title: "Invalid Slack Webhook URL",
-          description: "Please enter a valid Slack Webhook URL",
-          variant: "error",
-        });
-        return;
-      }
-
-      const response = await fetch("/api/organization", {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: orgName,
-          slackWebhookUrl: slackWebhookUrl,
-        }),
-      });
-
-      if (response.ok) {
-        setOriginalSlackWebhookUrl(slackWebhookUrl);
-        refreshUser();
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to update organization",
-          description: errorData.error || "Failed to update organization",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating Slack webhook URL:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to update organization",
-        description: "Failed to update organization",
-      });
-    } finally {
-      setSavingSlack(false);
     }
   };
 
@@ -532,57 +481,15 @@ export default function OrganizationSettingsPage() {
 
       {/* Slack Integration */}
       <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
-        <div className="space-y-3 lg:space-y-6">
+        {user?.isAdmin ? (
+          <ConnectSlack orgId={user?.organization?.id || ""} />
+        ) : (
           <div>
-            <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-100 mb-2">
-              Slack Integration
-            </h3>
-            <p className="text-zinc-600 dark:text-zinc-400">
-              Configure Slack notifications for notes and todos.
-            </p>
+            <ChevronsLeftRightEllipsis className="size-6" />
+            <h3 className="text-lg font-semibold">Slack is Integrated</h3>
+            <p className="text-gray-600">You can join the workspace and get started.</p>
           </div>
-
-          <div>
-            <Label htmlFor="slackWebhookUrl" className="text-zinc-800 dark:text-zinc-200">
-              Slack Webhook URL
-            </Label>
-            <Input
-              id="slackWebhookUrl"
-              type="url"
-              value={slackWebhookUrl}
-              onChange={(e) => setSlackWebhookUrl(e.target.value)}
-              placeholder="https://hooks.slack.com/services/..."
-              className="mt-2 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100"
-              disabled={!user?.isAdmin}
-            />
-            <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              Create a webhook URL in your Slack workspace to receive notifications when notes and
-              todos are created or completed.{" "}
-              <a
-                href="https://api.slack.com/apps"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-              >
-                Create Slack App
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </a>
-            </p>
-          </div>
-
-          <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
-            <Button
-              onClick={handleSaveSlack}
-              disabled={
-                savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin
-              }
-              className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-              title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
-            >
-              {savingSlack ? "Saving..." : "Save changes"}
-            </Button>
-          </div>
-        </div>
+        )}
       </Card>
 
       {/* Team Members */}

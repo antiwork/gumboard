@@ -46,6 +46,9 @@ export async function GET() {
             name: user.organization.name,
             slackWebhookUrl: user.organization.slackWebhookUrl,
             members: user.organization.members,
+            slackTeamId: user.organization.slackTeamId,
+            slackBotToken: user.organization.slackBotToken,
+            slackSigningSecret: user.organization.slackSigningSecret,
           }
         : null,
     });
