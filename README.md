@@ -23,6 +23,11 @@ npm install
 cp .env.example .env
 ```
 
+For Development
+```
+cp .env.example .env.local
+```
+
 2. Start the PostgreSQL database using Docker:
 
 ```bash
