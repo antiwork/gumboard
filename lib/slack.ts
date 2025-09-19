@@ -154,15 +154,15 @@ export function formatTodoForSlack(
 ): string {
   switch (action) {
     case "added":
-      return `➕ ${content} by ${userName} in ${boardName}`; // just plain text when added
+      return `➕ ${content} by ${userName} in ${boardName}`;
     case "completed":
-      return `✅ ${content} by ${userName} in ${boardName}`; // checkmark for completed
+      return `✅ ${content} by ${userName} in ${boardName}`;
     case "uncompleted":
-      return `➕ ${content} by ${userName} in ${boardName}`; // cross for uncompleted
+      return `➕ ${content} by ${userName} in ${boardName}`;
     case "updated":
       return checked
         ? `✅ ${content} by ${userName} in ${boardName}`
-        : `➕ ${content} by ${userName} in ${boardName}`; // just update text without extra icons
+        : `➕ ${content} by ${userName} in ${boardName}`;
   }
 }
 
