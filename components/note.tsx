@@ -12,7 +12,7 @@ import {
 } from "@/components/checklist-item";
 import { DraggableRoot, DraggableContainer, DraggableItem } from "@/components/ui/draggable";
 import { cn } from "@/lib/utils";
-import { Trash2, Archive, ArchiveRestore, Copy } from "lucide-react";
+import { Trash2, Archive, ArchiveRestore, Copy, Check } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 // Core domain types
@@ -68,6 +68,10 @@ interface NoteProps {
   showBoardName?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  // Selection (optional)
+  isSelected?: boolean;
+  onToggleSelect?: (noteId: string, additive: boolean) => void;
+  onSelectExclusive?: (noteId: string) => void;
 }
 
 export function Note({
@@ -83,6 +87,9 @@ export function Note({
   className,
   syncDB = true,
   style,
+  isSelected = false,
+  onToggleSelect,
+  onSelectExclusive,
 }: NoteProps) {
   const [editingItem, setEditingItem] = useState<string | null>(null);
   const [editingItemContent, setEditingItemContent] = useState("");
@@ -344,13 +351,46 @@ export function Note({
         // Minimal top sticky shade
         "before:content-[''] before:absolute before:inset-x-0 before:top-0 before:h-1 before:opacity-20 before:pointer-events-none",
         "before:bg-gradient-to-b before:from-black/5 before:to-transparent dark:before:from-white/5",
+        isSelected ? "ring-2 ring-sky-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900" : "",
         className
       )}
       data-testid="note-card"
+      data-selected={isSelected ? "true" : "false"}
+      data-note-id={note.id}
       onFocusCapture={() => {}}
       onBlurCapture={() => {}}
+      onClick={(event) => {
+        // Ignore clicks coming from interactive elements inside the card
+        const target = event.target as HTMLElement;
+        const interactiveTags = ["BUTTON", "TEXTAREA", "INPUT", "A", "SELECT", "LABEL"] as const;
+        if (interactiveTags.includes(target.tagName as any) || target.closest("button, textarea, input, a, [role='button']")) {
+          return;
+        }
+        // Support Ctrl/Cmd additive selection; otherwise exclusive selection
+        const additive = event.ctrlKey || event.metaKey;
+        if (onToggleSelect && additive) {
+          onToggleSelect(note.id, true);
+        } else if (onSelectExclusive) {
+          onSelectExclusive(note.id);
+        }
+      }}
+      onDoubleClick={(event) => {
+        // Avoid interfering with editing double-clicks inside
+        const target = event.target as HTMLElement;
+        if (target.closest("textarea, input, button, [role='button']")) {
+          return;
+        }
+        if (onSelectExclusive) {
+          onSelectExclusive(note.id);
+        }
+      }}
       style={style}
     >
+      {isSelected && (
+        <div className="absolute top-1 right-1 z-10 rounded-full bg-sky-500 text-white p-0.5 shadow-sm">
+          <Check className="w-3 h-3" />
+        </div>
+      )}
       <div className="flex items-start justify-between mb-2 flex-shrink-0">
         <div className="flex-1 min-w-0 flex items-center space-x-2">
           <Avatar className="h-7 w-7">

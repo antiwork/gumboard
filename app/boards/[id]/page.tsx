@@ -104,12 +104,86 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const boardRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Multi-select state
+  const [selectedNoteIds, setSelectedNoteIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!userLoading && !user) {
       router.push("/auth/signin");
     }
   }, [user, userLoading, router]);
+
+  // Keyboard shortcuts for multi-select actions
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (selectedNoteIds.size === 0) return;
+      // Avoid when typing in inputs/textarea/contenteditable
+      const active = document.activeElement as HTMLElement | null;
+      if (active) {
+        const tag = active.tagName;
+        const isInput = tag === "INPUT" || tag === "TEXTAREA" || active.isContentEditable;
+        if (isInput) return;
+      }
+
+      // Delete selected notes on Delete key
+      if (event.key === "Delete") {
+        event.preventDefault();
+        const ids = Array.from(selectedNoteIds);
+        ids.forEach((id) => handleDeleteNote(id));
+        setSelectedNoteIds(new Set());
+        return;
+      }
+
+      // Archive selected notes on Ctrl/Cmd + Q
+      if ((event.ctrlKey || event.metaKey) && (event.key === "q" || event.key === "Q")) {
+        event.preventDefault();
+        if (boardId === "archive") return; // no archive in archive view
+        const ids = Array.from(selectedNoteIds);
+        ids.forEach((id) => handleArchiveNote(id));
+        setSelectedNoteIds(new Set());
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedNoteIds, boardId]);
+
+  // Click-outside clears selection
+  useEffect(() => {
+    const handleMouseDown = (event: MouseEvent) => {
+      if (!boardRef.current) return;
+      const target = event.target as HTMLElement;
+      // If clicked inside a note card, do nothing
+      if (target.closest('[data-testid="note-card"]')) return;
+      // Otherwise clear selection
+      if (selectedNoteIds.size > 0) {
+        setSelectedNoteIds(new Set());
+      }
+    };
+    document.addEventListener("mousedown", handleMouseDown);
+    return () => document.removeEventListener("mousedown", handleMouseDown);
+  }, [selectedNoteIds]);
+
+  const handleToggleSelect = useCallback((noteId: string, _additive: boolean) => {
+    setSelectedNoteIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(noteId)) {
+        next.delete(noteId);
+      } else {
+        next.add(noteId);
+      }
+      return next;
+    });
+  }, []);
+
+  const handleSelectExclusive = useCallback((noteId: string) => {
+    setSelectedNoteIds((prev) => {
+      if (prev.size === 1 && prev.has(noteId)) {
+        // if already the only selected, toggle off
+        return new Set();
+      }
+      return new Set([noteId]);
+    });
+  }, []);
 
   const formSchema = z.object({
     name: z.string().min(1, "Board name is required"),
@@ -906,6 +980,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   style={{
                     backgroundColor: resolvedTheme === "dark" ? "#18181B" : note.color,
                   }}
+                  isSelected={selectedNoteIds.has(note.id)}
+                  onToggleSelect={handleToggleSelect}
+                  onSelectExclusive={handleSelectExclusive}
                 />
               ))}
             </div>
