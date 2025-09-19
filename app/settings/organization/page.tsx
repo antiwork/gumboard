@@ -606,7 +606,11 @@ export default function OrganizationSettingsPage() {
                   <Label className="text-sm text-black dark:text-white ">
                     Select a channel to send notifications
                   </Label>
-                  <Button disabled={!user?.isAdmin || savingSlackChannel} variant="outline" className="text-sm">
+                  <Button
+                    disabled={!user?.isAdmin || savingSlackChannel}
+                    variant="outline"
+                    className="text-sm"
+                  >
                     {slackChannelName || "Select channel"}
                     <span>
                       <ChevronDown
@@ -722,10 +726,11 @@ export default function OrganizationSettingsPage() {
                       onClick={() => handleToggleAdmin(member.id, !!member.isAdmin)}
                       variant="outline"
                       size="sm"
-                      className={`${member.isAdmin
-                        ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                        : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                        }`}
+                      className={`${
+                        member.isAdmin
+                          ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                          : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                      }`}
                       title={member.isAdmin ? "Remove admin role" : "Make admin"}
                     >
                       {member.isAdmin ? (
@@ -951,10 +956,11 @@ export default function OrganizationSettingsPage() {
               {selfServeInvites.map((invite) => (
                 <div
                   key={invite.id}
-                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${deletingInviteToken === invite.token
-                    ? "opacity-50 pointer-events-none transition-opacity duration-100"
-                    : ""
-                    } truncate max-w-full overflow-x-auto whitespace-nowrap`}
+                  className={`p-4 bg-blue-50 dark:bg-zinc-800 rounded-lg border border-blue-200 dark:border-zinc-700 ${
+                    deletingInviteToken === invite.token
+                      ? "opacity-50 pointer-events-none transition-opacity duration-100"
+                      : ""
+                  } truncate max-w-full overflow-x-auto whitespace-nowrap`}
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
