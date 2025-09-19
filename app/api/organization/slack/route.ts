@@ -46,7 +46,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Only admins can update organization name
+    // Only admins can update organization 
     if (!user.isAdmin) {
       return NextResponse.json(
         { error: "Only admins can update organization settings" },

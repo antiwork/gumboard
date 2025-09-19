@@ -106,7 +106,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
 
   const handleAddBoard = async () => {
     try {
-      await fetch("/api/boards", {
+      await fetch("/api/boards/slack", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
