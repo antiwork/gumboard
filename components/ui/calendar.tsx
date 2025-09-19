@@ -108,6 +108,18 @@ function Calendar({
         Root: ({ className, rootRef, ...props }) => {
           return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
         },
+        Day: ({ className, ...props }: any) => {
+          // Attempt to read the underlying Date from react-day-picker's props shape
+          const date: Date | undefined = (props as any)?.day?.date || (props as any)?.date;
+          const formatYYYYMMDD = (d: Date) => {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, "0");
+            const day = String(d.getDate()).padStart(2, "0");
+            return `${y}-${m}-${day}`;
+          };
+          const dataDay = date ? formatYYYYMMDD(date) : undefined;
+          return <td data-day={dataDay} className={className} {...props} />;
+        },
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
             return <ChevronLeftIcon className={cn("size-4", className)} {...props} />;
