@@ -134,6 +134,12 @@ SLACK_REDIRECT_URI=https://localhost:3010/api/slack/oauth/callback
 
 ---
 
+Open your app at 
+
+```
+https://localhost:3010
+```
+
 
 ## 🔐 Google OAuth Setup
 
