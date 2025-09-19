@@ -108,17 +108,27 @@ function Calendar({
         Root: ({ className, rootRef, ...props }) => {
           return <div data-slot="calendar" ref={rootRef} className={cn(className)} {...props} />;
         },
-        Day: ({ className, ...props }: any) => {
-          // Attempt to read the underlying Date from react-day-picker's props shape
-          const date: Date | undefined = (props as any)?.day?.date || (props as any)?.date;
+        Day: (
+          props: React.PropsWithChildren<
+            React.TdHTMLAttributes<HTMLTableCellElement> & {
+              day?: { date: Date };
+            }
+          >
+        ) => {
+          const { className, day, children, ...rest } = props;
+          const date: Date | undefined = day?.date;
           const formatYYYYMMDD = (d: Date) => {
             const y = d.getFullYear();
             const m = String(d.getMonth() + 1).padStart(2, "0");
-            const day = String(d.getDate()).padStart(2, "0");
-            return `${y}-${m}-${day}`;
+            const dd = String(d.getDate()).padStart(2, "0");
+            return `${y}-${m}-${dd}`;
           };
           const dataDay = date ? formatYYYYMMDD(date) : undefined;
-          return <td data-day={dataDay} className={className} {...props} />;
+          return (
+            <td data-day={dataDay} className={className} {...rest}>
+              {children}
+            </td>
+          );
         },
         Chevron: ({ className, orientation, ...props }) => {
           if (orientation === "left") {
