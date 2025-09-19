@@ -113,8 +113,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   }, [user, userLoading, router]);
 
-  
-
   // Click-outside clears selection
   useEffect(() => {
     const handleMouseDown = (event: MouseEvent) => {

@@ -351,7 +351,9 @@ export function Note({
         // Minimal top sticky shade
         "before:content-[''] before:absolute before:inset-x-0 before:top-0 before:h-1 before:opacity-20 before:pointer-events-none",
         "before:bg-gradient-to-b before:from-black/5 before:to-transparent dark:before:from-white/5",
-        isSelected ? "ring-2 ring-sky-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900" : "",
+        isSelected
+          ? "ring-2 ring-sky-500 ring-offset-1 ring-offset-white dark:ring-offset-zinc-900"
+          : "",
         className
       )}
       data-testid="note-card"
@@ -370,7 +372,10 @@ export function Note({
           "SELECT",
           "LABEL",
         ];
-        if (interactiveTags.includes(target.tagName) || target.closest("button, textarea, input, a, [role='button']")) {
+        if (
+          interactiveTags.includes(target.tagName) ||
+          target.closest("button, textarea, input, a, [role='button']")
+        ) {
           return;
         }
         // Support Ctrl/Cmd additive selection; otherwise exclusive selection
