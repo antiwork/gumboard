@@ -28,8 +28,6 @@ interface ChecklistItemProps {
   className?: string;
   isNewItem?: boolean;
   onCreateItem?: (content: string) => void;
-
-  // drag-drop grouping
   onDragStart?: (itemId: string) => void;
   onDragOver?: (e: React.DragEvent<HTMLDivElement>, targetId: string) => void;
   onDrop?: (e: React.DragEvent<HTMLDivElement>, targetId: string) => void;
