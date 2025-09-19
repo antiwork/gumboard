@@ -1017,7 +1017,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       </PopoverContent>
                     </Popover>
                   )}
-                  
+
                   {/* Board Settings Button - Always visible for tests */}
                   <Button
                     variant="ghost"
