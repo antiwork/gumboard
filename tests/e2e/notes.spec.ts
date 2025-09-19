@@ -44,7 +44,12 @@ test.describe("Note Management", () => {
     await expect(authenticatedPage.getByText(testItemContent)).toBeVisible();
 
     // Add a small delay to ensure all async operations complete
-    await authenticatedPage.waitForTimeout(1000);
+    await authenticatedPage.waitForResponse(
+      (resp) =>
+        resp.url().includes(`/api/boards/${board.id}/notes`) &&
+        (resp.status() === 200 || resp.status() === 201),
+      { timeout: 15000 }
+    );
 
     const notes = await testPrisma.note.findMany({
       where: {
