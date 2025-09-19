@@ -130,7 +130,7 @@ function DateRangePicker({
                     selected={internalStartDate || undefined}
                     onSelect={handleStartCalendarSelect}
                     modifiersClassNames={{
-                      outside: "text-gray-400 opacity-50 pointer-events-none",
+                      outside: "text-gray-400 opacity-50",
                     }}
                     classNames={{
                       day: "hover:bg-sky-500 hover:text-white transition-colors duration-200 rounded",
@@ -167,7 +167,7 @@ function DateRangePicker({
                     onSelect={handleEndCalendarSelect}
                     disabled={(date) => (internalStartDate ? date < internalStartDate : false)}
                     modifiersClassNames={{
-                      outside: "text-gray-400 opacity-50 pointer-events-none",
+                      outside: "text-gray-400 opacity-50",
                     }}
                     classNames={{
                       day: "hover:bg-sky-500 hover:text-white transition-colors duration-200 rounded",

@@ -124,7 +124,7 @@ export default function OrganizationSettingsPage() {
       fetchInvites();
       fetchSelfServeInvites();
     }
-  }, [user?.organization]);
+  }, [user?.organization?.id]);
 
   const fetchInvites = async () => {
     try {
