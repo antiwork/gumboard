@@ -378,17 +378,26 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const checkbox = authenticatedPage.locator('[data-state="unchecked"]').first();
+    // Wait for the note card to render
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+    await expect(noteCard).toBeVisible();
+
+    // Use role-based locator for checkbox inside the note
+    const checkbox = noteCard.getByRole("checkbox").first();
     await expect(checkbox).toBeVisible();
+
+    // Wait for API call while toggling
     const toggleResponse = authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes/`) &&
         resp.request().method() === "PUT" &&
         resp.ok()
     );
+
     await checkbox.click();
     await toggleResponse;
 
+    // Verify DB state
     const updatedNote = await testPrisma.note.findUnique({
       where: { id: note.id },
       include: {
