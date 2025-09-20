@@ -513,11 +513,16 @@ test.describe("Note Management", () => {
 
       await authenticatedPage.goto(`/boards/${board.id}`);
 
-      const sourceElement = authenticatedPage.getByTestId(itemA3Id);
-      const targetElement = authenticatedPage.getByTestId(itemA1Id);
+      // Ensure the note card is rendered
+      const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
+      await expect(noteCard).toBeVisible({ timeout: 10000 });
 
-      await expect(sourceElement).toBeVisible();
-      await expect(targetElement).toBeVisible();
+      // Scope locators inside the note card
+      const sourceElement = noteCard.getByTestId(itemA3Id);
+      const targetElement = noteCard.getByTestId(itemA1Id);
+
+      await expect(sourceElement).toBeVisible({ timeout: 10000 });
+      await expect(targetElement).toBeVisible({ timeout: 10000 });
 
       const targetBox = await targetElement.boundingBox();
       if (!targetBox) throw new Error("Target element not found");
@@ -528,21 +533,18 @@ test.describe("Note Management", () => {
           resp.request().method() === "PUT" &&
           resp.ok()
       );
+
       await sourceElement.hover();
       await authenticatedPage.mouse.down();
       await targetElement.hover();
-      await targetElement.hover();
+      await authenticatedPage.waitForTimeout(100); // let DnD handlers attach
       await authenticatedPage.mouse.move(targetBox.x + targetBox.width / 2, targetBox.y + 5);
       await authenticatedPage.mouse.up();
       await reorderResponse;
 
       const updatedNote = await testPrisma.note.findUnique({
         where: { id: note.id },
-        include: {
-          checklistItems: {
-            orderBy: { order: "asc" },
-          },
-        },
+        include: { checklistItems: { orderBy: { order: "asc" } } },
       });
 
       expect(updatedNote).not.toBeNull();
