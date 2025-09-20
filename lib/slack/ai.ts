@@ -1,4 +1,3 @@
-// lib/intent.ts
 import { model } from "../models";
 
 const prompt = `
