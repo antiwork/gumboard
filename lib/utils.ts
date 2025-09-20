@@ -98,7 +98,7 @@ export function getBaseUrl(requestOrHeaders?: Request | Headers): string {
     return `${protocol}://${host}`;
   }
 
-  return process.env.AUTH_URL || "https://norfolk-pasta-evans-flip.trycloudflare.com/auth/signin";
+  return process.env.AUTH_URL || "http://localhost:3000";
 }
 
 export function getUniqueAuthors(notes: Note[]) {
