@@ -36,14 +36,8 @@ test.describe("Organization Settings", () => {
     const slackSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
     await slackSaveButton.click();
 
-    // Expect error dialog to appear
+    // Expect error toast to appear
     await expect(authenticatedPage.locator("text=Invalid Slack Webhook URL")).toBeVisible();
-    await expect(
-      authenticatedPage.locator("text=Please enter a valid Slack Webhook URL")
-    ).toBeVisible();
-
-    // Close error dialog
-    await authenticatedPage.locator('button:has-text("OK")').click();
 
     // Verify the organization wasn't updated in the database
     const org = await testPrisma.organization.findUnique({
@@ -172,17 +166,12 @@ test.describe("Organization Settings", () => {
 
     // Verify Slack webhook input is disabled for non-admin users
     const slackWebhookInput = authenticatedPage.locator("#slackWebhookUrl");
-    await expect(slackWebhookInput).toBeDisabled();
+    await expect(slackWebhookInput).toBeHidden();
 
     // Verify save button is disabled for non-admin users
     const slackSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
-    await expect(slackSaveButton).toBeDisabled();
+    await expect(slackSaveButton).toBeHidden();
 
-    // Verify tooltip shows admin-only message
-    await expect(slackSaveButton).toHaveAttribute(
-      "title",
-      "Only admins can update organization settings"
-    );
   });
 
   test("should independently handle save operations for organization name and Slack webhook", async ({
@@ -264,7 +253,7 @@ test.describe("Organization Settings", () => {
     const invite = await testPrisma.organizationSelfServeInvite.create({
       data: {
         name: "Test Invite",
-        token: "test-token-123",
+        token: "test-token-111",
         organizationId: testContext.organizationId,
         createdBy: testContext.userId,
         isActive: true,
@@ -288,7 +277,7 @@ test.describe("Organization Settings", () => {
       return await navigator.clipboard.readText();
     });
     const baseUrl = new URL(authenticatedPage.url()).origin;
-    const expectedInviteLink = `${baseUrl}/join/test-token-123`;
+    const expectedInviteLink = `${baseUrl}/join/test-token-111`;
     expect(clipboardContent).toBe(expectedInviteLink);
 
     await testPrisma.organizationSelfServeInvite.delete({
