@@ -1,7 +1,15 @@
 import { db } from "@/lib/db";
-// import { client } from "../handler";
 import { NOTE_COLORS } from "../constants";
 import { WebClient } from "@slack/web-api";
+import {
+  addTask,
+  deleteTask,
+  editTask,
+  listTask,
+  markTask,
+  unmarkTask,
+} from "./command-handler/task-handler";
+import { createBoard, listBoards } from "./command-handler/board-handler";
 
 export async function executeCommand(
   intent: string,
@@ -15,304 +23,75 @@ export async function executeCommand(
 
   switch (intent) {
     case "add": {
-      if (!user.organizationId) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ You need to be part of an organization.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const boardRecord = await resolveBoard(board, user.organizationId);
-      if (!boardRecord) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ Board not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const note = await resolveDefaultSlackNote(boardRecord.id, user.id);
-
-      // Create first checklist item with the note content
-      await db.checklistItem.create({
-        data: {
-          content: data.task,
-          noteId: note.id,
-          order: 0,
-        },
-      });
-
-      await sendMessage(
-        client,
-        event.channel,
-        `📝 Added task to board *${boardRecord.name}*`,
-        isThreaded ? event.ts : undefined
-      );
+      await addTask(board, data, user, event, client, isThreaded);
       break;
     }
 
     case "edit": {
-      // Find the checklist item to edit
-
-      if (!user.organizationId) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ You need to be part of an organization.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const boardRecord = await resolveBoard(board, user.organizationId);
-      if (!boardRecord) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ Board not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const note = await resolveDefaultSlackNote(boardRecord.id, user.id);
-
-      const item = await db.checklistItem.findFirst({
-        where: {
-          noteId: note.id,
-          content: data.task,
-        },
-      });
-
-      if (!item) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ task not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const updatedItem = await db.checklistItem.update({
-        where: { id: item.id },
-        data: { content: data.newTask },
-      });
-
-      await sendMessage(
-        client,
-        event.channel,
-        `✏️ Updated task content to *${updatedItem.content}*`,
-        isThreaded ? event.ts : undefined
-      );
+      await editTask(board, data, user, event, client, isThreaded);
       break;
     }
 
     case "delete": {
-      // Delete the entire note (which will cascade delete checklist items)
-      if (!user.organizationId) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ You need to be part of an organization.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const boardRecord = await resolveBoard(board, user.organizationId);
-      if (!boardRecord) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ Board not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const note = await resolveDefaultSlackNote(boardRecord.id, user.id);
-
-      const item = await db.checklistItem.findFirst({
-        where: {
-          noteId: note.id,
-          content: data.task,
-        },
-      });
-
-      if (!item) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ Note not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const deletedItem = await db.checklistItem.delete({
-        where: {
-          id: item.id,
-        },
-      });
-
-      await sendMessage(
-        client,
-        event.channel,
-        `🗑️ Deleted task`,
-        isThreaded ? event.ts : undefined
-      );
+      await deleteTask(board, data, user, event, client, isThreaded);
       break;
     }
 
     case "list": {
-      if (!user.organizationId) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ You need to be part of an organization.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const boardRecord = await resolveBoard(board, user.organizationId);
-      if (!boardRecord) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ Board not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const note = await resolveDefaultSlackNote(boardRecord.id, user.id);
-      let item;
-      if (data.filters === "completed") {
-        item = await db.checklistItem.findMany({
-          where: {
-            noteId: note.id,
-            checked: true,
-          },
-        });
-      } else if (data.filters === "pending") {
-        item = await db.checklistItem.findMany({
-          where: {
-            noteId: note.id,
-            checked: false,
-          },
-        });
-      } else {
-        item = await db.checklistItem.findMany({
-          where: {
-            noteId: note.id,
-          },
-        });
-      }
-
-      if (!item) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ Note not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const text =
-        item.length === 0
-          ? "No tasks found."
-          : item
-              .map((n) =>
-                !n.checked ? `○ ${n.content || "Empty task"}` : `● ${n.content || "Empty task"}`
-              )
-              .join("\n");
-
-      await sendMessage(
-        client,
-        event.channel,
-        `📒 Tasks in *${boardRecord.name}*:\n${text}`,
-        isThreaded ? event.ts : undefined
-      );
+      await listTask(board, data, user, event, client, isThreaded);
       break;
     }
 
     case "mark": {
-      if (!user.organizationId) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ You need to be part of an organization.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
+      await markTask(board, data, user, event, client, isThreaded);
+      break;
+    }
 
-      const boardRecord = await resolveBoard(board, user.organizationId);
-      if (!boardRecord) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ Board not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
+    case "unmark": {
+      await unmarkTask(board, data, user, event, client, isThreaded);
+      break;
+    }
 
-      const note = await resolveDefaultSlackNote(boardRecord.id, user.id);
+    case "boards": {
+      await listBoards(user, event, client, isThreaded);
+      break;
+    }
 
-      const item = await db.checklistItem.findFirst({
-        where: {
-          noteId: note.id,
-          content: data.task,
-        },
-      });
-
-      if (!item) {
-        await sendMessage(
-          client,
-          event.channel,
-          `❌ Note not found.`,
-          isThreaded ? event.ts : undefined
-        );
-        return;
-      }
-
-      const updatedItem = await db.checklistItem.update({
-        where: { id: item.id },
-        data: { checked: true },
-      });
-
-      await sendMessage(
-        client,
-        event.channel,
-        `✅ Marked task *${updatedItem.content}* as completed`,
-        isThreaded ? event.ts : undefined
-      );
+    case "create board": {
+      await createBoard(data, user, event, client, isThreaded);
       break;
     }
 
     case "help": {
       const helpText = `
-                  Here are the things you can ask me to do:
+🤖 *Try Saying*
 
-                  • *Add a task* → "add buy milk"
-                  • *Edit a task* → "edit buy milk to buy bread"
-                  • *Mark as done* → "mark buy milk as done"
-                  • *Delete a task* → "delete buy milk"
-                  • *List all tasks* → "list all"
-                  • *List completed tasks* → "list completed"
-                  • *List boards* → "list boards"
-                  • *Add task to specific board* → "add buy fruits to Growth board"
+*Basic Commands:*
+• \`add <task>\` → Add a new task
+• \`list all\` → Show all tasks (numbered)
+• \`list completed\` → Show completed tasks
+• \`list pending\` → Show pending tasks
 
-                  ℹ️ I'll always use your org's default Slack board and your personal default note unless you specify another board.
+*Work with Numbers:*
+• \`delete 3rd one\` → Delete task #3
+• \`mark 1st as done\` → Mark task #1 complete
+• \`edit 2nd to <new text>\` → Edit task #2
+
+*Work with Names:*
+• \`delete buy milk\` → Delete by task name
+• \`mark buy milk as done\` → Mark by name
+• \`edit buy milk to buy bread\` → Edit by name
+
+*Board Commands:*
+• \`boards\` → List all boards
+• \`add <task> to <board>\` → Add to specific board
+• \`list tasks in <board>\` → List tasks from board
+
+*Other:*
+• \`unmark 1st\` → Mark task as pending
+• \`help\` → Show this help
+
+💡 *Tip:* Use \`list all\` first to see numbered tasks, then reference by number!
             `;
 
       await sendMessage(client, event.channel, helpText.trim(), isThreaded ? event.ts : undefined);
@@ -323,14 +102,19 @@ export async function executeCommand(
       await sendMessage(
         client,
         event.channel,
-        `🤔 Sorry ${isThreaded ? `<@${event.user}>` : ""}, I didn't understand that.`,
+        `🤔 Sorry ${isThreaded ? `<@${event.user}>` : ""}, I didn't understand that. Try \`help\` to see what I can do!`,
         isThreaded ? event.ts : undefined
       );
     }
   }
 }
 
-async function sendMessage(client: WebClient, channel: string, text: string, thread_ts?: string) {
+export async function sendMessage(
+  client: WebClient,
+  channel: string,
+  text: string,
+  thread_ts?: string
+) {
   await client.chat.postMessage({
     channel,
     text,
@@ -338,43 +122,40 @@ async function sendMessage(client: WebClient, channel: string, text: string, thr
   });
 }
 
-async function resolveBoard(boardName: string | undefined, organizationId: string) {
+export async function resolveBoard(boardName: string | undefined, organizationId: string) {
   if (!boardName) {
     // Find first board in organization - default
     return await db.board.findFirst({
       where: { organizationId },
+      orderBy: { name: "asc" },
     });
   }
-  return await db.board.findFirst({
+
+  // Try exact match first
+  let board = await db.board.findFirst({
     where: {
       name: boardName,
       organizationId,
     },
   });
+
+  // If no exact match, try case-insensitive partial match
+  if (!board) {
+    board = await db.board.findFirst({
+      where: {
+        name: {
+          contains: boardName,
+          mode: "insensitive",
+        },
+        organizationId,
+      },
+    });
+  }
+
+  return board;
 }
 
-async function resolveNoteByContent(boardId: string, noteContent: string) {
-  // Find note by looking for a checklist item with matching content
-  const item = await db.checklistItem.findFirst({
-    where: {
-      content: {
-        contains: noteContent,
-        mode: "insensitive",
-      },
-      note: {
-        boardId: boardId,
-        deletedAt: null,
-      },
-    },
-    include: {
-      note: true,
-    },
-  });
-
-  return item?.note || null;
-}
-
-async function resolveDefaultSlackNote(boardId: string, userId: string) {
+export async function resolveDefaultSlackNote(boardId: string, userId: string) {
   const randomColor = NOTE_COLORS[Math.floor(Math.random() * NOTE_COLORS.length)];
   let note = await db.note.findFirst({
     where: { boardId, createdBy: userId, isSlackDefault: true, deletedAt: null },

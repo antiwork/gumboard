@@ -14,9 +14,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(result);
   } catch (error) {
     console.error("Slack auth test error:", error);
-    return NextResponse.json(
-      { error: "Failed to test Slack authentication" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to test Slack authentication" }, { status: 500 });
   }
 }

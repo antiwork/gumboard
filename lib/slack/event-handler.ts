@@ -5,7 +5,6 @@ import { db } from "@/lib/db";
 import { executeCommand } from "./commands";
 import { getSlackClient } from "./slack-client";
 
-
 export async function handleSlackEvent(event: any) {
   console.log("Event received:", event);
 
@@ -93,7 +92,7 @@ async function handleDirectMessage(event: any, client: WebClient) {
     if (!user) {
       await client.chat.postMessage({
         channel: event.channel,
-        text: `Sorry, I couldn't find your account. Please sign up first!`,
+        text: `Sorry, I couldn't find your account. Ask admin for the invite!`,
       });
       return;
     }

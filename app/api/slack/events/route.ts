@@ -6,35 +6,6 @@ import { db } from "@/lib/db";
 import { handleSlackEvent } from "@/lib/slack/event-handler";
 import { isDuplicateEvent } from "@/lib/slack/dedupe";
 
-function verifySlackRequest(req: NextRequest, body: string, slackSigningSecret: string): boolean {
-  const timestamp = req.headers.get("x-slack-request-timestamp");
-  const signature = req.headers.get("x-slack-signature");
-
-  if (!timestamp || !signature) {
-    console.error("Missing timestamp or signature");
-    return false;
-  }
-
-  // Check if request is too old (more than 5 minutes)
-  const now = Math.floor(Date.now() / 1000);
-  if (Math.abs(now - parseInt(timestamp)) > 300) {
-    console.error("Request too old");
-    return false;
-  }
-
-  const sigBaseString = `v0:${timestamp}:${body}`;
-  const mySig =
-    "v0=" +
-    crypto.createHmac("sha256", slackSigningSecret).update(sigBaseString, "utf8").digest("hex");
-
-  try {
-    return crypto.timingSafeEqual(Buffer.from(mySig, "utf8"), Buffer.from(signature, "utf8"));
-  } catch (error) {
-    console.error("Signature verification error:", error);
-    return false;
-  }
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.text();
@@ -88,4 +59,33 @@ export async function GET() {
     message: "Slack bot endpoint is running!",
     timestamp: new Date().toISOString(),
   });
+}
+
+function verifySlackRequest(req: NextRequest, body: string, slackSigningSecret: string): boolean {
+  const timestamp = req.headers.get("x-slack-request-timestamp");
+  const signature = req.headers.get("x-slack-signature");
+
+  if (!timestamp || !signature) {
+    console.error("Missing timestamp or signature");
+    return false;
+  }
+
+  // Check if request is too old (more than 5 minutes)
+  const now = Math.floor(Date.now() / 1000);
+  if (Math.abs(now - parseInt(timestamp)) > 300) {
+    console.error("Request too old");
+    return false;
+  }
+
+  const sigBaseString = `v0:${timestamp}:${body}`;
+  const mySig =
+    "v0=" +
+    crypto.createHmac("sha256", slackSigningSecret).update(sigBaseString, "utf8").digest("hex");
+
+  try {
+    return crypto.timingSafeEqual(Buffer.from(mySig, "utf8"), Buffer.from(signature, "utf8"));
+  } catch (error) {
+    console.error("Signature verification error:", error);
+    return false;
+  }
 }

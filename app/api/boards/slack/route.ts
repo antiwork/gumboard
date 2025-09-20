@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
     });
 
     console.log("Existing board check:", { existingBoard });
-    
+
     if (existingBoard) {
       return NextResponse.json({ error: "Board already exists" }, { status: 200 });
     }

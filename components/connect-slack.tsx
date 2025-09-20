@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, ExternalLink, Info } from "lucide-react";
+import { AlertCircle, Trash2 } from "lucide-react";
 import { useUser } from "@/app/contexts/UserContext";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
 import { Checkbox } from "./ui/checkbox";
 import { toast } from "sonner";
-
+import CopyManifest from "./slack-manifest";
 
 const ConnectSlack = ({ orgId }: { orgId: string }) => {
   const [botToken, setBotToken] = useState<string>("");
@@ -29,7 +29,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
 
     try {
       // 1. Test Slack credentials
-      
+
       const response = await fetch("/api/slack", {
         method: "POST",
         body: JSON.stringify({ token: botToken, signingSecret }),
@@ -46,7 +46,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
         method: "PUT",
         body: JSON.stringify({
           slackToken: botToken,
-          slackTeamId: teamId || data.team_id,
+          slackTeamId: data.team_id,
           organizationId: orgId,
           slackSigningSecret: signingSecret,
         }),
@@ -58,7 +58,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
         toast.error(errData.error || "Failed to save Slack settings");
         throw new Error(errData.error || "Failed to save Slack settings");
       }
-
+      setTeamId(saveResponse.ok ? data.team_id : "");
       await handleAddBoard();
       toast.success("Slack connected successfully!");
     } catch (err: any) {
@@ -66,6 +66,31 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
       setError(err.message || "Failed to connect Slack");
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      const saveResponse = await fetch("/api/organization/slack", {
+        method: "DELETE",
+        body: JSON.stringify({
+          organizationId: orgId,
+        }),
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!saveResponse.ok) {
+        const errData = await saveResponse.json();
+        toast.error(errData.error || "Failed to delete Slack settings");
+        throw new Error(errData.error || "Failed to delete Slack settings");
+      }
+      setSigningSecret("");
+      setBotToken("");
+      setTeamId("");
+      toast.success("Slack bot connection removed!");
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || "Failed to delete Slack connnection");
     }
   };
 
@@ -82,7 +107,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
       const response = await fetch("/api/organization", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slackWebhookUrl }),
+        body: JSON.stringify({ name: user?.organization?.name, slackWebhookUrl }),
       });
 
       if (response.ok) {
@@ -198,6 +223,10 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
             placeholder="T1234567890"
           />
         )}
+
+        <div>
+          <CopyManifest />
+        </div>
       </div>
 
       {error && (
@@ -207,18 +236,18 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
         </div>
       )}
 
-            {/* Status & Action Button */}
+      {/* Status & Action Button */}
       {teamId ? (
         <div className="flex items-center gap-3 mt-3">
-          <span className="px-3 py-2 text-sm rounded-md bg-green-100 text-green-800 border border-green-200">
-             Connected
+          <span className="px-3 py-2 text-sm rounded-lg bg-green-100 text-green-800 border border-green-400">
+            Connected
           </span>
           <Button
-            onClick={handleSubmit}
-            disabled={isLoading || !botToken || !signingSecret}
-            className=" bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+            onClick={handleDelete}
+            variant="destructive"
+            className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
           >
-            {isLoading ? "Updating..." : `Edit Connection`}
+            <Trash2 className="size-4" />
           </Button>
         </div>
       ) : (
@@ -230,8 +259,6 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
           {isLoading ? "Connecting..." : "Connect Slack"}
         </Button>
       )}
-
-
     </div>
   );
 };
