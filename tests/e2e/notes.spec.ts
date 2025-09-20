@@ -142,7 +142,10 @@ test.describe("Note Management", () => {
       },
     });
 
+    // ✅ Store itemId once to keep it consistent
+    const itemId = testContext.prefix("item-1");
     const testItemContent = testContext.prefix("Test item");
+
     await testPrisma.note.create({
       data: {
         color: "#fff2a8",
@@ -151,7 +154,7 @@ test.describe("Note Management", () => {
         checklistItems: {
           create: [
             {
-              id: testContext.prefix("item-1"),
+              id: itemId,
               content: testItemContent,
               checked: false,
               order: 0,
@@ -163,89 +166,88 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    // Test 1: Toggle checklist item
-    // Select the first checkbox inside the note
-    const checkbox = authenticatedPage.getByRole("checkbox").first();
-    await expect(checkbox).toBeVisible();
+    // --- Test 1: Toggle checklist item ---
+    const checkbox = authenticatedPage.getByTestId(itemId).getByRole("checkbox");
+    await expect(checkbox).toBeVisible({ timeout: 10000 });
 
-    const toggleResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await checkbox.click();
-    await toggleResponse;
+    await Promise.all([
+      authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+          resp.request().method() === "PUT" &&
+          resp.ok()
+      ),
+      checkbox.click(),
+    ]);
 
-    // Verify toggle in database
-    const toggledItem = await testPrisma.checklistItem.findFirst({
-      where: { id: testContext.prefix("item-1") },
-    });
+    const toggledItem = await testPrisma.checklistItem.findFirst({ where: { id: itemId } });
     expect(toggledItem?.checked).toBe(true);
 
-    // Test 2: Add a new checklist item using always-available input
+    // --- Test 2: Add a new checklist item ---
     const newItemInput = authenticatedPage.getByTestId("new-item").locator("textarea");
     await expect(newItemInput).toBeVisible();
-    const newItemContent = testContext.prefix("New test item");
-    const addItemResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok(),
-      { timeout: 15000 }
-    );
-    await newItemInput.fill(newItemContent);
-    await newItemInput.blur();
-    await addItemResponse;
 
-    // Verify new item in database
+    const newItemContent = testContext.prefix("New test item");
+    await Promise.all([
+      authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+          resp.request().method() === "PUT" &&
+          resp.ok(),
+        { timeout: 15000 }
+      ),
+      (async () => {
+        await newItemInput.fill(newItemContent);
+        await newItemInput.blur();
+      })(),
+    ]);
+
     const newItem = await testPrisma.checklistItem.findFirst({
       where: { content: newItemContent },
     });
     expect(newItem).toBeTruthy();
 
-    // Test 3: Edit checklist item content
-    const existingItem = authenticatedPage.locator(`text=${testItemContent}`).first();
-    await expect(existingItem).toBeVisible();
-    await existingItem.dblclick();
-    const editInput = authenticatedPage
-      .getByTestId(testContext.prefix("item-1"))
-      .locator("textarea");
-    await expect(editInput).toBeVisible();
-    const editedContent = testContext.prefix("Edited test item");
-    const editResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await editInput.fill(editedContent);
-    await authenticatedPage.locator("body").click();
-    await editResponse;
+    // --- Test 3: Edit checklist item ---
+    const item = authenticatedPage.getByTestId(itemId);
+    await expect(item).toBeVisible();
 
-    // Verify edit in database
+    // Click to activate edit mode
+    await item.click();
+
+    const editInput = item.locator("textarea");
+    await expect(editInput).toBeVisible();
+
+    const editedContent = testContext.prefix("Edited test item");
+    await Promise.all([
+      authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+          resp.request().method() === "PUT" &&
+          resp.ok()
+      ),
+      (async () => {
+        await editInput.fill(editedContent);
+        await editInput.press("Enter");
+      })(),
+    ]);
+
     const editedItem = await testPrisma.checklistItem.findFirst({
       where: { content: editedContent },
     });
     expect(editedItem).toBeTruthy();
 
-    // Test 4: Delete checklist item
-    const deleteResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await authenticatedPage
-      .getByTestId(testContext.prefix("item-1"))
-      .getByRole("button", { name: "Delete item" })
-      .click();
-    await deleteResponse;
+    // --- Test 4: Delete checklist item ---
+    await Promise.all([
+      authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+          resp.request().method() === "PUT" &&
+          resp.ok()
+      ),
+      authenticatedPage.getByTestId(itemId).getByRole("button", { name: "Delete item" }).click(),
+    ]);
 
-    // Verify deletion in database
-    const deletedItem = await testPrisma.checklistItem.findFirst({
-      where: { id: testContext.prefix("item-1") },
-    });
+    const deletedItem = await testPrisma.checklistItem.findFirst({ where: { id: itemId } });
     expect(deletedItem).toBeNull();
   });
 
