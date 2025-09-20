@@ -1,4 +1,27 @@
 import { test, expect } from "../fixtures/test-helpers";
+import type { Response } from "@playwright/test";
+
+// Helper functions for more reliable interactions
+async function waitForNoteToBeReady(page: any, noteContent: string) {
+  const noteCard = page.locator('[data-testid="note-card"]')
+    .filter({ hasText: noteContent });
+  
+  await expect(noteCard).toBeVisible({ timeout: 15000 });
+  await noteCard.locator('textarea').first().waitFor({ state: 'visible' });
+  await page.waitForTimeout(300); // Brief stability wait
+  
+  return noteCard;
+}
+
+async function waitForNoteOperation(page: any, boardId: string, method: 'POST' | 'PUT' | 'DELETE') {
+  return page.waitForResponse(
+    (resp: Response) =>
+      resp.url().includes(`/api/boards/${boardId}/notes`) &&
+      resp.request().method() === method &&
+      resp.status() >= 200 && resp.status() < 300,
+    { timeout: 15000 }
+  );
+}
 
 test.describe("Archive Functionality", () => {
   test("should display Archive board on dashboard", async ({
@@ -16,10 +39,16 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/dashboard");
+    
+    // Wait for dashboard to load completely
+    await authenticatedPage.waitForLoadState('networkidle');
+    
     await expect(authenticatedPage.getByRole("heading", { name: "Your Boards" })).toBeVisible({
       timeout: 15000,
     });
-    await expect(authenticatedPage.getByRole("link", { name: "Archive" })).toBeVisible();
+    await expect(authenticatedPage.getByRole("link", { name: "Archive" })).toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should navigate to Archive board from dashboard", async ({
@@ -36,6 +65,7 @@ test.describe("Archive Functionality", () => {
       },
     });
 
+    const noteContent = testContext.prefix("This is an archived note");
     await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -45,7 +75,7 @@ test.describe("Archive Functionality", () => {
         checklistItems: {
           create: [
             {
-              content: testContext.prefix("This is an archived note"),
+              content: noteContent,
               checked: false,
               order: 0,
             },
@@ -55,14 +85,16 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/dashboard");
+    await authenticatedPage.waitForLoadState('networkidle');
 
+    // Wait for navigation to complete
+    const navigationPromise = authenticatedPage.waitForURL("/boards/archive");
     await authenticatedPage.click('[href="/boards/archive"]');
+    await navigationPromise;
 
-    await expect(authenticatedPage).toHaveURL("/boards/archive");
-
-    await expect(
-      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
-    ).toBeVisible();
+    await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("should archive a note and remove it from regular board", async ({
@@ -100,48 +132,51 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
+    await authenticatedPage.waitForLoadState('networkidle');
 
-    // Optional: ensure notes have loaded
+    // Wait for notes to load with response verification
     await authenticatedPage.waitForResponse(
-      (r) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok()
+      (r: Response) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok(),
+      { timeout: 15000 }
     );
 
-    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
-    await expect(noteCard).toBeVisible();
-
+    // Find the specific note card and wait for it to be ready
+    const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
+    
+    // Verify textarea content
     const textarea = noteCard.locator("textarea").first();
     await expect(textarea).toHaveValue(noteContent);
 
-    // Reveal actions
+    // Ensure card is stable before interaction
+    await noteCard.waitFor({ state: 'stable', timeout: 5000 });
+    
+    // Find archive button within this specific note card
+    const archiveButton = noteCard.locator('[aria-label="Archive note"]');
+    
+    // Hover to reveal button and wait for visibility
     await noteCard.hover();
+    await expect(archiveButton).toBeVisible({ timeout: 8000 });
 
-    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
-    await expect(archiveButton).toBeVisible();
-
-    // Hover over the archive button to show tooltip
+    // Verify tooltip appears
     await archiveButton.hover();
+    const tooltip = authenticatedPage.getByRole("tooltip", { name: "Archive note" });
+    await expect(tooltip).toBeVisible({ timeout: 5000 });
+    await expect(tooltip.getByRole("paragraph")).toBeVisible();
 
-    // Check if the tooltip is visible
-    await expect(
-      authenticatedPage.getByRole("tooltip", { name: "Archive note" }).getByRole("paragraph")
-    ).toBeVisible();
+    // Set up response waiting BEFORE clicking
+    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
 
     await archiveButton.click();
+    await archiveResponsePromise;
 
-    const archiveResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await archiveResponse;
-
+    // Verify database state
     const archivedNote = await testPrisma.note.findUnique({
       where: { id: note.id },
     });
     expect(archivedNote?.archivedAt).toBeTruthy();
 
-    await expect(noteCard).not.toBeVisible();
+    // Verify UI state - note should disappear
+    await expect(noteCard).not.toBeVisible({ timeout: 10000 });
   });
 
   test("should not show archive button on Archive board", async ({
@@ -150,8 +185,8 @@ test.describe("Archive Functionality", () => {
     testPrisma,
   }) => {
     const suffix = Math.random().toString(36).substring(2, 8);
+    const noteContent = testContext.prefix(`Archived note content ${suffix}`);
 
-    // Create an archived board
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName(`Archived Board ${suffix}`),
@@ -161,8 +196,7 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Create an archived note inside the archived board
-    const note = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
         color: "#fef3c7",
         archivedAt: new Date(),
@@ -171,7 +205,7 @@ test.describe("Archive Functionality", () => {
         checklistItems: {
           create: [
             {
-              content: testContext.prefix(`Archived note content ${suffix}`),
+              content: noteContent,
               checked: false,
               order: 0,
             },
@@ -180,17 +214,22 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Go to archive page
     await authenticatedPage.goto("/boards/archive");
+    await authenticatedPage.waitForLoadState('networkidle');
 
-    // Scope to the note text to avoid picking up another note
-    const noteLocator = authenticatedPage.getByText(
-      testContext.prefix(`Archived note content ${suffix}`)
-    );
-    await expect(noteLocator).toBeVisible();
+    // Wait for the specific note to be visible
+    await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
+      timeout: 15000,
+    });
 
-    // Look for archive button inside this note only
-    const archiveButton = noteLocator.locator("..").locator('[aria-label="Archive note"]');
+    // Find the note card containing this specific content
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]')
+      .filter({ hasText: noteContent });
+
+    await expect(noteCard).toBeVisible();
+
+    // Verify archive button is NOT visible within this note card
+    const archiveButton = noteCard.locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 
@@ -199,6 +238,7 @@ test.describe("Archive Functionality", () => {
     testContext,
     testPrisma,
   }) => {
+    // Verify no archived notes exist for this user
     const archivedNoteCount = await testPrisma.note.count({
       where: {
         createdBy: testContext.userId,
@@ -208,16 +248,24 @@ test.describe("Archive Functionality", () => {
     expect(archivedNoteCount).toBe(0);
 
     await authenticatedPage.goto("/boards/archive");
+    await authenticatedPage.waitForLoadState('networkidle');
 
+    // Verify no delete buttons are present (empty state)
     const deleteNoteButtons = authenticatedPage.getByRole("button", { name: /Delete Note/ });
     await expect(deleteNoteButtons).toHaveCount(0);
   });
 
-  test('should display board name as "Archive" in navigation', async ({ authenticatedPage }) => {
+  test('should display board name as "Archive" in navigation', async ({ 
+    authenticatedPage 
+  }) => {
     await authenticatedPage.goto("/boards/archive");
+    await authenticatedPage.waitForLoadState('networkidle');
 
     await expect(authenticatedPage).toHaveURL("/boards/archive");
-    await expect(authenticatedPage.getByRole("button", { name: "Add note" })).toBeDisabled();
+    
+    const addNoteButton = authenticatedPage.getByRole("button", { name: "Add note" });
+    await expect(addNoteButton).toBeVisible({ timeout: 10000 });
+    await expect(addNoteButton).toBeDisabled();
   });
 
   test("should show unarchive button instead of archive button on Archive board", async ({
@@ -234,6 +282,7 @@ test.describe("Archive Functionality", () => {
       },
     });
 
+    const noteContent = testContext.prefix("This is an archived note");
     await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -243,7 +292,7 @@ test.describe("Archive Functionality", () => {
         checklistItems: {
           create: [
             {
-              content: testContext.prefix("This is an archived note"),
+              content: noteContent,
               checked: false,
               order: 0,
             },
@@ -253,22 +302,33 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
+    await authenticatedPage.waitForLoadState('networkidle');
 
-    await expect(
-      authenticatedPage.getByText(testContext.prefix("This is an archived note"))
-    ).toBeVisible();
+    // Wait for note to be visible
+    await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
+      timeout: 15000,
+    });
 
-    const unarchiveButton = authenticatedPage.getByRole("button", { name: "Unarchive note" });
-    await expect(unarchiveButton).toBeVisible();
+    // Find the specific note card
+    const noteCard = authenticatedPage.locator('[data-testid="note-card"]')
+      .filter({ hasText: noteContent });
 
-    // Hover over the button and verify tooltip
+    await expect(noteCard).toBeVisible();
+    
+    // Hover to reveal action buttons
+    await noteCard.hover();
+
+    const unarchiveButton = noteCard.getByRole("button", { name: "Unarchive note" });
+    await expect(unarchiveButton).toBeVisible({ timeout: 8000 });
+
+    // Verify tooltip
     await unarchiveButton.hover();
+    const tooltip = authenticatedPage.getByRole("tooltip", { name: "Unarchive note" });
+    await expect(tooltip).toBeVisible({ timeout: 5000 });
+    await expect(tooltip.getByRole("paragraph")).toBeVisible();
 
-    await expect(
-      authenticatedPage.getByRole("tooltip", { name: "Unarchive note" }).getByRole("paragraph")
-    ).toBeVisible();
-
-    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]');
+    // Verify archive button is NOT present
+    const archiveButton = noteCard.locator('[aria-label="Archive note"]');
     await expect(archiveButton).not.toBeVisible();
   });
 
@@ -286,6 +346,7 @@ test.describe("Archive Functionality", () => {
       },
     });
 
+    const noteContent = testContext.prefix("Test note to unarchive");
     const archivedNote = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -295,7 +356,7 @@ test.describe("Archive Functionality", () => {
         checklistItems: {
           create: [
             {
-              content: testContext.prefix("Test note to unarchive"),
+              content: noteContent,
               checked: false,
               order: 0,
             },
@@ -305,31 +366,33 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
+    await authenticatedPage.waitForLoadState('networkidle');
 
-    await expect(
-      authenticatedPage.locator(`text=${testContext.prefix("Test note to unarchive")}`)
-    ).toBeVisible();
+    // Find the specific note card and wait for it to be ready
+    const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
+    
+    // Hover to reveal unarchive button
+    await noteCard.hover();
+    
+    const unarchiveButton = noteCard.locator('[aria-label="Unarchive note"]');
+    await expect(unarchiveButton).toBeVisible({ timeout: 8000 });
 
-    const unarchiveButton = authenticatedPage.locator('[aria-label="Unarchive note"]');
-    await expect(unarchiveButton).toBeVisible();
+    // Set up response waiting BEFORE clicking
+    const unarchiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
+
     await unarchiveButton.click();
+    await unarchiveResponsePromise;
 
-    const unarchiveResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await unarchiveResponse;
-
+    // Verify database state
     const unarchivedNote = await testPrisma.note.findUnique({
       where: { id: archivedNote.id },
     });
     expect(unarchivedNote?.archivedAt).toBe(null);
 
-    await expect(
-      authenticatedPage.getByText(testContext.prefix("Test note to unarchive"))
-    ).not.toBeVisible();
+    // Verify UI state - note should disappear from archive
+    await expect(authenticatedPage.getByText(noteContent)).not.toBeVisible({
+      timeout: 10000,
+    });
   });
 
   test("should complete full archive-unarchive workflow", async ({
@@ -346,6 +409,7 @@ test.describe("Archive Functionality", () => {
       },
     });
 
+    const noteContent = testContext.prefix("Note for archive-unarchive workflow test");
     const note = await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -355,7 +419,7 @@ test.describe("Archive Functionality", () => {
         checklistItems: {
           create: [
             {
-              content: testContext.prefix("Note for archive-unarchive workflow test"),
+              content: noteContent,
               checked: false,
               order: 0,
             },
@@ -364,25 +428,32 @@ test.describe("Archive Functionality", () => {
       },
     });
 
+    // Step 1: Go to regular board and verify note exists
     await authenticatedPage.goto(`/boards/${board.id}`);
-    await expect(
-      authenticatedPage.getByText(testContext.prefix("Note for archive-unarchive workflow test"))
-    ).toBeVisible();
-
-    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
-    await expect(archiveButton).toBeVisible();
-    await archiveButton.click();
-    const archiveResponse2 = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
+    await authenticatedPage.waitForLoadState('networkidle');
+    
+    await authenticatedPage.waitForResponse(
+      (r: Response) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok(),
+      { timeout: 15000 }
     );
-    await archiveResponse2;
 
-    await expect(
-      authenticatedPage.getByText(testContext.prefix("Note for archive-unarchive workflow test"))
-    ).not.toBeVisible();
+    const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
+    
+    // Step 2: Archive the note
+    await noteCard.hover();
+    const archiveButton = noteCard.locator('[aria-label="Archive note"]');
+    await expect(archiveButton).toBeVisible({ timeout: 8000 });
+
+    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
+    await archiveButton.click();
+    await archiveResponsePromise;
+
+    // Verify note disappears from regular board
+    await expect(authenticatedPage.getByText(noteContent)).not.toBeVisible({
+      timeout: 10000,
+    });
+
+    // Verify database state
     const archivedNote = await testPrisma.note.findUnique({
       where: { id: note.id },
     });
@@ -403,7 +474,10 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Create a note with multiple checklist items in specific order
+    const firstItem = testContext.prefix("First item");
+    const secondItem = testContext.prefix("Second item");
+    const thirdItem = testContext.prefix("Third item");
+
     await testPrisma.note.create({
       data: {
         color: "#fef3c7",
@@ -413,17 +487,17 @@ test.describe("Archive Functionality", () => {
         checklistItems: {
           create: [
             {
-              content: testContext.prefix("First item"),
+              content: firstItem,
               checked: false,
               order: 0,
             },
             {
-              content: testContext.prefix("Second item"),
+              content: secondItem,
               checked: true,
               order: 1,
             },
             {
-              content: testContext.prefix("Third item"),
+              content: thirdItem,
               checked: false,
               order: 2,
             },
@@ -433,23 +507,20 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
+    await authenticatedPage.waitForLoadState('networkidle');
 
-    // Wait for the note to load
+    // Wait for note card to be visible
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
-    await expect(noteCard).toBeVisible();
+    await expect(noteCard).toBeVisible({ timeout: 15000 });
 
-    // Verify all items are visible and in correct order
-    // Note: Archive board notes are still editable by the owner, so we expect 4 textareas (3 items + 1 new item input)
+    // Wait for all textareas to be present
     const textareas = noteCard.locator("textarea");
-    await expect(textareas).toHaveCount(4);
+    await expect(textareas).toHaveCount(4, { timeout: 10000 });
 
-    const firstTextarea = await textareas.nth(0).inputValue();
-    const secondTextarea = await textareas.nth(1).inputValue();
-    const thirdTextarea = await textareas.nth(2).inputValue();
-
-    expect(firstTextarea).toContain(testContext.prefix("First item"));
-    expect(secondTextarea).toContain(testContext.prefix("Second item"));
-    expect(thirdTextarea).toContain(testContext.prefix("Third item"));
+    // Verify content order
+    await expect(textareas.nth(0)).toHaveValue(firstItem);
+    await expect(textareas.nth(1)).toHaveValue(secondItem);
+    await expect(textareas.nth(2)).toHaveValue(thirdItem);
   });
 
   test("should disable Add note button on Archive board", async ({
@@ -457,7 +528,6 @@ test.describe("Archive Functionality", () => {
     testContext,
     testPrisma,
   }) => {
-    // Create a regular board and note first
     const board = await testPrisma.board.create({
       data: {
         name: testContext.getBoardName("Test Board"),
@@ -485,30 +555,35 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Navigate to archive board
     await authenticatedPage.goto("/boards/archive");
+    await authenticatedPage.waitForLoadState('networkidle');
 
-    // Verify Add note button is disabled
+    // Verify Add note button state
     const addNoteButton = authenticatedPage.getByRole("button", { name: "Add note" });
-    await expect(addNoteButton).toBeVisible();
+    await expect(addNoteButton).toBeVisible({ timeout: 10000 });
     await expect(addNoteButton).toBeDisabled();
 
-    // Verify button cannot be clicked (should not trigger any action)
-    await addNoteButton.click({ force: true });
-
-    // Wait a moment and verify no new note was created
-    await authenticatedPage.waitForTimeout(1000);
-
-    // Count existing notes (should remain the same)
-    const noteCount = await testPrisma.note.count({
+    // Get initial note count
+    const initialNoteCount = await testPrisma.note.count({
       where: {
         createdBy: testContext.userId,
         deletedAt: null,
       },
     });
 
-    // Should still have only the one note we created
-    expect(noteCount).toBe(1);
+    // Try clicking disabled button (should not create new note)
+    await addNoteButton.click({ force: true });
+    await authenticatedPage.waitForTimeout(2000);
+
+    // Verify no new notes were created
+    const finalNoteCount = await testPrisma.note.count({
+      where: {
+        createdBy: testContext.userId,
+        deletedAt: null,
+      },
+    });
+
+    expect(finalNoteCount).toBe(initialNoteCount);
   });
 
   test("should enable Add note button on regular boards", async ({
@@ -525,26 +600,21 @@ test.describe("Archive Functionality", () => {
       },
     });
 
-    // Navigate to regular board
     await authenticatedPage.goto(`/boards/${board.id}`);
+    await authenticatedPage.waitForLoadState('networkidle');
 
     // Verify Add note button is enabled
     const addNoteButton = authenticatedPage.getByRole("button", { name: "Add note" });
-    await expect(addNoteButton).toBeVisible();
+    await expect(addNoteButton).toBeVisible({ timeout: 10000 });
     await expect(addNoteButton).toBeEnabled();
 
-    // Verify button can be clicked and creates a note
+    // Set up response waiting BEFORE clicking
+    const createResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'POST');
+
     await addNoteButton.click();
+    await createResponsePromise;
 
-    // Wait for the note creation response
-    await authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes`) &&
-        resp.request().method() === "POST" &&
-        resp.ok()
-    );
-
-    // Verify a new note was created
+    // Verify new note was created
     const noteCount = await testPrisma.note.count({
       where: {
         createdBy: testContext.userId,
@@ -591,30 +661,40 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
+    await authenticatedPage.waitForLoadState('networkidle');
 
-    // Verify note is initially visible
-    await expect(authenticatedPage.getByText(noteContent)).toBeVisible();
-
-    // Archive the note
-    await authenticatedPage.locator(`text=${noteContent}`).hover();
-    const archiveButton = authenticatedPage.locator('[aria-label="Archive note"]').first();
-    await expect(archiveButton).toBeVisible();
-    await archiveButton.click();
-
-    // Wait for the archive response
+    // Wait for notes to load
     await authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
+      (r: Response) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok(),
+      { timeout: 15000 }
     );
 
-    // Verify note immediately disappears from regular board (optimistic update)
-    await expect(authenticatedPage.getByText(noteContent)).not.toBeVisible();
+    // Find and verify note
+    const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
+
+    // Archive the note
+    await noteCard.hover();
+    const archiveButton = noteCard.locator('[aria-label="Archive note"]');
+    await expect(archiveButton).toBeVisible({ timeout: 8000 });
+
+    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
+    await archiveButton.click();
+    await archiveResponsePromise;
+
+    // Verify immediate UI update - note disappears
+    await expect(authenticatedPage.getByText(noteContent)).not.toBeVisible({
+      timeout: 10000,
+    });
 
     // Navigate to archive and verify note appears there
+    const navigationPromise = authenticatedPage.waitForURL("/boards/archive");
     await authenticatedPage.goto("/boards/archive");
-    await expect(authenticatedPage.getByText(noteContent)).toBeVisible();
+    await navigationPromise;
+    await authenticatedPage.waitForLoadState('networkidle');
+
+    await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
+      timeout: 15000,
+    });
   });
 
   test("should properly update note state when unarchiving from archive board", async ({
@@ -651,28 +731,32 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
+    await authenticatedPage.waitForLoadState('networkidle');
 
-    // Verify note is initially visible in archive
-    await expect(authenticatedPage.locator(`text=${noteContent}`)).toBeVisible();
+    // Find note and unarchive it
+    const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
+    
+    await noteCard.hover();
+    const unarchiveButton = noteCard.locator('[aria-label="Unarchive note"]');
+    await expect(unarchiveButton).toBeVisible({ timeout: 8000 });
 
-    // Unarchive the note
-    const unarchiveButton = authenticatedPage.locator('[aria-label="Unarchive note"]').first();
-    await expect(unarchiveButton).toBeVisible();
+    const unarchiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
     await unarchiveButton.click();
+    await unarchiveResponsePromise;
 
-    // Wait for the unarchive response
-    await authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-
-    // Verify note immediately disappears from archive (optimistic update)
-    await expect(authenticatedPage.getByText(noteContent)).not.toBeVisible();
+    // Verify immediate UI update - note disappears from archive
+    await expect(authenticatedPage.getByText(noteContent)).not.toBeVisible({
+      timeout: 10000,
+    });
 
     // Navigate to regular board and verify note appears there
+    const navigationPromise = authenticatedPage.waitForURL(`/boards/${board.id}`);
     await authenticatedPage.goto(`/boards/${board.id}`);
-    await expect(authenticatedPage.getByText(noteContent)).toBeVisible();
+    await navigationPromise;
+    await authenticatedPage.waitForLoadState('networkidle');
+
+    await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
+      timeout: 15000,
+    });
   });
 });
