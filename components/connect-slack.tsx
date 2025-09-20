@@ -8,6 +8,7 @@ import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
 import { Checkbox } from "./ui/checkbox";
 import { toast } from "sonner";
 
+
 const ConnectSlack = ({ orgId }: { orgId: string }) => {
   const [botToken, setBotToken] = useState<string>("");
   const [signingSecret, setSigningSecret] = useState<string>("");
@@ -28,6 +29,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
 
     try {
       // 1. Test Slack credentials
+      
       const response = await fetch("/api/slack", {
         method: "POST",
         body: JSON.stringify({ token: botToken, signingSecret }),
@@ -72,12 +74,8 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
 
     try {
       if (slackWebhookUrl && !SLACK_WEBHOOK_REGEX.test(slackWebhookUrl)) {
-        setErrorDialog({
-          open: true,
-          title: "Invalid Slack Webhook URL",
-          description: "Please enter a valid Slack Webhook URL",
-          variant: "error",
-        });
+        toast.error("Invalid Slack Webhook URL");
+        setSavingSlack(false);
         return;
       }
 
@@ -89,21 +87,21 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
 
       if (response.ok) {
         setOriginalSlackWebhookUrl(slackWebhookUrl);
+        toast.success("Slack webhook url is saved");
       } else {
         const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to update organization",
-          description: errorData.error || "Failed to update organization",
-        });
+        console.error("Error updating Slack webhook URL:", errorData);
+        toast.error("Failed to update Slack webhook URL");
       }
     } catch (err) {
       console.error("Error updating Slack webhook URL:", err);
+      toast.error("Failed to update Slack webhook URL");
     } finally {
       setSavingSlack(false);
     }
   };
 
+  /// Creates a default board for Slack if none exists
   const handleAddBoard = async () => {
     try {
       await fetch("/api/boards/slack", {
@@ -154,6 +152,8 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
           {savingSlack ? "Saving..." : "Save changes"}
         </Button>
       </div>
+
+      <div className="w-full border-t border-gray-200 dark:border-gray-700" />
 
       {/* Bot Token */}
       <div className="flex flex-col gap-2">
@@ -207,13 +207,31 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
         </div>
       )}
 
-      <Button
-        onClick={handleSubmit}
-        disabled={isLoading || !botToken || !signingSecret || (useManualEntry && !teamId)}
-        className="mt-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-      >
-        {isLoading ? "Connecting..." : "Connect Slack"}
-      </Button>
+            {/* Status & Action Button */}
+      {teamId ? (
+        <div className="flex items-center gap-3 mt-3">
+          <span className="px-3 py-2 text-sm rounded-md bg-green-100 text-green-800 border border-green-200">
+             Connected
+          </span>
+          <Button
+            onClick={handleSubmit}
+            disabled={isLoading || !botToken || !signingSecret}
+            className=" bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+          >
+            {isLoading ? "Updating..." : `Edit Connection`}
+          </Button>
+        </div>
+      ) : (
+        <Button
+          onClick={handleSubmit}
+          disabled={isLoading || !botToken || !signingSecret || (useManualEntry && !teamId)}
+          className="mt-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+        >
+          {isLoading ? "Connecting..." : "Connect Slack"}
+        </Button>
+      )}
+
+
     </div>
   );
 };

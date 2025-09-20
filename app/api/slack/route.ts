@@ -1,29 +1,22 @@
+import { WebClient } from "@slack/web-api";
 import { NextRequest, NextResponse } from "next/server";
-
-/// get the teamId
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.body ? (await request.json()).token : null;
+    const { token } = await request.json();
     if (!token) {
       return NextResponse.json({ error: "Missing token" }, { status: 400 });
     }
-    const authResponse = await fetch("https://slack.com/api/auth.test", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    });
 
-    const data = await authResponse.json();
-    console.log("Slack API Response:", data);
+    const client = new WebClient(token);
+    const result = await client.auth.test();
 
-    // Return the data as JSON response
-    return NextResponse.json(data);
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Slack auth test error:", error);
-
-    return NextResponse.json({ error: "Failed to test Slack authentication" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to test Slack authentication" },
+      { status: 500 }
+    );
   }
 }
