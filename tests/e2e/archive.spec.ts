@@ -3,22 +3,22 @@ import type { Response } from "@playwright/test";
 
 // Helper functions for more reliable interactions
 async function waitForNoteToBeReady(page: any, noteContent: string) {
-  const noteCard = page.locator('[data-testid="note-card"]')
-    .filter({ hasText: noteContent });
-  
+  const noteCard = page.locator('[data-testid="note-card"]').filter({ hasText: noteContent });
+
   await expect(noteCard).toBeVisible({ timeout: 15000 });
-  await noteCard.locator('textarea').first().waitFor({ state: 'visible' });
+  await noteCard.locator("textarea").first().waitFor({ state: "visible" });
   await page.waitForTimeout(300); // Brief stability wait
-  
+
   return noteCard;
 }
 
-async function waitForNoteOperation(page: any, boardId: string, method: 'POST' | 'PUT' | 'DELETE') {
+async function waitForNoteOperation(page: any, boardId: string, method: "POST" | "PUT" | "DELETE") {
   return page.waitForResponse(
     (resp: Response) =>
       resp.url().includes(`/api/boards/${boardId}/notes`) &&
       resp.request().method() === method &&
-      resp.status() >= 200 && resp.status() < 300,
+      resp.status() >= 200 &&
+      resp.status() < 300,
     { timeout: 15000 }
   );
 }
@@ -39,10 +39,10 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/dashboard");
-    
+
     // Wait for dashboard to load completely
-    await authenticatedPage.waitForLoadState('networkidle');
-    
+    await authenticatedPage.waitForLoadState("networkidle");
+
     await expect(authenticatedPage.getByRole("heading", { name: "Your Boards" })).toBeVisible({
       timeout: 15000,
     });
@@ -85,7 +85,7 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/dashboard");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Wait for navigation to complete
     const navigationPromise = authenticatedPage.waitForURL("/boards/archive");
@@ -132,7 +132,7 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Wait for notes to load with response verification
     await authenticatedPage.waitForResponse(
@@ -142,17 +142,17 @@ test.describe("Archive Functionality", () => {
 
     // Find the specific note card and wait for it to be ready
     const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
-    
+
     // Verify textarea content
     const textarea = noteCard.locator("textarea").first();
     await expect(textarea).toHaveValue(noteContent);
 
     // Ensure card is stable before interaction
-    await noteCard.waitFor({ state: 'stable', timeout: 5000 });
-    
+    await noteCard.waitFor({ state: "stable", timeout: 5000 });
+
     // Find archive button within this specific note card
     const archiveButton = noteCard.locator('[aria-label="Archive note"]');
-    
+
     // Hover to reveal button and wait for visibility
     await noteCard.hover();
     await expect(archiveButton).toBeVisible({ timeout: 8000 });
@@ -164,7 +164,7 @@ test.describe("Archive Functionality", () => {
     await expect(tooltip.getByRole("paragraph")).toBeVisible();
 
     // Set up response waiting BEFORE clicking
-    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
+    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, "PUT");
 
     await archiveButton.click();
     await archiveResponsePromise;
@@ -215,7 +215,7 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Wait for the specific note to be visible
     await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
@@ -223,7 +223,8 @@ test.describe("Archive Functionality", () => {
     });
 
     // Find the note card containing this specific content
-    const noteCard = authenticatedPage.locator('[data-testid="note-card"]')
+    const noteCard = authenticatedPage
+      .locator('[data-testid="note-card"]')
       .filter({ hasText: noteContent });
 
     await expect(noteCard).toBeVisible();
@@ -248,21 +249,19 @@ test.describe("Archive Functionality", () => {
     expect(archivedNoteCount).toBe(0);
 
     await authenticatedPage.goto("/boards/archive");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Verify no delete buttons are present (empty state)
     const deleteNoteButtons = authenticatedPage.getByRole("button", { name: /Delete Note/ });
     await expect(deleteNoteButtons).toHaveCount(0);
   });
 
-  test('should display board name as "Archive" in navigation', async ({ 
-    authenticatedPage 
-  }) => {
+  test('should display board name as "Archive" in navigation', async ({ authenticatedPage }) => {
     await authenticatedPage.goto("/boards/archive");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     await expect(authenticatedPage).toHaveURL("/boards/archive");
-    
+
     const addNoteButton = authenticatedPage.getByRole("button", { name: "Add note" });
     await expect(addNoteButton).toBeVisible({ timeout: 10000 });
     await expect(addNoteButton).toBeDisabled();
@@ -302,7 +301,7 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Wait for note to be visible
     await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
@@ -310,11 +309,12 @@ test.describe("Archive Functionality", () => {
     });
 
     // Find the specific note card
-    const noteCard = authenticatedPage.locator('[data-testid="note-card"]')
+    const noteCard = authenticatedPage
+      .locator('[data-testid="note-card"]')
       .filter({ hasText: noteContent });
 
     await expect(noteCard).toBeVisible();
-    
+
     // Hover to reveal action buttons
     await noteCard.hover();
 
@@ -366,19 +366,19 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Find the specific note card and wait for it to be ready
     const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
-    
+
     // Hover to reveal unarchive button
     await noteCard.hover();
-    
+
     const unarchiveButton = noteCard.locator('[aria-label="Unarchive note"]');
     await expect(unarchiveButton).toBeVisible({ timeout: 8000 });
 
     // Set up response waiting BEFORE clicking
-    const unarchiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
+    const unarchiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, "PUT");
 
     await unarchiveButton.click();
     await unarchiveResponsePromise;
@@ -430,21 +430,21 @@ test.describe("Archive Functionality", () => {
 
     // Step 1: Go to regular board and verify note exists
     await authenticatedPage.goto(`/boards/${board.id}`);
-    await authenticatedPage.waitForLoadState('networkidle');
-    
+    await authenticatedPage.waitForLoadState("networkidle");
+
     await authenticatedPage.waitForResponse(
       (r: Response) => r.url().includes(`/api/boards/${board.id}/notes`) && r.ok(),
       { timeout: 15000 }
     );
 
     const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
-    
+
     // Step 2: Archive the note
     await noteCard.hover();
     const archiveButton = noteCard.locator('[aria-label="Archive note"]');
     await expect(archiveButton).toBeVisible({ timeout: 8000 });
 
-    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
+    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, "PUT");
     await archiveButton.click();
     await archiveResponsePromise;
 
@@ -507,7 +507,7 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Wait for note card to be visible
     const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
@@ -556,7 +556,7 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Verify Add note button state
     const addNoteButton = authenticatedPage.getByRole("button", { name: "Add note" });
@@ -601,7 +601,7 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Verify Add note button is enabled
     const addNoteButton = authenticatedPage.getByRole("button", { name: "Add note" });
@@ -609,7 +609,7 @@ test.describe("Archive Functionality", () => {
     await expect(addNoteButton).toBeEnabled();
 
     // Set up response waiting BEFORE clicking
-    const createResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'POST');
+    const createResponsePromise = waitForNoteOperation(authenticatedPage, board.id, "POST");
 
     await addNoteButton.click();
     await createResponsePromise;
@@ -661,7 +661,7 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto(`/boards/${board.id}`);
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Wait for notes to load
     await authenticatedPage.waitForResponse(
@@ -677,7 +677,7 @@ test.describe("Archive Functionality", () => {
     const archiveButton = noteCard.locator('[aria-label="Archive note"]');
     await expect(archiveButton).toBeVisible({ timeout: 8000 });
 
-    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
+    const archiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, "PUT");
     await archiveButton.click();
     await archiveResponsePromise;
 
@@ -690,7 +690,7 @@ test.describe("Archive Functionality", () => {
     const navigationPromise = authenticatedPage.waitForURL("/boards/archive");
     await authenticatedPage.goto("/boards/archive");
     await navigationPromise;
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
       timeout: 15000,
@@ -731,16 +731,16 @@ test.describe("Archive Functionality", () => {
     });
 
     await authenticatedPage.goto("/boards/archive");
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     // Find note and unarchive it
     const noteCard = await waitForNoteToBeReady(authenticatedPage, noteContent);
-    
+
     await noteCard.hover();
     const unarchiveButton = noteCard.locator('[aria-label="Unarchive note"]');
     await expect(unarchiveButton).toBeVisible({ timeout: 8000 });
 
-    const unarchiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, 'PUT');
+    const unarchiveResponsePromise = waitForNoteOperation(authenticatedPage, board.id, "PUT");
     await unarchiveButton.click();
     await unarchiveResponsePromise;
 
@@ -753,7 +753,7 @@ test.describe("Archive Functionality", () => {
     const navigationPromise = authenticatedPage.waitForURL(`/boards/${board.id}`);
     await authenticatedPage.goto(`/boards/${board.id}`);
     await navigationPromise;
-    await authenticatedPage.waitForLoadState('networkidle');
+    await authenticatedPage.waitForLoadState("networkidle");
 
     await expect(authenticatedPage.getByText(noteContent)).toBeVisible({
       timeout: 15000,
