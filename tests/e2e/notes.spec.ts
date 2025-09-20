@@ -378,22 +378,32 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const checkbox = authenticatedPage.locator('[data-state="unchecked"]').first();
-    await expect(checkbox).toBeVisible();
-    const toggleResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
-    await checkbox.click();
-    await toggleResponse;
+    // ✅ Target the specific checklist item by testId (avoids .first() flakiness)
+    const checkbox = authenticatedPage.getByTestId(toggleItemId).getByRole("checkbox");
 
+    // Ensure it's ready for interaction
+    await expect(checkbox).toBeVisible({ timeout: 10000 });
+    await expect(checkbox).toBeEnabled();
+
+    // ✅ Wrap click + waitForResponse in Promise.all to avoid race conditions
+    await Promise.all([
+      authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+          resp.request().method() === "PUT" &&
+          resp.ok(),
+        { timeout: 20000 }
+      ),
+      checkbox.click(),
+    ]);
+
+    // ✅ Verify UI state (extra stability check)
+    await expect(checkbox).toBeChecked({ timeout: 5000 });
+
+    // ✅ Verify DB state (after UI confirmed)
     const updatedNote = await testPrisma.note.findUnique({
       where: { id: note.id },
-      include: {
-        checklistItems: true,
-      },
+      include: { checklistItems: true },
     });
 
     expect(updatedNote).not.toBeNull();
