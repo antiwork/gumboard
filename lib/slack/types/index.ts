@@ -1,15 +1,14 @@
 export interface SlackEvent {
   user: string;
-  type: 'message' | 'app_mention';
+  type: "message" | "app_mention";
   ts: string;
   text: string;
   team: string;
   channel: string;
   event_ts: string;
-  
 
   client_msg_id?: string;
-//   blocks?: any[];
+  //   blocks?: any[];
   channel_type?: string;
 
   subtype?: string;

@@ -3,14 +3,12 @@ import { sendMessage } from "../commands";
 import { WebClient } from "@slack/web-api";
 import { CommandData, SlackEvent, User } from "../types";
 
-
-
-
-export async function listBoards( 
+export async function listBoards(
   user: User,
   event: SlackEvent,
   client: WebClient,
-  isThreaded: boolean) {
+  isThreaded: boolean
+) {
   if (!user.organizationId) {
     await sendMessage(
       client,

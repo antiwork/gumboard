@@ -5,7 +5,6 @@ import { executeCommand } from "./commands";
 import { getSlackClient } from "./slack-client";
 import { SlackEvent } from "./types";
 
-
 export async function handleSlackEvent(event: SlackEvent) {
   console.log("Event received:", event);
 

@@ -12,7 +12,6 @@ import {
 import { createBoard, listBoards } from "./command-handler/board-handler";
 import { CommandData, SlackEvent, User } from "./types";
 
-
 export async function executeCommand(
   intent: string,
   board: string | undefined,

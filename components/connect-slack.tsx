@@ -63,7 +63,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
     } catch (err) {
       console.error(err);
       const message = err instanceof Error ? err.message : "Failed to connect Slack";
-      setError(message)
+      setError(message);
     } finally {
       setIsLoading(false);
     }
@@ -147,7 +147,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
       setSigningSecret(user.organization.slackSigningSecret || "");
       setBotToken(user.organization.slackBotToken || "");
       setTeamId(user.organization.slackTeamId || "");
-      setSlackWebhookUrl(user.organization.slackWebhookUrl || "")
+      setSlackWebhookUrl(user.organization.slackWebhookUrl || "");
     }
   }, [user]);
 
@@ -170,28 +170,24 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
           className="mt-2"
           disabled={!user?.isAdmin}
         />
-        {
-          slackWebhookUrl ? (
+        {slackWebhookUrl ? (
           <Button
             onClick={handleSaveSlack}
             disabled={savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
             className="mt-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
           >
-            <Edit className="size-4"/>
+            <Edit className="size-4" />
             Edit
           </Button>
-          ):
-          (
-             <Button
-          onClick={handleSaveSlack}
-          disabled={savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
-          className="mt-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
-        >
-          {savingSlack ? "Saving..." : "Save changes"}
-        </Button>
-          )
-        }
-       
+        ) : (
+          <Button
+            onClick={handleSaveSlack}
+            disabled={savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
+            className="mt-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+          >
+            {savingSlack ? "Saving..." : "Save changes"}
+          </Button>
+        )}
       </div>
 
       <div className="w-full border-t border-gray-200 dark:border-gray-700" />

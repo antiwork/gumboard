@@ -140,7 +140,7 @@ export async function editTask(
 
   const updatedItem = await db.checklistItem.update({
     where: { id: item.id },
-    data: { content: data.newTask || ""},
+    data: { content: data.newTask || "" },
   });
 
   const taskRef = data.position ? `task #${data.position}` : `"${data.task}"`;
