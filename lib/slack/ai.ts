@@ -184,7 +184,7 @@ export async function extractIntentAndData(eventText: string) {
   try {
     return JSON.parse(clean);
   } catch (err) {
-    console.error("Parsing failed. Raw text:", rawText);
+    console.error("Error parsing JSON:", err);
     return { intent: "unknown", board: null, data: {} };
   }
 }

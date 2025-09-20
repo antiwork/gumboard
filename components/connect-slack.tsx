@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, Trash2 } from "lucide-react";
+import { AlertCircle, Edit, Trash2 } from "lucide-react";
 import { useUser } from "@/app/contexts/UserContext";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,6 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
   const [error, setError] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
-  const [errorDialog, setErrorDialog] = useState<any>(null);
 
   const { user } = useUser();
 
@@ -61,9 +60,10 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
       setTeamId(saveResponse.ok ? data.team_id : "");
       await handleAddBoard();
       toast.success("Slack connected successfully!");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || "Failed to connect Slack");
+      const message = err instanceof Error ? err.message : "Failed to connect Slack";
+      setError(message)
     } finally {
       setIsLoading(false);
     }
@@ -88,9 +88,9 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
       setBotToken("");
       setTeamId("");
       toast.success("Slack bot connection removed!");
-    } catch (err: any) {
+    } catch (err) {
       console.error(err);
-      setError(err.message || "Failed to delete Slack connnection");
+      setError((err as Error).message || "Failed to delete Slack connnection");
     }
   };
 
@@ -147,6 +147,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
       setSigningSecret(user.organization.slackSigningSecret || "");
       setBotToken(user.organization.slackBotToken || "");
       setTeamId(user.organization.slackTeamId || "");
+      setSlackWebhookUrl(user.organization.slackWebhookUrl || "")
     }
   }, [user]);
 
@@ -169,13 +170,28 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
           className="mt-2"
           disabled={!user?.isAdmin}
         />
-        <Button
+        {
+          slackWebhookUrl ? (
+          <Button
+            onClick={handleSaveSlack}
+            disabled={savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
+            className="mt-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
+          >
+            <Edit className="size-4"/>
+            Edit
+          </Button>
+          ):
+          (
+             <Button
           onClick={handleSaveSlack}
           disabled={savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
           className="mt-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
         >
           {savingSlack ? "Saving..." : "Save changes"}
         </Button>
+          )
+        }
+       
       </div>
 
       <div className="w-full border-t border-gray-200 dark:border-gray-700" />

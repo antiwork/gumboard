@@ -1,4 +1,3 @@
-// app/api/slack/events/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 
@@ -22,7 +21,11 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    if (!verifySlackRequest(req, body, organization?.slackSigningSecret!)) {
+    if (!organization || !organization.slackSigningSecret) {
+      return NextResponse.json({ error: "Missing signing secret" }, { status: 400 });
+    }
+
+    if (!verifySlackRequest(req, body, organization?.slackSigningSecret)) {
       console.error("Invalid signature");
       return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
     }

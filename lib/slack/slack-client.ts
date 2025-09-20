@@ -2,6 +2,7 @@ import { WebClient } from "@slack/web-api";
 import { db } from "@/lib/db";
 
 export async function getSlackClient(teamId: string): Promise<WebClient> {
+  console.log("team id",teamId)
   const org = await db.organization.findFirst({
     where: { slackTeamId: teamId },
   });

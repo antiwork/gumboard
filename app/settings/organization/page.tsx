@@ -20,7 +20,6 @@ import {
   Check,
   CalendarIcon,
   Users,
-  ExternalLink,
   Calendar as CalendarIconLucide,
   ChevronsLeftRightEllipsis,
 } from "lucide-react";
@@ -70,7 +69,6 @@ export default function OrganizationSettingsPage() {
   const [savingOrg, setSavingOrg] = useState(false);
   const [orgName, setOrgName] = useState("");
   const [originalOrgName, setOriginalOrgName] = useState("");
-  const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -107,7 +105,7 @@ export default function OrganizationSettingsPage() {
       setOrgName(orgNameValue);
       setOriginalOrgName(orgNameValue);
     }
-  }, [user?.organization?.name]);
+  }, [user?.organization]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -156,7 +154,7 @@ export default function OrganizationSettingsPage() {
         },
         body: JSON.stringify({
           name: orgName,
-          slackWebhookUrl: slackWebhookUrl,
+          slackWebhookUrl: user?.organization?.slackWebhookUrl || "",
         }),
       });
 

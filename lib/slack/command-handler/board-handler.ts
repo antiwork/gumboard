@@ -1,8 +1,16 @@
 import { db } from "@/lib/db";
 import { sendMessage } from "../commands";
 import { WebClient } from "@slack/web-api";
+import { CommandData, SlackEvent, User } from "../types";
 
-export async function listBoards(user: any, event: any, client: WebClient, isThreaded: boolean) {
+
+
+
+export async function listBoards( 
+  user: User,
+  event: SlackEvent,
+  client: WebClient,
+  isThreaded: boolean) {
   if (!user.organizationId) {
     await sendMessage(
       client,
@@ -45,9 +53,9 @@ export async function listBoards(user: any, event: any, client: WebClient, isThr
 }
 
 export async function createBoard(
-  data: any,
-  user: any,
-  event: any,
+  data: CommandData,
+  user: User,
+  event: SlackEvent,
   client: WebClient,
   isThreaded: boolean
 ) {
@@ -61,7 +69,7 @@ export async function createBoard(
     return;
   }
 
-  const boards = await db.board.create({
+  await db.board.create({
     data: {
       name: data.task || "New Board",
       organizationId: user.organizationId,

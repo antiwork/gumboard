@@ -3,8 +3,10 @@ import { extractIntentAndData } from "./ai";
 import { db } from "@/lib/db";
 import { executeCommand } from "./commands";
 import { getSlackClient } from "./slack-client";
+import { SlackEvent } from "./types";
 
-export async function handleSlackEvent(event: any) {
+
+export async function handleSlackEvent(event: SlackEvent) {
   console.log("Event received:", event);
 
   // Skip bot messages to avoid loops
@@ -13,7 +15,7 @@ export async function handleSlackEvent(event: any) {
     return;
   }
 
-  const client = await getSlackClient(event.team_id);
+  const client = await getSlackClient(event.team);
 
   // Handle app mentions
   if (event.type === "app_mention") {
@@ -25,7 +27,7 @@ export async function handleSlackEvent(event: any) {
   }
 }
 
-async function handleMention(event: any, client: WebClient) {
+async function handleMention(event: SlackEvent, client: WebClient) {
   try {
     // Clean the message text (remove bot mentions)
     let userMessage = event.text || "";
@@ -72,7 +74,7 @@ async function handleMention(event: any, client: WebClient) {
   }
 }
 
-async function handleDirectMessage(event: any, client: WebClient) {
+async function handleDirectMessage(event: SlackEvent, client: WebClient) {
   try {
     // Clean the message text
     let userMessage = event.text || "";

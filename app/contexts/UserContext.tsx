@@ -26,6 +26,8 @@ export type User = {
   image?: string | null;
   isAdmin?: boolean;
   organization: Organization | null;
+  organizationId?: string | null;
+  slackUserId?: string | null;
 };
 
 interface UserContextType {

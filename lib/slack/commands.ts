@@ -10,13 +10,15 @@ import {
   unmarkTask,
 } from "./command-handler/task-handler";
 import { createBoard, listBoards } from "./command-handler/board-handler";
+import { CommandData, SlackEvent, User } from "./types";
+
 
 export async function executeCommand(
   intent: string,
   board: string | undefined,
-  data: any,
-  user: any,
-  event: any,
+  data: CommandData,
+  user: User,
+  event: SlackEvent,
   client: WebClient
 ) {
   const isThreaded = event.type === "app_mention";

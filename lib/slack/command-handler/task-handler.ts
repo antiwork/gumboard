@@ -1,12 +1,13 @@
 import { db } from "@/lib/db";
 import { resolveBoard, resolveDefaultSlackNote, sendMessage } from "../commands";
 import { WebClient } from "@slack/web-api";
+import { CommandData, SlackEvent, User } from "../types";
 
 export async function addTask(
   board: string | undefined,
-  data: any,
-  user: any,
-  event: any,
+  data: CommandData,
+  user: User,
+  event: SlackEvent,
   client: WebClient,
   isThreaded: boolean
 ) {
@@ -43,7 +44,7 @@ export async function addTask(
   // Create first checklist item with the note content
   await db.checklistItem.create({
     data: {
-      content: data.task,
+      content: data.task || "",
       noteId: note.id,
       order: nextOrder,
     },
@@ -59,9 +60,9 @@ export async function addTask(
 
 export async function editTask(
   board: string | undefined,
-  data: any,
-  user: any,
-  event: any,
+  data: CommandData,
+  user: User,
+  event: SlackEvent,
   client: WebClient,
   isThreaded: boolean
 ) {
@@ -91,7 +92,7 @@ export async function editTask(
 
   // Handle position-based editing (e.g., "edit 2nd task to buy bread")
   if (data.position) {
-    const position = parseInt(data.position) - 1; // Convert to 0-based index
+    const position = data.position ?? parseInt(data.position) - 1; // Convert to 0-based index
     const items = await db.checklistItem.findMany({
       where: { noteId: note.id },
       orderBy: { order: "asc" },
@@ -139,7 +140,7 @@ export async function editTask(
 
   const updatedItem = await db.checklistItem.update({
     where: { id: item.id },
-    data: { content: data.newTask },
+    data: { content: data.newTask || ""},
   });
 
   const taskRef = data.position ? `task #${data.position}` : `"${data.task}"`;
@@ -153,9 +154,9 @@ export async function editTask(
 
 export async function deleteTask(
   board: string | undefined,
-  data: any,
-  user: any,
-  event: any,
+  data: CommandData,
+  user: User,
+  event: SlackEvent,
   client: WebClient,
   isThreaded: boolean
 ) {
@@ -185,7 +186,7 @@ export async function deleteTask(
 
   // Handle position-based deletion (e.g., "delete 3rd one")
   if (data.position) {
-    const position = parseInt(data.position) - 1; // Convert to 0-based index
+    const position = data.position ?? parseInt(data.position) - 1; // Convert to 0-based index
     const items = await db.checklistItem.findMany({
       where: { noteId: note.id },
       orderBy: { order: "asc" },
@@ -247,9 +248,9 @@ export async function deleteTask(
 
 export async function listTask(
   board: string | undefined,
-  data: any,
-  user: any,
-  event: any,
+  data: CommandData,
+  user: User,
+  event: SlackEvent,
   client: WebClient,
   isThreaded: boolean
 ) {
@@ -308,7 +309,7 @@ export async function listTask(
 
   // Format with numbers for easy reference
   const text = items
-    .map((item, index) => {
+    .map((item) => {
       const status = item.checked ? "☑" : "☐";
       return `${status} ${item.content || "Empty task"}`;
     })
@@ -326,9 +327,9 @@ export async function listTask(
 
 export async function markTask(
   board: string | undefined,
-  data: any,
-  user: any,
-  event: any,
+  data: CommandData,
+  user: User,
+  event: SlackEvent,
   client: WebClient,
   isThreaded: boolean
 ) {
@@ -358,7 +359,7 @@ export async function markTask(
 
   // Handle position-based marking (e.g., "mark 1st as done")
   if (data.position) {
-    const position = parseInt(data.position) - 1;
+    const position = data.position ?? parseInt(data.position) - 1;
     const items = await db.checklistItem.findMany({
       where: { noteId: note.id },
       orderBy: { order: "asc" },
@@ -430,9 +431,9 @@ export async function markTask(
 
 export async function unmarkTask(
   board: string | undefined,
-  data: any,
-  user: any,
-  event: any,
+  data: CommandData,
+  user: User,
+  event: SlackEvent,
   client: WebClient,
   isThreaded: boolean
 ) {
@@ -462,7 +463,7 @@ export async function unmarkTask(
 
   // Handle position-based unmarking
   if (data.position) {
-    const position = parseInt(data.position) - 1;
+    const position = data.position ?? parseInt(data.position) - 1;
     const items = await db.checklistItem.findMany({
       where: { noteId: note.id },
       orderBy: { order: "asc" },
