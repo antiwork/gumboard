@@ -378,31 +378,32 @@ test.describe("Note Management", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    // Wait for the note card to render
-    const noteCard = authenticatedPage.locator('[data-testid="note-card"]').first();
-    await expect(noteCard).toBeVisible();
+    // ✅ Scope directly to the checklist item by testId
+    const checkbox = authenticatedPage.getByTestId(toggleItemId).getByRole("checkbox");
 
-    // Use role-based locator for checkbox inside the note
-    const checkbox = noteCard.getByRole("checkbox").first();
-    await expect(checkbox).toBeVisible();
+    // Ensure it's ready for interaction
+    await expect(checkbox).toBeVisible({ timeout: 10000 });
+    await expect(checkbox).toBeEnabled();
 
-    // Wait for API call while toggling
-    const toggleResponse = authenticatedPage.waitForResponse(
-      (resp) =>
-        resp.url().includes(`/api/boards/${board.id}/notes/`) &&
-        resp.request().method() === "PUT" &&
-        resp.ok()
-    );
+    // ✅ Avoid race condition by combining action + wait
+    await Promise.all([
+      authenticatedPage.waitForResponse(
+        (resp) =>
+          resp.url().includes(`/api/boards/${board.id}/notes/`) &&
+          resp.request().method() === "PUT" &&
+          resp.ok(),
+        { timeout: 20000 }
+      ),
+      checkbox.click(),
+    ]);
 
-    await checkbox.click();
-    await toggleResponse;
+    // ✅ Verify UI updated
+    await expect(checkbox).toBeChecked({ timeout: 5000 });
 
-    // Verify DB state
+    // ✅ Verify DB state
     const updatedNote = await testPrisma.note.findUnique({
       where: { id: note.id },
-      include: {
-        checklistItems: true,
-      },
+      include: { checklistItems: true },
     });
 
     expect(updatedNote).not.toBeNull();
