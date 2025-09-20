@@ -1,4 +1,3 @@
-// lib/handler.ts
 import { WebClient } from "@slack/web-api";
 import { extractIntentAndData } from "./ai";
 import { db } from "@/lib/db";
