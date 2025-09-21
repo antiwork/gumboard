@@ -481,11 +481,16 @@ export default function OrganizationSettingsPage() {
       <Card className="p-4 lg:p-6 bg-white dark:bg-black border border-gray-200 dark:border-zinc-800">
         {user?.isAdmin ? (
           <ConnectSlack orgId={user?.organization?.id || ""} />
-        ) : (
+        ) : user?.organization?.slackTeamId ? (
           <div>
             <ChevronsLeftRightEllipsis className="size-6" />
             <h3 className="text-lg font-semibold">Slack is Integrated</h3>
             <p className="text-gray-600">You can join the workspace and get started.</p>
+          </div>
+        ) : (
+          <div>
+            <h3 className="text-lg font-semibold">Slack is not Integrated</h3>
+            <p className="text-gray-600">You can ask the Admin to get started.</p>
           </div>
         )}
       </Card>

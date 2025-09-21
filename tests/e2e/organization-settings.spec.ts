@@ -171,7 +171,6 @@ test.describe("Organization Settings", () => {
     // Verify save button is disabled for non-admin users
     const slackSaveButton = authenticatedPage.locator('button:has-text("Save changes")').nth(1);
     await expect(slackSaveButton).toBeHidden();
-
   });
 
   test("should independently handle save operations for organization name and Slack webhook", async ({

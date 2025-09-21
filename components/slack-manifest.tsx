@@ -38,7 +38,8 @@ const manifest = {
   },
   settings: {
     event_subscriptions: {
-      request_url: process.env.NEXT_PUBLIC_SLACK_EVENT_REQUEST_URL || "https://gumboard.com/api/slack/events",
+      request_url:
+        process.env.NEXT_PUBLIC_SLACK_EVENT_REQUEST_URL || "https://gumboard.com/api/slack/events",
       bot_events: ["app_mention", "message.im"],
     },
     interactivity: {

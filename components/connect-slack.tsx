@@ -147,8 +147,8 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
       setSigningSecret(user.organization.slackSigningSecret || "");
       setBotToken(user.organization.slackBotToken || "");
       setTeamId(user.organization.slackTeamId || "");
-      setSlackWebhookUrl(user.organization.slackWebhookUrl || "")
-      setOriginalSlackWebhookUrl(user.organization.slackWebhookUrl || "")
+      setSlackWebhookUrl(user.organization.slackWebhookUrl || "");
+      setOriginalSlackWebhookUrl(user.organization.slackWebhookUrl || "");
     }
   }, [user]);
 
@@ -158,17 +158,17 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
         <h3 className="text-lg font-semibold">Slack Integration</h3>
         <p className="text-gray-600">Configure Slack notifications for notes and todos.</p>
 
-         <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
-              <a
-                href="https://api.slack.com/apps"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
-              >
-                Create Slack App
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </a>
-            </p>
+        <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+          <a
+            href="https://api.slack.com/apps"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+          >
+            Create Slack App
+            <ExternalLink className="w-3 h-3 ml-1" />
+          </a>
+        </p>
       </div>
 
       {/* Webhook Section */}
@@ -183,7 +183,7 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
           className="mt-2"
           disabled={!user?.isAdmin}
         />
-    
+
         <Button
           onClick={handleSaveSlack}
           disabled={savingSlack || slackWebhookUrl === originalSlackWebhookUrl || !user?.isAdmin}
@@ -191,7 +191,6 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
         >
           {savingSlack ? "Saving..." : "Save changes"}
         </Button>
-          
       </div>
 
       <div className="w-full border-t border-gray-200 dark:border-gray-700" />
@@ -241,7 +240,9 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
         )}
 
         <div className="mt-4">
-          <p className="text-sm text-zinc-600 dark:text-zinc-400 ">Create a Slack App with manifest file</p>
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 ">
+            Create a Slack App with manifest file
+          </p>
           <CopyManifest />
         </div>
       </div>
