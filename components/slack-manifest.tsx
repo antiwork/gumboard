@@ -38,7 +38,7 @@ const manifest = {
   },
   settings: {
     event_subscriptions: {
-      request_url: "https://gumboard.com/boards/api/slack/events",
+      request_url: process.env.NEXT_PUBLIC_SLACK_EVENT_REQUEST_URL || "https://gumboard.com/api/slack/events",
       bot_events: ["app_mention", "message.im"],
     },
     interactivity: {
@@ -69,7 +69,7 @@ export default function CopyManifest() {
   return (
     <button
       onClick={copyManifest}
-      className="inline-flex items-center gap-2      py-2 hover:text-sky-600 cursor-pointer"
+      className="inline-flex items-center gap-2 py-2 hover:text-sky-600 cursor-pointer text-zinc-600 dark:text-zinc-400"
     >
       {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
       <span className="text-sm">Copy manifest.json</span>

@@ -92,7 +92,7 @@ export async function editTask(
 
   // Handle position-based editing (e.g., "edit 2nd task to buy bread")
   if (data.position) {
-    const position = data.position ?? parseInt(data.position) - 1; // Convert to 0-based index
+    const position = (typeof data.position === "number" ? data.position : parseInt(data.position, 10)) - 1; // Convert to 0-based index
     const items = await db.checklistItem.findMany({
       where: { noteId: note.id },
       orderBy: { order: "asc" },
@@ -186,7 +186,7 @@ export async function deleteTask(
 
   // Handle position-based deletion (e.g., "delete 3rd one")
   if (data.position) {
-    const position = data.position ?? parseInt(data.position) - 1; // Convert to 0-based index
+   const position = (typeof data.position === "number" ? data.position : parseInt(data.position, 10)) - 1; // Convert to 0-based index
     const items = await db.checklistItem.findMany({
       where: { noteId: note.id },
       orderBy: { order: "asc" },
@@ -359,7 +359,8 @@ export async function markTask(
 
   // Handle position-based marking (e.g., "mark 1st as done")
   if (data.position) {
-    const position = data.position ?? parseInt(data.position) - 1;
+    const position = (typeof data.position === "number" ? data.position : parseInt(data.position, 10)) - 1;
+
     const items = await db.checklistItem.findMany({
       where: { noteId: note.id },
       orderBy: { order: "asc" },
@@ -463,7 +464,8 @@ export async function unmarkTask(
 
   // Handle position-based unmarking
   if (data.position) {
-    const position = data.position ?? parseInt(data.position) - 1;
+  const position = (typeof data.position === "number" ? data.position : parseInt(data.position, 10)) - 1;
+
     const items = await db.checklistItem.findMany({
       where: { noteId: note.id },
       orderBy: { order: "asc" },

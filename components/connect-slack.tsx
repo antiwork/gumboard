@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { AlertCircle, Edit, Trash2 } from "lucide-react";
+import { AlertCircle, ExternalLink, Trash2 } from "lucide-react";
 import { useUser } from "@/app/contexts/UserContext";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -157,6 +157,18 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
       <div>
         <h3 className="text-lg font-semibold">Slack Integration</h3>
         <p className="text-gray-600">Configure Slack notifications for notes and todos.</p>
+
+         <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-1">
+              <a
+                href="https://api.slack.com/apps"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 underline"
+              >
+                Create Slack App
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </a>
+            </p>
       </div>
 
       {/* Webhook Section */}
@@ -228,7 +240,8 @@ const ConnectSlack = ({ orgId }: { orgId: string }) => {
           />
         )}
 
-        <div>
+        <div className="mt-4">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 ">Create a Slack App with manifest file</p>
           <CopyManifest />
         </div>
       </div>
