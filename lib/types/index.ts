@@ -27,7 +27,6 @@ export const boardSchema = z.object({
 
 export const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
-  slackWebhookUrl: z.string().optional(),
 });
 
 export const profileSchema = z.object({

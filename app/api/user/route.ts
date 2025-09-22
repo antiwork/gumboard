@@ -15,7 +15,11 @@ export async function GET() {
       where: { id: session.user.id },
       include: {
         organization: {
-          include: {
+          select: {
+            id: true,
+            name: true,
+            slackAppId: true,
+            slackChannelName: true,
             members: {
               select: {
                 id: true,
@@ -44,7 +48,8 @@ export async function GET() {
         ? {
             id: user.organization.id,
             name: user.organization.name,
-            slackWebhookUrl: user.organization.slackWebhookUrl,
+            slackAppId: user.organization.slackAppId,
+            slackChannelName: user.organization.slackChannelName,
             members: user.organization.members,
           }
         : null,

@@ -120,7 +120,7 @@ test.describe("Board Name Link Functionality", () => {
     ).toBeVisible();
 
     // Find the board name link and click it
-    const boardLink = authenticatedPage.locator(`a[href="/boards/${board1.id}"]`).first();
+    const boardLink = authenticatedPage.locator("#board-name-link");
     await expect(boardLink).toBeVisible();
 
     await Promise.race([
