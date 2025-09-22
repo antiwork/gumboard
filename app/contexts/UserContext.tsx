@@ -14,6 +14,9 @@ export type Organization = {
   name: string;
   slackWebhookUrl?: string | null;
   members: User[];
+  slackTeamId?: string;
+  slackBotToken?: string;
+  slackSigningSecret?: string;
 };
 
 export type User = {
@@ -23,6 +26,8 @@ export type User = {
   image?: string | null;
   isAdmin?: boolean;
   organization: Organization | null;
+  organizationId?: string | null;
+  slackUserId?: string | null;
 };
 
 interface UserContextType {

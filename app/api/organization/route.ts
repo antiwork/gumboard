@@ -58,7 +58,7 @@ export async function PUT(request: NextRequest) {
     await db.organization.update({
       where: { id: user.organizationId },
       data: {
-        name: name.trim(),
+        name: name?.trim(),
         ...(slackWebhookUrl !== undefined && { slackWebhookUrl: slackWebhookUrl?.trim() || null }),
       },
     });
