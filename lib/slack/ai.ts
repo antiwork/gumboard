@@ -42,7 +42,7 @@ Response:
   "data": { "task": null, "newTask": null, "id": null, "position": null, "filters": "all" }
 }
 
-User: "delete 3rd one" or "delete the 3rd task" or "delete third one"
+User: "delete 3rd one" or "delete the 3rd task" or "delete third one" or "delete task 3"
 Response:
 {
   "intent": "delete",
@@ -50,7 +50,7 @@ Response:
   "data": { "task": null, "newTask": null, "id": null, "position": "3", "filters": null }
 }
 
-User: "mark 1st as done" or "mark first task as complete"
+User: "mark 1st as done" or "mark first task as complete" or "mark task 1 as done"
 Response:
 {
   "intent": "mark",
@@ -58,7 +58,7 @@ Response:
   "data": { "task": null, "newTask": null, "id": null, "position": "1", "filters": null }
 }
 
-User: "edit 2nd task to buy bread"
+User: "edit 2nd task to buy bread" or "edit task 2 to buy bread"
 Response:
 {
   "intent": "edit",
@@ -66,7 +66,7 @@ Response:
   "data": { "task": null, "newTask": "buy bread", "id": null, "position": "2", "filters": null }
 }
 
-User: "unmark 1st" or "unmark first task"
+User: "unmark 1st" or "unmark first task" or "unmark task 1"
 Response:
 {
   "intent": "unmark",
