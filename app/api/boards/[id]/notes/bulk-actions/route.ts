@@ -12,10 +12,7 @@ const bulkDeleteSchema = z.object({
   ids: z.array(z.string().min(1)),
 });
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
     if (!session?.user?.id) {
@@ -86,9 +83,6 @@ export async function PUT(
   }
 }
 
-
-
-
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -107,7 +101,10 @@ export async function DELETE(
       validated = bulkDeleteSchema.parse(body);
     } catch (err) {
       if (err instanceof z.ZodError) {
-        return NextResponse.json({ error: "Validation failed", details: err.errors }, { status: 400 });
+        return NextResponse.json(
+          { error: "Validation failed", details: err.errors },
+          { status: 400 }
+        );
       }
       throw err;
     }
@@ -138,7 +135,10 @@ export async function DELETE(
         return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
       if (note.createdBy !== session.user.id && !user.isAdmin) {
-        return NextResponse.json({ error: "Only the note author or admin can delete this note" }, { status: 403 });
+        return NextResponse.json(
+          { error: "Only the note author or admin can delete this note" },
+          { status: 403 }
+        );
       }
     }
 

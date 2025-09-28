@@ -108,7 +108,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const router = useRouter();
   const searchParams = useSearchParams();
   const [selectedNotes, setSelectedNotes] = useState<string[]>([]);
-  
+
   useEffect(() => {
     if (!userLoading && !user) {
       router.push("/auth/signin");
@@ -128,186 +128,178 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     },
   });
 
-   
-
   const handleBulkDelete = () => {
-  if (selectedNotes.length === 0) return;
+    if (selectedNotes.length === 0) return;
 
-  const notesToDelete = notes.filter((n) => selectedNotes.includes(n.id));
-  const targetBoardId = notesToDelete[0]?.board?.id ?? notesToDelete[0]?.boardId;
-  if (!targetBoardId) return;
+    const notesToDelete = notes.filter((n) => selectedNotes.includes(n.id));
+    const targetBoardId = notesToDelete[0]?.board?.id ?? notesToDelete[0]?.boardId;
+    if (!targetBoardId) return;
 
-  // Optimistic UI update
-  setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
+    // Optimistic UI update
+    setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
 
-  const timeoutId = setTimeout(async () => {
-    try {
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedNotes }),
-      });
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: selectedNotes }),
+        });
 
-      if (!response.ok) {
-        setNotes((prev) => [...notesToDelete, ...prev]); // rollback
-        const errorData = await response.json().catch(() => null);
+        if (!response.ok) {
+          setNotes((prev) => [...notesToDelete, ...prev]); // rollback
+          const errorData = await response.json().catch(() => null);
+          setErrorDialog({
+            open: true,
+            title: "Failed to delete notes",
+            description: errorData?.error || "Failed to delete notes",
+          });
+        }
+      } catch (error) {
+        console.error("Error deleting notes:", error);
+        setNotes((prev) => [...notesToDelete, ...prev]);
         setErrorDialog({
           open: true,
           title: "Failed to delete notes",
-          description: errorData?.error || "Failed to delete notes",
+          description: "Failed to delete notes",
         });
+      } finally {
+        delete pendingDeleteTimeoutsRef.current["bulk"];
+        setSelectedNotes([]);
       }
-    } catch (error) {
-      console.error("Error deleting notes:", error);
-      setNotes((prev) => [...notesToDelete, ...prev]);
-      setErrorDialog({
-        open: true,
-        title: "Failed to delete notes",
-        description: "Failed to delete notes",
-      });
-    } finally {
-      delete pendingDeleteTimeoutsRef.current["bulk"];
-      setSelectedNotes([]);
-    }
-  }, 4000);
+    }, 4000);
 
-  pendingDeleteTimeoutsRef.current["bulk"] = timeoutId;
+    pendingDeleteTimeoutsRef.current["bulk"] = timeoutId;
 
-  toast(`${selectedNotes.length} note(s) deleted`, {
-    action: {
-      label: "Undo",
-      onClick: () => {
-        const t = pendingDeleteTimeoutsRef.current["bulk"];
-        if (t) {
-          clearTimeout(t);
-          delete pendingDeleteTimeoutsRef.current["bulk"];
-        }
-        setNotes((prev) => [...notesToDelete, ...prev]);
+    toast(`${selectedNotes.length} note(s) deleted`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const t = pendingDeleteTimeoutsRef.current["bulk"];
+          if (t) {
+            clearTimeout(t);
+            delete pendingDeleteTimeoutsRef.current["bulk"];
+          }
+          setNotes((prev) => [...notesToDelete, ...prev]);
+        },
       },
-    },
-    duration: 4000,
-  });
-};
+      duration: 4000,
+    });
+  };
 
-
- 
   const handleBulkArchive = () => {
-  if (selectedNotes.length === 0) return;
+    if (selectedNotes.length === 0) return;
 
-  const notesToArchive = notes.filter((n) => selectedNotes.includes(n.id));
-  const targetBoardId = notesToArchive[0]?.board?.id ?? notesToArchive[0]?.boardId;
-  if (!targetBoardId) return;
+    const notesToArchive = notes.filter((n) => selectedNotes.includes(n.id));
+    const targetBoardId = notesToArchive[0]?.board?.id ?? notesToArchive[0]?.boardId;
+    if (!targetBoardId) return;
 
-  setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
+    setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
 
-  const timeoutId = setTimeout(async () => {
-    try {
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedNotes, archivedAt: new Date().toISOString() }),
-      });
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: selectedNotes, archivedAt: new Date().toISOString() }),
+        });
 
-      if (!response.ok) {
+        if (!response.ok) {
+          setNotes((prev) => [...notesToArchive, ...prev]);
+          setErrorDialog({
+            open: true,
+            title: "Archive Failed",
+            description: "Failed to archive notes. Please try again.",
+          });
+        }
+      } catch (error) {
+        console.error("Error archiving notes:", error);
         setNotes((prev) => [...notesToArchive, ...prev]);
         setErrorDialog({
           open: true,
           title: "Archive Failed",
           description: "Failed to archive notes. Please try again.",
         });
+      } finally {
+        delete pendingArchiveTimeoutsRef.current["bulk"];
+        setSelectedNotes([]);
       }
-    } catch (error) {
-      console.error("Error archiving notes:", error);
-      setNotes((prev) => [...notesToArchive, ...prev]);
-      setErrorDialog({
-        open: true,
-        title: "Archive Failed",
-        description: "Failed to archive notes. Please try again.",
-      });
-    } finally {
-      delete pendingArchiveTimeoutsRef.current["bulk"];
-      setSelectedNotes([]);
+    }, 4000);
 
-    }
-  }, 4000);
+    pendingArchiveTimeoutsRef.current["bulk"] = timeoutId;
 
-  pendingArchiveTimeoutsRef.current["bulk"] = timeoutId;
-
-  toast(`${selectedNotes.length} note(s) archived`, {
-    action: {
-      label: "Undo",
-      onClick: () => {
-        const t = pendingArchiveTimeoutsRef.current["bulk"];
-        if (t) {
-          clearTimeout(t);
-          delete pendingArchiveTimeoutsRef.current["bulk"];
-        }
-        setNotes((prev) => [...notesToArchive, ...prev]);
+    toast(`${selectedNotes.length} note(s) archived`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const t = pendingArchiveTimeoutsRef.current["bulk"];
+          if (t) {
+            clearTimeout(t);
+            delete pendingArchiveTimeoutsRef.current["bulk"];
+          }
+          setNotes((prev) => [...notesToArchive, ...prev]);
+        },
       },
-    },
-    duration: 4000,
-  });
-};
+      duration: 4000,
+    });
+  };
 
-
-  
-  
   const handleBulkUnarchive = () => {
-  if (selectedNotes.length === 0) return;
+    if (selectedNotes.length === 0) return;
 
-  const notesToUnarchive = notes.filter((n) => selectedNotes.includes(n.id));
-  const targetBoardId = notesToUnarchive[0]?.board?.id ?? notesToUnarchive[0]?.boardId;
-  if (!targetBoardId) return;
+    const notesToUnarchive = notes.filter((n) => selectedNotes.includes(n.id));
+    const targetBoardId = notesToUnarchive[0]?.board?.id ?? notesToUnarchive[0]?.boardId;
+    if (!targetBoardId) return;
 
-  setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
+    setNotes((prev) => prev.filter((n) => !selectedNotes.includes(n.id)));
 
-  const timeoutId = setTimeout(async () => {
-    try {
-      const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids: selectedNotes, archivedAt: null }),
-      });
+    const timeoutId = setTimeout(async () => {
+      try {
+        const response = await fetch(`/api/boards/${targetBoardId}/notes/bulk-actions`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ids: selectedNotes, archivedAt: null }),
+        });
 
-      if (!response.ok) {
+        if (!response.ok) {
+          setNotes((prev) => [...notesToUnarchive, ...prev]);
+          setErrorDialog({
+            open: true,
+            title: "Unarchive Failed",
+            description: "Failed to unarchive notes. Please try again.",
+          });
+        }
+      } catch (error) {
+        console.error("Error unarchiving notes:", error);
         setNotes((prev) => [...notesToUnarchive, ...prev]);
         setErrorDialog({
           open: true,
           title: "Unarchive Failed",
           description: "Failed to unarchive notes. Please try again.",
         });
+      } finally {
+        delete pendingUnarchiveTimeoutsRef.current["bulk"];
+        setSelectedNotes([]);
       }
-    } catch (error) {
-      console.error("Error unarchiving notes:", error);
-      setNotes((prev) => [...notesToUnarchive, ...prev]);
-      setErrorDialog({
-        open: true,
-        title: "Unarchive Failed",
-        description: "Failed to unarchive notes. Please try again.",
-      });
-    } finally {
-      delete pendingUnarchiveTimeoutsRef.current["bulk"];
-      setSelectedNotes([]);
-    }
-  }, 4000);
+    }, 4000);
 
-  pendingUnarchiveTimeoutsRef.current["bulk"] = timeoutId;
+    pendingUnarchiveTimeoutsRef.current["bulk"] = timeoutId;
 
-  toast(`${selectedNotes.length} note(s) unarchived`, {
-    action: {
-      label: "Undo",
-      onClick: () => {
-        const t = pendingUnarchiveTimeoutsRef.current["bulk"];
-        if (t) {
-          clearTimeout(t);
-          delete pendingUnarchiveTimeoutsRef.current["bulk"];
-        }
-        setNotes((prev) => [...notesToUnarchive, ...prev]);
+    toast(`${selectedNotes.length} note(s) unarchived`, {
+      action: {
+        label: "Undo",
+        onClick: () => {
+          const t = pendingUnarchiveTimeoutsRef.current["bulk"];
+          if (t) {
+            clearTimeout(t);
+            delete pendingUnarchiveTimeoutsRef.current["bulk"];
+          }
+          setNotes((prev) => [...notesToUnarchive, ...prev]);
+        },
       },
-    },
-    duration: 4000,
-  });
-};
+      duration: 4000,
+    });
+  };
 
   const handleSelectAll = () => {
     if (selectedNotes.length === filteredNotes.length) {
@@ -1196,7 +1188,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           )}
       </div>
 
-
       <Dialog open={showAddBoard} onOpenChange={setShowAddBoard}>
         <DialogContent className="bg-white dark:bg-zinc-950  sm:max-w-[425px] ">
           <DialogHeader>
@@ -1444,13 +1435,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    {
-      selectedNotes.length > 0 ? (
-    <BulkActionBar clearSelection={handleAddNote} handleBulkDelete={handleBulkDelete} handleBulkArchive={handleBulkArchive} handleBulkUnarchive={handleBulkUnarchive} handleSelectAll={handleSelectAll} handleClearSelection={handleClearSelection} boardId={boardId || ""} selectedNotes={selectedNotes}/>
-      ):
-      null
-    }
-
+      {selectedNotes.length > 0 ? (
+        <BulkActionBar
+          clearSelection={handleAddNote}
+          handleBulkDelete={handleBulkDelete}
+          handleBulkArchive={handleBulkArchive}
+          handleBulkUnarchive={handleBulkUnarchive}
+          handleSelectAll={handleSelectAll}
+          handleClearSelection={handleClearSelection}
+          boardId={boardId || ""}
+          selectedNotes={selectedNotes}
+        />
+      ) : null}
     </div>
   );
 }
