@@ -1446,7 +1446,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       </AlertDialog>
     {
       selectedNotes.length > 0 ? (
-    <BulkActionBar clearSelection={handleAddNote} handleBulkDelete={handleBulkDelete} handleBulkArchive={handleBulkArchive} handleBulkUnarchive={handleBulkUnarchive} handleSelectAll={handleSelectAll} handleClearSelection={handleClearSelection} boardId={boardId} selectedNotes={selectedNotes}/>
+    <BulkActionBar clearSelection={handleAddNote} handleBulkDelete={handleBulkDelete} handleBulkArchive={handleBulkArchive} handleBulkUnarchive={handleBulkUnarchive} handleSelectAll={handleSelectAll} handleClearSelection={handleClearSelection} boardId={boardId || ""} selectedNotes={selectedNotes}/>
       ):
       null
     }
