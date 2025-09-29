@@ -334,7 +334,7 @@ export function Note({
   return (
     <div
       className={cn(
-        "relative select-none group transition-shadow duration-200 flex flex-col dark:border-gray-600 dark:bg-zinc-900 box-border",
+        "relative select-none group transition-shadow duration-200 flex flex-col dark:border-gray-600 dark:bg-zinc-900 box-border border rounded-lg",
         // Focus highlight when any child is focused/being typed into
         "focus-within:ring-2 focus-within:ring-sky-500 dark:focus-within:ring-sky-400 focus-within:ring-offset-1 focus-within:ring-offset-white dark:focus-within:ring-offset-zinc-900",
         // Light theme variant
