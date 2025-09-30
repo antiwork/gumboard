@@ -127,7 +127,8 @@ export function filterAndSortNotes(
   searchTerm: string,
   dateRange: { startDate: Date | null; endDate: Date | null },
   authorId: string | null,
-  currentUser?: { id: string } | null
+  currentUser?: { id: string } | null,
+  hideEmptyChecklists?: boolean
 ): Note[] {
   let filteredNotes = notes;
 
@@ -164,6 +165,12 @@ export function filterAndSortNotes(
       }
       return true;
     });
+  }
+
+  if (hideEmptyChecklists) {
+    filteredNotes = filteredNotes.filter(
+      (note) => note.checklistItems && note.checklistItems.length > 0
+    );
   }
 
   filteredNotes.sort((a, b) => {

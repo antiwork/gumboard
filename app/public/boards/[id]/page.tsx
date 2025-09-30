@@ -89,7 +89,7 @@ export default function PublicBoardPage({ params }: { params: Promise<{ id: stri
   const uniqueAuthors = useMemo(() => getUniqueAuthors(notes), [notes]);
 
   const filteredNotes = useMemo(
-    () => filterAndSortNotes(notes, searchTerm, dateRange, selectedAuthor, null),
+    () => filterAndSortNotes(notes, searchTerm, dateRange, selectedAuthor, null, true),
     [notes, searchTerm, dateRange, selectedAuthor]
   );
 

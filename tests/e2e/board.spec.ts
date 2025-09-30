@@ -12,7 +12,7 @@ test.describe("Board Management", () => {
 
     await authenticatedPage.click('button:has-text("Add Board")');
     await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
-    await authenticatedPage.fill('textarea[placeholder*="board description"]', boardDescription);
+    await authenticatedPage.fill('input[placeholder*="board description"]', boardDescription);
     const responsePromise = authenticatedPage.waitForResponse(
       (resp) => resp.url().includes("/api/boards") && resp.status() === 201
     );
@@ -261,6 +261,60 @@ test.describe("Board Management", () => {
 
       await authenticatedPage.getByText("All archived").click();
       await expect(authenticatedPage).toHaveURL("/boards/archive");
+    });
+  });
+
+  test.describe("Public Board Filtering", () => {
+    test("should hide notes with empty checklist items on public boards", async ({
+      authenticatedPage,
+      testContext,
+      testPrisma,
+      page,
+    }) => {
+      const boardName = testContext.getBoardName("Public Test Board");
+      const board = await testPrisma.board.create({
+        data: {
+          name: boardName,
+          description: "A public test board",
+          createdBy: testContext.userId,
+          organizationId: testContext.organizationId,
+          isPublic: true,
+        },
+      });
+
+      const noteWithItems = await testPrisma.note.create({
+        data: {
+          color: "#cde4ff",
+          boardId: board.id,
+          createdBy: testContext.userId,
+        },
+      });
+
+      await testPrisma.checklistItem.create({
+        data: {
+          content: "Task 1",
+          checked: false,
+          order: 0,
+          noteId: noteWithItems.id,
+        },
+      });
+
+      await testPrisma.note.create({
+        data: {
+          color: "#ffcccb",
+          boardId: board.id,
+          createdBy: testContext.userId,
+        },
+      });
+
+      await page.goto(`/public/boards/${board.id}`);
+
+      await expect(page.locator(`text=${boardName}`)).toBeVisible();
+
+      await expect(page.locator('[data-testid="note-card"]').first()).toBeVisible();
+
+      const noteCards = page.locator('[data-testid="note-card"]');
+      await expect(noteCards).toHaveCount(1);
     });
   });
 });

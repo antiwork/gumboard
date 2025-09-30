@@ -226,7 +226,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
 
   // Get filtered and sorted notes for display
   const filteredNotes = useMemo(
-    () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user),
+    () => filterAndSortNotes(notes, debouncedSearchTerm, dateRange, selectedAuthor, user, false),
     [notes, debouncedSearchTerm, dateRange, selectedAuthor, user]
   );
 
