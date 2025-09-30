@@ -688,7 +688,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     <div className="min-h-screen max-w-screen bg-zinc-100 dark:bg-zinc-800 bg-dots">
       <div>
         <div className="mx-0.5 md:mx-5 grid grid-cols-1 md:grid-cols-[1fr_auto] gap-2 items-center h-auto md:h-16 p-2 md:p-0">
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 md:w-fit grid grid-cols-[1fr_auto] sm:grid-cols-[1fr_auto_auto_auto] md:grid-cols-[auto_auto_1fr_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Company Name */}
             <Link href="/dashboard" className="flex-shrink-0 pl-1 w-fit">
               <h1 className="text-xl font-bold text-zinc-900 dark:text-zinc-100 flex items-center gap-3">
@@ -827,14 +827,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                   <EllipsisVertical className="size-4" />
                 </Button>
               )}
+
+              <div className="md:hidden">
+                <ProfileDropdown user={user} />
+              </div>
             </div>
           </div>
 
           {/* Right side - Search, Add Note and User dropdown */}
-          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[1fr_auto] md:grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
+          <div className="bg-white dark:bg-zinc-900 shadow-sm border border-zinc-100 rounded-lg dark:border-zinc-800 mt-2 py-2 px-3 grid grid-cols-[auto_auto_auto] gap-2 items-center auto-rows-auto grid-flow-dense">
             {/* Search Box */}
             {notes.length > 0 && (
-              <div className="relative h-9">
+              <div className="relative h-9 col-span-3 md:col-span-1">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                   <Search className="h-4 w-4 text-muted-foreground dark:text-zinc-400" />
                 </div>
@@ -871,14 +875,16 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 }
               }}
               disabled={boardId === "archive"}
-              className="col-span-2 md:col-span-1 flex items-center"
+              className="col-span-3 md:col-span-1 flex items-center"
             >
               <Plus className="w-4 h-4" />
               <span>Add note</span>
             </Button>
 
             {/* User Dropdown */}
-            <ProfileDropdown user={user} />
+            <div className="hidden md:block">
+              <ProfileDropdown user={user} />
+            </div>
           </div>
         </div>
       </div>
