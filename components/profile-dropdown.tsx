@@ -33,7 +33,7 @@ export function ProfileDropdown({ user }: Props) {
           </div>
         </Avatar>
       </PopoverTrigger>
-      <PopoverContent className="w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 p-2">
+      <PopoverContent className="w-64 bg-white dark:bg-zinc-900 rounded-lg shadow-lg border border-zinc-100 dark:border-zinc-800 p-2 mr-5">
         <div className="p-2">
           <p className="font-medium text-foreground dark:text-zinc-100 truncate max-w-full overflow-hidden whitespace-nowrap">
             {user?.name || user?.email}

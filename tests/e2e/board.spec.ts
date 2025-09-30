@@ -12,7 +12,7 @@ test.describe("Board Management", () => {
 
     await authenticatedPage.click('button:has-text("Add Board")');
     await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
-    await authenticatedPage.fill('input[placeholder*="board description"]', boardDescription);
+    await authenticatedPage.fill('textarea[placeholder*="board description"]', boardDescription);
     const responsePromise = authenticatedPage.waitForResponse(
       (resp) => resp.url().includes("/api/boards") && resp.status() === 201
     );

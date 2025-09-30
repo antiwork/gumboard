@@ -1093,6 +1093,14 @@ test.describe("Note Management", () => {
       const futureDateButton = startCalendar.locator(
         `td[role="gridcell"][data-day="${futureDateStr}"] button:not([disabled])`
       );
+
+      // Click "next month" until date is available
+      if (!(await futureDateButton.isVisible())) {
+        for (let i = 0; i < 12; i++) {
+          await authenticatedPage.getByRole("button", { name: /next month/i }).click();
+          if (await futureDateButton.isVisible()) break;
+        }
+      }
       await expect(futureDateButton).toBeVisible();
       await futureDateButton.click();
 
@@ -1105,6 +1113,15 @@ test.describe("Note Management", () => {
       const endFutureDateButton = endCalendar.locator(
         `td[role="gridcell"][data-day="${endFutureDateStr}"] button:not([disabled])`
       );
+
+      // Click "next month" until date is available
+      if (!(await endFutureDateButton.isVisible())) {
+        for (let i = 0; i < 12; i++) {
+          await authenticatedPage.getByRole("button", { name: /next month/i }).click();
+          if (await endFutureDateButton.isVisible()) break;
+        }
+      }
+
       await expect(endFutureDateButton).toBeVisible();
       await endFutureDateButton.click();
 
