@@ -1,5 +1,5 @@
 import { test, expect } from "../fixtures/test-helpers";
-import { addDays, endOfMonth, min } from "date-fns";
+import { addDays } from "date-fns";
 
 test.describe("Note Management", () => {
   test("should create a note and add checklist items", async ({
@@ -1067,7 +1067,6 @@ test.describe("Note Management", () => {
           organizationId: testContext.organizationId,
         },
       });
-
       await testPrisma.note.create({
         data: {
           color: "#fef3c7",
@@ -1078,50 +1077,37 @@ test.describe("Note Management", () => {
       });
 
       const today = new Date();
-      const lastDayOfMonth = endOfMonth(today);
-
-      // Pick a start date 5 days ahead (still in this month)
-      const futureDate = min([addDays(today, 5), lastDayOfMonth]);
-
-      // Pick an end date 5 days after start, but capped at month end
-      const tentativeEndDate = addDays(futureDate, 5);
-      const endFutureDate = min([tentativeEndDate, lastDayOfMonth]);
+      const futureDate = addDays(today, 7);
 
       await authenticatedPage.goto(`/boards/${board.id}`);
       await authenticatedPage.locator('[data-slot="filter-popover"]').click();
       await authenticatedPage.getByRole("button", { name: "Select date range" }).click();
 
-      // --- Pick start date ---
       await authenticatedPage
         .getByRole("button", { name: "Pick a start date", exact: true })
         .click();
       const startCalendar = authenticatedPage.locator('table[role="grid"]');
       await expect(startCalendar).toBeVisible();
 
-      const futureDateStr = `${futureDate.getFullYear()}-${String(
-        futureDate.getMonth() + 1
-      ).padStart(2, "0")}-${String(futureDate.getDate()).padStart(2, "0")}`;
+      const futureDateStr = `${futureDate.getFullYear()}-${String(futureDate.getMonth() + 1).padStart(2, "0")}-${String(futureDate.getDate()).padStart(2, "0")}`;
       const futureDateButton = startCalendar.locator(
         `td[role="gridcell"][data-day="${futureDateStr}"] button:not([disabled])`
       );
       await expect(futureDateButton).toBeVisible();
       await futureDateButton.click();
 
-      // --- Pick end date ---
       await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
       const endCalendar = authenticatedPage.locator('table[role="grid"]');
       await expect(endCalendar).toBeVisible();
 
-      const endFutureDateStr = `${endFutureDate.getFullYear()}-${String(
-        endFutureDate.getMonth() + 1
-      ).padStart(2, "0")}-${String(endFutureDate.getDate()).padStart(2, "0")}`;
+      const endFutureDate = addDays(futureDate, 7);
+      const endFutureDateStr = `${endFutureDate.getFullYear()}-${String(endFutureDate.getMonth() + 1).padStart(2, "0")}-${String(endFutureDate.getDate()).padStart(2, "0")}`;
       const endFutureDateButton = endCalendar.locator(
         `td[role="gridcell"][data-day="${endFutureDateStr}"] button:not([disabled])`
       );
       await expect(endFutureDateButton).toBeVisible();
       await endFutureDateButton.click();
 
-      // --- Apply filter ---
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(0);
     });
@@ -1269,7 +1255,7 @@ test.describe("Note Management", () => {
       },
     });
 
-    const originalNote = await testPrisma.note.create({
+    await testPrisma.note.create({
       data: {
         color: "#cde4ff",
         boardId: board.id,
