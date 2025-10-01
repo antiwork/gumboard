@@ -10,6 +10,7 @@ import {
 } from "@/lib/slack";
 import { NOTE_COLORS } from "@/lib/constants";
 import { noteSchema } from "@/lib/types";
+import { getBaseUrl } from "@/lib/utils";
 
 // Get all notes for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -207,7 +208,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       hasContent &&
       shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)
     ) {
-      const slackMessage = formatNoteForSlack(noteWithItems, board.name, user.name || user.email);
+      const baseUrl = getBaseUrl(request);
+      const slackMessage = formatNoteForSlack(noteWithItems, board.name, user.name || user.email, boardId, baseUrl);
       const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
         text: slackMessage,
         username: "Gumboard",

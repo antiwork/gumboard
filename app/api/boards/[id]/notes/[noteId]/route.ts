@@ -9,6 +9,7 @@ import {
   shouldSendNotification,
 } from "@/lib/slack";
 import { noteSchema } from "@/lib/types";
+import { getBaseUrl } from "@/lib/utils";
 
 export async function PUT(
   request: NextRequest,
@@ -188,21 +189,24 @@ export async function PUT(
       const userName = note.user?.name || note.user?.email || "Unknown User";
       const boardName = note.board.name;
       const isArchived = archivedAt !== null;
-      // Get content from first checklist item for Slack message
       const noteContent =
         note.checklistItems && note.checklistItems.length > 0 ? note.checklistItems[0].content : "";
+      const baseUrl = getBaseUrl(request);
       await updateSlackMessage(
         user.organization.slackWebhookUrl,
         noteContent,
         isArchived,
         boardName,
-        userName
+        userName,
+        boardId,
+        baseUrl
       );
     }
 
     if (user.organization?.slackWebhookUrl && checklistChanges) {
       const boardName = updatedNote.board.name;
       const userName = user.name || user.email || "Unknown User";
+      const baseUrl = getBaseUrl(request);
 
       for (const item of checklistChanges.created) {
         if (
@@ -219,7 +223,9 @@ export async function PUT(
             item.content,
             boardName,
             userName,
-            "added"
+            "added",
+            boardId,
+            baseUrl
           );
         }
       }
@@ -240,7 +246,9 @@ export async function PUT(
             u.content,
             boardName,
             userName,
-            "completed"
+            "completed",
+            boardId,
+            baseUrl
           );
         }
       }

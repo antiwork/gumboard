@@ -81,12 +81,15 @@ export async function updateSlackMessage(
   originalText: string,
   completed: boolean,
   boardName: string,
-  userName: string
+  userName: string,
+  boardId: string,
+  baseUrl: string
 ): Promise<void> {
   try {
+    const boardLink = `<${baseUrl}/boards/${boardId}|${boardName}>`;
     const updatedText = completed
-      ? `:white_check_mark: ${originalText} by ${userName} in ${boardName}`
-      : `:heavy_plus_sign: ${originalText} by ${userName} in ${boardName}`;
+      ? `:white_check_mark: ${originalText} by ${userName} in ${boardLink}`
+      : `:heavy_plus_sign: ${originalText} by ${userName} in ${boardLink}`;
 
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -112,26 +115,31 @@ export async function updateSlackMessage(
 export function formatNoteForSlack(
   note: { checklistItems?: Array<{ content: string }> },
   boardName: string,
-  userName: string
+  userName: string,
+  boardId: string,
+  baseUrl: string
 ): string {
-  // Get content from first checklist item
   const content =
     note.checklistItems && note.checklistItems.length > 0
       ? note.checklistItems[0].content
       : "New note";
-  return `:heavy_plus_sign: ${content} by ${userName} in ${boardName}`;
+  const boardLink = `<${baseUrl}/boards/${boardId}|${boardName}>`;
+  return `:heavy_plus_sign: ${content} by ${userName} in ${boardLink}`;
 }
 
 export function formatTodoForSlack(
   todoContent: string,
   boardName: string,
   userName: string,
-  action: "added" | "completed"
+  action: "added" | "completed",
+  boardId: string,
+  baseUrl: string
 ): string {
+  const boardLink = `<${baseUrl}/boards/${boardId}|${boardName}>`;
   if (action === "completed") {
-    return `:white_check_mark: ${todoContent} by ${userName} in ${boardName}`;
+    return `:white_check_mark: ${todoContent} by ${userName} in ${boardLink}`;
   }
-  return `:heavy_plus_sign: ${todoContent} by ${userName} in ${boardName}`;
+  return `:heavy_plus_sign: ${todoContent} by ${userName} in ${boardLink}`;
 }
 
 export async function sendTodoNotification(
@@ -139,9 +147,11 @@ export async function sendTodoNotification(
   todoContent: string,
   boardName: string,
   userName: string,
-  action: "added" | "completed"
+  action: "added" | "completed",
+  boardId: string,
+  baseUrl: string
 ): Promise<string | null> {
-  const message = formatTodoForSlack(todoContent, boardName, userName, action);
+  const message = formatTodoForSlack(todoContent, boardName, userName, action, boardId, baseUrl);
   return await sendSlackMessage(webhookUrl, {
     text: message,
     username: "Gumboard",
