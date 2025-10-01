@@ -209,7 +209,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       shouldSendNotification(session.user.id, boardId, board.name, board.sendSlackUpdates)
     ) {
       const baseUrl = getBaseUrl(request);
-      const slackMessage = formatNoteForSlack(noteWithItems, board.name, user.name || user.email, boardId, baseUrl);
+      const slackMessage = formatNoteForSlack(
+        noteWithItems,
+        board.name,
+        user.name || user.email,
+        boardId,
+        baseUrl
+      );
       const messageId = await sendSlackMessage(user.organization.slackWebhookUrl, {
         text: slackMessage,
         username: "Gumboard",
