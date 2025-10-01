@@ -69,7 +69,9 @@ describe("formatNoteForSlack", () => {
 
     const result = formatNoteForSlack(note, boardName, userName, boardId, baseUrl);
 
-    expect(result).toBe(`:heavy_plus_sign: Test task by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`);
+    expect(result).toBe(
+      `:heavy_plus_sign: Test task by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`
+    );
   });
 
   it("should use 'New note' when no checklist items", () => {
@@ -77,7 +79,9 @@ describe("formatNoteForSlack", () => {
 
     const result = formatNoteForSlack(note, boardName, userName, boardId, baseUrl);
 
-    expect(result).toBe(`:heavy_plus_sign: New note by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`);
+    expect(result).toBe(
+      `:heavy_plus_sign: New note by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`
+    );
   });
 
   it("should use 'New note' when checklistItems is undefined", () => {
@@ -85,7 +89,9 @@ describe("formatNoteForSlack", () => {
 
     const result = formatNoteForSlack(note, boardName, userName, boardId, baseUrl);
 
-    expect(result).toBe(`:heavy_plus_sign: New note by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`);
+    expect(result).toBe(
+      `:heavy_plus_sign: New note by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`
+    );
   });
 
   it("should handle board names with special characters", () => {
@@ -110,18 +116,43 @@ describe("formatTodoForSlack", () => {
   it("should format added todo with clickable board link", () => {
     const result = formatTodoForSlack(todoContent, boardName, userName, "added", boardId, baseUrl);
 
-    expect(result).toBe(`:heavy_plus_sign: ${todoContent} by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`);
+    expect(result).toBe(
+      `:heavy_plus_sign: ${todoContent} by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`
+    );
   });
 
   it("should format completed todo with clickable board link", () => {
-    const result = formatTodoForSlack(todoContent, boardName, userName, "completed", boardId, baseUrl);
+    const result = formatTodoForSlack(
+      todoContent,
+      boardName,
+      userName,
+      "completed",
+      boardId,
+      baseUrl
+    );
 
-    expect(result).toBe(`:white_check_mark: ${todoContent} by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`);
+    expect(result).toBe(
+      `:white_check_mark: ${todoContent} by ${userName} in <${baseUrl}/boards/${boardId}|${boardName}>`
+    );
   });
 
   it("should use correct emoji for each action type", () => {
-    const addedResult = formatTodoForSlack(todoContent, boardName, userName, "added", boardId, baseUrl);
-    const completedResult = formatTodoForSlack(todoContent, boardName, userName, "completed", boardId, baseUrl);
+    const addedResult = formatTodoForSlack(
+      todoContent,
+      boardName,
+      userName,
+      "added",
+      boardId,
+      baseUrl
+    );
+    const completedResult = formatTodoForSlack(
+      todoContent,
+      boardName,
+      userName,
+      "completed",
+      boardId,
+      baseUrl
+    );
 
     expect(addedResult).toContain(":heavy_plus_sign:");
     expect(completedResult).toContain(":white_check_mark:");
@@ -166,7 +197,15 @@ describe("updateSlackMessage", () => {
   it("should format uncompleted message with clickable board link", async () => {
     (global.fetch as jest.Mock).mockResolvedValueOnce({ ok: true });
 
-    await updateSlackMessage(webhookUrl, originalText, false, boardName, userName, boardId, baseUrl);
+    await updateSlackMessage(
+      webhookUrl,
+      originalText,
+      false,
+      boardName,
+      userName,
+      boardId,
+      baseUrl
+    );
 
     expect(global.fetch).toHaveBeenCalledWith(
       webhookUrl,

@@ -41,7 +41,7 @@ test.describe("Slack Message Formatting", () => {
     await authenticatedPage.goto(`/boards/${board.id}`);
 
     await authenticatedPage.click('button:has-text("Add Note")');
-    
+
     await authenticatedPage.waitForResponse(
       (resp) =>
         resp.url().includes(`/api/boards/${board.id}/notes`) &&
@@ -53,8 +53,10 @@ test.describe("Slack Message Formatting", () => {
 
     expect(slackPayload).not.toBeNull();
     expect(slackPayload.text).toBeDefined();
-    
-    const expectedLinkPattern = new RegExp(`<http://localhost:3000/boards/${board.id}\\|${board.name}>`);
+
+    const expectedLinkPattern = new RegExp(
+      `<http://localhost:3000/boards/${board.id}\\|${board.name}>`
+    );
     expect(slackPayload.text).toMatch(expectedLinkPattern);
   });
 
@@ -110,15 +112,19 @@ test.describe("Slack Message Formatting", () => {
 
     await authenticatedPage.goto(`/boards/${board.id}`);
 
-    const checkbox = authenticatedPage.getByTestId(checklistItem.id).locator('input[type="checkbox"]');
+    const checkbox = authenticatedPage
+      .getByTestId(checklistItem.id)
+      .locator('input[type="checkbox"]');
     await checkbox.check();
 
     await authenticatedPage.waitForTimeout(1000);
 
     expect(slackPayload).not.toBeNull();
     expect(slackPayload.text).toBeDefined();
-    
-    const expectedLinkPattern = new RegExp(`<http://localhost:3000/boards/${board.id}\\|${board.name}>`);
+
+    const expectedLinkPattern = new RegExp(
+      `<http://localhost:3000/boards/${board.id}\\|${board.name}>`
+    );
     expect(slackPayload.text).toMatch(expectedLinkPattern);
     expect(slackPayload.text).toContain(":white_check_mark:");
   });
@@ -184,7 +190,7 @@ test.describe("Slack Message Formatting", () => {
 
     const noteElement = authenticatedPage.getByTestId(note.id);
     await noteElement.hover();
-    
+
     const archiveButton = noteElement.getByRole("button", { name: "Archive" });
     await archiveButton.click();
 
@@ -192,8 +198,10 @@ test.describe("Slack Message Formatting", () => {
 
     expect(slackPayload).not.toBeNull();
     expect(slackPayload.text).toBeDefined();
-    
-    const expectedLinkPattern = new RegExp(`<http://localhost:3000/boards/${board.id}\\|${board.name}>`);
+
+    const expectedLinkPattern = new RegExp(
+      `<http://localhost:3000/boards/${board.id}\\|${board.name}>`
+    );
     expect(slackPayload.text).toMatch(expectedLinkPattern);
     expect(slackPayload.text).toContain(":white_check_mark:");
   });
