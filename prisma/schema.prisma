@@ -63,6 +63,7 @@ model User {
   invitedOrganizations OrganizationInvite[]
   createdSelfServeInvites OrganizationSelfServeInvite[]
   notes          Note[]
+  boardMemberships BoardMember[]
 
   @@index([organizationId], name: "idx_user_org")
   @@map("users")
@@ -72,6 +73,7 @@ model Organization {
   id        String   @id @default(cuid())
   name      String
   slackWebhookUrl String?
+  shareAllBoardsByDefault Boolean @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   members   User[]
@@ -88,12 +90,14 @@ model Board {
   description    String?
   isPublic       Boolean      @default(false)
   sendSlackUpdates Boolean    @default(true)
+  shareWithOrganization Boolean @default(true)
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   createdBy      String
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   notes          Note[]
+  members        BoardMember[]
 
   // Performance indexes
   @@index([organizationId, createdAt], name: "idx_board_org_created")
@@ -135,6 +139,22 @@ model ChecklistItem {
   @@map("checklist_items")
   @@index([noteId])
   @@index([noteId, order])
+}
+
+model BoardMember {
+  id        String   @id @default(cuid())
+  userId    String
+  boardId   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  board     Board @relation(fields: [boardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, boardId])
+  @@index([userId])
+  @@index([boardId])
+  @@map("board_members")
 }
 
 model OrganizationInvite {

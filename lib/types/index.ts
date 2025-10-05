@@ -23,11 +23,13 @@ export const boardSchema = z.object({
   description: z.string().optional(),
   isPublic: z.boolean().optional(),
   sendSlackUpdates: z.boolean().optional(),
+  shareWithOrganization: z.boolean().optional(),
 });
 
 export const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
   slackWebhookUrl: z.string().optional(),
+  shareAllBoardsByDefault: z.boolean().optional(),
 });
 
 export const profileSchema = z.object({

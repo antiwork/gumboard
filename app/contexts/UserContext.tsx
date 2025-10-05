@@ -13,6 +13,7 @@ export type Organization = {
   id: string;
   name: string;
   slackWebhookUrl?: string | null;
+  shareAllBoardsByDefault?: boolean;
   members: User[];
 };
 

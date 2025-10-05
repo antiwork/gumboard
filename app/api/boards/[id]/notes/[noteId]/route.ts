@@ -73,7 +73,17 @@ export async function PUT(
       return NextResponse.json({ error: "Note not found" }, { status: 404 });
     }
 
-    if (note.board.organizationId !== user.organizationId || note.boardId !== boardId) {
+    // Check access: board is public, shared with org, or user is member
+    const hasAccess = note.board.isPublic ||
+      note.board.shareWithOrganization ||
+      await db.boardMember.findFirst({
+        where: {
+          boardId: note.boardId,
+          userId: session.user.id,
+        },
+      });
+
+    if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -291,7 +301,17 @@ export async function DELETE(
       return NextResponse.json({ error: "Note not found" }, { status: 404 });
     }
 
-    if (note.board.organizationId !== user.organizationId || note.boardId !== boardId) {
+    // Check access: board is public, shared with org, or user is member
+    const hasAccess = note.board.isPublic ||
+      note.board.shareWithOrganization ||
+      await db.boardMember.findFirst({
+        where: {
+          boardId: note.boardId,
+          userId: session.user.id,
+        },
+      });
+
+    if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

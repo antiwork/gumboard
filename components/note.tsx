@@ -28,6 +28,9 @@ export interface Board {
   id: string;
   name: string;
   description: string | null;
+  shareWithOrganization?: boolean;
+  isPublic?: boolean;
+  sendSlackUpdates?: boolean;
 }
 
 export interface Note {

@@ -4,6 +4,55 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { organizationSchema } from "@/lib/types";
 
+export async function GET() {
+  try {
+    const session = await auth();
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await db.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        organization: {
+          include: {
+            members: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                isAdmin: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!user?.organization) {
+      return NextResponse.json({ error: "No organization found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      isAdmin: user.isAdmin,
+      organization: {
+        id: user.organization.id,
+        name: user.organization.name,
+        slackWebhookUrl: user.organization.slackWebhookUrl,
+        shareAllBoardsByDefault: user.organization.shareAllBoardsByDefault,
+        members: user.organization.members,
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching organization:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
 export async function PUT(request: NextRequest) {
   try {
     const session = await auth();
@@ -27,7 +76,7 @@ export async function PUT(request: NextRequest) {
       throw error;
     }
 
-    const { name, slackWebhookUrl } = validatedBody;
+    const { name, slackWebhookUrl, shareAllBoardsByDefault } = validatedBody;
 
     // Get user with organization
     const user = await db.user.findUnique({
@@ -54,12 +103,13 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    // Update organization name and Slack webhook URL
+    // Update organization name, Slack webhook URL, and sharing settings
     await db.organization.update({
       where: { id: user.organizationId },
       data: {
         name: name.trim(),
         ...(slackWebhookUrl !== undefined && { slackWebhookUrl: slackWebhookUrl?.trim() || null }),
+        ...(shareAllBoardsByDefault !== undefined && { shareAllBoardsByDefault }),
       },
     });
 
@@ -92,6 +142,7 @@ export async function PUT(request: NextRequest) {
             id: updatedUser!.organization.id,
             name: updatedUser!.organization.name,
             slackWebhookUrl: updatedUser!.organization.slackWebhookUrl,
+            shareAllBoardsByDefault: updatedUser!.organization.shareAllBoardsByDefault,
             members: updatedUser!.organization.members,
           }
         : null,

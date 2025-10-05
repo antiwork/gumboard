@@ -23,14 +23,27 @@ export async function GET() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Get all boards for the organization
+    // Get boards user has access to based on sharing settings
     const boards = await db.board.findMany({
-      where: { organizationId: user.organizationId },
+      where: {
+        organizationId: user.organizationId,
+        OR: [
+          { shareWithOrganization: true },
+          {
+            members: {
+              some: {
+                userId: session.user.id,
+              },
+            },
+          },
+        ],
+      },
       select: {
         id: true,
         name: true,
         description: true,
         isPublic: true,
+        shareWithOrganization: true,
         createdBy: true,
         createdAt: true,
         updatedAt: true,
@@ -66,6 +79,7 @@ export async function GET() {
       name: board.name,
       description: board.description,
       isPublic: board.isPublic,
+      shareWithOrganization: board.shareWithOrganization,
       createdBy: board.createdBy,
       createdAt: board.createdAt,
       updatedAt: board.updatedAt,
@@ -114,6 +128,11 @@ export async function POST(request: NextRequest) {
       where: { id: session.user.id },
       select: {
         organizationId: true,
+        organization: {
+          select: {
+            shareAllBoardsByDefault: true,
+          },
+        },
       },
     });
 
@@ -121,12 +140,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
+    const shareWithOrganization = user.organization?.shareAllBoardsByDefault ?? true;
+
     // Create new board
     const board = await db.board.create({
       data: {
         name: trimmedName,
         description,
         isPublic: Boolean(isPublic),
+        shareWithOrganization,
         organizationId: user.organizationId,
         createdBy: session.user.id,
       },
@@ -135,6 +157,7 @@ export async function POST(request: NextRequest) {
         name: true,
         description: true,
         isPublic: true,
+        shareWithOrganization: true,
         createdBy: true,
         createdAt: true,
         updatedAt: true,
@@ -149,6 +172,14 @@ export async function POST(request: NextRequest) {
             },
           },
         },
+      },
+    });
+
+    // Add creator to board members
+    await db.boardMember.create({
+      data: {
+        userId: session.user.id,
+        boardId: board.id,
       },
     });
 

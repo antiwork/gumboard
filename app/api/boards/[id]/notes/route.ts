@@ -22,6 +22,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       select: {
         id: true,
         isPublic: true,
+        shareWithOrganization: true,
         organizationId: true,
         notes: {
           where: {
@@ -63,18 +64,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        organizationId: true,
-      },
-    });
+    // Check access: board is public, shared with org, or user is member
+    const hasAccess = board.isPublic ||
+      board.shareWithOrganization ||
+      await db.boardMember.findFirst({
+        where: {
+          boardId: boardId,
+          userId: session.user.id,
+        },
+      });
 
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 });
-    }
-
-    if (board.organizationId !== user.organizationId) {
+    if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -141,6 +141,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         name: true,
         organizationId: true,
         sendSlackUpdates: true,
+        isPublic: true,
+        shareWithOrganization: true,
       },
     });
 
@@ -148,7 +150,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    if (board.organizationId !== user.organizationId) {
+    // Check access: board is public, shared with org, or user is member
+    const hasAccess = board.isPublic ||
+      board.shareWithOrganization ||
+      await db.boardMember.findFirst({
+        where: {
+          boardId: boardId,
+          userId: session.user.id,
+        },
+      });
+
+    if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

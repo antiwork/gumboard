@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
@@ -72,6 +73,8 @@ export default function OrganizationSettingsPage() {
   const [originalOrgName, setOriginalOrgName] = useState("");
   const [slackWebhookUrl, setSlackWebhookUrl] = useState("");
   const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
+  const [shareAllBoardsByDefault, setShareAllBoardsByDefault] = useState(true);
+  const [originalShareAllBoardsByDefault, setOriginalShareAllBoardsByDefault] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -106,12 +109,15 @@ export default function OrganizationSettingsPage() {
     if (user?.organization) {
       const orgNameValue = user.organization.name || "";
       const slackWebhookValue = user.organization.slackWebhookUrl || "";
+      const shareValue = user.organization.shareAllBoardsByDefault ?? true;
       setOrgName(orgNameValue);
       setOriginalOrgName(orgNameValue);
       setSlackWebhookUrl(slackWebhookValue);
       setOriginalSlackWebhookUrl(slackWebhookValue);
+      setShareAllBoardsByDefault(shareValue);
+      setOriginalShareAllBoardsByDefault(shareValue);
     }
-  }, [user?.organization?.name, user?.organization?.slackWebhookUrl]);
+  }, [user?.organization?.name, user?.organization?.slackWebhookUrl, user?.organization?.shareAllBoardsByDefault]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -161,11 +167,13 @@ export default function OrganizationSettingsPage() {
         body: JSON.stringify({
           name: orgName,
           slackWebhookUrl: slackWebhookUrl,
+          shareAllBoardsByDefault: shareAllBoardsByDefault,
         }),
       });
 
       if (response.ok) {
         setOriginalOrgName(orgName);
+        setOriginalShareAllBoardsByDefault(shareAllBoardsByDefault);
         refreshUser();
       } else {
         const errorData = await response.json();
@@ -518,9 +526,27 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center space-x-2 mb-4">
+              <Switch
+                id="shareAllBoards"
+                checked={shareAllBoardsByDefault}
+                onCheckedChange={setShareAllBoardsByDefault}
+                disabled={!user?.isAdmin}
+              />
+              <label
+                htmlFor="shareAllBoards"
+                className="text-sm font-medium text-zinc-900 dark:text-zinc-100 cursor-pointer"
+              >
+                Share all boards with organization members
+              </label>
+            </div>
+            <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-4 ml-6">
+              When enabled, all new boards will be automatically shared with all organization members. You can still control sharing for individual boards in their settings.
+            </p>
+
             <Button
               onClick={handleSaveOrgName}
-              disabled={savingOrg || orgName === originalOrgName || !user?.isAdmin}
+              disabled={savingOrg || (orgName === originalOrgName && shareAllBoardsByDefault === originalShareAllBoardsByDefault) || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >

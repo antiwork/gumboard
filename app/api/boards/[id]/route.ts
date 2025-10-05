@@ -35,15 +35,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is member of the organization
-    const userInOrg = await db.user.findFirst({
-      where: {
-        id: session.user.id,
-        organizationId: board.organizationId,
-      },
-    });
+    // Check access: board is public, shared with org, or user is member
+    const hasAccess = board.isPublic ||
+      board.shareWithOrganization ||
+      await db.boardMember.findFirst({
+        where: {
+          boardId: boardId,
+          userId: session.user.id,
+        },
+      });
 
-    if (!userInOrg) {
+    if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -53,6 +55,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({
       board: {
         ...boardData,
+        shareWithOrganization: board.shareWithOrganization,
         organization: {
           id: organization.id,
           name: organization.name,
@@ -93,7 +96,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       throw error;
     }
 
-    const { name, description, isPublic, sendSlackUpdates } = validatedBody;
+    const { name, description, isPublic, sendSlackUpdates, shareWithOrganization } = validatedBody;
 
     // Check if board exists and user has access
     const board = await db.board.findUnique({
@@ -121,6 +124,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
+    // Check if user has board access (is member or org admin)
+    const isBoardMember = await db.boardMember.findFirst({
+      where: {
+        boardId: boardId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!isBoardMember && !currentUser.isAdmin) {
+      return NextResponse.json({ error: "Only board members or org admins can edit this board" }, { status: 403 });
+    }
+
     // For name/description/isPublic updates, check if user can edit this board (board creator or admin)
     if (
       (name !== undefined || description !== undefined || isPublic !== undefined) &&
@@ -138,11 +153,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       description?: string | null;
       isPublic?: boolean;
       sendSlackUpdates?: boolean;
+      shareWithOrganization?: boolean;
     } = {};
     if (name !== undefined) updateData.name = name.trim() || board.name;
     if (description !== undefined) updateData.description = description?.trim() || null;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (sendSlackUpdates !== undefined) updateData.sendSlackUpdates = sendSlackUpdates;
+    if (shareWithOrganization !== undefined) updateData.shareWithOrganization = shareWithOrganization;
 
     const updatedBoard = await db.board.update({
       where: { id: boardId },
@@ -210,6 +227,18 @@ export async function DELETE(
 
     if (!currentUser) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    // Check if user has board access (is member or org admin)
+    const isBoardMember = await db.boardMember.findFirst({
+      where: {
+        boardId: boardId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!isBoardMember && !currentUser.isAdmin) {
+      return NextResponse.json({ error: "Only board members or org admins can delete this board" }, { status: 403 });
     }
 
     // Check if user can delete this board (board creator or admin)

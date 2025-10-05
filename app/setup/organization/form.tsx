@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { X, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@/app/contexts/UserContext";
@@ -11,13 +12,15 @@ import { useUser } from "@/app/contexts/UserContext";
 interface OrganizationSetupFormProps {
   onSubmit: (
     orgName: string,
-    teamEmails: string[]
+    teamEmails: string[],
+    shareAllBoardsByDefault?: boolean
   ) => Promise<{ success: boolean; organization?: unknown }>;
 }
 
 export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFormProps) {
   const [orgName, setOrgName] = useState("");
   const [teamEmails, setTeamEmails] = useState<string[]>([""]);
+  const [shareAllBoardsByDefault, setShareAllBoardsByDefault] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const { refreshUser } = useUser();
@@ -49,7 +52,7 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
     setIsSubmitting(true);
     try {
       const validEmails = teamEmails.filter((email) => email.trim() && email.includes("@"));
-      const result = await onSubmit(orgName.trim(), validEmails);
+      const result = await onSubmit(orgName.trim(), validEmails, shareAllBoardsByDefault);
       if (result?.success) {
         await refreshUser();
         router.push("/dashboard");
@@ -110,6 +113,22 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
 
         <p className="text-xs text-muted-foreground">
           {`we'll send invitations to join your organization to these email addresses.`}
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="shareAllBoards"
+            checked={shareAllBoardsByDefault}
+            onCheckedChange={setShareAllBoardsByDefault}
+          />
+          <Label htmlFor="shareAllBoards" className="text-sm font-medium cursor-pointer">
+            Share all boards with organization members by default
+          </Label>
+        </div>
+        <p className="text-xs text-muted-foreground ml-6">
+          When enabled, all new boards will be automatically shared with all organization members. You can still control sharing for individual boards later.
         </p>
       </div>
 

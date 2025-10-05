@@ -98,6 +98,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: "",
     isPublic: false,
     sendSlackUpdates: true,
+    shareWithOrganization: true,
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
@@ -285,6 +286,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           description: board.description || "",
           isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
           sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+          shareWithOrganization: (board as { shareWithOrganization?: boolean })?.shareWithOrganization ?? true,
         });
       }
 
@@ -621,6 +623,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           description: board.description || "",
           isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
           sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+          shareWithOrganization: (board as { shareWithOrganization?: boolean })?.shareWithOrganization ?? true,
         });
         setBoardSettingsDialog(false);
       }
@@ -817,6 +820,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
                       sendSlackUpdates:
                         (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
+                      shareWithOrganization: (board as { shareWithOrganization?: boolean })?.shareWithOrganization ?? true,
                     });
                     setBoardSettingsDialog(true);
                   }}
@@ -1137,6 +1141,27 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </div>
               <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
                 When enabled, anyone with the link can view this board
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="shareWithOrganization"
+                  checked={boardSettings.shareWithOrganization}
+                  onCheckedChange={(checked) =>
+                    setBoardSettings((prev) => ({ ...prev, shareWithOrganization: checked as boolean }))
+                  }
+                />
+                <label
+                  htmlFor="shareWithOrganization"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
+                >
+                  Share with organization members
+                </label>
+              </div>
+              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
+                When enabled, all organization members can view and edit this board. When disabled, only explicitly added members can access it.
               </p>
 
               {boardSettings.isPublic && (
