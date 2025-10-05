@@ -9,6 +9,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { NumberField } from "@/components/ui/number-field";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import {
   Trash2,
@@ -22,6 +24,7 @@ import {
   Users,
   ExternalLink,
   Calendar as CalendarIconLucide,
+  Eye,
 } from "lucide-react";
 import { Loader } from "@/components/ui/loader";
 import {
@@ -34,6 +37,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 import { useUser } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -61,6 +72,21 @@ interface SelfServeInvite {
     name: string | null;
     email: string;
   };
+}
+
+interface Board {
+  id: string;
+  name: string;
+}
+
+interface MemberWithSharing {
+  id: string;
+  name: string | null;
+  email: string;
+  isAdmin: boolean;
+  shareAllBoards: boolean;
+  sharedBoardIds: string[];
+  totalBoards: number;
 }
 
 export default function OrganizationSettingsPage() {
@@ -101,6 +127,16 @@ export default function OrganizationSettingsPage() {
   }>({ open: false, title: "", description: "", variant: "error" });
   const [creating, setCreating] = useState(false);
   const [copiedInviteToken, setCopiedInviteToken] = useState<string | null>(null);
+  const [membersWithSharing, setMembersWithSharing] = useState<MemberWithSharing[]>([]);
+  const [boards, setBoards] = useState<Board[]>([]);
+  const [loadingSharing, setLoadingSharing] = useState(false);
+  const [updatingSharing, setUpdatingSharing] = useState<string | null>(null);
+  const [boardDialog, setBoardDialog] = useState<{
+    open: boolean;
+    memberId: string;
+    memberName: string;
+    sharedBoardIds: string[];
+  }>({ open: false, memberId: "", memberName: "", sharedBoardIds: [] });
 
   useEffect(() => {
     if (user?.organization) {
@@ -123,6 +159,7 @@ export default function OrganizationSettingsPage() {
     if (user?.organization) {
       fetchInvites();
       fetchSelfServeInvites();
+      fetchBoardSharing();
     }
   }, [user?.organization]);
 
@@ -148,6 +185,109 @@ export default function OrganizationSettingsPage() {
     } catch (error) {
       console.error("Error fetching self-serve invites:", error);
     }
+  };
+
+  const fetchBoardSharing = async () => {
+    setLoadingSharing(true);
+    try {
+      const response = await fetch("/api/organization/share");
+      if (response.ok) {
+        const data = await response.json();
+        setMembersWithSharing(data.members || []);
+        setBoards(data.boards || []);
+      }
+    } catch (error) {
+      console.error("Error fetching board sharing:", error);
+    } finally {
+      setLoadingSharing(false);
+    }
+  };
+
+  const handleToggleShareAllBoards = async (memberId: string, shareAllBoards: boolean) => {
+    setUpdatingSharing(memberId);
+    try {
+      const response = await fetch("/api/organization/share", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userSharing: [{
+            userId: memberId,
+            shareAllBoards,
+          }],
+        }),
+      });
+
+      if (response.ok) {
+        await fetchBoardSharing();
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update board sharing",
+          description: errorData.error || "Failed to update board sharing",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating board sharing:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to update board sharing",
+        description: "Failed to update board sharing",
+      });
+    } finally {
+      setUpdatingSharing(null);
+    }
+  };
+
+  const handleUpdateBoardSharing = async (memberId: string, sharedBoardIds: string[]) => {
+    setUpdatingSharing(memberId);
+    try {
+      const response = await fetch("/api/organization/share", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userSharing: [{
+            userId: memberId,
+            shareAllBoards: sharedBoardIds.length === boards.length,
+            sharedBoardIds,
+          }],
+        }),
+      });
+
+      if (response.ok) {
+        await fetchBoardSharing();
+        setBoardDialog({ open: false, memberId: "", memberName: "", sharedBoardIds: [] });
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update board sharing",
+          description: errorData.error || "Failed to update board sharing",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating board sharing:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to update board sharing",
+        description: "Failed to update board sharing",
+      });
+    } finally {
+      setUpdatingSharing(null);
+    }
+  };
+
+  const openBoardDialog = (memberId: string, memberName: string, sharedBoardIds: string[]) => {
+    setBoardDialog({
+      open: true,
+      memberId,
+      memberName,
+      sharedBoardIds,
+    });
   };
 
   const handleSaveOrgName = async () => {
@@ -600,73 +740,109 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="space-y-3 truncate max-w-full overflow-hidden whitespace-nowrap">
-            {user?.organization?.members?.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between p-2 lg:p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
-              >
-                <div className="flex items-center space-x-3">
-                  <Avatar>
-                    <AvatarImage src={member.image || ""} alt={member.name || member.email} />
-                    <AvatarFallback
-                      className={
-                        member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700 text-white"
-                      }
-                    >
-                      {member.name
-                        ? member.name.charAt(0).toUpperCase()
-                        : member.email.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {member.name || "Unnamed User"}
-                      </p>
-                      {member.isAdmin && (
-                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                          <ShieldCheck className="w-3 h-3 mr-1" />
-                          Admin
-                        </span>
+            {user?.organization?.members?.map((member) => {
+              const memberSharing = membersWithSharing.find(m => m.id === member.id);
+              return (
+                <div
+                  key={member.id}
+                  className="flex items-center justify-between p-2 lg:p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
+                >
+                  <div className="flex items-center space-x-3">
+                    <Avatar>
+                      <AvatarImage src={member.image || ""} alt={member.name || member.email} />
+                      <AvatarFallback
+                        className={
+                          member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700 text-white"
+                        }
+                      >
+                        {member.name
+                          ? member.name.charAt(0).toUpperCase()
+                          : member.email.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {member.name || "Unnamed User"}
+                        </p>
+                        {member.isAdmin && (
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                            <ShieldCheck className="w-3 h-3 mr-1" />
+                            Admin
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
+                      {memberSharing && (
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                            {memberSharing.shareAllBoards
+                              ? `All ${memberSharing.totalBoards} boards shared`
+                              : `${memberSharing.sharedBoardIds.length} of ${memberSharing.totalBoards} boards shared`}
+                          </span>
+                        </div>
                       )}
                     </div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    {/* Board sharing toggle - only for admins and not for yourself */}
+                    {user?.isAdmin && member.id !== user.id && (
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          checked={memberSharing?.shareAllBoards || false}
+                          onCheckedChange={(checked) => handleToggleShareAllBoards(member.id, checked)}
+                          disabled={updatingSharing === member.id}
+                          className="data-[state=checked]:bg-green-600"
+                        />
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Share all boards
+                        </span>
+                        <Button
+                          onClick={() => openBoardDialog(member.id, member.name || member.email, memberSharing?.sharedBoardIds || [])}
+                          variant="outline"
+                          size="sm"
+                          className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 dark:hover:text-zinc-300 dark:hover:bg-zinc-800"
+                          title="View and edit shared boards"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )}
+
+                    {/* Admin toggle - only for admins and not for yourself */}
+                    {user?.isAdmin && member.id !== user.id && (
+                      <>
+                        <Button
+                          onClick={() => handleToggleAdmin(member.id, !!member.isAdmin)}
+                          variant="outline"
+                          size="sm"
+                          className={`${
+                            member.isAdmin
+                              ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                              : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
+                          }`}
+                          title={member.isAdmin ? "Remove admin role" : "Make admin"}
+                        >
+                          {member.isAdmin ? (
+                            <ShieldCheck className="w-4 h-4" />
+                          ) : (
+                            <Shield className="w-4 h-4" />
+                          )}
+                        </Button>
+                        <Button
+                          onClick={() => handleRemoveMember(member.id, member.name || member.email)}
+                          variant="outline"
+                          size="sm"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
-                  {/* Only show admin toggle to current admins and not for yourself */}
-                  {user?.isAdmin && member.id !== user.id && (
-                    <Button
-                      onClick={() => handleToggleAdmin(member.id, !!member.isAdmin)}
-                      variant="outline"
-                      size="sm"
-                      className={`${
-                        member.isAdmin
-                          ? "text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:text-purple-400 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                          : "text-zinc-500 dark:text-zinc-400 hover:text-purple-600 hover:bg-purple-50 dark:hover:text-purple-300 dark:hover:bg-purple-900"
-                      }`}
-                      title={member.isAdmin ? "Remove admin role" : "Make admin"}
-                    >
-                      {member.isAdmin ? (
-                        <ShieldCheck className="w-4 h-4" />
-                      ) : (
-                        <Shield className="w-4 h-4" />
-                      )}
-                    </Button>
-                  )}
-                  {user?.isAdmin && member.id !== user.id && (
-                    <Button
-                      onClick={() => handleRemoveMember(member.id, member.name || member.email)}
-                      variant="outline"
-                      size="sm"
-                      className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300 dark:hover:bg-red-900"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </Card>
@@ -1008,6 +1184,67 @@ export default function OrganizationSettingsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Board Sharing Dialog */}
+      <Dialog open={boardDialog.open} onOpenChange={(open) => setBoardDialog({ open, memberId: "", memberName: "", sharedBoardIds: [] })}>
+        <DialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-foreground dark:text-zinc-100">
+              Share boards with {boardDialog.memberName}
+            </DialogTitle>
+            <DialogDescription className="text-muted-foreground dark:text-zinc-400">
+              Select which boards to share with this team member. They will only be able to see and edit the selected boards.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 max-h-96 overflow-y-auto">
+            {boards.map((board) => {
+              const isShared = boardDialog.sharedBoardIds.includes(board.id);
+              return (
+                <div key={board.id} className="flex items-center space-x-3 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                  <Checkbox
+                    id={`board-${board.id}`}
+                    checked={isShared}
+                    onCheckedChange={(checked) => {
+                      const newSharedBoardIds = checked
+                        ? [...boardDialog.sharedBoardIds, board.id]
+                        : boardDialog.sharedBoardIds.filter(id => id !== board.id);
+                      setBoardDialog(prev => ({ ...prev, sharedBoardIds: newSharedBoardIds }));
+                    }}
+                    className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
+                  />
+                  <label
+                    htmlFor={`board-${board.id}`}
+                    className="flex-1 text-sm font-medium text-zinc-900 dark:text-zinc-100 cursor-pointer"
+                  >
+                    {board.name}
+                  </label>
+                </div>
+              );
+            })}
+          </div>
+          <div className="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
+            <div className="text-sm text-zinc-600 dark:text-zinc-400">
+              {boardDialog.sharedBoardIds.length} of {boards.length} boards selected
+            </div>
+            <div className="flex space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setBoardDialog({ open: false, memberId: "", memberName: "", sharedBoardIds: [] })}
+                disabled={updatingSharing === boardDialog.memberId}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleUpdateBoardSharing(boardDialog.memberId, boardDialog.sharedBoardIds)}
+                disabled={updatingSharing === boardDialog.memberId}
+                className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800"
+              >
+                {updatingSharing === boardDialog.memberId ? "Updating..." : "Update Sharing"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog
         open={errorDialog.open}

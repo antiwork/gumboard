@@ -63,6 +63,7 @@ model User {
   invitedOrganizations OrganizationInvite[]
   createdSelfServeInvites OrganizationSelfServeInvite[]
   notes          Note[]
+  boardShares    BoardShare[]
 
   @@index([organizationId], name: "idx_user_org")
   @@map("users")
@@ -94,6 +95,7 @@ model Board {
   createdAt      DateTime     @default(now())
   updatedAt      DateTime     @updatedAt
   notes          Note[]
+  shares         BoardShare[]
 
   // Performance indexes
   @@index([organizationId, createdAt], name: "idx_board_org_created")
@@ -135,6 +137,20 @@ model ChecklistItem {
   @@map("checklist_items")
   @@index([noteId])
   @@index([noteId, order])
+}
+
+model BoardShare {
+  id        String   @id @default(cuid())
+  boardId   String
+  userId    String
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([boardId, userId])
+  @@map("board_shares")
+  @@index([boardId])
+  @@index([userId])
 }
 
 model OrganizationInvite {

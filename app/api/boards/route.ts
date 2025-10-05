@@ -23,9 +23,20 @@ export async function GET() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Get all boards for the organization
+    // Get boards the user has access to (public boards or explicitly shared with the user)
     const boards = await db.board.findMany({
-      where: { organizationId: user.organizationId },
+      where: {
+        OR: [
+          { isPublic: true },
+          {
+            shares: {
+              some: {
+                userId: session.user.id,
+              },
+            },
+          },
+        ],
+      },
       select: {
         id: true,
         name: true,
@@ -34,6 +45,12 @@ export async function GET() {
         createdBy: true,
         createdAt: true,
         updatedAt: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: {
           select: {
             notes: {

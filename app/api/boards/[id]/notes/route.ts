@@ -63,18 +63,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await db.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        organizationId: true,
+    // Check if user is in the organization (required for board sharing)
+    const userInOrg = await db.user.findFirst({
+      where: {
+        id: session.user.id,
+        organizationId: board.organizationId,
       },
     });
 
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 });
+    if (!userInOrg) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    if (board.organizationId !== user.organizationId) {
+    // Check if user has explicit sharing permissions for this board
+    const boardShare = await db.boardShare.findFirst({
+      where: {
+        boardId: boardId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!boardShare) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -115,9 +124,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
     const { color, checklistItems } = validatedBody;
 
-    // Verify user has access to this board (same organization)
+    // Verify user has access to this board (either through organization membership or explicit board share)
     const user = await db.user.findUnique({
-      where: { id: session.user.id },
+      where: {
+        id: session.user.id,
+        OR: [
+          { organizationId: { not: null } },
+          {
+            boardShares: {
+              some: {
+                boardId: boardId,
+              },
+            },
+          },
+        ],
+      },
       select: {
         organizationId: true,
         organization: {
@@ -130,8 +151,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     });
 
-    if (!user?.organizationId) {
-      return NextResponse.json({ error: "No organization found" }, { status: 403 });
+    if (!user) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     const board = await db.board.findUnique({
@@ -148,7 +169,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    if (board.organizationId !== user.organizationId) {
+    // Check if user is in the organization (required for board sharing)
+    const userInOrg = await db.user.findFirst({
+      where: {
+        id: session.user.id,
+        organizationId: board.organizationId,
+      },
+    });
+
+    if (!userInOrg) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    // Check if user has explicit sharing permissions for this board
+    const boardShare = await db.boardShare.findFirst({
+      where: {
+        boardId: boardId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!boardShare) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
