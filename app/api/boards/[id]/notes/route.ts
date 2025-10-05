@@ -23,6 +23,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         id: true,
         isPublic: true,
         organizationId: true,
+        createdBy: true, // Added for authorization check
         notes: {
           where: {
             deletedAt: null, // Only include non-deleted notes
@@ -75,7 +76,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Check if user has explicit sharing permissions for this board
+    // Board creators automatically have access to their own boards
+    // Check if user has explicit sharing permissions for this board OR is the creator
     const boardShare = await db.boardShare.findFirst({
       where: {
         boardId: boardId,
@@ -83,7 +85,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     });
 
-    if (!boardShare) {
+    if (!boardShare && board.createdBy !== session.user.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -161,6 +163,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         id: true,
         name: true,
         organizationId: true,
+        createdBy: true, // Added for authorization check
         sendSlackUpdates: true,
       },
     });
@@ -181,7 +184,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Check if user has explicit sharing permissions for this board
+    // Board creators automatically have access to their own boards
+    // Check if user has explicit sharing permissions for this board OR is the creator
     const boardShare = await db.boardShare.findFirst({
       where: {
         boardId: boardId,
@@ -189,7 +193,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     });
 
-    if (!boardShare) {
+    if (!boardShare && board.createdBy !== session.user.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 

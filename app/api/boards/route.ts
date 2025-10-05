@@ -23,7 +23,7 @@ export async function GET() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
-    // Get boards the user has access to (public boards or explicitly shared with the user)
+    // Get boards the user has access to (public boards, explicitly shared boards, or boards created by the user)
     const boards = await db.board.findMany({
       where: {
         OR: [
@@ -35,6 +35,7 @@ export async function GET() {
               },
             },
           },
+          { createdBy: session.user.id }, // Boards created by the user
         ],
       },
       select: {
@@ -166,6 +167,14 @@ export async function POST(request: NextRequest) {
             },
           },
         },
+      },
+    });
+
+    // Automatically create a board sharing record for the creator
+    await db.boardShare.create({
+      data: {
+        boardId: board.id,
+        userId: session.user.id,
       },
     });
 

@@ -132,7 +132,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       isShared: sharedUserIds.has(member.id),
     }));
 
-    return NextResponse.json({ members: membersWithSharing });
+    return NextResponse.json({
+      members: membersWithSharing,
+      boardCreator: board.createdBy
+    });
   } catch (error) {
     console.error("Error fetching board sharing:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

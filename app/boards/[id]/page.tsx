@@ -104,6 +104,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const [boardSharing, setBoardSharing] = useState<{ id: string; name: string; email: string; isShared: boolean }[]>([]);
+  const [boardCreator, setBoardCreator] = useState<string | null>(null);
   const [memberSearchTerm, setMemberSearchTerm] = useState("");
   const [updatingSharing, setUpdatingSharing] = useState<string | null>(null);
   const [boardSharingDialog, setBoardSharingDialog] = useState(false);
@@ -660,6 +661,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       if (response.ok) {
         const data = await response.json();
         setBoardSharing(data.members || []);
+        setBoardCreator(data.boardCreator || null);
       }
     } catch (error) {
       console.error("Error fetching board sharing:", error);
@@ -715,9 +717,46 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
         ? [...currentSharedIds, memberId]
         : currentSharedIds.filter(id => id !== memberId);
 
-      await handleUpdateBoardSharing(newSharedIds);
+      // Use individual update function that doesn't close the dialog
+      await handleUpdateBoardSharingIndividual(newSharedIds);
     } catch (error) {
       console.error("Error toggling member sharing:", error);
+    } finally {
+      setUpdatingSharing(null);
+    }
+  };
+
+  const handleUpdateBoardSharingIndividual = async (userIds: string[]) => {
+    if (!boardId || boardId === "all-notes" || boardId === "archive") return;
+
+    setUpdatingSharing("bulk");
+    try {
+      const response = await fetch(`/api/boards/${boardId}/share`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ userIds }),
+      });
+
+      if (response.ok) {
+        await fetchBoardSharing();
+        // Don't close dialog for individual toggles
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to update board sharing",
+          description: errorData.error || "Failed to update board sharing",
+        });
+      }
+    } catch (error) {
+      console.error("Error updating board sharing:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to update board sharing",
+        description: "Failed to update board sharing",
+      });
     } finally {
       setUpdatingSharing(null);
     }
@@ -1381,41 +1420,59 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 memberSearchTerm === "" ||
                 (member.name || member.email).toLowerCase().includes(memberSearchTerm.toLowerCase())
               )
-              .map((member) => (
-                <div
-                  key={member.id}
-                  className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg"
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-blue-500 dark:bg-zinc-700 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                      {(member.name || member.email).charAt(0).toUpperCase()}
+              .map((member) => {
+                const isCreator = boardCreator === member.id;
+                return (
+                  <div
+                    key={member.id}
+                    className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
+                        isCreator ? "bg-purple-500 dark:bg-purple-600" : "bg-blue-500 dark:bg-zinc-700"
+                      }`}>
+                        {(member.name || member.email).charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <p className="font-medium text-zinc-900 dark:text-zinc-100">
+                          {member.name || "Unnamed User"}
+                          {isCreator && (
+                            <span className="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                              Creator
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                        {member.name || "Unnamed User"}
-                      </p>
-                      <p className="text-sm text-zinc-600 dark:text-zinc-400">{member.email}</p>
+                    <div className="flex items-center space-x-2">
+                      {isCreator ? (
+                        <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                          Auto access
+                        </span>
+                      ) : (
+                        <>
+                          <Switch
+                            checked={member.isShared}
+                            onCheckedChange={(checked) => handleToggleMemberSharing(member.id, checked)}
+                            disabled={updatingSharing === member.id || updatingSharing === "bulk"}
+                            className="data-[state=checked]:bg-green-600"
+                          />
+                          <span className="text-sm text-zinc-600 dark:text-zinc-400">
+                            {member.isShared ? "Shared" : "Not shared"}
+                          </span>
+                        </>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      checked={member.isShared}
-                      onCheckedChange={(checked) => handleToggleMemberSharing(member.id, checked)}
-                      disabled={updatingSharing === member.id || updatingSharing === "bulk"}
-                      className="data-[state=checked]:bg-green-600"
-                    />
-                    <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                      {member.isShared ? "Shared" : "Not shared"}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
           </div>
 
           {/* Summary */}
           <div className="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              {boardSharing.filter(member => member.isShared).length} of {boardSharing.length} members have access
+              {boardSharing.filter(member => member.isShared || member.id === boardCreator).length} of {boardSharing.length} members have access
             </div>
             <Button
               variant="outline"
