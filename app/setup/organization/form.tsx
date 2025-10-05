@@ -13,13 +13,15 @@ interface OrganizationSetupFormProps {
   onSubmit: (
     orgName: string,
     teamEmails: string[],
-    shareAllBoardsByDefault?: boolean
+    shareAllBoardsByDefault?: boolean,
+    emailAccess?: boolean[]
   ) => Promise<{ success: boolean; organization?: unknown }>;
 }
 
 export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFormProps) {
   const [orgName, setOrgName] = useState("");
   const [teamEmails, setTeamEmails] = useState<string[]>([""]);
+  const [emailAccess, setEmailAccess] = useState<boolean[]>([true]);
   const [shareAllBoardsByDefault, setShareAllBoardsByDefault] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
@@ -27,11 +29,13 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
 
   const addEmailField = () => {
     setTeamEmails([...teamEmails, ""]);
+    setEmailAccess([...emailAccess, true]);
   };
 
   const removeEmailField = (index: number) => {
     if (teamEmails.length > 1) {
       setTeamEmails(teamEmails.filter((_, i) => i !== index));
+      setEmailAccess(emailAccess.filter((_, i) => i !== index));
     }
   };
 
@@ -39,6 +43,12 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
     const updated = [...teamEmails];
     updated[index] = value;
     setTeamEmails(updated);
+  };
+
+  const updateEmailAccess = (index: number, hasAccess: boolean) => {
+    const updated = [...emailAccess];
+    updated[index] = hasAccess;
+    setEmailAccess(updated);
   };
 
   const hasValidEmails = () => {
@@ -52,7 +62,8 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
     setIsSubmitting(true);
     try {
       const validEmails = teamEmails.filter((email) => email.trim() && email.includes("@"));
-      const result = await onSubmit(orgName.trim(), validEmails, shareAllBoardsByDefault);
+      const validEmailAccess = emailAccess.filter((_, index) => teamEmails[index].trim() && teamEmails[index].includes("@"));
+      const result = await onSubmit(orgName.trim(), validEmails, shareAllBoardsByDefault, validEmailAccess);
       if (result?.success) {
         await refreshUser();
         router.push("/dashboard");
@@ -83,24 +94,39 @@ export default function OrganizationSetupForm({ onSubmit }: OrganizationSetupFor
 
         <div className="space-y-3">
           {teamEmails.map((email, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Input
-                type="email"
-                placeholder="teammate@company.com"
-                value={email}
-                onChange={(e) => updateEmail(index, e.target.value)}
-                className="flex-1"
-              />
-              {teamEmails.length > 1 && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={() => removeEmailField(index)}
-                  className="shrink-0 h-9 w-9 flex items-center justify-center"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
+            <div key={index} className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="email"
+                  placeholder="teammate@company.com"
+                  value={email}
+                  onChange={(e) => updateEmail(index, e.target.value)}
+                  className="flex-1"
+                />
+                {teamEmails.length > 1 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    onClick={() => removeEmailField(index)}
+                    className="shrink-0 h-9 w-9 flex items-center justify-center"
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
+              {email.trim() && email.includes("@") && (
+                <div className="flex items-center space-x-2 ml-1">
+                  <Switch
+                    id={`email-access-${index}`}
+                    checked={emailAccess[index] ?? true}
+                    onCheckedChange={(checked) => updateEmailAccess(index, checked)}
+                    className="data-[state=checked]:bg-blue-600"
+                  />
+                  <Label htmlFor={`email-access-${index}`} className="text-xs text-muted-foreground cursor-pointer">
+                    Give access to all boards
+                  </Label>
+                </div>
               )}
             </div>
           ))}

@@ -10,7 +10,7 @@ import { getBaseUrl } from "@/lib/utils";
 
 const resend = new Resend(env.AUTH_RESEND_KEY);
 
-async function createOrganization(orgName: string, teamEmails: string[], shareAllBoardsByDefault: boolean = true) {
+async function createOrganization(orgName: string, teamEmails: string[], shareAllBoardsByDefault: boolean = true, emailAccess?: boolean[]) {
   "use server";
 
   const baseUrl = getBaseUrl(await headers());

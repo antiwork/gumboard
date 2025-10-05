@@ -76,7 +76,7 @@ export async function PUT(request: NextRequest) {
       throw error;
     }
 
-    const { name, slackWebhookUrl, shareAllBoardsByDefault } = validatedBody;
+    const { name, slackWebhookUrl, shareAllBoardsByDefault, userAccess } = validatedBody;
 
     // Get user with organization
     const user = await db.user.findUnique({
@@ -113,6 +113,18 @@ export async function PUT(request: NextRequest) {
       },
     });
 
+    // Handle per-user organization access updates
+    if (userAccess && Array.isArray(userAccess)) {
+      for (const accessUpdate of userAccess) {
+        if (accessUpdate.userId && typeof accessUpdate.hasOrgWideAccess === 'boolean') {
+          await db.user.update({
+            where: { id: accessUpdate.userId },
+            data: { hasOrgWideAccess: accessUpdate.hasOrgWideAccess },
+          });
+        }
+      }
+    }
+
     // Return updated user data
     const updatedUser = await db.user.findUnique({
       where: { id: session.user.id },
@@ -125,6 +137,7 @@ export async function PUT(request: NextRequest) {
                 name: true,
                 email: true,
                 isAdmin: true,
+                hasOrgWideAccess: true,
               },
             },
           },

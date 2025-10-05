@@ -30,6 +30,10 @@ export const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
   slackWebhookUrl: z.string().optional(),
   shareAllBoardsByDefault: z.boolean().optional(),
+  userAccess: z.array(z.object({
+    userId: z.string(),
+    hasOrgWideAccess: z.boolean(),
+  })).optional(),
 });
 
 export const profileSchema = z.object({

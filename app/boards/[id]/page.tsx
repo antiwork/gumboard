@@ -5,7 +5,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   ChevronDown,
   Search,
@@ -98,8 +100,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     description: "",
     isPublic: false,
     sendSlackUpdates: true,
-    shareWithOrganization: true,
   });
+  const [boardMembers, setBoardMembers] = useState<any[]>([]);
+  const [orgMembers, setOrgMembers] = useState<any[]>([]);
+  const [filteredOrgMembers, setFilteredOrgMembers] = useState<any[]>([]);
+  const [memberSearchTerm, setMemberSearchTerm] = useState("");
+  const [loadingOrgMembers, setLoadingOrgMembers] = useState(false);
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const boardRef = useRef<HTMLDivElement>(null);
@@ -286,7 +292,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           description: board.description || "",
           isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
           sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-          shareWithOrganization: (board as { shareWithOrganization?: boolean })?.shareWithOrganization ?? true,
         });
       }
 
@@ -623,7 +628,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           description: board.description || "",
           isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
           sendSlackUpdates: (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-          shareWithOrganization: (board as { shareWithOrganization?: boolean })?.shareWithOrganization ?? true,
         });
         setBoardSettingsDialog(false);
       }
@@ -642,6 +646,105 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
       console.error("Failed to copy URL:", error);
     }
   };
+
+  const fetchBoardMembers = async () => {
+    try {
+      const response = await fetch(`/api/boards/${boardId}/members`);
+      if (response.ok) {
+        const data = await response.json();
+        setBoardMembers(data.members || []);
+      }
+    } catch (error) {
+      console.error("Error fetching board members:", error);
+    }
+  };
+
+
+  const handleRemoveBoardMember = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/boards/${boardId}/members?userId=${userId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        await fetchBoardMembers();
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to remove member",
+          description: errorData.error || "Failed to remove member",
+        });
+      }
+    } catch (error) {
+      console.error("Error removing board member:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to remove member",
+        description: "Failed to remove member",
+      });
+    }
+  };
+
+  const fetchOrgMembers = async () => {
+    setLoadingOrgMembers(true);
+    try {
+      const response = await fetch("/api/organization");
+      if (response.ok) {
+        const data = await response.json();
+        setOrgMembers(data.organization?.members || []);
+      }
+    } catch (error) {
+      console.error("Error fetching organization members:", error);
+    } finally {
+      setLoadingOrgMembers(false);
+    }
+  };
+
+  const handleAddBoardMemberFromOrg = async (email: string) => {
+    try {
+      const response = await fetch(`/api/boards/${boardId}/members`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        await fetchBoardMembers();
+      } else {
+        const errorData = await response.json();
+        setErrorDialog({
+          open: true,
+          title: "Failed to add member",
+          description: errorData.error || "Failed to add member",
+        });
+      }
+    } catch (error) {
+      console.error("Error adding board member:", error);
+      setErrorDialog({
+        open: true,
+        title: "Failed to add member",
+        description: "Failed to add member",
+      });
+    }
+  };
+
+  const isCurrentUserCreator = (userId: string) => {
+    return user?.id === userId;
+  };
+
+  // Filter org members based on search term
+  useEffect(() => {
+    if (memberSearchTerm.trim() === "") {
+      setFilteredOrgMembers(orgMembers);
+    } else {
+      const filtered = orgMembers.filter(member =>
+        (member.name || "").toLowerCase().includes(memberSearchTerm.toLowerCase()) ||
+        member.email.toLowerCase().includes(memberSearchTerm.toLowerCase())
+      );
+      setFilteredOrgMembers(filtered);
+    }
+  }, [orgMembers, memberSearchTerm]);
 
   const handleDeleteBoard = async () => {
     try {
@@ -820,9 +923,10 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                       isPublic: (board as { isPublic?: boolean })?.isPublic ?? false,
                       sendSlackUpdates:
                         (board as { sendSlackUpdates?: boolean })?.sendSlackUpdates ?? true,
-                      shareWithOrganization: (board as { shareWithOrganization?: boolean })?.shareWithOrganization ?? true,
                     });
                     setBoardSettingsDialog(true);
+                    fetchBoardMembers();
+                    fetchOrgMembers();
                   }}
                   aria-label="Board settings"
                   title="Board settings"
@@ -1144,27 +1248,124 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               </p>
             </div>
 
+            {/* Organization Members Management */}
             <div className="space-y-4">
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="shareWithOrganization"
-                  checked={boardSettings.shareWithOrganization}
-                  onCheckedChange={(checked) =>
-                    setBoardSettings((prev) => ({ ...prev, shareWithOrganization: checked as boolean }))
-                  }
-                />
-                <label
-                  htmlFor="shareWithOrganization"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-foreground dark:text-zinc-100"
+              <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium text-foreground dark:text-zinc-100">
+                  Organization Members ({orgMembers.length})
+                </h4>
+                <Button
+                  onClick={fetchOrgMembers}
+                  size="sm"
+                  variant="outline"
+                  className="text-xs"
+                  disabled={loadingOrgMembers}
                 >
-                  Share with organization members
-                </label>
+                  {loadingOrgMembers ? "Loading..." : "Refresh"}
+                </Button>
               </div>
-              <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
-                When enabled, all organization members can view and edit this board. When disabled, only explicitly added members can access it.
-              </p>
 
-              {boardSettings.isPublic && (
+              {/* Search Input */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+                <Input
+                  type="text"
+                  placeholder="Search members..."
+                  value={memberSearchTerm}
+                  onChange={(e) => setMemberSearchTerm(e.target.value)}
+                  className="pl-10 bg-white dark:bg-zinc-800 text-zinc-900 dark:text-zinc-100 border-zinc-200 dark:border-zinc-700"
+                />
+              </div>
+
+              {/* Members List */}
+              <div className="space-y-2 max-h-80 overflow-y-auto border border-zinc-200 dark:border-zinc-700 rounded-lg p-3">
+                {filteredOrgMembers.length === 0 ? (
+                  <p className="text-xs text-muted-foreground dark:text-zinc-400 text-center py-4">
+                    {orgMembers.length === 0 ? "No organization members found." : "No members match your search."}
+                  </p>
+                ) : (
+                  filteredOrgMembers.map((member) => {
+                    const isBoardMember = boardMembers.some(bm => bm.user.id === member.id);
+                    const isCreator = member.id === (board as any)?.createdBy;
+
+                    return (
+                      <div
+                        key={member.id}
+                        className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                          isBoardMember
+                            ? "bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800"
+                            : "bg-zinc-50 dark:bg-zinc-800 border-zinc-200 dark:border-zinc-700"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <Avatar className="w-8 h-8">
+                            <AvatarImage src={member.image || ""} alt={member.name || member.email} />
+                            <AvatarFallback className={`text-sm ${isBoardMember ? "bg-green-500" : "bg-blue-500"} text-white`}>
+                              {member.name
+                                ? member.name.charAt(0).toUpperCase()
+                                : member.email.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                {member.name || "Unnamed User"}
+                              </p>
+                              {member.isAdmin && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                  Admin
+                                </span>
+                              )}
+                              {isCreator && (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
+                                  Creator
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-xs text-zinc-600 dark:text-zinc-400">{member.email}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Switch
+                            id={`member-access-${member.id}`}
+                            checked={isBoardMember}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                handleAddBoardMemberFromOrg(member.email);
+                              } else if (!isCreator) {
+                                handleRemoveBoardMember(member.id);
+                              }
+                            }}
+                            disabled={isCreator}
+                            className="data-[state=checked]:bg-green-600"
+                          />
+                          <Label
+                            htmlFor={`member-access-${member.id}`}
+                            className={`text-xs cursor-pointer ${isCreator ? 'text-zinc-400' : 'text-zinc-600 dark:text-zinc-400'}`}
+                          >
+                            {isBoardMember ? "Shared" : "Not Shared"}
+                          </Label>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              {/* Summary */}
+              <div className="flex items-center justify-between text-xs text-zinc-600 dark:text-zinc-400 pt-2 border-t border-zinc-200 dark:border-zinc-700">
+                <span>
+                  {boardMembers.length} of {orgMembers.length} members have access
+                </span>
+                {boardMembers.length > 0 && (
+                  <span className="text-green-600 dark:text-green-400">
+                    {boardMembers.length} shared
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {boardSettings.isPublic && (
                 <div className="ml-6 p-3 bg-gray-50 dark:bg-zinc-800 rounded-md">
                   <div className="flex items-center justify-between">
                     <div>
@@ -1219,9 +1420,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
             <p className="text-xs text-muted-foreground dark:text-zinc-400 mt-1 ml-6">
               When enabled, note updates will be sent to your organization&apos;s Slack channel
             </p>
-          </div>
 
-          <AlertDialogFooter className="flex !flex-row justify-start md:justify-between">
+            <AlertDialogFooter className="flex !flex-row justify-start md:justify-between">
             <Button
               onClick={() => setDeleteConfirmDialog(true)}
               variant="destructive"
@@ -1240,6 +1440,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmDialog} onOpenChange={setDeleteConfirmDialog}>

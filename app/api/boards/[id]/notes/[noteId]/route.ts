@@ -73,15 +73,24 @@ export async function PUT(
       return NextResponse.json({ error: "Note not found" }, { status: 404 });
     }
 
-    // Check access: board is public, shared with org, or user is member
+    // Check if user is explicitly a member
+    const isExplicitMember = await db.boardMember.findFirst({
+      where: {
+        boardId: note.boardId,
+        userId: session.user.id,
+      },
+    });
+
+    // Check if user has org-wide access
+    const userAccess = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { hasOrgWideAccess: true },
+    });
+
+    // Check access: board is public, user is explicit member, or (board shared with org AND user has org-wide access)
     const hasAccess = note.board.isPublic ||
-      note.board.shareWithOrganization ||
-      await db.boardMember.findFirst({
-        where: {
-          boardId: note.boardId,
-          userId: session.user.id,
-        },
-      });
+      !!isExplicitMember ||
+      (note.board.shareWithOrganization && (userAccess?.hasOrgWideAccess ?? false));
 
     if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
@@ -301,15 +310,24 @@ export async function DELETE(
       return NextResponse.json({ error: "Note not found" }, { status: 404 });
     }
 
-    // Check access: board is public, shared with org, or user is member
+    // Check if user is explicitly a member
+    const isExplicitMember = await db.boardMember.findFirst({
+      where: {
+        boardId: note.boardId,
+        userId: session.user.id,
+      },
+    });
+
+    // Check if user has org-wide access
+    const userAccess = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { hasOrgWideAccess: true },
+    });
+
+    // Check access: board is public, user is explicit member, or (board shared with org AND user has org-wide access)
     const hasAccess = note.board.isPublic ||
-      note.board.shareWithOrganization ||
-      await db.boardMember.findFirst({
-        where: {
-          boardId: note.boardId,
-          userId: session.user.id,
-        },
-      });
+      !!isExplicitMember ||
+      (note.board.shareWithOrganization && (userAccess?.hasOrgWideAccess ?? false));
 
     if (!hasAccess) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });

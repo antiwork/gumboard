@@ -23,18 +23,28 @@ export async function GET() {
       return NextResponse.json({ error: "No organization found" }, { status: 404 });
     }
 
+    // Get current user's org access setting
+    const currentUserAccess = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: { hasOrgWideAccess: true },
+    });
+
     // Get boards user has access to based on sharing settings
     const boards = await db.board.findMany({
       where: {
         organizationId: user.organizationId,
         OR: [
-          { shareWithOrganization: true },
+          // User is explicitly a member of the board
           {
             members: {
               some: {
                 userId: session.user.id,
               },
             },
+          },
+          // Board is shared with organization AND user has org-wide access
+          {
+            shareWithOrganization: true,
           },
         ],
       },

@@ -17,6 +17,10 @@ export type Organization = {
   members: User[];
 };
 
+export type UserWithAccess = User & {
+  hasOrgWideAccess?: boolean;
+};
+
 export type User = {
   id: string;
   name: string | null;

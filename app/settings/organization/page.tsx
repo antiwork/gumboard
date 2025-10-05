@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-import { useUser } from "@/app/contexts/UserContext";
+import { useUser, UserWithAccess } from "@/app/contexts/UserContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
 import { SLACK_WEBHOOK_REGEX } from "@/lib/constants";
@@ -75,6 +75,7 @@ export default function OrganizationSettingsPage() {
   const [originalSlackWebhookUrl, setOriginalSlackWebhookUrl] = useState("");
   const [shareAllBoardsByDefault, setShareAllBoardsByDefault] = useState(true);
   const [originalShareAllBoardsByDefault, setOriginalShareAllBoardsByDefault] = useState(true);
+  const [userAccessUpdates, setUserAccessUpdates] = useState<{userId: string, hasOrgWideAccess: boolean}[]>([]);
   const [inviteEmail, setInviteEmail] = useState("");
   const [invites, setInvites] = useState<OrganizationInvite[]>([]);
   const [inviting, setInviting] = useState(false);
@@ -168,12 +169,14 @@ export default function OrganizationSettingsPage() {
           name: orgName,
           slackWebhookUrl: slackWebhookUrl,
           shareAllBoardsByDefault: shareAllBoardsByDefault,
+          userAccess: userAccessUpdates,
         }),
       });
 
       if (response.ok) {
         setOriginalOrgName(orgName);
         setOriginalShareAllBoardsByDefault(shareAllBoardsByDefault);
+        setUserAccessUpdates([]);
         refreshUser();
       } else {
         const errorData = await response.json();
@@ -546,7 +549,7 @@ export default function OrganizationSettingsPage() {
 
             <Button
               onClick={handleSaveOrgName}
-              disabled={savingOrg || (orgName === originalOrgName && shareAllBoardsByDefault === originalShareAllBoardsByDefault) || !user?.isAdmin}
+              disabled={savingOrg || (orgName === originalOrgName && shareAllBoardsByDefault === originalShareAllBoardsByDefault && userAccessUpdates.length === 0) || !user?.isAdmin}
               className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white dark:text-zinc-100"
               title={!user?.isAdmin ? "Only admins can update organization settings" : undefined}
             >
@@ -626,7 +629,7 @@ export default function OrganizationSettingsPage() {
           </div>
 
           <div className="space-y-3 truncate max-w-full overflow-hidden whitespace-nowrap">
-            {user?.organization?.members?.map((member) => (
+            {user?.organization?.members?.map((member: UserWithAccess) => (
               <div
                 key={member.id}
                 className="flex items-center justify-between p-2 lg:p-4 bg-zinc-50 dark:bg-zinc-800 rounded-lg border border-zinc-200 dark:border-zinc-700"
@@ -660,6 +663,34 @@ export default function OrganizationSettingsPage() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
+                  {/* Organization Access Toggle */}
+                  {user?.isAdmin && (
+                    <div className="flex items-center space-x-1">
+                      <Switch
+                        id={`org-access-${member.id}`}
+                        checked={member.hasOrgWideAccess ?? true}
+                        onCheckedChange={(checked) => {
+                          // Update local state
+                          const existingUpdateIndex = userAccessUpdates.findIndex(update => update.userId === member.id);
+                          if (existingUpdateIndex >= 0) {
+                            const updated = [...userAccessUpdates];
+                            updated[existingUpdateIndex] = { userId: member.id, hasOrgWideAccess: checked };
+                            setUserAccessUpdates(updated);
+                          } else {
+                            setUserAccessUpdates([...userAccessUpdates, { userId: member.id, hasOrgWideAccess: checked }]);
+                          }
+                        }}
+                        className="data-[state=checked]:bg-green-600"
+                      />
+                      <Label
+                        htmlFor={`org-access-${member.id}`}
+                        className="text-xs text-zinc-600 dark:text-zinc-400 cursor-pointer"
+                      >
+                        All Boards
+                      </Label>
+                    </div>
+                  )}
+
                   {/* Only show admin toggle to current admins and not for yourself */}
                   {user?.isAdmin && member.id !== user.id && (
                     <Button
