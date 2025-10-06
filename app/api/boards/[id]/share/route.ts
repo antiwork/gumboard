@@ -23,7 +23,7 @@ async function updateOrganizationSharingStatus(organizationId: string) {
     // Get current board shares for all boards in the organization
     const allBoardShares = await db.boardShare.findMany({
       where: {
-        boardId: { in: boards.map(b => b.id) },
+        boardId: { in: boards.map((b) => b.id) },
       },
       select: {
         boardId: true,
@@ -33,7 +33,7 @@ async function updateOrganizationSharingStatus(organizationId: string) {
 
     // Group shares by user
     const sharesByUser = new Map<string, Set<string>>();
-    allBoardShares.forEach(share => {
+    allBoardShares.forEach((share) => {
       if (!sharesByUser.has(share.userId)) {
         sharesByUser.set(share.userId, new Set());
       }
@@ -47,13 +47,11 @@ async function updateOrganizationSharingStatus(organizationId: string) {
 
       // If user should share all boards but doesn't have shares for all boards, add them
       if (shouldShareAllBoards) {
-        const missingBoardIds = boards
-          .map(b => b.id)
-          .filter(id => !sharedBoardIds.has(id));
+        const missingBoardIds = boards.map((b) => b.id).filter((id) => !sharedBoardIds.has(id));
 
         if (missingBoardIds.length > 0) {
           await db.boardShare.createMany({
-            data: missingBoardIds.map(boardId => ({
+            data: missingBoardIds.map((boardId) => ({
               boardId,
               userId: user.id,
             })),
@@ -121,10 +119,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       select: { userId: true },
     });
 
-    const sharedUserIds = new Set(boardShares.map(share => share.userId));
+    const sharedUserIds = new Set(boardShares.map((share) => share.userId));
 
     // Combine member data with sharing status
-    const membersWithSharing = organizationMembers.map(member => ({
+    const membersWithSharing = organizationMembers.map((member) => ({
       id: member.id,
       name: member.name,
       email: member.email,
@@ -134,7 +132,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({
       members: membersWithSharing,
-      boardCreator: board.createdBy
+      boardCreator: board.createdBy,
     });
   } catch (error) {
     console.error("Error fetching board sharing:", error);
@@ -202,13 +200,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     });
 
     if (validUsers.length !== userIds.length) {
-      return NextResponse.json({ error: "Some users are not in the organization" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Some users are not in the organization" },
+        { status: 400 }
+      );
     }
 
     // Update board shares - delete existing and create new ones
     await db.$transaction([
       db.boardShare.deleteMany({ where: { boardId } }),
-      ...userIds.map(userId =>
+      ...userIds.map((userId) =>
         db.boardShare.create({
           data: {
             boardId,

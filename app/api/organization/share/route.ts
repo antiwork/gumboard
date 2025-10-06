@@ -13,7 +13,6 @@ async function updateBoardSharingStatus(orgId: string) {
     });
 
     if (boards.length === 0) return;
-
   } catch (error) {
     console.error("Error updating board sharing status:", error);
   }
@@ -43,7 +42,10 @@ export async function GET() {
 
     // Only admins can view organization sharing
     if (!user.isAdmin) {
-      return NextResponse.json({ error: "Only admins can view organization sharing" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Only admins can view organization sharing" },
+        { status: 403 }
+      );
     }
 
     // Get all organization members
@@ -83,7 +85,7 @@ export async function GET() {
 
     // Create a map of board shares by user
     const sharesByUser = new Map<string, Set<string>>();
-    boardShares.forEach(share => {
+    boardShares.forEach((share) => {
       if (!sharesByUser.has(share.userId)) {
         sharesByUser.set(share.userId, new Set());
       }
@@ -91,7 +93,7 @@ export async function GET() {
     });
 
     // For each member, determine if they have all boards shared
-    const membersWithSharingStatus = organizationMembers.map(member => {
+    const membersWithSharingStatus = organizationMembers.map((member) => {
       const sharedBoardIds = sharesByUser.get(member.id) || new Set();
       const allBoardsShared = boards.length > 0 && sharedBoardIds.size === boards.length;
 
@@ -108,7 +110,7 @@ export async function GET() {
 
     return NextResponse.json({
       members: membersWithSharingStatus,
-      boards: boards.map(board => ({ id: board.id, name: board.name })),
+      boards: boards.map((board) => ({ id: board.id, name: board.name })),
     });
   } catch (error) {
     console.error("Error fetching organization sharing:", error);
@@ -128,11 +130,13 @@ export async function PUT(request: NextRequest) {
     const body = await request.json();
 
     const schema = z.object({
-      userSharing: z.array(z.object({
-        userId: z.string(),
-        shareAllBoards: z.boolean(),
-        sharedBoardIds: z.array(z.string()).optional(),
-      })),
+      userSharing: z.array(
+        z.object({
+          userId: z.string(),
+          shareAllBoards: z.boolean(),
+          sharedBoardIds: z.array(z.string()).optional(),
+        })
+      ),
     });
 
     const validatedBody = schema.parse(body);
@@ -155,7 +159,10 @@ export async function PUT(request: NextRequest) {
 
     // Only admins can update organization sharing
     if (!user.isAdmin) {
-      return NextResponse.json({ error: "Only admins can update organization sharing" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Only admins can update organization sharing" },
+        { status: 403 }
+      );
     }
 
     // Get all boards in the organization
@@ -164,19 +171,22 @@ export async function PUT(request: NextRequest) {
       select: { id: true },
     });
 
-    const boardIds = boards.map(board => board.id);
+    const boardIds = boards.map((board) => board.id);
 
     // Validate that all userIds are in the same organization
     const validUsers = await db.user.findMany({
       where: {
-        id: { in: userSharing.map(us => us.userId) },
+        id: { in: userSharing.map((us) => us.userId) },
         organizationId,
       },
       select: { id: true },
     });
 
     if (validUsers.length !== userSharing.length) {
-      return NextResponse.json({ error: "Some users are not in the organization" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Some users are not in the organization" },
+        { status: 400 }
+      );
     }
 
     // Update sharing for each user
@@ -191,7 +201,7 @@ export async function PUT(request: NextRequest) {
         });
 
         await db.boardShare.createMany({
-          data: boardIds.map(boardId => ({
+          data: boardIds.map((boardId) => ({
             boardId,
             userId: userShare.userId,
           })),
@@ -206,7 +216,7 @@ export async function PUT(request: NextRequest) {
         });
 
         await db.boardShare.createMany({
-          data: userShare.sharedBoardIds.map(boardId => ({
+          data: userShare.sharedBoardIds.map((boardId) => ({
             boardId,
             userId: userShare.userId,
           })),

@@ -102,7 +102,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
   });
   const [copiedPublicUrl, setCopiedPublicUrl] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
-  const [boardSharing, setBoardSharing] = useState<{ id: string; name: string; email: string; isShared: boolean }[]>([]);
+  const [boardSharing, setBoardSharing] = useState<
+    { id: string; name: string; email: string; isShared: boolean }[]
+  >([]);
   const [boardCreator, setBoardCreator] = useState<string | null>(null);
   const [memberSearchTerm, setMemberSearchTerm] = useState("");
   const [updatingSharing, setUpdatingSharing] = useState<string | null>(null);
@@ -667,19 +669,18 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-
   const handleToggleMemberSharing = async (memberId: string, isShared: boolean) => {
     if (!boardId || boardId === "all-notes" || boardId === "archive") return;
 
     setUpdatingSharing(memberId);
     try {
       const currentSharedIds = boardSharing
-        .filter(member => member.isShared)
-        .map(member => member.id);
+        .filter((member) => member.isShared)
+        .map((member) => member.id);
 
       const newSharedIds = isShared
         ? [...currentSharedIds, memberId]
-        : currentSharedIds.filter(id => id !== memberId);
+        : currentSharedIds.filter((id) => id !== memberId);
 
       // Use individual update function that doesn't close the dialog
       await handleUpdateBoardSharingIndividual(newSharedIds);
@@ -1312,7 +1313,7 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {boardSharing
-                    .filter(member => member.isShared)
+                    .filter((member) => member.isShared)
                     .slice(0, 3)
                     .map((member) => (
                       <span
@@ -1322,9 +1323,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         {member.name || member.email}
                       </span>
                     ))}
-                  {boardSharing.filter(member => member.isShared).length > 3 && (
+                  {boardSharing.filter((member) => member.isShared).length > 3 && (
                     <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200">
-                      +{boardSharing.filter(member => member.isShared).length - 3} more
+                      +{boardSharing.filter((member) => member.isShared).length - 3} more
                     </span>
                   )}
                 </div>
@@ -1360,7 +1361,8 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
               Share &quot;{board?.name}&quot; with team members
             </DialogTitle>
             <DialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Select which team members should have access to this board. Only selected members will be able to view and edit notes in this board.
+              Select which team members should have access to this board. Only selected members will
+              be able to view and edit notes in this board.
             </DialogDescription>
           </DialogHeader>
 
@@ -1380,9 +1382,12 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           {/* Member List */}
           <div className="space-y-3 max-h-96 overflow-y-auto">
             {boardSharing
-              .filter(member =>
-                memberSearchTerm === "" ||
-                (member.name || member.email).toLowerCase().includes(memberSearchTerm.toLowerCase())
+              .filter(
+                (member) =>
+                  memberSearchTerm === "" ||
+                  (member.name || member.email)
+                    .toLowerCase()
+                    .includes(memberSearchTerm.toLowerCase())
               )
               .map((member) => {
                 const isCreator = boardCreator === member.id;
@@ -1392,9 +1397,13 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                     className="flex items-center justify-between p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg"
                   >
                     <div className="flex items-center space-x-3">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
-                        isCreator ? "bg-purple-500 dark:bg-purple-600" : "bg-blue-500 dark:bg-zinc-700"
-                      }`}>
+                      <div
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-medium ${
+                          isCreator
+                            ? "bg-purple-500 dark:bg-purple-600"
+                            : "bg-blue-500 dark:bg-zinc-700"
+                        }`}
+                      >
                         {(member.name || member.email).charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -1418,7 +1427,9 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
                         <>
                           <Switch
                             checked={member.isShared}
-                            onCheckedChange={(checked) => handleToggleMemberSharing(member.id, checked)}
+                            onCheckedChange={(checked) =>
+                              handleToggleMemberSharing(member.id, checked)
+                            }
                             disabled={updatingSharing === member.id || updatingSharing === "bulk"}
                             className="data-[state=checked]:bg-green-600"
                           />
@@ -1436,7 +1447,11 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
           {/* Summary */}
           <div className="flex justify-between items-center pt-4 border-t border-zinc-200 dark:border-zinc-800">
             <div className="text-sm text-zinc-600 dark:text-zinc-400">
-              {boardSharing.filter(member => member.isShared || member.id === boardCreator).length} of {boardSharing.length} members have access
+              {
+                boardSharing.filter((member) => member.isShared || member.id === boardCreator)
+                  .length
+              }{" "}
+              of {boardSharing.length} members have access
             </div>
             <Button
               variant="outline"

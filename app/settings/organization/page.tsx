@@ -208,10 +208,12 @@ export default function OrganizationSettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userSharing: [{
-            userId: memberId,
-            shareAllBoards,
-          }],
+          userSharing: [
+            {
+              userId: memberId,
+              shareAllBoards,
+            },
+          ],
         }),
       });
 
@@ -246,11 +248,13 @@ export default function OrganizationSettingsPage() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userSharing: [{
-            userId: memberId,
-            shareAllBoards: sharedBoardIds.length === boards.length,
-            sharedBoardIds,
-          }],
+          userSharing: [
+            {
+              userId: memberId,
+              shareAllBoards: sharedBoardIds.length === boards.length,
+              sharedBoardIds,
+            },
+          ],
         }),
       });
 
@@ -737,7 +741,7 @@ export default function OrganizationSettingsPage() {
 
           <div className="space-y-3 truncate max-w-full overflow-hidden whitespace-nowrap">
             {user?.organization?.members?.map((member) => {
-              const memberSharing = membersWithSharing.find(m => m.id === member.id);
+              const memberSharing = membersWithSharing.find((m) => m.id === member.id);
               return (
                 <div
                   key={member.id}
@@ -748,7 +752,9 @@ export default function OrganizationSettingsPage() {
                       <AvatarImage src={member.image || ""} alt={member.name || member.email} />
                       <AvatarFallback
                         className={
-                          member.isAdmin ? "bg-purple-500" : "bg-blue-500 dark:bg-zinc-700 text-white"
+                          member.isAdmin
+                            ? "bg-purple-500"
+                            : "bg-blue-500 dark:bg-zinc-700 text-white"
                         }
                       >
                         {member.name
@@ -786,7 +792,9 @@ export default function OrganizationSettingsPage() {
                       <div className="flex items-center space-x-2">
                         <Switch
                           checked={memberSharing?.shareAllBoards || false}
-                          onCheckedChange={(checked) => handleToggleShareAllBoards(member.id, checked)}
+                          onCheckedChange={(checked) =>
+                            handleToggleShareAllBoards(member.id, checked)
+                          }
                           disabled={updatingSharing === member.id}
                           className="data-[state=checked]:bg-green-600"
                         />
@@ -794,7 +802,13 @@ export default function OrganizationSettingsPage() {
                           Share all boards
                         </span>
                         <Button
-                          onClick={() => openBoardDialog(member.id, member.name || member.email, memberSharing?.sharedBoardIds || [])}
+                          onClick={() =>
+                            openBoardDialog(
+                              member.id,
+                              member.name || member.email,
+                              memberSharing?.sharedBoardIds || []
+                            )
+                          }
                           variant="outline"
                           size="sm"
                           className="text-zinc-500 dark:text-zinc-400 hover:text-zinc-600 hover:bg-zinc-50 dark:hover:text-zinc-300 dark:hover:bg-zinc-800"
@@ -1182,29 +1196,38 @@ export default function OrganizationSettingsPage() {
       </AlertDialog>
 
       {/* Board Sharing Dialog */}
-      <Dialog open={boardDialog.open} onOpenChange={(open) => setBoardDialog({ open, memberId: "", memberName: "", sharedBoardIds: [] })}>
+      <Dialog
+        open={boardDialog.open}
+        onOpenChange={(open) =>
+          setBoardDialog({ open, memberId: "", memberName: "", sharedBoardIds: [] })
+        }
+      >
         <DialogContent className="bg-white dark:bg-zinc-950 border border-gray-200 dark:border-zinc-800 max-w-2xl">
           <DialogHeader>
             <DialogTitle className="text-foreground dark:text-zinc-100">
               Share boards with {boardDialog.memberName}
             </DialogTitle>
             <DialogDescription className="text-muted-foreground dark:text-zinc-400">
-              Select which boards to share with this team member. They will only be able to see and edit the selected boards.
+              Select which boards to share with this team member. They will only be able to see and
+              edit the selected boards.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 max-h-96 overflow-y-auto">
             {boards.map((board) => {
               const isShared = boardDialog.sharedBoardIds.includes(board.id);
               return (
-                <div key={board.id} className="flex items-center space-x-3 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
+                <div
+                  key={board.id}
+                  className="flex items-center space-x-3 p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg"
+                >
                   <Checkbox
                     id={`board-${board.id}`}
                     checked={isShared}
                     onCheckedChange={(checked) => {
                       const newSharedBoardIds = checked
                         ? [...boardDialog.sharedBoardIds, board.id]
-                        : boardDialog.sharedBoardIds.filter(id => id !== board.id);
-                      setBoardDialog(prev => ({ ...prev, sharedBoardIds: newSharedBoardIds }));
+                        : boardDialog.sharedBoardIds.filter((id) => id !== board.id);
+                      setBoardDialog((prev) => ({ ...prev, sharedBoardIds: newSharedBoardIds }));
                     }}
                     className="data-[state=checked]:bg-blue-600 data-[state=checked]:border-blue-600"
                   />
@@ -1225,13 +1248,17 @@ export default function OrganizationSettingsPage() {
             <div className="flex space-x-2">
               <Button
                 variant="outline"
-                onClick={() => setBoardDialog({ open: false, memberId: "", memberName: "", sharedBoardIds: [] })}
+                onClick={() =>
+                  setBoardDialog({ open: false, memberId: "", memberName: "", sharedBoardIds: [] })
+                }
                 disabled={updatingSharing === boardDialog.memberId}
               >
                 Cancel
               </Button>
               <Button
-                onClick={() => handleUpdateBoardSharing(boardDialog.memberId, boardDialog.sharedBoardIds)}
+                onClick={() =>
+                  handleUpdateBoardSharing(boardDialog.memberId, boardDialog.sharedBoardIds)
+                }
                 disabled={updatingSharing === boardDialog.memberId}
                 className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-700 dark:hover:bg-blue-800"
               >
