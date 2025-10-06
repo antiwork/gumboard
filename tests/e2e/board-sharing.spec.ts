@@ -34,7 +34,10 @@ test.describe("Board Sharing", () => {
       const boardName = testContext.getBoardName("Shared Test Board");
       await authenticatedPage.click('button:has-text("Add Board")');
       await authenticatedPage.fill('input[placeholder*="board name"]', boardName);
-      await authenticatedPage.fill('textarea[placeholder*="board description"]', "Test board for sharing");
+      await authenticatedPage.fill(
+        'textarea[placeholder*="board description"]',
+        "Test board for sharing"
+      );
 
       const createResponse = authenticatedPage.waitForResponse(
         (resp) => resp.url().includes("/api/boards") && resp.status() === 201
@@ -68,11 +71,7 @@ test.describe("Board Sharing", () => {
       expect(boardShare).toBeTruthy();
     });
 
-    test("creator can access own board", async ({
-      authenticatedPage,
-      testContext,
-      testPrisma,
-    }) => {
+    test("creator can access own board", async ({ authenticatedPage, testContext, testPrisma }) => {
       // Create board
       const boardName = testContext.getBoardName("Creator Access Board");
       const board = await testPrisma.board.create({
@@ -89,7 +88,11 @@ test.describe("Board Sharing", () => {
 
       // Should load successfully
       await expect(authenticatedPage.locator("text=Board not found")).not.toBeVisible();
-      await expect(authenticatedPage.locator(`[data-testid="board-dropdown-trigger"]`).filter({ hasText: boardName })).toBeVisible();
+      await expect(
+        authenticatedPage
+          .locator(`[data-testid="board-dropdown-trigger"]`)
+          .filter({ hasText: boardName })
+      ).toBeVisible();
     });
   });
 
@@ -115,7 +118,9 @@ test.describe("Board Sharing", () => {
       await authenticatedPage.click('button:has-text("Manage Sharing")');
 
       // Dialog opens
-      await expect(authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })).toBeVisible();
+      await expect(
+        authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })
+      ).toBeVisible();
 
       // Creator identified with badge and auto-access
       await expect(authenticatedPage.locator("text=Creator")).toBeVisible();
@@ -172,18 +177,18 @@ test.describe("Board Sharing", () => {
       await toggleSwitch.click();
 
       // Dialog stays open
-      await expect(authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })).toBeVisible();
+      await expect(
+        authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })
+      ).toBeVisible();
 
       // Can toggle again
       await toggleSwitch.click();
-      await expect(authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })).toBeVisible();
+      await expect(
+        authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })
+      ).toBeVisible();
     });
 
-    test("dialog closes on Done button", async ({
-      authenticatedPage,
-      testContext,
-      testPrisma,
-    }) => {
+    test("dialog closes on Done button", async ({ authenticatedPage, testContext, testPrisma }) => {
       // Create board
       const boardName = testContext.getBoardName("Done Button Board");
       const board = await testPrisma.board.create({
@@ -200,22 +205,22 @@ test.describe("Board Sharing", () => {
       await authenticatedPage.click('button:has-text("Manage Sharing")');
 
       // Dialog opens
-      await expect(authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })).toBeVisible();
+      await expect(
+        authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })
+      ).toBeVisible();
 
       // Click Done
       await authenticatedPage.click('[data-slot="dialog-content"] button:has-text("Done")');
 
       // Dialog closes
-      await expect(authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })).not.toBeVisible();
+      await expect(
+        authenticatedPage.locator('[data-slot="dialog-title"]').filter({ hasText: "Share" })
+      ).not.toBeVisible();
     });
   });
 
   test.describe("Access Control", () => {
-    test("shared user can access board", async ({
-      authenticatedPage,
-      testContext,
-      testPrisma,
-    }) => {
+    test("shared user can access board", async ({ authenticatedPage, testContext, testPrisma }) => {
       // Create board
       const boardName = testContext.getBoardName("Shared Access Board");
       const board = await testPrisma.board.create({
@@ -264,17 +269,16 @@ test.describe("Board Sharing", () => {
       // Creator can access own board
       await authenticatedPage.goto(`/boards/${board.id}`);
       await expect(authenticatedPage.locator("text=Board not found")).not.toBeVisible();
-      await expect(authenticatedPage.locator(`[data-testid="board-dropdown-trigger"]`).filter({ hasText: boardName })).toBeVisible();
+      await expect(
+        authenticatedPage
+          .locator(`[data-testid="board-dropdown-trigger"]`)
+          .filter({ hasText: boardName })
+      ).toBeVisible();
     });
-
   });
 
   test.describe("Organization Integration", () => {
-    test("org sharing API works", async ({
-      authenticatedPage,
-      testContext,
-      testPrisma,
-    }) => {
+    test("org sharing API works", async ({ authenticatedPage, testContext, testPrisma }) => {
       // Create board
       const boardName = testContext.getBoardName("Org Sync Board");
       const board = await testPrisma.board.create({
@@ -299,11 +303,7 @@ test.describe("Board Sharing", () => {
   });
 
   test.describe("Edge Cases", () => {
-    test("public boards are accessible", async ({
-      authenticatedPage,
-      testContext,
-      testPrisma,
-    }) => {
+    test("public boards are accessible", async ({ authenticatedPage, testContext, testPrisma }) => {
       // Create public board
       const boardName = testContext.getBoardName("Public Board");
       const board = await testPrisma.board.create({
@@ -318,7 +318,11 @@ test.describe("Board Sharing", () => {
 
       // Public boards accessible
       await authenticatedPage.goto(`/boards/${board.id}`);
-      await expect(authenticatedPage.locator(`[data-testid="board-dropdown-trigger"]`).filter({ hasText: boardName })).toBeVisible();
+      await expect(
+        authenticatedPage
+          .locator(`[data-testid="board-dropdown-trigger"]`)
+          .filter({ hasText: boardName })
+      ).toBeVisible();
     });
 
     test("board deletion removes sharing", async ({
