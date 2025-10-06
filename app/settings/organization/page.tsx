@@ -43,7 +43,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 
 import { useUser } from "@/app/contexts/UserContext";
@@ -129,7 +128,6 @@ export default function OrganizationSettingsPage() {
   const [copiedInviteToken, setCopiedInviteToken] = useState<string | null>(null);
   const [membersWithSharing, setMembersWithSharing] = useState<MemberWithSharing[]>([]);
   const [boards, setBoards] = useState<Board[]>([]);
-  const [loadingSharing, setLoadingSharing] = useState(false);
   const [updatingSharing, setUpdatingSharing] = useState<string | null>(null);
   const [boardDialog, setBoardDialog] = useState<{
     open: boolean;
@@ -188,7 +186,6 @@ export default function OrganizationSettingsPage() {
   };
 
   const fetchBoardSharing = async () => {
-    setLoadingSharing(true);
     try {
       const response = await fetch("/api/organization/share");
       if (response.ok) {
@@ -199,7 +196,6 @@ export default function OrganizationSettingsPage() {
     } catch (error) {
       console.error("Error fetching board sharing:", error);
     } finally {
-      setLoadingSharing(false);
     }
   };
 

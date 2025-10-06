@@ -23,10 +23,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         id: true,
         isPublic: true,
         organizationId: true,
-        createdBy: true, // Added for authorization check
+        createdBy: true,
         notes: {
           where: {
-            deletedAt: null, // Only include non-deleted notes
+            deletedAt: null,
             archivedAt: null,
           },
           select: {
@@ -64,7 +64,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is in the organization (required for board sharing)
     const userInOrg = await db.user.findFirst({
       where: {
         id: session.user.id,
@@ -76,8 +75,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Board creators automatically have access to their own boards
-    // Check if user has explicit sharing permissions for this board OR is the creator
     const boardShare = await db.boardShare.findFirst({
       where: {
         boardId: boardId,
@@ -163,7 +160,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         id: true,
         name: true,
         organizationId: true,
-        createdBy: true, // Added for authorization check
+        createdBy: true,
         sendSlackUpdates: true,
       },
     });
@@ -172,7 +169,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    // Check if user is in the organization (required for board sharing)
     const userInOrg = await db.user.findFirst({
       where: {
         id: session.user.id,
@@ -184,8 +180,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Board creators automatically have access to their own boards
-    // Check if user has explicit sharing permissions for this board OR is the creator
     const boardShare = await db.boardShare.findFirst({
       where: {
         boardId: boardId,

@@ -14,17 +14,12 @@ async function updateBoardSharingStatus(orgId: string) {
 
     if (boards.length === 0) return;
 
-    // For each user that has "share all boards" enabled, ensure they have shares for all boards
-    // This is handled by the existing logic in the main function, but we could add additional logic here if needed
-
-    // If a user has specific board shares that don't match their "share all boards" status,
-    // we might need to adjust, but this is complex and might be better handled in the UI layer
   } catch (error) {
     console.error("Error updating board sharing status:", error);
   }
 }
 
-// GET /api/organization/share - Get sharing status for all organization members across all boards
+// Get sharing status for all organization members across all boards
 export async function GET() {
   try {
     const session = await auth();
@@ -121,7 +116,7 @@ export async function GET() {
   }
 }
 
-// PUT /api/organization/share - Update sharing for specific users across all boards
+// Update sharing for specific users across all boards
 export async function PUT(request: NextRequest) {
   try {
     const session = await auth();

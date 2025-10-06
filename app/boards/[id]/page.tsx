@@ -17,7 +17,6 @@ import {
   StickyNote,
   Plus,
   Users,
-  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { BetaBadge } from "@/components/ui/beta-badge";
@@ -668,41 +667,6 @@ export default function BoardPage({ params }: { params: Promise<{ id: string }> 
     }
   };
 
-  const handleUpdateBoardSharing = async (userIds: string[]) => {
-    if (!boardId || boardId === "all-notes" || boardId === "archive") return;
-
-    setUpdatingSharing("bulk");
-    try {
-      const response = await fetch(`/api/boards/${boardId}/share`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ userIds }),
-      });
-
-      if (response.ok) {
-        await fetchBoardSharing();
-        setBoardSharingDialog(false);
-      } else {
-        const errorData = await response.json();
-        setErrorDialog({
-          open: true,
-          title: "Failed to update board sharing",
-          description: errorData.error || "Failed to update board sharing",
-        });
-      }
-    } catch (error) {
-      console.error("Error updating board sharing:", error);
-      setErrorDialog({
-        open: true,
-        title: "Failed to update board sharing",
-        description: "Failed to update board sharing",
-      });
-    } finally {
-      setUpdatingSharing(null);
-    }
-  };
 
   const handleToggleMemberSharing = async (memberId: string, isShared: boolean) => {
     if (!boardId || boardId === "all-notes" || boardId === "archive") return;

@@ -66,7 +66,7 @@ async function updateOrganizationSharingStatus(organizationId: string) {
   }
 }
 
-// GET /api/boards/[id]/share - Get sharing status for a board
+// Get sharing status for a board
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// PUT /api/boards/[id]/share - Update sharing for specific users on this board
+// Update sharing for specific users on this board
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth();

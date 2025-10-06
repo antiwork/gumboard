@@ -47,8 +47,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
-    // Board creators automatically have access to their own boards
-    // Check if user has explicit sharing permissions for this board OR is the creator
     const boardShare = await db.boardShare.findFirst({
       where: {
         boardId: boardId,
