@@ -74,7 +74,6 @@ interface SelfServeInvite {
   };
 }
 
-
 interface MemberWithSharing {
   id: string;
   name: string | null;
