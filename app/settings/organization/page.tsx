@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { NumberField } from "@/components/ui/number-field";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Board } from "@/components/note";
 
 import {
   Trash2,
@@ -73,10 +74,6 @@ interface SelfServeInvite {
   };
 }
 
-interface Board {
-  id: string;
-  name: string;
-}
 
 interface MemberWithSharing {
   id: string;
