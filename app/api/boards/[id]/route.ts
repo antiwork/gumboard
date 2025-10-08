@@ -35,7 +35,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check if user is member of the organization
+    // Check if user is in the organization (required for board sharing)
     const userInOrg = await db.user.findFirst({
       where: {
         id: session.user.id,
@@ -44,6 +44,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
 
     if (!userInOrg) {
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
+    }
+
+    const boardShare = await db.boardShare.findFirst({
+      where: {
+        boardId: boardId,
+        userId: session.user.id,
+      },
+    });
+
+    if (!boardShare && board.createdBy !== session.user.id) {
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
@@ -105,15 +116,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    // Check if user is member of the organization and get admin status
+    // Check if user is in the organization and has admin status (for editing/deleting boards)
+    // OR if user is the board creator
     const currentUser = await db.user.findFirst({
       where: {
         id: session.user.id,
-        organizationId: board.organizationId,
+        OR: [
+          { organizationId: board.organizationId },
+          { id: board.createdBy }, // Allow board creator to edit their own board
+        ],
       },
       select: {
         id: true,
         isAdmin: true,
+        organizationId: true,
       },
     });
 
@@ -121,11 +137,14 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
+    // For admin checks, user must be organization admin OR board creator
+    const isOrgAdmin = currentUser.isAdmin || board.createdBy === session.user.id;
+
     // For name/description/isPublic updates, check if user can edit this board (board creator or admin)
     if (
       (name !== undefined || description !== undefined || isPublic !== undefined) &&
       board.createdBy !== session.user.id &&
-      !currentUser.isAdmin
+      !isOrgAdmin
     ) {
       return NextResponse.json(
         { error: "Only the board creator or admin can edit this board" },
@@ -196,15 +215,20 @@ export async function DELETE(
       return NextResponse.json({ error: "Board not found" }, { status: 404 });
     }
 
-    // Check if user is member of the organization and get admin status
+    // Check if user is in the organization and has admin status (for editing/deleting boards)
+    // OR if user is the board creator
     const currentUser = await db.user.findFirst({
       where: {
         id: session.user.id,
-        organizationId: board.organizationId,
+        OR: [
+          { organizationId: board.organizationId },
+          { id: board.createdBy }, // Allow board creator to edit their own board
+        ],
       },
       select: {
         id: true,
         isAdmin: true,
+        organizationId: true,
       },
     });
 
@@ -212,8 +236,11 @@ export async function DELETE(
       return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
+    // For admin checks, user must be organization admin OR board creator
+    const isOrgAdmin = currentUser.isAdmin || board.createdBy === session.user.id;
+
     // Check if user can delete this board (board creator or admin)
-    if (board.createdBy !== session.user.id && !currentUser.isAdmin) {
+    if (board.createdBy !== session.user.id && !isOrgAdmin) {
       return NextResponse.json(
         { error: "Only the board creator or admin can delete this board" },
         { status: 403 }
