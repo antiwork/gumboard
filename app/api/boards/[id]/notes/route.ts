@@ -26,7 +26,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         createdBy: true,
         notes: {
           where: {
-            deletedAt: null,
+            deletedAt: null, // Only include non-deleted notes
             archivedAt: null,
           },
           select: {
