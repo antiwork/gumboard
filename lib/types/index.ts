@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NOTE_COLORS } from "@/lib/constants";
+import { NOTE_COLORS, SLACK_WEBHOOK_REGEX } from "@/lib/constants";
 
 const checklistItemSchema = z.object({
   id: z.string(),
@@ -27,7 +27,16 @@ export const boardSchema = z.object({
 
 export const organizationSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
-  slackWebhookUrl: z.string().optional(),
+  slackWebhookUrl: z
+    .union([
+      z.literal(""),
+      z
+        .string()
+        .trim()
+        .url("Must be a valid URL")
+        .regex(SLACK_WEBHOOK_REGEX, "Must be a valid Slack webhook URL"),
+    ])
+    .optional(),
 });
 
 export const profileSchema = z.object({
