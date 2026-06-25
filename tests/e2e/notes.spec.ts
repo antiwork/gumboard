@@ -1103,9 +1103,13 @@ test.describe("Note Management", () => {
       }
       await expect(futureDateButton).toBeVisible();
       await futureDateButton.click({ force: true });
-      await authenticatedPage.locator('[data-radix-popper-content-wrapper]').waitFor({ state: 'hidden' });
+      await authenticatedPage
+        .locator("[data-radix-popper-content-wrapper]")
+        .waitFor({ state: "hidden" });
 
-      await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click({ force: true });
+      await authenticatedPage
+        .getByRole("button", { name: "Pick an end date" })
+        .click({ force: true });
       const endCalendar = authenticatedPage.locator('table[role="grid"]');
       await expect(endCalendar).toBeVisible();
 
@@ -1125,7 +1129,6 @@ test.describe("Note Management", () => {
 
       await expect(endFutureDateButton).toBeVisible();
       await endFutureDateButton.click({ force: true });
-
 
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(0);
