@@ -4,6 +4,18 @@ interface SlackMessage {
   icon_emoji?: string;
 }
 
+function assertSafeWebhookUrl(url: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    throw new Error("Invalid webhook URL");
+  }
+  if (parsed.protocol !== "https:" || parsed.hostname !== "hooks.slack.com") {
+    throw new Error(`Rejected disallowed webhook host: ${parsed.hostname}`);
+  }
+}
+
 export function hasValidContent(content: string | null | undefined): boolean {
   if (!content) {
     return false;
@@ -54,6 +66,8 @@ export async function sendSlackMessage(
   webhookUrl: string,
   message: SlackMessage
 ): Promise<string | null> {
+  assertSafeWebhookUrl(webhookUrl);
+
   try {
     const response = await fetch(webhookUrl, {
       method: "POST",
@@ -83,6 +97,8 @@ export async function updateSlackMessage(
   boardName: string,
   userName: string
 ): Promise<void> {
+  assertSafeWebhookUrl(webhookUrl);
+
   try {
     const updatedText = completed
       ? `:white_check_mark: ${originalText} by ${userName} in ${boardName}`

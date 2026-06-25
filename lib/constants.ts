@@ -13,4 +13,5 @@ export const NOTE_COLORS = [
 
 export type NoteColor = (typeof NOTE_COLORS)[number];
 
-export const SLACK_WEBHOOK_REGEX = /slack/i;
+export const SLACK_WEBHOOK_REGEX =
+  /^https:\/\/hooks\.slack\.com\/services\/[A-Z0-9]+\/[A-Z0-9]+\/[a-zA-Z0-9]+$/;
