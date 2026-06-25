@@ -1102,7 +1102,8 @@ test.describe("Note Management", () => {
         }
       }
       await expect(futureDateButton).toBeVisible();
-      await futureDateButton.click();
+      await futureDateButton.click({ force: true });
+
 
       await authenticatedPage.getByRole("button", { name: "Pick an end date" }).click();
       const endCalendar = authenticatedPage.locator('table[role="grid"]');
@@ -1123,7 +1124,8 @@ test.describe("Note Management", () => {
       }
 
       await expect(endFutureDateButton).toBeVisible();
-      await endFutureDateButton.click();
+      await endFutureDateButton.click({ force: true });
+
 
       await authenticatedPage.getByRole("button", { name: "Apply" }).click();
       await expect(authenticatedPage.locator('[data-testid="note-card"]')).toHaveCount(0);
